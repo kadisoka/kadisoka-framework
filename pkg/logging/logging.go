@@ -28,7 +28,7 @@ func NewPkgLogger() PkgLogger {
 // set to the provided name.
 func NewPkgLoggerInternal(name string) PkgLogger {
 	//TODO: configurable prefix trimming
-	name = strings.TrimPrefix(name, "github.com/citadelion/citadel/")
+	name = strings.TrimPrefix(name, "github.com/citadelium/")
 	logCtx := newLoggerByEnv().With().Str("pkg", name)
 	return PkgLogger{logCtx.Logger()}
 }
