@@ -1,7 +1,7 @@
 package errors
 
 import (
-	"github.com/citadelium/pkg/errors"
+	"github.com/citadelium/foundation/pkg/errors"
 )
 
 type Error interface {

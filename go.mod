@@ -1,4 +1,4 @@
-module github.com/citadelium/pkg
+module github.com/citadelium/foundation
 
 go 1.14
 
@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/gorilla/schema v1.1.0
+	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/minio/minio-go/v6 v6.0.56
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

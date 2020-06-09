@@ -1,4 +1,4 @@
-PKG_PATH = github.com/citadelium/pkg
+PKG_PATH = github.com/citadelium/foundation/pkg
 GOLANG_IMAGE ?= golang:1.14
 
 .PHONY: fmt deps-up

@@ -9,7 +9,7 @@ import (
 	"github.com/rez-go/crux-apis/crux/media/v1"
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/citadelium/pkg/errors"
+	"github.com/citadelium/foundation/pkg/errors"
 )
 
 // Store contains business logic of a file service.

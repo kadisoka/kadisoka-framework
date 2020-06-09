@@ -7,7 +7,7 @@ import (
 
 	"github.com/rez-go/stev"
 
-	"github.com/citadelium/pkg/errors"
+	"github.com/citadelium/foundation/pkg/errors"
 )
 
 const EnvPrefixDefault = "APP_"

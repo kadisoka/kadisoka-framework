@@ -17,7 +17,7 @@ import (
 	"github.com/OneOfOne/xxhash"
 	"github.com/oxtoacart/bpool"
 
-	"github.com/citadelium/pkg/errors"
+	"github.com/citadelium/foundation/pkg/errors"
 )
 
 func NewServer(

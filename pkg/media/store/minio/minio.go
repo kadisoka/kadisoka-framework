@@ -5,8 +5,8 @@ import (
 
 	"github.com/minio/minio-go/v6"
 
-	"github.com/citadelium/pkg/errors"
-	mediastore "github.com/citadelium/pkg/media/store"
+	"github.com/citadelium/foundation/pkg/errors"
+	mediastore "github.com/citadelium/foundation/pkg/media/store"
 )
 
 type Config struct {

@@ -6,7 +6,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/rez-go/stev"
 
-	"github.com/citadelium/pkg/errors"
+	"github.com/citadelium/foundation/pkg/errors"
 )
 
 type CORSFilterConfig struct {

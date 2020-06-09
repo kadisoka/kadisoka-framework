@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/citadelium/pkg/api"
+	"github.com/citadelium/foundation/pkg/api"
 )
 
 type RequestContext interface {

@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/citadelium/pkg/logging"
+	"github.com/citadelium/foundation/pkg/logging"
 )
 
 var log = logging.NewPkgLogger()

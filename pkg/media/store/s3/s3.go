@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"github.com/citadelium/pkg/errors"
-	mediastore "github.com/citadelium/pkg/media/store"
+	"github.com/citadelium/foundation/pkg/errors"
+	mediastore "github.com/citadelium/foundation/pkg/media/store"
 )
 
 type Config struct {

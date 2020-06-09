@@ -4,8 +4,8 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
-	"github.com/citadelium/pkg/errors"
-	accesserrs "github.com/citadelium/pkg/errors/access"
+	"github.com/citadelium/foundation/pkg/errors"
+	accesserrs "github.com/citadelium/foundation/pkg/errors/access"
 )
 
 // Error translates err into gRPC error.
