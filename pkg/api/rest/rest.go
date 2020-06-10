@@ -54,6 +54,16 @@ func (r Responder) Error(errorData ErrorResponse, httpStatusCode int) {
 	}
 }
 
+func (r Responder) Success(successData interface{}) {
+	//TODO: ensure that it's trully nil. It's possible that the data is not
+	// actually nil.
+	if successData == nil {
+		r.w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	r.SuccessWithHTTPStatusCode(successData, http.StatusOK)
+}
+
 func (r Responder) SuccessWithHTTPStatusCode(successData interface{}, httpStatusCode int) {
 	r.w.Header().Set("Content-Type", "application/json")
 	r.w.WriteHeader(httpStatusCode)
