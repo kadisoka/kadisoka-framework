@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-func IsCallErrorStatusCode(statusCode int) bool {
-	return statusCode >= 400 && statusCode < 500
+func IsCallErrorStatusCode(httpStatusCode int) bool {
+	return httpStatusCode >= 400 && httpStatusCode < 500
 }
 
 type ErrorResponse struct {
@@ -31,15 +31,47 @@ type EmptyRequest struct{}
 
 type EmptyResponse struct{}
 
-func RespondErrorEmpty(w http.ResponseWriter, statusCode int) {
+func RespondTo(w http.ResponseWriter) Responder { return Responder{w} }
+
+type Responder struct {
+	w http.ResponseWriter
+}
+
+// EmptyError responses with empty ErrorResponse with status code set to httpStatusCode.
+func (r Responder) EmptyError(httpStatusCode int) {
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(httpStatusCode)
+	r.w.Write([]byte("{}"))
+}
+
+// Error responses with payload provided as errorResp
+func (r Responder) Error(errorData ErrorResponse, httpStatusCode int) {
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(httpStatusCode)
+	err := json.NewEncoder(r.w).Encode(errorData)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (r Responder) SuccessWithHTTPStatusCode(successData interface{}, httpStatusCode int) {
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(httpStatusCode)
+	err := json.NewEncoder(r.w).Encode(successData)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func RespondErrorEmpty(w http.ResponseWriter, httpStatusCode int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
+	w.WriteHeader(httpStatusCode)
 	w.Write([]byte("{}"))
 }
 
-func RespondError(w http.ResponseWriter, statusCode int, errorData ErrorResponse) {
+func RespondError(w http.ResponseWriter, httpStatusCode int, errorData ErrorResponse) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
+	w.WriteHeader(httpStatusCode)
 	err := json.NewEncoder(w).Encode(errorData)
 	if err != nil {
 		panic(err)

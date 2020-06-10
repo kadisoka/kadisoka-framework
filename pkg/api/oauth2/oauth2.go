@@ -198,9 +198,7 @@ var (
 	schemaDecoder = schema.NewDecoder()
 )
 
-func RespondTo(w http.ResponseWriter) *Responder {
-	return &Responder{w}
-}
+func RespondTo(w http.ResponseWriter) Responder { return Responder{w} }
 
 type Responder struct {
 	w http.ResponseWriter
@@ -216,23 +214,23 @@ func (r Responder) ErrInvalidClientBasicAuthorization(realmName string, errorDes
 		realmName = "Restricted"
 	}
 	r.w.Header().Set("WWW-Authenticate", fmt.Sprintf("Basic realm=%q", realmName))
-	r.ErrWithStatusCode(ErrorResponse{
+	r.ErrorWithHTTPStatusCode(ErrorResponse{
 		Error:            ErrorInvalidClient,
 		ErrorDescription: errorDesc,
 	}, http.StatusUnauthorized)
 }
 
-func (r Responder) Err(errorData ErrorResponse) {
-	r.ErrWithStatusCode(errorData, errorData.Error.HTTPStatusCode())
+func (r Responder) Error(errorData ErrorResponse) {
+	r.ErrorWithHTTPStatusCode(errorData, errorData.Error.HTTPStatusCode())
 }
 
-func (r Responder) ErrCode(errorCode ErrorCode) {
-	r.ErrWithStatusCode(ErrorResponse{Error: errorCode}, errorCode.HTTPStatusCode())
+func (r Responder) ErrorCode(errorCode ErrorCode) {
+	r.ErrorWithHTTPStatusCode(ErrorResponse{Error: errorCode}, errorCode.HTTPStatusCode())
 }
 
-func (r Responder) ErrWithStatusCode(errorData ErrorResponse, statusCode int) {
+func (r Responder) ErrorWithHTTPStatusCode(errorData ErrorResponse, httpStatusCode int) {
 	r.w.Header().Set("Content-Type", "application/json")
-	r.w.WriteHeader(statusCode)
+	r.w.WriteHeader(httpStatusCode)
 	err := json.NewEncoder(r.w).Encode(errorData)
 	if err != nil {
 		panic(err)
