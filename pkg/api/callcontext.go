@@ -25,7 +25,7 @@ type CallContext interface {
 	//
 	MethodName() string
 
-	// RequestID returns the idempotency token, if provided.
+	// RequestID returns the idempotency token, if provided in the call request.
 	RequestID() *RequestID
 
 	// RemoteAddress returns the IP address where this call was initiated

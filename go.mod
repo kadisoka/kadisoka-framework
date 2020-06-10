@@ -12,8 +12,9 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/gorilla/schema v1.1.0
 	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/klauspost/cpuid v1.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/minio/minio-go/v6 v6.0.56
+	github.com/minio/minio-go/v6 v6.0.57
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect

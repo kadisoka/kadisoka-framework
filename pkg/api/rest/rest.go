@@ -1,5 +1,10 @@
 package rest
 
+import (
+	"encoding/json"
+	"net/http"
+)
+
 func IsCallErrorStatusCode(statusCode int) bool {
 	return statusCode >= 400 && statusCode < 500
 }
@@ -25,3 +30,18 @@ type ErrorResponseField struct {
 type EmptyRequest struct{}
 
 type EmptyResponse struct{}
+
+func RespondErrorEmpty(w http.ResponseWriter, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write([]byte("{}"))
+}
+
+func RespondError(w http.ResponseWriter, statusCode int, errorData ErrorResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(errorData)
+	if err != nil {
+		panic(err)
+	}
+}
