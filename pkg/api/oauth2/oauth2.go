@@ -226,6 +226,10 @@ func (r Responder) Err(errorData ErrorResponse) {
 	r.ErrWithStatusCode(errorData, errorData.Error.HTTPStatusCode())
 }
 
+func (r Responder) ErrCode(errorCode ErrorCode) {
+	r.ErrWithStatusCode(ErrorResponse{Error: errorCode}, errorCode.HTTPStatusCode())
+}
+
 func (r Responder) ErrWithStatusCode(errorData ErrorResponse, statusCode int) {
 	r.w.Header().Set("Content-Type", "application/json")
 	r.w.WriteHeader(statusCode)
