@@ -1,6 +1,9 @@
 package oauth2
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/gorilla/schema"
@@ -34,13 +37,39 @@ func GrantTypeFromString(s string) GrantType {
 type ErrorCode string
 
 const (
-	ErrorServerError          ErrorCode = "server_error"
-	ErrorInvalidRequest       ErrorCode = "invalid_request"
-	ErrorInvalidClient        ErrorCode = "invalid_client"
-	ErrorInvalidGrant         ErrorCode = "invalid_grant"
-	ErrorUnauthorizedClient   ErrorCode = "unauthorized_client"
+	// 4.1.2.1, 4.2.2.1, 5.2
+	ErrorInvalidRequest ErrorCode = "invalid_request"
+	// 4.1.2.1, 4.2.2.1, 5.2
+	ErrorUnauthorizedClient ErrorCode = "unauthorized_client"
+	// 4.1.2.1, 4.2.2.1
+	ErrorAccessDenied ErrorCode = "access_denied"
+	// 4.1.2.1, 4.2.2.1
+	ErrorUnspportedResponseType ErrorCode = "unsupported_response_type"
+	// 4.1.2.1, 4.2.2.1, 5.2
+	ErrorInvalidScope ErrorCode = "invalid_scope"
+	// 4.1.2.1, 4.2.2.1
+	ErrorServerError ErrorCode = "server_error"
+	// 4.1.2.1, 4.2.2.1
+	ErrorTemporarilyUnavailable ErrorCode = "temporarily_unavailable"
+	// 5.2
+	ErrorInvalidClient ErrorCode = "invalid_client"
+	// 5.2
+	ErrorInvalidGrant ErrorCode = "invalid_grant"
+	// 5.2
 	ErrorUnsupportedGrantType ErrorCode = "unsupported_grant_type"
 )
+
+func (errorCode ErrorCode) HTTPStatusCode() int {
+	switch errorCode {
+	case ErrorInvalidRequest,
+		ErrorInvalidClient,
+		ErrorInvalidGrant,
+		ErrorUnauthorizedClient,
+		ErrorUnsupportedGrantType:
+		return http.StatusBadRequest
+	}
+	return http.StatusInternalServerError
+}
 
 type ResponseType string
 
@@ -168,3 +197,49 @@ var (
 	schemaEncoder = schema.NewEncoder()
 	schemaDecoder = schema.NewDecoder()
 )
+
+func RespondTo(w http.ResponseWriter) *Responder {
+	return &Responder{w}
+}
+
+type Responder struct {
+	w http.ResponseWriter
+}
+
+// ErrInvalidClientBasicAuthorization is used for special case for ErrorInvalidClient.
+// Instead of returning 400, we respond with 401 and provide information
+// about the client authorizations supported, for this case, Basic.
+//
+// Details: RFC 6749 § 5.2
+func (r Responder) ErrInvalidClientBasicAuthorization(realmName string, errorDesc string) {
+	if realmName == "" {
+		realmName = "Restricted"
+	}
+	r.w.Header().Set("WWW-Authenticate", fmt.Sprintf("Basic realm=%q", realmName))
+	r.ErrWithStatusCode(ErrorResponse{
+		Error:            ErrorInvalidClient,
+		ErrorDescription: errorDesc,
+	}, http.StatusUnauthorized)
+}
+
+func (r Responder) Err(errorData ErrorResponse) {
+	r.ErrWithStatusCode(errorData, errorData.Error.HTTPStatusCode())
+}
+
+func (r Responder) ErrWithStatusCode(errorData ErrorResponse, statusCode int) {
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(statusCode)
+	err := json.NewEncoder(r.w).Encode(errorData)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (r Responder) TokenCustom(tokenData interface{}) {
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(r.w).Encode(tokenData)
+	if err != nil {
+		panic(err)
+	}
+}
