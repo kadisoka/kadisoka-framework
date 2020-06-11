@@ -36,7 +36,7 @@ func NewServer(
 	}
 
 	var filesDirWithSlash string
-	if config.FilesDir == "/" {
+	if config.FilesDir != "/" {
 		filesDirWithSlash = config.FilesDir + "/"
 	}
 	filesDirNoSlash := config.FilesDir
