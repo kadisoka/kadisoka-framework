@@ -73,8 +73,17 @@ type Server struct {
 	processedFiles map[string]*processedFileInfo
 }
 
+// ProcessedFilenames returns a list of file names which have processed.
+func (srv Server) ProcessedFilenames() []string {
+	nameList := make([]string, 0, len(srv.processedFiles))
+	for k := range srv.processedFiles {
+		nameList := append(nameList, k)
+	}
+	return nameList
+}
+
 // ServerName conforms app.ServiceServer interface.
-func (srv *Server) ServerName() string { return "web UI server" }
+func (srv Server) ServerName() string { return "web UI server" }
 
 // Serve conforms app.ServiceServer interface.
 func (srv *Server) Serve() error {
@@ -103,10 +112,10 @@ func (srv *Server) Shutdown(ctx context.Context) error {
 }
 
 // IsAcceptingClients conforms app.ServiceServer interface.
-func (srv *Server) IsAcceptingClients() bool { return true }
+func (srv Server) IsAcceptingClients() bool { return true }
 
 // IsHealthy conforms app.ServiceServer interface.
-func (srv *Server) IsHealthy() bool { return !srv.shuttingDown && srv.IsHealthy() }
+func (srv Server) IsHealthy() bool { return !srv.shuttingDown && srv.IsHealthy() }
 
 // ServeHTTP conforms Go's HTTP Handler interface.
 func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
