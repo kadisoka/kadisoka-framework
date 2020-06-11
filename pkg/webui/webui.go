@@ -27,11 +27,19 @@ func NewServer(
 	if !strings.HasSuffix(config.ServePath, "/") {
 		config.ServePath += "/"
 	}
-	filesDirWithSlash := config.FilesDir
-	if !strings.HasSuffix(filesDirWithSlash, "/") {
-		filesDirWithSlash += "/"
+
+	var err error
+
+	config.FilesDir, err = filepath.Abs(config.FilesDir)
+	if err != nil {
+		return nil, errors.Ent("config.FilesDir", err)
 	}
-	filesDirNoSlash := strings.TrimSuffix(config.FilesDir, "/")
+
+	var filesDirWithSlash string
+	if config.FilesDir == "/" {
+		filesDirWithSlash = config.FilesDir + "/"
+	}
+	filesDirNoSlash := config.FilesDir
 
 	fileServer := ETagHandler(
 		http.StripPrefix(config.ServePath,
@@ -48,7 +56,7 @@ func NewServer(
 		map[string]*processedFileInfo{},
 	}
 
-	err := srv.processFiles()
+	err = srv.processFiles()
 	if err != nil {
 		return nil, err
 	}
