@@ -77,7 +77,7 @@ type Server struct {
 func (srv Server) ProcessedFilenames() []string {
 	nameList := make([]string, 0, len(srv.processedFiles))
 	for k := range srv.processedFiles {
-		nameList := append(nameList, k)
+		nameList = append(nameList, k)
 	}
 	return nameList
 }
