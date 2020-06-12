@@ -7,17 +7,17 @@ import (
 
 	"github.com/rez-go/stev"
 
-	"github.com/citadelium/foundation/pkg/errors"
+	"github.com/kadisoka/foundation/pkg/errors"
 )
 
 const EnvPrefixDefault = "APP_"
 
 const (
-	NameDefault                    = "Citadel"
-	URLDefault                     = "https://github.com/citadelion/citadel"
+	NameDefault                    = "Kadisoka"
+	URLDefault                     = "https://github.com/kadisoka"
 	EmailDefault                   = "nop@example.com"
 	NotificationEmailSenderDefault = "no-reply@example.com"
-	TeamNameDefault                = "Team Citadel"
+	TeamNameDefault                = "Team Kadisoka"
 )
 
 func DefaultInfo() Info {
@@ -33,8 +33,10 @@ func DefaultInfo() Info {
 type Info struct {
 	// Name of the app
 	Name string
-	// URL of the app
+	// Canonical URL of the app
 	URL                     string
+	TermsOfServiceURL       string
+	PrivacyPolicyURL        string
 	Email                   string
 	NotificationEmailSender string
 	TeamName                string

@@ -1,7 +1,7 @@
 package access
 
 import (
-	"github.com/citadelium/foundation/pkg/errors"
+	"github.com/kadisoka/foundation/pkg/errors"
 )
 
 // Error is an abstract error type for all API access-related errors.

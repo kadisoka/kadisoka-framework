@@ -1,6 +1,6 @@
 
 GOLANG_IMAGE ?= golang:1.14
-TESTER_IMAGE ?= citadel-tester
+TESTER_IMAGE ?= kadisoka-foundation-tester
 
 .PHONY: fmt test deps-up
 

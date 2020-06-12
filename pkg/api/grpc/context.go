@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	"github.com/citadelium/foundation/pkg/api"
+	"github.com/kadisoka/foundation/pkg/api"
 )
 
 type CallContext interface {

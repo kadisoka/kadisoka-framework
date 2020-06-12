@@ -1,4 +1,4 @@
-module github.com/citadelium/foundation
+module github.com/kadisoka/foundation
 
 go 1.14
 

@@ -1,3 +1,3 @@
-# Citadelium Foundation Module
+# Kadisoka Services Foundation Module
 
-![tests](https://github.com/citadelium/foundation/workflows/tests/badge.svg)
+![tests](https://github.com/kadisoka/foundation/workflows/tests/badge.svg)

@@ -3,9 +3,9 @@ package errors
 import (
 	"net/http"
 
-	"github.com/citadelium/foundation/pkg/api/rest"
-	"github.com/citadelium/foundation/pkg/errors"
-	accesserrs "github.com/citadelium/foundation/pkg/errors/access"
+	"github.com/kadisoka/foundation/pkg/api/rest"
+	"github.com/kadisoka/foundation/pkg/errors"
+	accesserrs "github.com/kadisoka/foundation/pkg/errors/access"
 )
 
 const HTTPStatusUnknown = 0

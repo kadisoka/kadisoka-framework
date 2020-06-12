@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/citadelium/foundation/pkg/errors"
+	"github.com/kadisoka/foundation/pkg/errors"
 )
 
 // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html
