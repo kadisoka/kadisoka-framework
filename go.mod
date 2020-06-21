@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/aws/aws-sdk-go v1.32.6
-	github.com/emicklei/go-restful v2.12.0+incompatible
+	github.com/emicklei/go-restful v2.13.0+incompatible
 	github.com/gabriel-vasile/mimetype v1.1.1
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.0 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/thoas/stats v0.0.0-20190407194641-965cb2de1678
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
-	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1 // indirect
+	golang.org/x/sys v0.0.0-20200620081246-981b61492c35 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/genproto v0.0.0-20200620020550-bd6e04640131 // indirect
 	google.golang.org/grpc v1.29.1
