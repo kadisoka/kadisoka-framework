@@ -48,6 +48,7 @@ type App interface {
 
 	AddServer(ServiceServer)
 	Run()
+	IsAllServersAcceptingClients() bool
 }
 
 type AppBase struct {
