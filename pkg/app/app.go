@@ -61,17 +61,32 @@ type AppBase struct {
 func (appBase AppBase) AppInfo() Info      { return appBase.appInfo }
 func (appBase AppBase) InstanceID() string { return appBase.instanceID }
 
+// AddServer adds a server to be run simultaneously. Do NOT call this
+// method after the app has been started.
 func (appBase *AppBase) AddServer(srv ServiceServer) {
 	appBase.serversMu.Lock()
 	appBase.servers = append(appBase.servers, srv)
 	appBase.serversMu.Unlock()
 }
 
-func (appBase AppBase) Run() {
+// Run runs all the servers. Do NOT add any new server after this method
+// was called.
+func (appBase *AppBase) Run() {
 	RunServers(appBase.Servers())
 }
 
-func (appBase AppBase) Servers() []ServiceServer {
+// IsAllServersAcceptingClients checks if every server is accepting clients.
+func (appBase *AppBase) IsAllServersAcceptingClients() bool {
+	servers := appBase.Servers()
+	for _, srv := range servers {
+		if !srv.IsAcceptingClients() {
+			return false
+		}
+	}
+	return true
+}
+
+func (appBase *AppBase) Servers() []ServiceServer {
 	out := make([]ServiceServer, len(appBase.servers))
 	appBase.serversMu.RLock()
 	copy(out, appBase.servers)
