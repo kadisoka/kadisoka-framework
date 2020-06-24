@@ -34,3 +34,12 @@ type CallContext interface {
 	// the origin IP).
 	RemoteAddress() string
 }
+
+type CallInfo struct {
+	MethodName string
+	RequestID  *RequestID
+}
+
+type CallRemoteInfo struct {
+	Address string
+}
