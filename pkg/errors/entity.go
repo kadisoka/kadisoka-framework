@@ -9,7 +9,7 @@ type EntityError interface {
 // entityIdentifier which could be the name, key or URL of an entity. The
 // entityIdentifier should describe the 'what' while err describes the 'why'.
 //
-//   // Describes that the file ".config.yaml" is not exist.
+//   // Describes that the file ".config.yaml" does not exist.
 //   errors.Ent("./config.yaml", os.ErrNotExist)
 //
 //   // Describes that the site "https://example.com" is unreachable.
