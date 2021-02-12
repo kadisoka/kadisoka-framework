@@ -16,9 +16,11 @@ func ConfigFromEnv(envPrefix string) (*Config, error) {
 
 // Config File Core cofiguration
 type Config struct {
-	ImagesBaseURL string `env:"IMAGES_BASE_URL"`
 	//TODO: declare the encoding (hex?)
-	NameGenerationKey string                 `env:"FILENAME_GENERATION_KEY"`
-	StoreService      string                 `env:"STORE_SERVICE"`
-	Modules           map[string]interface{} `env:",map,squash"`
+	NameGenerationKey string `env:"FILENAME_GENERATION_KEY"`
+	StoreService      string `env:"STORE_SERVICE"`
+
+	Modules map[string]interface{} `env:",map,squash"`
+
+	ImagesBaseURL string `env:"IMAGES_BASE_URL"`
 }

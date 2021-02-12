@@ -25,8 +25,8 @@ func init() {
 	mediastore.RegisterModule(
 		ServiceName,
 		mediastore.Module{
-			NewServiceClient: NewServiceClient,
-			ConfigSkeleton: func() interface{} {
+			NewService: NewService,
+			ServiceConfigSkeleton: func() mediastore.ServiceConfig {
 				cfg := ConfigSkeleton()
 				return &cfg
 			},
@@ -35,7 +35,7 @@ func init() {
 
 func ConfigSkeleton() Config { return Config{} }
 
-func NewServiceClient(config interface{}) (mediastore.Service, error) {
+func NewService(config mediastore.ServiceConfig) (mediastore.Service, error) {
 	if config == nil {
 		return nil, errors.ArgMsg("config", "missing")
 	}
@@ -66,7 +66,7 @@ func NewServiceClient(config interface{}) (mediastore.Service, error) {
 
 	const uploadPartSize = 10 * 1024 * 1024 // 10MiB
 
-	return &Client{
+	return &Service{
 		bucketName: conf.BucketName,
 		uploader: s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
 			u.PartSize = uploadPartSize
@@ -74,14 +74,14 @@ func NewServiceClient(config interface{}) (mediastore.Service, error) {
 	}, nil
 }
 
-type Client struct {
+type Service struct {
 	bucketName string
 	uploader   *s3manager.Uploader
 }
 
-var _ mediastore.Service = &Client{}
+var _ mediastore.Service = &Service{}
 
-func (objStoreCl *Client) PutObject(
+func (objStoreCl *Service) PutObject(
 	targetKey string, contentSource io.Reader,
 ) (finalURL string, err error) {
 	result, err := objStoreCl.uploader.

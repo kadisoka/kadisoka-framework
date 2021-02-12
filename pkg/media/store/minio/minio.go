@@ -24,8 +24,8 @@ func init() {
 	mediastore.RegisterModule(
 		ServiceName,
 		mediastore.Module{
-			NewServiceClient: NewServiceClient,
-			ConfigSkeleton: func() interface{} {
+			NewService: NewService,
+			ServiceConfigSkeleton: func() mediastore.ServiceConfig {
 				cfg := ConfigSkeleton()
 				return &cfg
 			},
@@ -34,7 +34,7 @@ func init() {
 
 func ConfigSkeleton() Config { return Config{} }
 
-func NewServiceClient(config interface{}) (mediastore.Service, error) {
+func NewService(config mediastore.ServiceConfig) (mediastore.Service, error) {
 	if config == nil {
 		return nil, errors.ArgMsg("config", "missing")
 	}
@@ -70,20 +70,20 @@ func NewServiceClient(config interface{}) (mediastore.Service, error) {
 		}
 	}
 
-	return &Client{
+	return &Service{
 		bucketName:  bucketName,
 		minioClient: minioClient,
 	}, nil
 }
 
-type Client struct {
+type Service struct {
 	bucketName  string
 	minioClient *minio.Client
 }
 
-var _ mediastore.Service = &Client{}
+var _ mediastore.Service = &Service{}
 
-func (objStoreCl *Client) PutObject(
+func (objStoreCl *Service) PutObject(
 	targetKey string, contentSource io.Reader,
 ) (finalURL string, err error) {
 	_, err = objStoreCl.minioClient.
