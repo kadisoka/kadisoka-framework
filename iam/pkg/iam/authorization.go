@@ -3,8 +3,8 @@ package iam
 import (
 	"time"
 
-	"github.com/kadisoka/foundation/pkg/errors"
-	dataerrs "github.com/kadisoka/foundation/pkg/errors/data"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	dataerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/data"
 	"github.com/square/go-jose/v3/jwt"
 )
 

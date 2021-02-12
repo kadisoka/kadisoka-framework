@@ -1,9 +1,9 @@
 package logging
 
 import (
-	foundationlog "github.com/kadisoka/foundation/pkg/logging"
+	foundationlog "github.com/kadisoka/kadisoka-framework/foundation/pkg/logging"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 // NewPkgLogger creates a logger for use within a package. This logger

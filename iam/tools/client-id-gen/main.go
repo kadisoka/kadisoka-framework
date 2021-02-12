@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 func main() {

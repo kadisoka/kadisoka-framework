@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github.com/kadisoka/iam/pkg/iam/rest/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
 )
 
 var (

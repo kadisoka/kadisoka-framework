@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"github.com/kadisoka/foundation/pkg/webui"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 var ResourcesDirDefault string

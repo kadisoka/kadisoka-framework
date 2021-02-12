@@ -5,12 +5,12 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/emicklei/go-restful-openapi"
-	"github.com/kadisoka/foundation/pkg/api/oauth2"
-	apperrs "github.com/kadisoka/foundation/pkg/app/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
+	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iam/rest/logging"
-	"github.com/kadisoka/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
 var (

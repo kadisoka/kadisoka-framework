@@ -9,15 +9,16 @@ import (
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"github.com/go-openapi/spec"
-	"github.com/kadisoka/foundation/pkg/api/rest"
-	"github.com/kadisoka/foundation/pkg/app"
-	"github.com/kadisoka/foundation/pkg/errors"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver"
-	"github.com/kadisoka/iam/pkg/iamserver/rest/oauth2"
-	"github.com/kadisoka/iam/pkg/iamserver/rest/terminal"
-	"github.com/kadisoka/iam/pkg/iamserver/rest/user"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest/oauth2"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest/terminal"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest/user"
 )
 
 const ServerLatestVersionString = "v1"
@@ -89,7 +90,7 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func NewServer(
 	config ServerConfig,
-	appInfo app.Info,
+	realmInfo realm.Info,
 	iamServerCore *iamserver.Core,
 	webUIURLs *iam.WebUIURLs, //TODO: add this to server core
 ) (*Server, error) {
@@ -137,7 +138,7 @@ func NewServer(
 		WebServices: container.RegisteredWebServices(),
 		APIPath:     apiDocsPath,
 		PostBuildSwaggerObjectHandler: func(swaggerSpec *spec.Swagger) {
-			processSwaggerSpec(swaggerSpec, appInfo, secDefs)
+			processSwaggerSpec(swaggerSpec, secDefs)
 		},
 	}))
 
@@ -188,13 +189,17 @@ func initRESTV1Services(
 	container.Add(oauth2Srv.RestfulWebService())
 }
 
-func processSwaggerSpec(swaggerSpec *spec.Swagger, appInfo app.Info, secDefs spec.SecurityDefinitions) {
+func processSwaggerSpec(
+	swaggerSpec *spec.Swagger,
+	secDefs spec.SecurityDefinitions,
+) {
 	buildInfo := app.GetBuildInfo()
 	rev := buildInfo.RevisionID
 	if rev != "unknown" && len(rev) > 7 {
 		rev = rev[:7]
 	}
 	swaggerSpec.Info = &spec.Info{
+		//TODO: use details from service info
 		InfoProps: spec.InfoProps{
 			Title:       "IAM",
 			Description: "Identity and Access Management service REST API",

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"google.golang.org/grpc"
 
-	"github.com/kadisoka/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
 type ServerConfig struct {

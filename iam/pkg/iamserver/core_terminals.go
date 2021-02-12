@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"golang.org/x/text/language"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver/eav10n"
-	"github.com/kadisoka/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
 var (

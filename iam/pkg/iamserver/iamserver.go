@@ -2,7 +2,7 @@
 package iamserver
 
 import (
-	"github.com/kadisoka/iam/pkg/iam/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
 )
 
 var (

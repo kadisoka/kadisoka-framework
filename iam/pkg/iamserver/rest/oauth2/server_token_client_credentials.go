@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"github.com/kadisoka/foundation/pkg/api/oauth2"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
 func (restSrv *Server) handleTokenRequestByClientCredentials(

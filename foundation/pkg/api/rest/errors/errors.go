@@ -3,9 +3,9 @@ package errors
 import (
 	"net/http"
 
-	"github.com/kadisoka/foundation/pkg/api/rest"
-	"github.com/kadisoka/foundation/pkg/errors"
-	accesserrs "github.com/kadisoka/foundation/pkg/errors/access"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	accesserrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/access"
 )
 
 const HTTPStatusUnknown = 0

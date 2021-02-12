@@ -3,7 +3,7 @@ package iamserver
 import (
 	"time"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 type TerminalRegistrationInput struct {

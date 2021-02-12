@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"github.com/kadisoka/foundation/pkg/api/oauth2"
-	"github.com/kadisoka/foundation/pkg/api/rest"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"golang.org/x/text/language"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
 func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response) {

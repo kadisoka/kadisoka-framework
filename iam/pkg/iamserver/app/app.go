@@ -4,16 +4,16 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kadisoka/foundation/pkg/app"
-	"github.com/kadisoka/foundation/pkg/errors"
-	"github.com/kadisoka/foundation/pkg/webui"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 	"github.com/rez-go/stev"
 
-	"github.com/kadisoka/iam/pkg/iam/logging"
-	"github.com/kadisoka/iam/pkg/iamserver"
-	"github.com/kadisoka/iam/pkg/iamserver/grpc"
-	"github.com/kadisoka/iam/pkg/iamserver/rest"
-	iamwebui "github.com/kadisoka/iam/pkg/iamserver/webui"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/grpc"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest"
+	iamwebui "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/webui"
 )
 
 var log = logging.NewPkgLogger()
@@ -58,7 +58,7 @@ func NewWithCombinedHTTPServers(cfg Config, mux *http.ServeMux) (*App, error) {
 		log.Info().Msg("Initializing REST server...")
 		restServer, err := rest.NewServer(
 			*cfg.REST,
-			srvApp.AppInfo(),
+			srvApp.RealmInfo(),
 			iamServerCore,
 			&cfg.WebUI.URLs)
 		if err != nil {
@@ -85,8 +85,8 @@ func setUpWebUIServer(srvApp *App, cfg Config) (*webui.Server, error) {
 	webUICfg := cfg.WebUI.Server
 
 	templateData := map[string]interface{}{
-		"AppInfo": srvApp.AppInfo(),
-		"AppName": srvApp.AppInfo().Name,
+		"AppInfo": srvApp.RealmInfo(),
+		"AppName": srvApp.RealmInfo().Name,
 	}
 	restAPIURLReplacer := &webui.StringReplacer{
 		Old: "http://localhost:11121/rest/v1",
@@ -129,7 +129,7 @@ func setUpWebUIServer(srvApp *App, cfg Config) (*webui.Server, error) {
 }
 
 func newWithoutServices(appCfg Config) (*App, error) {
-	appCore, err := app.Init(appCfg.AppInfo)
+	appCore, err := app.Init(appCfg.RealmInfo, appCfg.AppInfo)
 	if err != nil {
 		return nil, errors.Wrap("app initialization", err)
 	}
@@ -189,7 +189,7 @@ func (srvApp *App) initServers(cfg Config) error {
 		log.Info().Msg("Initializing REST server...")
 		restServer, err := rest.NewServer(
 			*cfg.REST,
-			srvApp.AppInfo(),
+			srvApp.RealmInfo(),
 			iamServerCore,
 			&cfg.WebUI.URLs)
 		if err != nil {

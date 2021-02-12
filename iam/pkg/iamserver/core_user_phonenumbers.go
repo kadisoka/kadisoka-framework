@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/lib/pq"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
 func (core *Core) ListUsersByPhoneNumber(

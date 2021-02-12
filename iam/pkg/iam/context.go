@@ -3,8 +3,8 @@ package iam
 import (
 	"context"
 
-	"github.com/kadisoka/foundation/pkg/api"
-	accesserrs "github.com/kadisoka/foundation/pkg/errors/access"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
+	accesserrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/access"
 )
 
 var (

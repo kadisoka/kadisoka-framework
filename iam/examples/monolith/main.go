@@ -6,14 +6,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kadisoka/foundation/pkg/app"
-	"github.com/kadisoka/foundation/pkg/webui"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 	_ "github.com/lib/pq"
 	"github.com/rez-go/stev"
 
-	"github.com/kadisoka/iam/pkg/iam/logging"
-	"github.com/kadisoka/iam/pkg/iamserver"
-	iamapp "github.com/kadisoka/iam/pkg/iamserver/app"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	iamapp "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/app"
 )
 
 var log = logging.NewPkgLogger()

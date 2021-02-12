@@ -7,42 +7,15 @@ import (
 
 	"github.com/rez-go/stev"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 )
 
 const EnvPrefixDefault = "APP_"
 
-const (
-	NameDefault                    = "Kadisoka"
-	URLDefault                     = "https://github.com/kadisoka"
-	EmailDefault                   = "nop@example.com"
-	NotificationEmailSenderDefault = "no-reply@example.com"
-	TeamNameDefault                = "Team Kadisoka"
-)
-
-func DefaultInfo() Info {
-	return Info{
-		Name:                    NameDefault,
-		URL:                     URLDefault,
-		Email:                   EmailDefault,
-		NotificationEmailSender: NotificationEmailSenderDefault,
-		TeamName:                TeamNameDefault,
-	}
-}
-
-type Info struct {
-	// Name of the app
-	Name string
-	// Canonical URL of the app
-	URL                     string
-	TermsOfServiceURL       string
-	PrivacyPolicyURL        string
-	Email                   string
-	NotificationEmailSender string
-	TeamName                string
-}
-
 type App interface {
+	RealmInfo() realm.Info
+
 	AppInfo() Info
 	InstanceID() string
 
@@ -51,7 +24,32 @@ type App interface {
 	IsAllServersAcceptingClients() bool
 }
 
+type Info struct {
+	Name string
+}
+
+const (
+	NameDefault = "Kadisoka-based App"
+)
+
+func DefaultInfo() Info {
+	return Info{
+		Name: NameDefault,
+	}
+}
+
+func InfoFromEnvOrDefault() (Info, error) {
+	info := DefaultInfo()
+	err := stev.LoadEnv(EnvPrefixDefault, &info)
+	if err != nil {
+		return DefaultInfo(), errors.Wrap("info loading from environment variables", err)
+	}
+	return info, nil
+}
+
 type AppBase struct {
+	realmInfo realm.Info
+
 	appInfo    Info
 	instanceID string
 
@@ -59,7 +57,10 @@ type AppBase struct {
 	serversMu sync.RWMutex
 }
 
-func (appBase AppBase) AppInfo() Info      { return appBase.appInfo }
+func (appBase AppBase) RealmInfo() realm.Info { return appBase.realmInfo }
+
+func (appBase AppBase) AppInfo() Info { return appBase.appInfo }
+
 func (appBase AppBase) InstanceID() string { return appBase.instanceID }
 
 // AddServer adds a server to be run simultaneously. Do NOT call this
@@ -101,22 +102,28 @@ var (
 )
 
 func InitByEnvDefault() (App, error) {
-	info := DefaultInfo()
-	err := stev.LoadEnv(EnvPrefixDefault, &info)
+	appInfo, err := InfoFromEnvOrDefault()
 	if err != nil {
-		return nil, errors.Wrap("info loading from environment variables", err)
+		return nil, errors.Wrap("app info loading", err)
 	}
-	return Init(&info)
+	realmInfo, err := realm.InfoFromEnvOrDefault()
+	if err != nil {
+		return nil, errors.Wrap("realm info loading", err)
+	}
+	return Init(&realmInfo, &appInfo)
 }
 
-func Init(info *Info) (App, error) {
+func Init(realmInfo *realm.Info, appInfo *Info) (App, error) {
 	var err error
 	defAppOnce.Do(func() {
-		var appInfo Info
-		if info != nil {
-			appInfo = *info
-		} else {
-			appInfo = DefaultInfo()
+		if realmInfo == nil {
+			i := realm.DefaultInfo()
+			realmInfo = &i
+		}
+
+		if appInfo == nil {
+			i := DefaultInfo()
+			appInfo = &i
 		}
 
 		var unameStr string
@@ -142,7 +149,11 @@ func Init(info *Info) (App, error) {
 			instanceID = unameStr
 		}
 
-		defApp = &AppBase{appInfo: appInfo, instanceID: instanceID}
+		defApp = &AppBase{
+			realmInfo:  *realmInfo,
+			appInfo:    *appInfo,
+			instanceID: instanceID,
+		}
 	})
 
 	if err != nil {

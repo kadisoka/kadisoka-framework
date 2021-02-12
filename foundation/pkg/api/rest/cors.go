@@ -6,7 +6,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/rez-go/stev"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 type CORSFilterConfig struct {

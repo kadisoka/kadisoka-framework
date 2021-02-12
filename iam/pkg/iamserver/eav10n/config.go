@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/rez-go/stev"
 )
 

@@ -3,11 +3,11 @@ package logging
 import (
 	"net/http"
 
-	"github.com/kadisoka/foundation/pkg/api/rest"
-	foundationlog "github.com/kadisoka/foundation/pkg/logging"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
+	foundationlog "github.com/kadisoka/kadisoka-framework/foundation/pkg/logging"
 	"github.com/tomasen/realip"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 // NewPkgLogger creates a logger for use within a package. This logger

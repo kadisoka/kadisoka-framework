@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kadisoka/foundation/pkg/errors"
-	mediastore "github.com/kadisoka/foundation/pkg/media/store"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 )
 
 type Config struct {

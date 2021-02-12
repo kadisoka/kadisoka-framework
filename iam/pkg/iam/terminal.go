@@ -3,7 +3,7 @@ package iam
 import (
 	"time"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"golang.org/x/text/language"
 )
 

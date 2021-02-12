@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"github.com/kadisoka/foundation/pkg/errors"
-	mediastore "github.com/kadisoka/foundation/pkg/media/store"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 )
 
 type Config struct {

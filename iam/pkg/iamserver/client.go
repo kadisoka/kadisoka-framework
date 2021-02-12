@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 type clientStaticDataProvider struct {

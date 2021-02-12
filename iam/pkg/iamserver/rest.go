@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kadisoka/foundation/pkg/errors"
-	dataerrs "github.com/kadisoka/foundation/pkg/errors/data"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	dataerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/data"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 type RESTServiceServerBase struct {

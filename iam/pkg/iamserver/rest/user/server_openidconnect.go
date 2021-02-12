@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful"
-	oidc "github.com/kadisoka/foundation/pkg/api/openid/connect"
-	"github.com/kadisoka/foundation/pkg/api/rest"
+	oidc "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/openid/connect"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 //TODO: the details would be depends on the type of the client:

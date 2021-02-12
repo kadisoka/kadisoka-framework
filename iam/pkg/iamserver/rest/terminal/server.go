@@ -8,15 +8,15 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	"github.com/kadisoka/foundation/pkg/api/rest"
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"golang.org/x/text/language"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iam/rest/logging"
-	"github.com/kadisoka/iam/pkg/iamserver"
-	"github.com/kadisoka/iam/pkg/iamserver/eav10n"
-	"github.com/kadisoka/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
 var (

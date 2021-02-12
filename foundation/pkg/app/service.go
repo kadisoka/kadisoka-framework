@@ -5,8 +5,9 @@ import (
 )
 
 // ServiceServer abstracts all service servers
+//TODO: ServiceInfo
 type ServiceServer interface {
-	// ServerName returns the name of the server. This not to be unique.
+	// ServerName returns the display name of the server. This not to be unique.
 	ServerName() string
 
 	// Serve starts the server. This method is blocking and won't return

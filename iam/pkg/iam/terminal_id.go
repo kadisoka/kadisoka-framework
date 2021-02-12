@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/richardlehane/crock32"
 )
 

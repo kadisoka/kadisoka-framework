@@ -4,12 +4,12 @@ import (
 	"crypto/rand"
 	"time"
 
-	apperrs "github.com/kadisoka/foundation/pkg/app/errors"
-	"github.com/kadisoka/foundation/pkg/errors"
+	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/lib/pq"
 	"github.com/square/go-jose/v3/jwt"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 func (core *Core) GenerateAccessTokenJWT(

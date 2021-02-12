@@ -9,25 +9,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/jmoiron/sqlx"
-	"github.com/kadisoka/foundation/pkg/app"
-	"github.com/kadisoka/foundation/pkg/errors"
-	mediastore "github.com/kadisoka/foundation/pkg/media/store"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 	_ "github.com/lib/pq"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver/eav10n"
-	"github.com/kadisoka/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 
 	// SMS delivery service providers
-	_ "github.com/kadisoka/iam/pkg/iamserver/pnv10n/nexmo"
-	_ "github.com/kadisoka/iam/pkg/iamserver/pnv10n/telesign"
-	_ "github.com/kadisoka/iam/pkg/iamserver/pnv10n/twilio"
+	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/nexmo"
+	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/telesign"
+	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/twilio"
 
 	// Media object storage modules
-	_ "github.com/kadisoka/foundation/pkg/media/store/minio"
-	_ "github.com/kadisoka/foundation/pkg/media/store/s3"
+	_ "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store/minio"
+	_ "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store/s3"
 )
 
 const secretFilesDir = "/run/secrets"
@@ -52,13 +52,9 @@ func (core Core) RealmName() string { return core.realmName }
 // NewCoreByConfig creates an instance of Core designed for use
 // in identity provider services.
 func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
-	appInfo := appApp.AppInfo()
-	appName := appInfo.Name
+	realmInfo := appApp.RealmInfo()
+	realmName := realmInfo.Name
 
-	realmName := coreCfg.RealmName
-	if realmName == "" {
-		realmName = appName
-	}
 	iamDB, err := connectPostgres(coreCfg.DBURL)
 	if err != nil {
 		return nil, errors.Wrap("DB connection", err)
@@ -88,11 +84,11 @@ func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
 	}
 
 	log.Info().Msg("Initializing email-address verification services...")
-	eaVerifier := eav10n.NewVerifier(appApp.AppInfo(), iamDB, coreCfg.EAV)
+	eaVerifier := eav10n.NewVerifier(appApp.RealmInfo(), iamDB, coreCfg.EAV)
 
 	log.Info().Msg("Initializing phone-number verification service...")
 	log.Info().Msgf("Registered SMS delivery service integrations: %v", pnv10n.ModuleNames())
-	pnVerifier := pnv10n.NewVerifier(appName, iamDB, coreCfg.PNV)
+	pnVerifier := pnv10n.NewVerifier(realmName, iamDB, coreCfg.PNV)
 
 	registeredUserIDCache, err := lru.NewARC(65535)
 	if err != nil {
@@ -185,11 +181,10 @@ func connectPostgres(dbURL string) (*sqlx.DB, error) {
 }
 
 type CoreConfig struct {
-	RealmName string            `env:"REALM_NAME"`
-	DBURL     string            `env:"DB_URL,required"`
-	Media     mediastore.Config `env:"MEDIA"`
-	EAV       eav10n.Config     `env:"EAV"`
-	PNV       pnv10n.Config     `env:"PNV"`
+	DBURL string            `env:"DB_URL,required"`
+	Media mediastore.Config `env:"MEDIA"`
+	EAV   eav10n.Config     `env:"EAV"`
+	PNV   pnv10n.Config     `env:"PNV"`
 }
 
 // CoreConfigSkeleton returns an instance of CoreConfig which has been

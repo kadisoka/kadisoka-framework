@@ -4,7 +4,7 @@
 package grpc
 
 import (
-	"github.com/kadisoka/iam/pkg/iam/grpc/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/grpc/logging"
 )
 
 var (

@@ -16,21 +16,21 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/jmoiron/sqlx"
-	"github.com/kadisoka/foundation/pkg/app"
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"golang.org/x/text/language"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 func NewVerifier(
-	appInfo app.Info,
+	realmInfo realm.Info,
 	db *sqlx.DB,
 	config Config,
 ) *Verifier {
-	emailSenderAddress := appInfo.NotificationEmailSender
+	emailSenderAddress := realmInfo.NotificationEmailSender
 	if emailSenderAddress == "" {
-		emailSenderAddress = appInfo.Email
+		emailSenderAddress = realmInfo.Email
 	}
 
 	if config.SenderAddress == "" && emailSenderAddress == "" {
@@ -80,7 +80,7 @@ func NewVerifier(
 	}
 
 	return &Verifier{
-		appInfo:                 appInfo,
+		realmInfo:               realmInfo,
 		db:                      db,
 		senderAddress:           config.SenderAddress,
 		sesClient:               svc,
@@ -90,7 +90,7 @@ func NewVerifier(
 }
 
 type Verifier struct {
-	appInfo                 app.Info
+	realmInfo               realm.Info
 	db                      *sqlx.DB
 	senderAddress           string
 	sesClient               *ses.SES
@@ -257,7 +257,7 @@ func (verifier *Verifier) sendVerificationEmail(
 	buf := new(bytes.Buffer)
 	err = subjectTemplate.
 		Execute(buf, map[string]interface{}{
-			"AppName": verifier.appInfo.Name,
+			"AppName": verifier.realmInfo.Name,
 		})
 	if err != nil {
 		return err
@@ -266,7 +266,7 @@ func (verifier *Verifier) sendVerificationEmail(
 
 	buf = new(bytes.Buffer)
 	if err = bodyTemplate.Execute(buf, map[string]interface{}{
-		"AppInfo": verifier.appInfo,
+		"AppInfo": verifier.realmInfo,
 		"Title":   subject, //TODO: title == subject?
 		"Code":    code,
 	}); err != nil {

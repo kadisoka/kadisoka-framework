@@ -1,11 +1,11 @@
 package logging
 
 import (
-	"github.com/kadisoka/foundation/pkg/api"
-	foundationlog "github.com/kadisoka/foundation/pkg/logging"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
+	foundationlog "github.com/kadisoka/kadisoka-framework/foundation/pkg/logging"
 	"google.golang.org/grpc"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 // NewPkgLogger creates a logger for use within a package. This logger

@@ -1,15 +1,18 @@
 package app
 
 import (
-	"github.com/kadisoka/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 
-	"github.com/kadisoka/iam/pkg/iamserver"
-	"github.com/kadisoka/iam/pkg/iamserver/grpc"
-	"github.com/kadisoka/iam/pkg/iamserver/rest"
-	"github.com/kadisoka/iam/pkg/iamserver/webui"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/grpc"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/webui"
 )
 
 type Config struct {
+	RealmInfo *realm.Info `env:"REALM"`
+
 	AppInfo *app.Info            `env:"APP"`
 	Core    iamserver.CoreConfig `env:",squash"`
 

@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/kadisoka/foundation/pkg/api/oauth2"
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	grpcmd "google.golang.org/grpc/metadata"
 )
 

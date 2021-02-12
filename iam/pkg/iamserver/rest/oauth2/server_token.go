@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful"
-	"github.com/kadisoka/foundation/pkg/api/oauth2"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 )
 
 func (restSrv *Server) postToken(req *restful.Request, resp *restful.Response) {

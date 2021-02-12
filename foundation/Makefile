@@ -2,16 +2,17 @@
 GOLANG_IMAGE ?= golang:1.15
 TESTER_IMAGE ?= kadisoka-foundation-tester
 
-.PHONY: fmt test deps-up
-
+.PHONY: fmt
 fmt:
 	@echo "Formatting files..."
 	@docker run --rm \
-		-v $(CURDIR):/workspace \
+		-v $(CURDIR):/go \
 		--entrypoint gofmt \
 		$(GOLANG_IMAGE) -w -l -s \
-		.
+		./pkg
 
+# TODO: move this to root?
+.PHONY: test
 test:
 	@echo "Preparing test runner..."
 	@docker build -t $(TESTER_IMAGE) -f ./tools/tester.dockerfile . > /dev/null
@@ -20,10 +21,3 @@ test:
 		-v $(CURDIR):/workspace \
 		--workdir /workspace \
 		$(TESTER_IMAGE) test -v ./...
-
-deps-up:
-	@echo "Updating all dependencies..."
-	@docker run --rm \
-		-v $(CURDIR):/workspace \
-		--workdir /workspace \
-		$(GOLANG_IMAGE) /bin/sh -c "go get -u all && go mod tidy"

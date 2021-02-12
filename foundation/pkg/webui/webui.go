@@ -17,7 +17,7 @@ import (
 	"github.com/OneOfOne/xxhash"
 	"github.com/oxtoacart/bpool"
 
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 func NewServer(

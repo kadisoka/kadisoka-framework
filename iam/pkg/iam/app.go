@@ -1,8 +1,8 @@
 package iam
 
 import (
-	"github.com/kadisoka/foundation/pkg/app"
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 func NewAppSimple(envVarPrefix string) (*App, error) {

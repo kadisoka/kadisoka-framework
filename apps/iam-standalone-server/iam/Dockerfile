@@ -3,28 +3,20 @@ FROM golang:1.15 as builder
 WORKDIR /workspace
 
 # Get the dependencies so it can be cached into a layer
-COPY iam/go.mod iam/go.sum ./iam/
-
-# Override with local modules
-COPY foundation foundation
-RUN echo "replace github.com/kadisoka/foundation => ../foundation\n" >> iam/go.mod
-
-WORKDIR /workspace/iam
+COPY go.mod go.sum ./
 
 RUN go mod download
 
 # Now copy all the source...
-COPY ./iam/ .
+COPY . .
 
 ARG revisionID=unknown
 ARG buildTimestamp=unknown
 
-RUN env
-
 # ...and build it.
-RUN CGO_ENABLED=0 go build -o ./bin/iam-server \
+RUN CGO_ENABLED=0 go build -o ./apps/iam-standalone-server/bin/server \
     -ldflags="-s -w -X main.revisionID=${revisionID} -X main.buildTimestamp=${buildTimestamp}" \
-    ./iam-server
+    ./iam/iam-server
 
 # Build the runtime image
 FROM alpine:3.13
@@ -34,7 +26,7 @@ WORKDIR /root/
 # Include resources required by IAM server
 COPY ./iam/iam-server/resources ./resources
 
-COPY --from=builder /workspace/iam/bin/iam-server ./service
+COPY --from=builder /workspace/apps/iam-standalone-server/bin/server ./server
 
 # Web UI
 EXPOSE 8080
@@ -43,4 +35,4 @@ EXPOSE 9080
 # gRPC
 EXPOSE 50051
 
-ENTRYPOINT ["./service"]
+ENTRYPOINT ["./server"]

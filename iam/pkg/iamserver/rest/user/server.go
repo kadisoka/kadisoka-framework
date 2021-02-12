@@ -7,12 +7,12 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	oidc "github.com/kadisoka/foundation/pkg/api/openid/connect"
-	"github.com/kadisoka/foundation/pkg/api/rest"
+	oidc "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/openid/connect"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iam/rest/logging"
-	"github.com/kadisoka/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
 const (

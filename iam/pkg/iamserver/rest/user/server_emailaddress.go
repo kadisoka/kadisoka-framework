@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"github.com/kadisoka/foundation/pkg/api/rest"
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver/eav10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 )
 
 func (restSrv *Server) putUserEmailAddress(

@@ -1,7 +1,7 @@
 package iamserver
 
 import (
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 func (core *Core) ClientByID(id iam.ClientID) (*iam.Client, error) {

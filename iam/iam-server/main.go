@@ -5,16 +5,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/kadisoka/foundation/pkg/app"
-	"github.com/kadisoka/foundation/pkg/webui"
 	_ "github.com/lib/pq"
 
-	"github.com/kadisoka/iam/pkg/iam/logging"
-	"github.com/kadisoka/iam/pkg/iamserver"
-	srvapp "github.com/kadisoka/iam/pkg/iamserver/app"
-	srvgrpc "github.com/kadisoka/iam/pkg/iamserver/grpc"
-	srvrest "github.com/kadisoka/iam/pkg/iamserver/rest"
-	srvwebui "github.com/kadisoka/iam/pkg/iamserver/webui"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	srvapp "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/app"
+	srvgrpc "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/grpc"
+	srvrest "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest"
+	srvwebui "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/webui"
 )
 
 var log = logging.NewPkgLogger()
@@ -51,8 +52,20 @@ func main() {
 func initApp() (app.App, error) {
 	envPrefix := "IAM_"
 
+	realmInfo, err := realm.InfoFromEnvOrDefault()
+	if err != nil {
+		log.Fatal().Err(err).Msg("RealmInfo loading")
+	}
+
+	appInfo, err := app.InfoFromEnvOrDefault()
+	if err != nil {
+		log.Fatal().Err(err).Msg("AppInfo loading")
+	}
+
 	cfg := srvapp.Config{
-		Core: iamserver.CoreConfigSkeleton(),
+		RealmInfo: &realmInfo,
+		AppInfo:   &appInfo,
+		Core:      iamserver.CoreConfigSkeleton(),
 		// Web UI
 		WebUIEnabled: true,
 		WebUI: &srvwebui.ServerConfig{

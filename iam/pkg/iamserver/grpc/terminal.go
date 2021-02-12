@@ -4,8 +4,8 @@ import (
 	"context"
 
 	pbtypes "github.com/gogo/protobuf/types"
-	grpcerrs "github.com/kadisoka/foundation/pkg/api/grpc/errors"
-	"github.com/kadisoka/foundation/pkg/errors"
+	grpcerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 	"golang.org/x/text/language"
 	"google.golang.org/grpc"
@@ -13,8 +13,8 @@ import (
 	grpcmd "google.golang.org/grpc/metadata"
 	grpcstatus "google.golang.org/grpc/status"
 
-	"github.com/kadisoka/iam/pkg/iam"
-	"github.com/kadisoka/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
 type TerminalAuthorizationServiceServer struct {

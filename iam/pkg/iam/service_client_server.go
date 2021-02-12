@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kadisoka/foundation/pkg/api"
-	"github.com/kadisoka/foundation/pkg/errors"
-	dataerrs "github.com/kadisoka/foundation/pkg/errors/data"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	dataerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/data"
 	"github.com/square/go-jose/v3/jwt"
 	"github.com/tomasen/realip"
 	grpcmd "google.golang.org/grpc/metadata"

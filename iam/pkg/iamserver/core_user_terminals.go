@@ -2,9 +2,9 @@ package iamserver
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/kadisoka/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 
-	"github.com/kadisoka/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 func (core *Core) DeleteUserTerminalFCMRegistrationToken(

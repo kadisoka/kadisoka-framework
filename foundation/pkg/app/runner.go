@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kadisoka/foundation/pkg/logging"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/logging"
 )
 
 var log = logging.NewPkgLogger()
