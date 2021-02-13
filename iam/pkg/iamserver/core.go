@@ -11,11 +11,11 @@ import (
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
-	_ "github.com/lib/pq"
-
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
@@ -26,6 +26,7 @@ import (
 	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/twilio"
 
 	// Media object storage modules
+	_ "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store/local"
 	_ "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store/minio"
 	_ "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store/s3"
 )

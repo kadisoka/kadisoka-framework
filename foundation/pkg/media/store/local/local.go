@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
@@ -54,6 +55,13 @@ var _ mediastore.Service = &Service{}
 func (objStoreCl *Service) PutObject(
 	targetKey string, contentSource io.Reader,
 ) (finalURL string, err error) {
+	targetKeyParts := strings.Split(targetKey, "/")
+	if len(targetKeyParts) > 1 {
+		targetPath := filepath.Join(targetKeyParts[:len(targetKeyParts)-1]...)
+		targetPath = filepath.Join(objStoreCl.folderPath, targetPath)
+		os.MkdirAll(targetPath, 0700)
+	}
+
 	targetName := filepath.Join(objStoreCl.folderPath, targetKey)
 	targetFile, err := os.Create(targetName)
 	if err != nil {

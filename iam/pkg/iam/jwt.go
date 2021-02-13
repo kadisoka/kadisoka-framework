@@ -200,7 +200,10 @@ func loadRSAPublicKeysByFileNamePattern(pattern string) (map[string]*rsa.PublicK
 	return publicKeys, nil
 }
 
-func loadRSAPrivateKeyFromPEMFile(fileName string, passphrase string) (*rsa.PrivateKey, error) {
+func loadRSAPrivateKeyFromPEMFile(
+	fileName string,
+	passphrase string,
+) (*rsa.PrivateKey, error) {
 	if fileName == "" {
 		return nil, nil
 	}

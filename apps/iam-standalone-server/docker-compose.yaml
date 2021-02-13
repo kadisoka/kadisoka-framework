@@ -40,6 +40,7 @@ services:
     volumes:
       # To simulate secrets in Swarm mode
       - ./iam/etc/secrets:/run/secrets
+      - ./iam/var/local-object-store:/object-store-data
     env_file:
       - ./iam/etc/secrets/config.env
     environment:
