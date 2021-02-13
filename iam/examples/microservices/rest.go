@@ -5,8 +5,8 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 

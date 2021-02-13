@@ -16,10 +16,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/jmoiron/sqlx"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"golang.org/x/text/language"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
@@ -28,9 +28,9 @@ func NewVerifier(
 	db *sqlx.DB,
 	config Config,
 ) *Verifier {
-	emailSenderAddress := realmInfo.NotificationEmailSender
+	emailSenderAddress := realmInfo.NotificationEmailsSenderAddress
 	if emailSenderAddress == "" {
-		emailSenderAddress = realmInfo.Email
+		emailSenderAddress = realmInfo.ContactInfo.EmailAddress
 	}
 
 	if config.SenderAddress == "" && emailSenderAddress == "" {

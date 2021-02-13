@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"google.golang.org/grpc"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
@@ -20,8 +21,13 @@ type Server struct {
 	transportServer *grpc.Server
 }
 
-// ServerName conforms app.ServiceServer interface.
-func (srv *Server) ServerName() string { return "IAM gRPC server" }
+var serviceInfo = app.ServiceInfo{
+	Name:        "IAM gRPC API",
+	Description: "Identity and Access Management service gRPC API",
+}
+
+// ServiceInfo conforms app.ServiceServer interface.
+func (srv *Server) ServiceInfo() app.ServiceInfo { return serviceInfo }
 
 // Serve conforms app.Serve interface.
 func (srv *Server) Serve() error {

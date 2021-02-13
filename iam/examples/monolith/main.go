@@ -6,11 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 	_ "github.com/lib/pq"
 	"github.com/rez-go/stev"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 	iamapp "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/app"
@@ -24,7 +25,8 @@ var (
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr, "Kadisoka monolith example server revision %v built at %v\n",
+	fmt.Fprintf(os.Stderr,
+		"Kadisoka monolith example server revision %v built at %v\n",
 		revisionID, buildTimestamp)
 	app.SetBuildInfo(revisionID, buildTimestamp)
 
@@ -50,6 +52,11 @@ func initApp() error {
 		log.Fatal().Err(err).Msg("")
 	}
 
+	realmInfo, err := realm.InfoFromEnvOrDefault()
+	if err != nil {
+		log.Fatal().Err(err).Msg("RealmInfo loading")
+	}
+
 	appInfo := app.DefaultInfo()
 	appInfo.Name = "monolith"
 
@@ -59,8 +66,9 @@ func initApp() error {
 			FilesDir:  filepath.Join(curDir, "resources", "monolith-webui"),
 		},
 		IAM: iamapp.Config{
-			AppInfo: &appInfo,
-			Core:    iamserver.CoreConfigSkeleton(),
+			RealmInfo: &realmInfo,
+			AppInfo:   &appInfo,
+			Core:      iamserver.CoreConfigSkeleton(),
 			// Serve HTTP services under /accounts
 			HTTPBasePath: "/accounts",
 			// Web UI

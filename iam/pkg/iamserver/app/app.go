@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/rez-go/stev"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
-	"github.com/rez-go/stev"
-
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/grpc"
@@ -186,36 +186,36 @@ func (srvApp *App) initServers(cfg Config) error {
 	iamServerCore := srvApp.Core
 
 	if cfg.RESTEnabled {
-		log.Info().Msg("Initializing REST server...")
+		log.Info().Msg("Initializing REST API server...")
 		restServer, err := rest.NewServer(
 			*cfg.REST,
 			srvApp.RealmInfo(),
 			iamServerCore,
 			&cfg.WebUI.URLs)
 		if err != nil {
-			return errors.Wrap("REST server initialization", err)
+			return errors.Wrap("REST API server initialization", err)
 		}
 
 		srvApp.AddServer(restServer)
 	}
 
 	if cfg.WebUIEnabled {
-		log.Info().Msg("Initializing web UI server...")
+		log.Info().Msg("Initializing Web UI server...")
 		webUIServer, err := setUpWebUIServer(srvApp, cfg)
 		if err != nil {
-			return errors.Wrap("web UI server initialization", err)
+			return errors.Wrap("Web UI server initialization", err)
 		}
 
 		srvApp.AddServer(webUIServer)
 	}
 
 	if cfg.GRPCEnabled {
-		log.Info().Msg("Initializing gRPC Server...")
+		log.Info().Msg("Initializing gRPC API server...")
 		grpcServer, err := grpc.NewServer(
 			*cfg.GRPC,
 			iamServerCore)
 		if err != nil {
-			return errors.Wrap("gRPC server initialization", err)
+			return errors.Wrap("gRPC API server initialization", err)
 		}
 
 		srvApp.AddServer(grpcServer)

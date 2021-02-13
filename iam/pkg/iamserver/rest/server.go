@@ -46,8 +46,13 @@ type Server struct {
 	shuttingDown bool
 }
 
-// ServerName conforms app.ServiceServer interface.
-func (srv *Server) ServerName() string { return "IAM REST server" }
+var serviceInfo = app.ServiceInfo{
+	Name:        "IAM REST API",
+	Description: "Identity and Access Management service REST API",
+}
+
+// ServiceInfo conforms app.ServiceServer interface.
+func (srv *Server) ServiceInfo() app.ServiceInfo { return serviceInfo }
 
 // Serve conforms app.ServiceServer interface.
 func (srv *Server) Serve() error {
@@ -100,7 +105,7 @@ func NewServer(
 
 	config.ServePath = strings.TrimSuffix(config.ServePath, "/")
 	servePath := config.ServePath
-	apiDocsPath := servePath + "/apidocs.json"
+	apiSpecPath := servePath + "/apidocs.json"
 
 	serveMux := http.NewServeMux()
 	container := restful.NewContainer()
@@ -136,16 +141,20 @@ func NewServer(
 	// Setup API specification handler
 	container.Add(restfulspec.NewOpenAPIService(restfulspec.Config{
 		WebServices: container.RegisteredWebServices(),
-		APIPath:     apiDocsPath,
+		APIPath:     apiSpecPath,
 		PostBuildSwaggerObjectHandler: func(swaggerSpec *spec.Swagger) {
 			processSwaggerSpec(swaggerSpec, secDefs)
 		},
 	}))
 
+	log.Info().Msgf("REST API spec at %s", apiSpecPath)
 	if config.SwaggerUIAssetsDir != "" {
-		serveMux.Handle(servePath+"/apidocs/",
-			http.StripPrefix(servePath+"/apidocs/",
+		// The trailing slash here is important.
+		apiDocsUIPath := servePath + "/apidocs/"
+		serveMux.Handle(apiDocsUIPath,
+			http.StripPrefix(apiDocsUIPath,
 				http.FileServer(http.Dir(config.SwaggerUIAssetsDir))))
+		log.Info().Msgf("REST API documentations UI at %s", apiDocsUIPath)
 	}
 
 	srv := &Server{
@@ -201,9 +210,11 @@ func processSwaggerSpec(
 	swaggerSpec.Info = &spec.Info{
 		//TODO: use details from service info
 		InfoProps: spec.InfoProps{
-			Title:       "IAM",
-			Description: "Identity and Access Management service REST API",
-			Version:     fmt.Sprintf("0.0.0-%s built at %s", rev, buildInfo.Timestamp),
+			Title:       serviceInfo.Name,
+			Description: serviceInfo.Description,
+			Version: fmt.Sprintf(
+				"0.0.0-%s built at %s",
+				rev, buildInfo.Timestamp),
 		},
 	}
 	for k := range swaggerSpec.Paths.Paths {
@@ -212,7 +223,9 @@ func processSwaggerSpec(
 	swaggerSpec.SecurityDefinitions = secDefs
 }
 
-func processOpenAPIPath(pathItem spec.PathItem, secDefs spec.SecurityDefinitions) spec.PathItem {
+func processOpenAPIPath(
+	pathItem spec.PathItem, secDefs spec.SecurityDefinitions,
+) spec.PathItem {
 	pathItem.Get = processOpenAPIPathOp(pathItem.Get, secDefs)
 	pathItem.Put = processOpenAPIPathOp(pathItem.Put, secDefs)
 	pathItem.Post = processOpenAPIPathOp(pathItem.Post, secDefs)
@@ -223,7 +236,9 @@ func processOpenAPIPath(pathItem spec.PathItem, secDefs spec.SecurityDefinitions
 	return pathItem
 }
 
-func processOpenAPIPathOp(op *spec.Operation, secDefs spec.SecurityDefinitions) *spec.Operation {
+func processOpenAPIPathOp(
+	op *spec.Operation, secDefs spec.SecurityDefinitions,
+) *spec.Operation {
 	if op == nil {
 		return nil
 	}

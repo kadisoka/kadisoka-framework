@@ -13,20 +13,20 @@ import (
 const EnvPrefixDefault = "REALM_"
 
 const (
-	NameDefault                    = "Kadisoka"
-	URLDefault                     = "https://github.com/kadisoka"
-	EmailDefault                   = "nop@example.com"
-	NotificationEmailSenderDefault = "no-reply@example.com"
-	TeamNameDefault                = "Team Kadisoka"
+	NameDefault                            = "Kadisoka"
+	URLDefault                             = "https://github.com/kadisoka"
+	ContactEmailAddressDefault             = "nop@example.com"
+	NotificationEmailsSenderAddressDefault = "no-reply@example.com"
+	DeveloperNameDefault                   = "Team Kadisoka"
 )
 
 func DefaultInfo() Info {
 	return Info{
-		Name:                    NameDefault,
-		URL:                     URLDefault,
-		Email:                   EmailDefault,
-		NotificationEmailSender: NotificationEmailSenderDefault,
-		TeamName:                TeamNameDefault,
+		Name:                            NameDefault,
+		URL:                             URLDefault,
+		ContactInfo:                     ContactInfo{EmailAddress: ContactEmailAddressDefault},
+		DeveloperInfo:                   DeveloperInfo{Name: DeveloperNameDefault},
+		NotificationEmailsSenderAddress: NotificationEmailsSenderAddressDefault,
 	}
 }
 
@@ -34,12 +34,12 @@ type Info struct {
 	// Name of the realm
 	Name string
 	// Canonical URL of the realm
-	URL                     string
-	TermsOfServiceURL       string
-	PrivacyPolicyURL        string
-	Email                   string
-	NotificationEmailSender string
-	TeamName                string
+	URL                             string
+	TermsOfServiceURL               string
+	PrivacyPolicyURL                string
+	ContactInfo                     ContactInfo
+	DeveloperInfo                   DeveloperInfo
+	NotificationEmailsSenderAddress string
 }
 
 func InfoFromEnvOrDefault() (Info, error) {
@@ -49,4 +49,12 @@ func InfoFromEnvOrDefault() (Info, error) {
 		return DefaultInfo(), errors.Wrap("info loading from environment variables", err)
 	}
 	return info, nil
+}
+
+type ContactInfo struct {
+	EmailAddress string
+}
+
+type DeveloperInfo struct {
+	Name string
 }

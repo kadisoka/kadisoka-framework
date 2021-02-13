@@ -12,9 +12,10 @@ import (
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"github.com/go-openapi/spec"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	_ "github.com/lib/pq"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
 )
@@ -30,8 +31,10 @@ var (
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr, "Kadisoka IAM Test Client Service revision %s built at %s\n",
+	fmt.Fprintf(os.Stderr,
+		"Kadisoka IAM Test Client Service revision %s built at %s\n",
 		revisionID, buildTimestamp)
+	app.SetBuildInfo(revisionID, buildTimestamp)
 
 	log.Info().Msg("Initializing app...")
 	svcApp, err := iam.NewAppSimple("IAM_")
@@ -116,7 +119,10 @@ func main() {
 	}()
 
 	// Gracefully shutdown the server.
-	shutdownCtx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+	shutdownCtx, shutdownCtxCancel := context.WithTimeout(
+		context.Background(), 15*time.Second)
+	defer shutdownCtxCancel()
+
 	httpServer.Shutdown(shutdownCtx)
 	log.Info().Msg("Done.")
 }

@@ -3,7 +3,6 @@ package app
 import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
-
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/grpc"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest"

@@ -7,8 +7,8 @@ import (
 // ServiceServer abstracts all service servers
 //TODO: ServiceInfo
 type ServiceServer interface {
-	// ServerName returns the display name of the server. This not to be unique.
-	ServerName() string
+	// ServiceInfo returns basic information about the service.
+	ServiceInfo() ServiceInfo
 
 	// Serve starts the server. This method is blocking and won't return
 	// until the server is stopped (e.g., through Shutdown).
@@ -22,4 +22,9 @@ type ServiceServer interface {
 
 	// IsHealthy returns true if the service is considerably healthy.
 	IsHealthy() bool
+}
+
+type ServiceInfo struct {
+	Name        string
+	Description string
 }

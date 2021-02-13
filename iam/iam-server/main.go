@@ -26,7 +26,8 @@ var (
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr, "IAM Server revision %v built at %v\n",
+	fmt.Fprintf(os.Stderr,
+		"IAM Server revision %v built at %v\n",
 		revisionID, buildTimestamp)
 	app.SetBuildInfo(revisionID, buildTimestamp)
 

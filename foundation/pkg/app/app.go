@@ -74,7 +74,7 @@ func (appBase *AppBase) AddServer(srv ServiceServer) {
 // Run runs all the servers. Do NOT add any new server after this method
 // was called.
 func (appBase *AppBase) Run() {
-	RunServers(appBase.Servers())
+	RunServers(appBase.Servers(), nil)
 }
 
 // IsAllServersAcceptingClients checks if every server is accepting clients.
@@ -88,6 +88,7 @@ func (appBase *AppBase) IsAllServersAcceptingClients() bool {
 	return true
 }
 
+// Servers returns an array of servers added to this app.
 func (appBase *AppBase) Servers() []ServiceServer {
 	out := make([]ServiceServer, len(appBase.servers))
 	appBase.serversMu.RLock()

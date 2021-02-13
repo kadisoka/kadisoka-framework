@@ -17,6 +17,7 @@ import (
 	"github.com/OneOfOne/xxhash"
 	"github.com/oxtoacart/bpool"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
@@ -90,8 +91,13 @@ func (srv Server) ProcessedFilenames() []string {
 	return nameList
 }
 
-// ServerName conforms app.ServiceServer interface.
-func (srv Server) ServerName() string { return "web UI server" }
+var serviceInfo = app.ServiceInfo{
+	Name:        "Web UI service",
+	Description: "A generic service for serving web UI assets",
+}
+
+// ServiceInfo conforms app.ServiceServer interface.
+func (srv Server) ServiceInfo() app.ServiceInfo { return serviceInfo }
 
 // Serve conforms app.ServiceServer interface.
 func (srv *Server) Serve() error {
