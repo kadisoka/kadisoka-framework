@@ -5,6 +5,7 @@ import (
 
 	"github.com/minio/minio-go/v6"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 )
@@ -34,7 +35,10 @@ func init() {
 
 func ConfigSkeleton() Config { return Config{} }
 
-func NewService(config mediastore.ServiceConfig) (mediastore.Service, error) {
+func NewService(
+	config mediastore.ServiceConfig,
+	_ app.App,
+) (mediastore.Service, error) {
 	if config == nil {
 		return nil, errors.ArgMsg("config", "missing")
 	}
@@ -83,11 +87,11 @@ type Service struct {
 
 var _ mediastore.Service = &Service{}
 
-func (objStoreCl *Service) PutObject(
+func (svc *Service) PutObject(
 	targetKey string, contentSource io.Reader,
 ) (finalURL string, err error) {
-	_, err = objStoreCl.minioClient.
-		PutObject(objStoreCl.bucketName, targetKey, contentSource, -1, minio.PutObjectOptions{})
+	_, err = svc.minioClient.
+		PutObject(svc.bucketName, targetKey, contentSource, -1, minio.PutObjectOptions{})
 	if err != nil {
 		return "", errors.Wrap("upload", err)
 	}

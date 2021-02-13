@@ -9,6 +9,7 @@ import (
 	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
@@ -19,7 +20,7 @@ type Store struct {
 }
 
 // New instantiates a file service.
-func New(config Config) (*Store, error) {
+func New(config Config, appApp app.App) (*Store, error) {
 	if len(config.Modules) == 0 {
 		return nil, errors.ArgMsg("config.Modules", "empty")
 	}
@@ -35,7 +36,7 @@ func New(config Config) (*Store, error) {
 	}
 
 	serviceClient, err := NewServiceClient(
-		config.StoreService, modCfg)
+		config.StoreService, modCfg, appApp)
 	if err != nil {
 		return nil, errors.ArgWrap("config.StoreService",
 			config.StoreService+" initialization failed", err)

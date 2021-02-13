@@ -79,7 +79,7 @@ func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
 	log.Info().Msg("Initializing media service...")
 	log.Info().Msgf("Registered media object storage service integrations: %v",
 		mediastore.ModuleNames())
-	mediaStore, err := mediastore.New(coreCfg.Media)
+	mediaStore, err := mediastore.New(coreCfg.Media, appApp)
 	if err != nil {
 		return nil, errors.Wrap("file service initialization", err)
 	}

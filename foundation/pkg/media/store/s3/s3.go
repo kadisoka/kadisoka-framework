@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 )
@@ -35,7 +36,10 @@ func init() {
 
 func ConfigSkeleton() Config { return Config{} }
 
-func NewService(config mediastore.ServiceConfig) (mediastore.Service, error) {
+func NewService(
+	config mediastore.ServiceConfig,
+	_ app.App,
+) (mediastore.Service, error) {
 	if config == nil {
 		return nil, errors.ArgMsg("config", "missing")
 	}
@@ -81,12 +85,12 @@ type Service struct {
 
 var _ mediastore.Service = &Service{}
 
-func (objStoreCl *Service) PutObject(
+func (svc *Service) PutObject(
 	targetKey string, contentSource io.Reader,
 ) (finalURL string, err error) {
-	result, err := objStoreCl.uploader.
+	result, err := svc.uploader.
 		Upload(&s3manager.UploadInput{
-			Bucket: aws.String(objStoreCl.bucketName),
+			Bucket: aws.String(svc.bucketName),
 			Key:    aws.String(targetKey),
 			Body:   contentSource,
 		})

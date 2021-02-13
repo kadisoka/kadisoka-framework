@@ -10,7 +10,7 @@ import (
 )
 
 func (sms *SMSDeliveryService) SendTextMessage(recipient, text string) error {
-	sender := sms.config.Number
+	sender := sms.config.Sender
 	if sender == "" {
 		sender = "Nexmo"
 	}

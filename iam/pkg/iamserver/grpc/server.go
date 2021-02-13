@@ -52,10 +52,10 @@ func (srv *Server) Shutdown(ctx context.Context) error {
 }
 
 // IsAcceptingClients conforms app.ServiceServer interface.
-func (srv *Server) IsAcceptingClients() bool { return true }
+func (srv Server) IsAcceptingClients() bool { return srv.IsHealthy() }
 
 // IsHealthy conforms app.ServiceServer interface.
-func (srv *Server) IsHealthy() bool { return true }
+func (srv Server) IsHealthy() bool { return true }
 
 func NewServer(
 	config ServerConfig,

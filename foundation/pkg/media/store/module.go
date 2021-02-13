@@ -2,6 +2,8 @@ package store
 
 import (
 	"sync"
+
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 )
 
 // Module contains attributes which describe a storage module.
@@ -12,7 +14,7 @@ type Module struct {
 
 	// NewService create a storage service backend connection. This is
 	// usually initialize the client of the object storage.
-	NewService func(config ServiceConfig) (Service, error)
+	NewService func(config ServiceConfig, appApp app.App) (Service, error)
 }
 
 var (
@@ -35,6 +37,7 @@ func ModuleNames() []string {
 func NewServiceClient(
 	serviceName string,
 	config interface{},
+	appApp app.App,
 ) (Service, error) {
 	if serviceName == "" {
 		return nil, nil
@@ -45,7 +48,7 @@ func NewServiceClient(
 	module, _ = modules[serviceName]
 	modulesMu.RUnlock()
 
-	return module.NewService(config)
+	return module.NewService(config, appApp)
 }
 
 func RegisterModule(
