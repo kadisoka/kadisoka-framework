@@ -8,15 +8,20 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	imagesrv "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/image/server"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 )
 
 type Config struct {
 	FolderPath string `env:"FOLDER_PATH"`
+
+	ImagesServePath    string                  `env:"IMAGES_SERVE_PATH"`
+	ImageServerHandler *imagesrv.HandlerConfig `env:"IMAGE_SERVER_HANDLER"`
 
 	ServerServePath string `env:"SERVER_SERVE_PATH"`
 	ServerServePort int16  `env:"SERVER_SERVE_PORT"`
@@ -75,9 +80,29 @@ func NewService(
 			http.FileServer(
 				http.Dir(filesDirNoSlash))))
 
+	cfg := *conf
+	if cfg.ImagesServePath == "" {
+		cfg.ImagesServePath = conf.ServerServePath + "/_imgs"
+	}
+
+	var imageServerHandlerCfg imagesrv.HandlerConfig
+	if cfg.ImageServerHandler != nil {
+		imageServerHandlerCfg = *cfg.ImageServerHandler
+	}
+	imageServerHandlerCfg.RawFilesDir = filesDirNoSlash
+	imageServer, err := imagesrv.NewHandler(imageServerHandlerCfg)
+	if err != nil {
+		return nil, errors.Wrap("image server handler initialization", err)
+	}
+
+	httpServeMux := http.NewServeMux()
+	httpServeMux.Handle("/", fileServer)
+	httpServeMux.Handle(cfg.ImagesServePath+"/",
+		http.StripPrefix(cfg.ImagesServePath+"/", imageServer))
+
 	svc := &Service{
-		config:     *conf,
-		fileServer: fileServer,
+		config:       cfg,
+		httpServeMux: httpServeMux,
 	}
 
 	appApp.AddServer(svc)
@@ -88,9 +113,11 @@ func NewService(
 type Service struct {
 	config Config
 
+	shutdownOnce sync.Once
 	shuttingDown bool
+
 	httpServer   *http.Server
-	fileServer   http.Handler
+	httpServeMux *http.ServeMux
 }
 
 var _ mediastore.Service = &Service{}
@@ -125,15 +152,15 @@ func (svc *Service) PutObject(
 }
 
 // ServiceInfo conforms app.ServiceServer interface.
-func (svc Service) ServiceInfo() app.ServiceInfo { return serviceInfo }
+func (svc *Service) ServiceInfo() app.ServiceInfo { return serviceInfo }
 
 // IsAcceptingClients is required by app.ServiceServer
-func (svc Service) IsAcceptingClients() bool {
+func (svc *Service) IsAcceptingClients() bool {
 	return !svc.shuttingDown && svc.IsHealthy()
 }
 
 // IsHealthy is required by app.ServiceServer
-func (svc Service) IsHealthy() bool { return true }
+func (svc *Service) IsHealthy() bool { return true }
 
 // Serve is required by app.ServiceServer
 func (svc *Service) Serve() error {
@@ -158,12 +185,16 @@ func (svc *Service) Serve() error {
 
 // Shutdown conforms app.ServiceServer interface.
 func (svc *Service) Shutdown(ctx context.Context) error {
-	//TODO: mutex?
-	svc.shuttingDown = true
-	return svc.httpServer.Shutdown(ctx)
+	svc.shutdownOnce.Do(func() {
+		//TODO: mutex?
+		svc.shuttingDown = true
+		svc.httpServer.Shutdown(ctx)
+	})
+
+	return nil
 }
 
 // ServeHTTP conforms Go's HTTP Handler interface.
 func (svc *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	svc.fileServer.ServeHTTP(w, r)
+	svc.httpServeMux.ServeHTTP(w, r)
 }

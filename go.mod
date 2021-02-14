@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
+	github.com/anthonynsimon/bild v0.13.0
 	github.com/aws/aws-sdk-go v1.37.9
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1

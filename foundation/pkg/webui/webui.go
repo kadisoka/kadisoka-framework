@@ -136,9 +136,7 @@ func (srv Server) IsHealthy() bool { return true }
 // ServeHTTP conforms Go's HTTP Handler interface.
 func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL != nil && r.Method == http.MethodGet {
-		// Note that for now, we use Path instead of RawPath. It works but
-		// we haven't tested it with edge cases. If there's issues with
-		// the path etc., might want to experiment with RawPath.
+		// If there's any issue related to path encoding, try using RawPath
 		reqPath := r.URL.Path
 		if strings.HasPrefix(reqPath, srv.config.ServePath) {
 			fileKey := strings.TrimPrefix(reqPath, srv.config.ServePath)
