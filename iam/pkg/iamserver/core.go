@@ -62,8 +62,12 @@ func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
 	}
 
 	//TODO: get from secret storage (e.g., vault or AWS secret manager)
-	jwtPrivateKeyFilename := filepath.Join(secretFilesDir, "jwt.key")
-	jwtKeyChain, err := iam.NewJWTKeyChainFromFiles(jwtPrivateKeyFilename, "")
+	jwtPrivateKeyFilenames := []string{
+		filepath.Join(secretFilesDir, "jwt_ed25519.key"),
+		filepath.Join(secretFilesDir, "jwt_rsa.key"),
+		filepath.Join(secretFilesDir, "jwt.key"),
+	}
+	jwtKeyChain, err := iam.NewJWTKeyChainFromFiles(jwtPrivateKeyFilenames, "")
 	if err != nil {
 		return nil, errors.Wrap("JWT key chain loading", err)
 	}

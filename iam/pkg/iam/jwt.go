@@ -2,13 +2,12 @@ package iam
 
 import (
 	"crypto"
+	"crypto/ed25519"
 	"crypto/rsa"
-	_ "crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,16 +15,18 @@ import (
 	"path/filepath"
 
 	"github.com/square/go-jose/v3"
+
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 var thumbprintHasher = crypto.SHA256
+var rsaSigningAlg = jose.RS256
 
 func NewJWTKeyChainFromFiles(
-	privateKeyFilename string,
+	privateKeyFilenamesToTry []string,
 	publicKeyFilenamePattern string,
 ) (*JWTKeyChain, error) {
-	//TODO: don't assume RSA
-	signerKey, err := loadRSAPrivateKeyFromPEMFile(privateKeyFilename, "")
+	signerKey, err := loadPrivateKeyFromPEMFile(privateKeyFilenamesToTry, "")
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,10 @@ func NewJWTKeyChainFromFiles(
 		}
 	}
 
-	return &JWTKeyChain{signerKey: signerKey, signerKeyID: signerKeyID, keySet: keySet}, nil
+	return &JWTKeyChain{
+		signerKey:   signerKey,
+		signerKeyID: signerKeyID,
+		keySet:      keySet}, nil
 }
 
 type JWTKeyChain struct {
@@ -65,9 +69,20 @@ func (jwtKeyChain JWTKeyChain) GetSigner() (jose.Signer, error) {
 	if !jwtKeyChain.CanSign() {
 		return nil, nil
 	}
+
+	var alg jose.SignatureAlgorithm
+	switch jwtKeyChain.signerKey.(type) {
+	case *rsa.PrivateKey:
+		alg = rsaSigningAlg
+	case ed25519.PrivateKey:
+		alg = jose.EdDSA
+	default:
+		return nil, errors.Msg("unexpected condition")
+	}
+
 	return jose.NewSigner(jose.SigningKey{
 		Key:       jwtKeyChain.signerKey,
-		Algorithm: jose.RS256,
+		Algorithm: alg,
 	}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]interface{}{
 			jose.HeaderKey("kid"): jwtKeyChain.signerKeyID,
@@ -102,34 +117,46 @@ func (jwtKeyChain *JWTKeyChain) LoadVerifierKeysFromJWKSetByURL(jwksURL string) 
 }
 
 func (jwtKeyChain JWTKeyChain) JWKSet() jose.JSONWebKeySet {
-	var keys []jose.JSONWebKey
+	jwks := []jose.JSONWebKey{}
 
 	// Add active signer key
 	signerKey := jwtKeyChain.signerKey
 	signerKeyID := jwtKeyChain.signerKeyID
 	if signerKey != nil && signerKeyID != "" {
-		if rsaPrivateKey, ok := signerKey.(*rsa.PrivateKey); ok {
-			publicKey := rsaPrivateKey.PublicKey
-			keys = append(keys, jose.JSONWebKey{
-				KeyID:     signerKeyID,
-				Key:       &publicKey,
-				Use:       "sig",
-				Algorithm: string(jose.RS256),
-			})
+		var publicKey interface{}
+		var algStr string
+		switch pk := signerKey.(type) {
+		case *rsa.PrivateKey:
+			algStr = string(rsaSigningAlg)
+			publicKey = &pk.PublicKey
+		case ed25519.PrivateKey:
+			algStr = string(jose.EdDSA)
+			// pk.PublicKey() doesn't return *ed25519.PublicKey. We pass
+			// the private key instead and let JOSE extract the public key
+			// from it.
+			publicKey = pk
+		default:
+			panic("unexpected condition")
 		}
+		jwks = append(jwks, jose.JSONWebKey{
+			KeyID:     signerKeyID,
+			Key:       publicKey,
+			Use:       "sig",
+			Algorithm: algStr,
+		})
 	}
 
 	// Add verifier keys
 	for kid, key := range jwtKeyChain.keySet {
-		keys = append(keys, jose.JSONWebKey{
+		jwks = append(jwks, jose.JSONWebKey{
 			KeyID:     kid,
 			Key:       key,
 			Use:       "sig",
-			Algorithm: string(jose.RS256),
+			Algorithm: string(jose.RS256), //TODO: should be stored along with the key
 		})
 	}
 
-	return jose.JSONWebKeySet{Keys: keys}
+	return jose.JSONWebKeySet{Keys: jwks}
 }
 
 func thumbprintKey(key interface{}) (thumbprintStr string, err error) {
@@ -168,7 +195,9 @@ func loadJSONWebKeySetByURL(jwksURL string) (keyMap map[string]interface{}, err 
 }
 
 // see filepath.Match for the pattern
-func loadRSAPublicKeysByFileNamePattern(pattern string) (map[string]*rsa.PublicKey, error) {
+func loadRSAPublicKeysByFileNamePattern(
+	pattern string,
+) (map[string]*rsa.PublicKey, error) {
 	fileNames, err := filepath.Glob(pattern)
 	if err != nil {
 		panic(err)
@@ -200,22 +229,37 @@ func loadRSAPublicKeysByFileNamePattern(pattern string) (map[string]*rsa.PublicK
 	return publicKeys, nil
 }
 
-func loadRSAPrivateKeyFromPEMFile(
-	fileName string,
+func loadPrivateKeyFromPEMFile(
+	fileNamesToTry []string,
 	passphrase string,
-) (*rsa.PrivateKey, error) {
-	if fileName == "" {
+) (crypto.Signer, error) {
+	if len(fileNamesToTry) == 0 {
 		return nil, nil
 	}
 
-	fileBytes, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return nil, err
+	var err error
+
+	var fileBytes []byte
+	var fileName string
+
+	for _, fileName = range fileNamesToTry {
+		fileBytes, err = ioutil.ReadFile(fileName)
+		if err != nil {
+			return nil, err
+		}
+		break
 	}
 
 	pemData, _ := pem.Decode(fileBytes)
-	if pemData == nil || pemData.Type != "RSA PRIVATE KEY" {
-		return nil, errors.New("not a RSA private key")
+	if pemData == nil {
+		return nil, errors.EntMsg(fileName, "key file doesn't containt private key")
+	}
+
+	switch pemData.Type {
+	case "RSA PRIVATE KEY":
+	case "PRIVATE KEY":
+	default:
+		return nil, errors.EntMsg(fileName, "key type unsupported: "+pemData.Type)
 	}
 
 	var pemBytes []byte
@@ -232,14 +276,17 @@ func loadRSAPrivateKeyFromPEMFile(
 		}
 	}
 
-	privateKey, ok := parsedKey.(*rsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("not a RSA private key")
+	if pk, ok := parsedKey.(*rsa.PrivateKey); ok {
+		return pk, nil
+	}
+	if pk, ok := parsedKey.(ed25519.PrivateKey); ok {
+		return pk, nil
 	}
 
-	return privateKey, nil
+	return nil, errors.EntMsg(fileName, "unsupported key type")
 }
 
+//TODO: support other key types (ed25519)
 func loadRSAPublicKeyFromPEMFile(fileName string) (*rsa.PublicKey, error) {
 	if fileName == "" {
 		return nil, nil
