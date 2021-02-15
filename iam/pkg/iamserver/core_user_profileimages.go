@@ -3,6 +3,7 @@ package iamserver
 import (
 	"io"
 	"path"
+	"strings"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/media"
@@ -28,6 +29,7 @@ func (core *Core) SetUserProfileImageByFile(
 	}
 	imageFile.Seek(0, io.SeekStart)
 
+	//TODO: configurable
 	const bucketSubPath = "user_profile_images/"
 	mediaTypeInfo := media.GetMediaTypeInfo(mediapb.MediaType_IMAGE)
 	if mediaTypeInfo == nil {
@@ -42,7 +44,7 @@ func (core *Core) SetUserProfileImageByFile(
 	filename := core.mediaStore.GenerateName(imageFile)
 	imageFile.Seek(0, io.SeekStart)
 
-	publicURL, err := core.mediaStore.
+	imageKey, err := core.mediaStore.
 		Upload(
 			path.Join(bucketSubPath, filename),
 			imageFile,
@@ -51,10 +53,28 @@ func (core *Core) SetUserProfileImageByFile(
 		return "", errors.Wrap("file store", err)
 	}
 
-	err = core.SetUserProfileImageURL(callCtx, userID, publicURL)
+	err = core.SetUserProfileImageURL(callCtx, userID, imageKey)
 	if err != nil {
 		return "", errors.Wrap("user profile image URL update", err)
 	}
 
-	return publicURL, nil
+	return core.BuildUserProfileImageURL(imageKey), nil
+}
+
+func (core *Core) BuildUserProfileImageURL(imageKey string) string {
+	if !strings.HasPrefix(imageKey, "https://") && !strings.HasPrefix(imageKey, "http://") {
+		var imagesBaseURL string
+		if core.mediaStore != nil {
+			imagesBaseURL = core.mediaStore.ImagesBaseURL()
+		}
+		if imagesBaseURL != "" {
+			imagesBaseURL = strings.TrimSuffix(imagesBaseURL, "/")
+			if strings.HasPrefix(imageKey, "/") {
+				return imagesBaseURL + imageKey
+			} else {
+				return imagesBaseURL + "/" + imageKey
+			}
+		}
+	}
+	return imageKey
 }

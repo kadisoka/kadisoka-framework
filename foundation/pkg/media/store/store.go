@@ -60,16 +60,7 @@ func (mediaStore *Store) Upload(
 		return "", errors.Wrap("object putting", err)
 	}
 
-	if mediaType == mediapb.MediaType_IMAGE {
-		if mediaStore.config.ImagesBaseURL != "" {
-			publicURL = strings.TrimRight(mediaStore.config.ImagesBaseURL, "/") +
-				"/" + mediaName
-		} else {
-			publicURL = objectURL
-		}
-	} else {
-		publicURL = objectURL
-	}
+	publicURL = objectURL
 
 	return publicURL, nil
 }
@@ -115,6 +106,10 @@ func (mediaStore *Store) GenerateName(stream io.Reader) string {
 		"N" + strconv.FormatInt(int64(dataSize), 16)
 
 	return encodedHash
+}
+
+func (mediaStore Store) ImagesBaseURL() string {
+	return mediaStore.config.ImagesBaseURL
 }
 
 func ContentTypeInList(contentType string, contentTypeList []string) bool {

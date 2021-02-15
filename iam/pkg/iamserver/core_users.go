@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/binary"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -52,7 +51,7 @@ func (core *Core) GetUserBaseProfile(
 		user.DisplayName = *displayName
 	}
 	if profileImageURL != nil {
-		user.ProfileImageURL = *profileImageURL
+		user.ProfileImageURL = core.BuildUserProfileImageURL(*profileImageURL)
 	}
 
 	return &user, nil
@@ -316,9 +315,7 @@ func (core *Core) GetUserContactInformation(
 
 func (core *Core) isUserProfileImageURLAllowed(profileImageURL string) bool {
 	//TODO(exa): limit profile image url to certain hosts or keep only the filename
-	return profileImageURL == "" ||
-		strings.HasPrefix(profileImageURL, "http://") ||
-		strings.HasPrefix(profileImageURL, "https://")
+	return true
 }
 
 func (core *Core) ensureOrNewUserID(

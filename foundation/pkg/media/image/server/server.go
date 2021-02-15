@@ -202,9 +202,9 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rawImageW := rawImage.Bounds().Dx()
-	rawImageH := rawImage.Bounds().Dy()
-	rawImageAR := float32(rawImageW) / float32(rawImageH)
+	srcImageWidth := rawImage.Bounds().Dx()
+	srcImageHeight := rawImage.Bounds().Dy()
+	srcImageAspectRatio := float32(srcImageWidth) / float32(srcImageHeight)
 
 	//TODO: support gif (animated?) and webp, and optimize the files.
 	saveImageAndRespond := func(img image.Image) {
@@ -225,7 +225,7 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if params.Scale == ScaleDirectionDown {
-		if rawImageW <= params.Width && rawImageH <= params.Height {
+		if srcImageWidth <= params.Width && srcImageHeight <= params.Height {
 			//TODO: check if padding we want some padding, otherwise
 			// simply save into the new location.
 			if params.PadColor != nil {
@@ -236,69 +236,84 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if params.Fit == FitModeContain {
-			wRatio := float32(rawImageW) / float32(params.Width)
-			hRatio := float32(rawImageH) / float32(params.Height)
+			wRatio := float32(srcImageWidth) / float32(params.Width)
+			hRatio := float32(srcImageHeight) / float32(params.Height)
 			//TODO: Pad
 			if params.PadColor != nil {
 			} else {
-				var targetWidth, targetHeight int
+				var scaledWidth, scaledHeight int
 				if wRatio > hRatio {
-					targetWidth = params.Width
-					targetHeight = int(float32(targetWidth) / rawImageAR)
+					scaledWidth = params.Width
+					scaledHeight = int(float32(scaledWidth) / srcImageAspectRatio)
 				} else {
-					targetHeight = params.Height
-					targetWidth = int(float32(targetHeight) * rawImageAR)
+					scaledHeight = params.Height
+					scaledWidth = int(float32(scaledHeight) * srcImageAspectRatio)
 				}
 				outImage := transform.Resize(rawImage,
-					targetWidth, targetHeight,
+					scaledWidth, scaledHeight,
 					imageScaleDownAlg)
 				saveImageAndRespond(outImage)
 				return
 			}
 		} else if params.Fit == FitModeCrop {
-			// pad is not applicable
-			wRatio := float32(rawImageW) / float32(params.Width)
-			hRatio := float32(rawImageH) / float32(params.Height)
-			var targetWidth, targetHeight int
+			//TODO:
+			// - never upscale. project into canvas, any excess will be trimmed.
+			// - do pad if necessary.
+			wRatio := float32(srcImageWidth) / float32(params.Width)
+			hRatio := float32(srcImageHeight) / float32(params.Height)
+			var scaledWidth, scaledHeight int
 			if wRatio <= hRatio {
-				targetWidth = params.Width
-				targetHeight = int(float32(targetWidth) / rawImageAR)
+				scaledWidth = params.Width
+				scaledHeight = int(float32(scaledWidth) / srcImageAspectRatio)
 			} else {
-				targetHeight = params.Height
-				targetWidth = int(float32(targetHeight) * rawImageAR)
+				if srcImageHeight < params.Height {
+					scaledHeight = srcImageHeight
+				} else {
+					scaledHeight = params.Height
+				}
+				scaledWidth = int(float32(scaledHeight) * srcImageAspectRatio)
 			}
-			tmpImage := transform.Resize(rawImage, targetWidth, targetHeight,
+			//TODO:
+			// - simply save if the image is smaller or has the same dimensions
+			//   as requested.
+			// - don't resize if the non-cropped side size is less than or
+			//   equal to the requested size.
+			workImage := transform.Resize(rawImage, scaledWidth, scaledHeight,
 				imageScaleDownAlg)
-			if targetHeight == params.Height {
-				if targetWidth == params.Width {
-					// No need to crop
-					saveImageAndRespond(tmpImage)
+			if scaledHeight <= params.Height && scaledWidth <= params.Width {
+				if params.PadColor != nil {
+					panic("TODO")
+				} else {
+					saveImageAndRespond(workImage)
 					return
 				}
-				wDiff := targetWidth - params.Width
+			}
+			var cropSourceRect image.Rectangle
+			if scaledWidth > params.Width {
+				wDiff := scaledWidth - params.Width
 				offX := wDiff / 2
-				tmpImage = transform.Crop(tmpImage, image.Rectangle{
+				cropSourceRect = image.Rectangle{
 					Min: image.Point{X: offX, Y: 0},
 					Max: image.Point{
 						X: params.Width + offX,
 						Y: params.Height},
-				})
-				saveImageAndRespond(tmpImage)
-				return
+				}
+			} else {
+				hDiff := scaledHeight - params.Height
+				offY := hDiff / 2
+				cropSourceRect = image.Rectangle{
+					Min: image.Point{X: 0, Y: offY},
+					Max: image.Point{
+						X: params.Width,
+						Y: params.Height + offY},
+				}
 			}
-			hDiff := targetHeight - params.Height
-			offY := hDiff / 2
-			tmpImage = transform.Crop(tmpImage, image.Rectangle{
-				Min: image.Point{X: 0, Y: offY},
-				Max: image.Point{
-					X: params.Width,
-					Y: params.Height + offY},
-			})
-			saveImageAndRespond(tmpImage)
+			workImage = transform.Crop(workImage, cropSourceRect)
+			saveImageAndRespond(workImage)
 			return
 		}
 	} else if params.Scale == ScaleDirectionUp {
-		if rawImageW >= params.Width && rawImageH >= params.Height {
+		if srcImageWidth >= params.Width && srcImageHeight >= params.Height {
 			// Process the file by removing any metadata
 		}
 	}
