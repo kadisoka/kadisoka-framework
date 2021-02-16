@@ -6,8 +6,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	azcore "github.com/alloyzeus/go-azcore/azcore"
 	"github.com/richardlehane/crock32"
+
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 var (
@@ -15,13 +17,88 @@ var (
 	ErrServiceUserIDStringInvalid = errors.Ent("service user ID string", nil)
 )
 
-// UserID holds an identifier of a user account.
+//region ID
+
+// UserID is a scoped identifier
+// used to identify an instance of entity User.
 type UserID int64
 
-// UserIDZero is the default value. This value is invalid for UserID.
+var _ azcore.EID = UserIDZero
+var _ azcore.EntityID = UserIDZero
+var _ azcore.UserID = UserIDZero
+
+// UserIDZero is the zero value
+// for UserID.
 const UserIDZero = UserID(0)
 
-func UserIDFromPrimitiveValue(v int64) UserID { return UserID(v) }
+// UserIDFromPrimitiveValue creates an instance
+// of UserID from its primitive value.
+func UserIDFromPrimitiveValue(v int64) UserID {
+	return UserID(v)
+}
+
+// PrimitiveValue returns the ID in its primitive type. Prefer to use
+// this method instead of casting directly.
+func (id UserID) PrimitiveValue() int64 {
+	return int64(id)
+}
+
+// AZEID is required for conformance
+// with azcore.EID.
+func (UserID) AZEID() {}
+
+// AZEntityID is required for conformance
+// with azcore.EntityID.
+func (UserID) AZEntityID() {}
+
+// AZUserID is required for conformance
+// with azcore.UserID.
+func (UserID) AZUserID() {}
+
+// IsZero is required as UserID is a value-object.
+func (id UserID) IsZero() bool {
+	return id == UserIDZero
+}
+
+// Equals is required as UserID is a value-object.
+//
+// Use EqualsUserID method if the other value
+// has the same type.
+func (id UserID) Equals(other interface{}) bool {
+	if x, ok := other.(UserID); ok {
+		return x == id
+	}
+	if x, _ := other.(*UserID); x != nil {
+		return *x == id
+	}
+	return false
+}
+
+// Equal is a wrapper for Equals method. It is required for
+// compatibility with github.com/google/go-cmp
+func (id UserID) Equal(other interface{}) bool {
+	return id.Equals(other)
+}
+
+// EqualsUserID determines if the other instance is equal
+// to this instance.
+func (id UserID) EqualsUserID(
+	other UserID,
+) bool {
+	return id == other
+}
+
+// IDString returns a string representation of this instance.
+func (id UserID) IDString() string {
+	return id.AZEIDString()
+}
+
+// AZEIDString returns a string representation
+// of the instance as an EID.
+func (id UserID) AZEIDString() string {
+	//TODO: custom encoding
+	return strconv.FormatInt(int64(id), 10)
+}
 
 func UserIDFromString(s string) (UserID, error) {
 	if s == "" {
@@ -30,51 +107,49 @@ func UserIDFromString(s string) (UserID, error) {
 	return userIDDecode(s)
 }
 
-func (userID UserID) IsValid() bool    { return userID > userIDReservedMax && userID <= userIDMax }
-func (userID UserID) IsNotValid() bool { return !userID.IsValid() }
+func (id UserID) IsValid() bool    { return id > userIDReservedMax && id <= userIDMax }
+func (id UserID) IsNotValid() bool { return !id.IsValid() }
 
-func (userID UserID) PrimitiveValue() int64 { return int64(userID) }
-
-func (userID UserID) String() string {
-	if userID.IsNotValid() {
+func (id UserID) String() string {
+	if id.IsNotValid() {
 		return ""
 	}
-	return userIDEncode(userID)
+	return userIDEncode(id)
 }
 
-func (userID UserID) IsNormalAccount() bool {
-	return userID.IsValid() && userID > userIDServiceMax
+func (id UserID) IsNormalAccount() bool {
+	return id.IsValid() && id > userIDServiceMax
 }
 
-func (userID UserID) IsServiceAccount() bool {
-	return userID.IsValid() && userID <= userIDServiceMax
+func (id UserID) IsServiceAccount() bool {
+	return id.IsValid() && id <= userIDServiceMax
 }
 
-func (userID UserID) MarshalText() ([]byte, error) {
-	return []byte(userID.String()), nil
+func (id UserID) MarshalText() ([]byte, error) {
+	return []byte(id.String()), nil
 }
 
-func (userID *UserID) UnmarshalText(b []byte) error {
+func (id *UserID) UnmarshalText(b []byte) error {
 	i, err := UserIDFromString(string(b))
 	if err == nil {
-		*userID = i
+		*id = i
 	}
 	return err
 }
 
-func (userID UserID) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + userID.String() + `"`), nil
+func (id UserID) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + id.String() + `"`), nil
 }
 
-func (userID *UserID) UnmarshalJSON(b []byte) error {
+func (id *UserID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
 	if s == "" {
-		*userID = UserIDZero
+		*id = UserIDZero
 		return nil
 	}
 	i, err := UserIDFromString(s)
 	if err == nil {
-		*userID = i
+		*id = i
 	}
 	return err
 }
@@ -209,3 +284,84 @@ func userIDV0Decode(s string) (UserID, error) {
 
 	return UserID(i), nil
 }
+
+//endregion
+
+//region RefKey
+
+// UserRefKey is used to identify
+// an instance of entity User system-wide.
+type UserRefKey UserID
+
+// To ensure that it conforms the interfaces
+var _ azcore.RefKey = _UserRefKeyZero
+var _ azcore.EntityRefKey = _UserRefKeyZero
+var _ azcore.UserRefKey = _UserRefKeyZero
+
+const _UserRefKeyZero = UserRefKey(UserIDZero)
+
+// UserRefKeyZero returns
+// a zero-valued instance of UserRefKey.
+func UserRefKeyZero() UserRefKey {
+	return _UserRefKeyZero
+}
+
+// AZRefKey is required for conformance with azcore.RefKey.
+func (UserRefKey) AZRefKey() {}
+
+// AZEntityRefKey is required for conformance
+// with azcore.EntityRefKey.
+func (UserRefKey) AZEntityRefKey() {}
+
+// ID is required for conformance with azcore.RefKey.
+func (refKey UserRefKey) ID() azcore.EID {
+	return UserID(refKey)
+}
+
+// UserID is required for conformance with azcore.UserRefKey.
+func (refKey UserRefKey) UserID() azcore.UserID {
+	return UserID(refKey)
+}
+
+// IsZero is required as UserRefKey is a value-object.
+func (refKey UserRefKey) IsZero() bool {
+	return UserID(refKey) == UserIDZero
+}
+
+// Equals is required for conformance with azcore.EntityRefKey.
+func (refKey UserRefKey) Equals(other interface{}) bool {
+	if x, ok := other.(UserRefKey); ok {
+		return x == refKey
+	}
+	if x, _ := other.(*UserRefKey); x != nil {
+		return *x == refKey
+	}
+	return false
+}
+
+// Equal is required for conformance with azcore.EntityRefKey.
+func (refKey UserRefKey) Equal(other interface{}) bool {
+	return refKey.Equals(other)
+}
+
+// EqualsUserRefKey returs true
+// if the other value has the same attributes as refKey.
+func (refKey UserRefKey) EqualsUserRefKey(
+	other UserRefKey,
+) bool {
+	return other == refKey
+}
+
+// RefKeyString returns an encoded representation of this instance.
+//
+// RefKeyString is required by azcore.RefKey.
+func (refKey UserRefKey) RefKeyString() string {
+	// TODO:
+	// something like /<pluralized type_name>/<id> or
+	// /<type_name><separator><id>
+	//
+	// might need to include version information (actually, use prefix option instead.).
+	return "User(" + UserID(refKey).AZEIDString() + ")"
+}
+
+//endregion

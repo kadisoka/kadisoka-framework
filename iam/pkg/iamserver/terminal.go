@@ -25,8 +25,6 @@ type TerminalRegistrationInput struct {
 }
 
 // terminalDBModel represents a row from 'terminals' table.
-//
-//TODO: should keep this private
 type terminalDBModel struct {
 	ID       iam.TerminalID `db:"id"`
 	ClientID iam.ClientID   `db:"client_id"`

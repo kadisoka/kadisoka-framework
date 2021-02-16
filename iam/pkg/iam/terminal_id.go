@@ -6,13 +6,89 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	azcore "github.com/alloyzeus/go-azcore/azcore"
 	"github.com/richardlehane/crock32"
+
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
+//region ID
+
+// TerminalID is a scoped identifier
+// used to identify an instance of adjunct entity Terminal
+// scoped within its host entity(s).
 type TerminalID int64
 
+var _ azcore.EID = TerminalIDZero
+var _ azcore.AdjunctEntityID = TerminalIDZero
+var _ azcore.TerminalID = TerminalIDZero
+
+// TerminalIDZero is the zero value for TerminalID.
 const TerminalIDZero = TerminalID(0)
+
+// TerminalIDFromPrimitiveValue creates an instance
+// of TerminalID from its primitive value.
+func TerminalIDFromPrimitiveValue(v int64) TerminalID {
+	return TerminalID(v)
+}
+
+// PrimitiveValue returns the ID in its primitive type. Prefer to use
+// this method instead of casting directly.
+func (id TerminalID) PrimitiveValue() int64 {
+	return int64(id)
+}
+
+// AZEID is required
+// for conformance with azcore.EID.
+func (TerminalID) AZEID() {}
+
+// AZAdjunctEntityID is required
+// for conformance with azcore.AdjunctEntityID.
+func (TerminalID) AZAdjunctEntityID() {}
+
+// AZTerminalID is required for conformance with azcore.TerminalID.
+func (TerminalID) AZTerminalID() {}
+
+// AZEIDString returns a string representation
+// of the instance as an EID.
+func (id TerminalID) AZEIDString() string {
+	return id.AZAdjunctEntityIDString()
+}
+
+// AZAdjunctEntityIDString returns a string representation
+// of the instance as an AdjunctEntityID.
+func (id TerminalID) AZAdjunctEntityIDString() string {
+	//TODO: custom encoding
+	return strconv.FormatInt(int64(id), 10)
+}
+
+// Equals is required as TerminalID is a value-object.
+//
+// Use EqualsTerminalID method if the other value
+// has the same type.
+func (id TerminalID) Equals(other interface{}) bool {
+	if x, ok := other.(TerminalID); ok {
+		return x == id
+	}
+	if x, _ := other.(*TerminalID); x != nil {
+		return *x == id
+	}
+	return false
+}
+
+// Equal is a wrapper for Equals method. It is required for
+// compatibility with github.com/google/go-cmp
+func (id TerminalID) Equal(other interface{}) bool {
+	return id.Equals(other)
+}
+
+// EqualsTerminalID determines if the other instance
+// is equal to this instance.
+func (id TerminalID) EqualsTerminalID(
+	other TerminalID,
+) bool {
+	return id == other
+}
 
 func TerminalIDFromString(s string) (TerminalID, error) {
 	if s == "" {
@@ -28,51 +104,51 @@ func TerminalIDFromString(s string) (TerminalID, error) {
 	return tid, nil
 }
 
-func (terminalID TerminalID) String() string {
-	if terminalID.IsNotValid() {
+func (id TerminalID) String() string {
+	if id.IsNotValid() {
 		return ""
 	}
-	return terminalIDEncode(terminalID)
+	return terminalIDEncode(id)
 }
 
-func (terminalID TerminalID) IsValid() bool {
-	return (terminalID&terminalInstanceIDMask) > 0 &&
-		terminalID.ClientID().IsValid()
+func (id TerminalID) IsValid() bool {
+	return (id&terminalInstanceIDMask) > 0 &&
+		id.ClientID().IsValid()
 }
 
-func (terminalID TerminalID) IsNotValid() bool {
-	return !terminalID.IsValid()
+func (id TerminalID) IsNotValid() bool {
+	return !id.IsValid()
 }
 
-func (terminalID TerminalID) ClientID() ClientID {
-	return ClientID(int64(terminalID) >> terminalClientIDShift)
+func (id TerminalID) ClientID() ClientID {
+	return ClientID(int64(id) >> terminalClientIDShift)
 }
 
-func (terminalID TerminalID) InstanceID() int32 {
-	return int32(terminalID & terminalInstanceIDMask)
+func (id TerminalID) InstanceID() int32 {
+	return int32(id & terminalInstanceIDMask)
 }
 
-func (terminalID TerminalID) MarshalText() ([]byte, error) {
-	return []byte(terminalID.String()), nil
+func (id TerminalID) MarshalText() ([]byte, error) {
+	return []byte(id.String()), nil
 }
 
-func (terminalID *TerminalID) UnmarshalText(b []byte) error {
+func (id *TerminalID) UnmarshalText(b []byte) error {
 	i, err := TerminalIDFromString(string(b))
 	if err == nil {
-		*terminalID = i
+		*id = i
 	}
 	return err
 }
 
-func (terminalID TerminalID) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + terminalID.String() + `"`), nil
+func (id TerminalID) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + id.String() + `"`), nil
 }
 
-func (terminalID *TerminalID) UnmarshalJSON(b []byte) error {
+func (id *TerminalID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
 	i, err := TerminalIDFromString(s)
 	if err == nil {
-		*terminalID = i
+		*id = i
 	}
 	return err
 }
@@ -137,3 +213,102 @@ func terminalIDV0Decode(s string) (TerminalID, error) {
 	i, err := strconv.ParseInt(s, 16, 64)
 	return TerminalID(i), err
 }
+
+//endregion
+
+//region RefKey
+
+// TerminalRefKey is used to identify
+// an instance of adjunct entity Terminal system-wide.
+type TerminalRefKey struct {
+	id TerminalID
+}
+
+// NewTerminalRefKey returns a new instance
+// of TerminalRefKey with the provided attribute values.
+func NewTerminalRefKey(
+	id TerminalID,
+) TerminalRefKey {
+	return TerminalRefKey{
+		id: id,
+	}
+}
+
+// To ensure that it conforms the interfaces
+var _ azcore.RefKey = _TerminalRefKeyZero
+var _ azcore.AdjunctEntityRefKey = _TerminalRefKeyZero
+var _ azcore.TerminalRefKey = _TerminalRefKeyZero
+
+var _TerminalRefKeyZero = TerminalRefKey{
+	id: TerminalIDZero,
+}
+
+// TerminalRefKeyZero returns
+// a zero-valued instance of TerminalRefKey.
+func TerminalRefKeyZero() TerminalRefKey {
+	return _TerminalRefKeyZero
+}
+
+// AZRefKey is required by azcore.RefKey interface.
+func (TerminalRefKey) AZRefKey() {}
+
+// AZAdjunctEntityRefKey is required
+// by azcore.AdjunctEntityRefKey interface.
+func (TerminalRefKey) AZAdjunctEntityRefKey() {}
+
+// ID is required for conformance with azcore.RefKey.
+func (refKey TerminalRefKey) ID() azcore.EID {
+	return refKey.id
+}
+
+// TerminalID is required for conformance with azcore.TerminalRefKey.
+func (refKey TerminalRefKey) TerminalID() azcore.TerminalID {
+	return refKey.id
+}
+
+// IsZero is required as TerminalRefKey is a value-object.
+func (refKey TerminalRefKey) IsZero() bool {
+	return refKey.id == TerminalIDZero
+}
+
+// Equals is required for conformance with azcore.AdjunctEntityRefKey.
+func (refKey TerminalRefKey) Equals(other interface{}) bool {
+	if x, ok := other.(TerminalRefKey); ok {
+		return refKey.id == x.id
+	}
+	if x, _ := other.(*TerminalRefKey); x != nil {
+		return refKey.id == x.id
+	}
+	return false
+}
+
+// Equal is required for conformance with azcore.AdjunctEntityRefKey.
+func (refKey TerminalRefKey) Equal(other interface{}) bool {
+	return refKey.Equals(other)
+}
+
+// EqualsTerminalRefKey returns true
+// if the other value has the same attributes as refKey.
+func (refKey TerminalRefKey) EqualsTerminalRefKey(
+	other TerminalRefKey,
+) bool {
+	return refKey.id == other.id
+}
+
+// RefKeyString returns an encoded representation of this instance.
+//
+// RefKeyString is required by azcore.RefKey.
+func (refKey TerminalRefKey) RefKeyString() string {
+	// TODO: refkeystring should be defined in the source as it needs
+	// to be strictly consistent across implementations.
+	// something like /host1_type-host1_id/host2_type-host2_id/hostn_type-hostn_id/own_type-own_id
+	// or for global adjuncts /own_type-own_id
+	//
+	// note that a ref key might comprise of other ref keys. so, we will have
+	// something like A(B(C(), D()), E()). the default pattern must be able
+	// to accomodate such structure.
+	return "Terminal(" +
+		refKey.id.AZAdjunctEntityIDString() + ")"
+}
+
+//endregion
