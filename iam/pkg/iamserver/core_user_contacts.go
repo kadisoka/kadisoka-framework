@@ -13,10 +13,9 @@ func (core *Core) GetUserContactUserIDs(
 			`SELECT DISTINCT `+
 				`ph.user_id `+
 				`FROM user_contact_phone_numbers AS cp `+
-				`JOIN user_phone_numbers AS ph ON `+
+				`JOIN `+userIdentifierPhoneNumberTableName+` AS ph ON `+
 				`  ph.country_code = cp.contact_country_code `+
 				`  AND ph.national_number = cp.contact_national_number `+
-				`  AND ph.is_primary IS TRUE `+
 				`  AND ph.deletion_time IS NULL `+
 				`  AND ph.verification_time IS NOT NULL `+
 				`JOIN users AS usr ON `+

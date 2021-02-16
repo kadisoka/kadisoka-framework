@@ -16,12 +16,11 @@ CREATE TABLE users (
     CHECK (id > 0)
 );
 
-CREATE TABLE user_phone_numbers (
+CREATE TABLE user_identifier_phone_numbers (
     user_id               bigint NOT NULL,
     country_code          integer NOT NULL,
     national_number       bigint NOT NULL, -- libphonenumber says uint64
-    raw_input             text NOT NULL,
-    is_primary            boolean NOT NULL DEFAULT false, 
+    raw_input             text NOT NULL, 
     creation_time         timestamp with time zone NOT NULL DEFAULT now(),
     creation_user_id      bigint NOT NULL,
     creation_terminal_id  bigint NOT NULL,
@@ -32,22 +31,16 @@ CREATE TABLE user_phone_numbers (
     verification_time     timestamp with time zone
 );
 -- Each user can only have one reference to the same phone number
-CREATE UNIQUE INDEX user_phone_numbers_pidx
-    ON user_phone_numbers (user_id, country_code, national_number)
+CREATE UNIQUE INDEX user_identifier_phone_numbers_pidx
+    ON user_identifier_phone_numbers (user_id, country_code, national_number)
     WHERE deletion_time IS NULL;
--- Each user has only one primary
-CREATE UNIQUE INDEX user_phone_numbers_user_id_uidx
-    ON user_phone_numbers (user_id)
-    WHERE deletion_time IS NULL AND verification_time IS NOT NULL AND is_primary IS TRUE;
--- One instance of active primary for each phone number
-CREATE UNIQUE INDEX user_phone_numbers_country_code_national_number_uidx
-    ON user_phone_numbers (country_code, national_number)
-    WHERE deletion_time IS NULL AND verification_time IS NOT NULL AND is_primary IS TRUE;
-CREATE INDEX user_phone_numbers_user_id_verified_idx
-    ON user_phone_numbers (user_id)
+-- Each user has only one non-deleted-verified phone number
+CREATE UNIQUE INDEX user_identifier_phone_numbers_user_id_uidx
+    ON user_identifier_phone_numbers (user_id)
     WHERE deletion_time IS NULL AND verification_time IS NOT NULL;
-CREATE INDEX user_phone_numbers_country_code_national_number_verified_idx
-    ON user_phone_numbers (country_code, national_number)
+-- One instance for an non-deleted-verified phone number
+CREATE UNIQUE INDEX user_identifier_phone_numbers_country_code_national_number_uidx
+    ON user_identifier_phone_numbers (country_code, national_number)
     WHERE deletion_time IS NULL AND verification_time IS NOT NULL;
 
 CREATE TABLE terminals (
@@ -155,12 +148,11 @@ CREATE UNIQUE INDEX user_profile_image_urls_pidx ON user_profile_image_urls (use
     WHERE deletion_time IS NULL;
 
 -- user email
-CREATE TABLE user_email_addresses (
+CREATE TABLE user_identifier_email_addresses (
     user_id               bigint NOT NULL,
     local_part            text NOT NULL,
     domain_part           text NOT NULL,
     raw_input             text NOT NULL,
-    is_primary            boolean NOT NULL DEFAULT false,
     creation_time         timestamp with time zone NOT NULL DEFAULT now(),
     creation_user_id      bigint NOT NULL,
     creation_terminal_id  bigint NOT NULL,
@@ -171,22 +163,16 @@ CREATE TABLE user_email_addresses (
     verification_time     timestamp with time zone
 );
 -- Each user can only have one reference to the same email address
-CREATE UNIQUE INDEX user_email_addresses_pidx
-    ON user_email_addresses (user_id, local_part, domain_part)
+CREATE UNIQUE INDEX user_identifier_email_addresses_pidx
+    ON user_identifier_email_addresses (user_id, local_part, domain_part)
     WHERE deletion_time IS NULL;
--- Each user has only one primary
-CREATE UNIQUE INDEX user_email_addresses_user_id_uidx
-    ON user_email_addresses (user_id)
-    WHERE deletion_time IS NULL AND verification_time IS NOT NULL AND is_primary IS TRUE;
--- One instance of active primary for each email address
-CREATE UNIQUE INDEX user_email_addresses_local_part_domain_part_uidx
-    ON user_email_addresses (local_part, domain_part)
-    WHERE deletion_time IS NULL AND verification_time IS NOT NULL AND is_primary IS TRUE;
-CREATE INDEX user_email_addresses_user_id_verified_idx
-    ON user_email_addresses (user_id)
+-- Each user has only one non-deleted-verified email address
+CREATE UNIQUE INDEX user_identifier_email_addresses_user_id_uidx
+    ON user_identifier_email_addresses (user_id)
     WHERE deletion_time IS NULL AND verification_time IS NOT NULL;
-CREATE INDEX user_email_addresses_local_part_domain_part_verified_idx
-    ON user_email_addresses (local_part, domain_part)
+-- One instance for an non-deleted-verified email address
+CREATE UNIQUE INDEX user_identifier_email_addresses_local_part_domain_part_uidx
+    ON user_identifier_email_addresses (local_part, domain_part)
     WHERE deletion_time IS NULL AND verification_time IS NOT NULL;
 
 CREATE TABLE email_address_verifications (

@@ -281,7 +281,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	restUserProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile)
 
 	userPhoneNumber, err := restSrv.serverCore.
-		GetUserPrimaryPhoneNumber(reqCtx, requestedUserID)
+		GetUserIdentifierPhoneNumber(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User phone number fetch")
@@ -296,7 +296,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	//TODO(exa): should get display email address instead of primary
 	// email address for this use case.
 	userEmailAddress, err := restSrv.serverCore.
-		GetUserPrimaryEmailAddress(reqCtx, requestedUserID)
+		GetUserIdentifierEmailAddress(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User email address fetch")
@@ -440,7 +440,7 @@ func (restSrv *Server) getUserContacts(req *restful.Request, resp *restful.Respo
 			userProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile)
 
 			userPhoneNumber, err := restSrv.serverCore.
-				GetUserPrimaryPhoneNumber(reqCtx, contactUserID)
+				GetUserIdentifierPhoneNumber(reqCtx, contactUserID)
 
 			if err != nil {
 				panic(err)

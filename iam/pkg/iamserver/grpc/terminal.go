@@ -71,7 +71,7 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 	}
 
 	terminalID, _, codeExpiry, err := authServer.iamServerCore.
-		StartTerminalAuthorizationByPhoneNumber(
+		StartTerminalRegistrationByPhoneNumber(
 			reqCtx, clientID, phoneNumber,
 			reqProto.TerminalInfo.DisplayName, userAgentString,
 			termLangTags, nil)
@@ -125,7 +125,7 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 	}
 
 	termSecret, _, err := authServer.iamServerCore.
-		ConfirmTerminalAuthorization(
+		ConfirmTerminalRegistrationVerification(
 			reqCtx, termID, reqProto.VerificationCode)
 	if err != nil {
 		logCtx(reqCtx).

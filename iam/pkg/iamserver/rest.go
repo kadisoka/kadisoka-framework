@@ -7,7 +7,6 @@ import (
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	dataerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/data"
-
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 

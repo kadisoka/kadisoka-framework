@@ -6,19 +6,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/lib/pq"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
+const userIdentifierPhoneNumberTableName = `user_identifier_phone_numbers`
+
 func (core *Core) ListUsersByPhoneNumber(
 	callCtx iam.CallContext,
 	phoneNumbers []iam.PhoneNumber,
-) ([]iam.UserPhoneNumber, error) {
+) ([]iam.UserIdentifierPhoneNumber, error) {
 	if len(phoneNumbers) == 0 {
-		return []iam.UserPhoneNumber{}, nil
+		return []iam.UserIdentifierPhoneNumber{}, nil
 	}
 	authCtx := callCtx.Authorization()
 
@@ -27,25 +29,24 @@ func (core *Core) ListUsersByPhoneNumber(
 	// https://dba.stackexchange.com/questions/91247/optimizing-a-postgres-query-with-a-large-in
 	userPhoneNumberRows, err := core.db.
 		Queryx(
-			`SELECT user_id, country_code, national_number, is_primary ` +
-				`FROM user_phone_numbers ` +
+			`SELECT user_id, country_code, national_number ` +
+				`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
 				`WHERE (country_code, national_number) ` +
 				`IN (VALUES ` + phoneNumberSliceToSQLSetString(phoneNumbers) + `) ` +
-				`AND is_primary IS TRUE AND deletion_time IS NULL AND verification_time IS NOT NULL ` +
+				`AND deletion_time IS NULL AND verification_time IS NOT NULL ` +
 				`LIMIT ` + strconv.Itoa(len(phoneNumbers)))
 	if err != nil {
 		panic(err)
 	}
 	defer userPhoneNumberRows.Close()
 
-	userPhoneNumberList := []iam.UserPhoneNumber{}
+	userPhoneNumberList := []iam.UserIdentifierPhoneNumber{}
 	for userPhoneNumberRows.Next() {
-		var userPhoneNumber iam.UserPhoneNumber
+		var userPhoneNumber iam.UserIdentifierPhoneNumber
 		var countryCode int32
 		var nationalNumber int64
 		err = userPhoneNumberRows.Scan(
-			&userPhoneNumber.UserID, &countryCode, &nationalNumber,
-			&userPhoneNumber.IsPrimary)
+			&userPhoneNumber.UserID, &countryCode, &nationalNumber)
 		if err != nil {
 			panic(err)
 		}
@@ -82,7 +83,7 @@ func (core *Core) ListUsersByPhoneNumber(
 //TODO: allow non-verified (let the caller decide with the status)
 // there should be getters for different purpose (e.g.,
 // for login, for display, for notification, for recovery, etc)
-func (core *Core) GetUserPrimaryPhoneNumber(
+func (core *Core) GetUserIdentifierPhoneNumber(
 	callCtx iam.CallContext,
 	userID iam.UserID,
 ) (*iam.PhoneNumber, error) {
@@ -91,8 +92,8 @@ func (core *Core) GetUserPrimaryPhoneNumber(
 	err := core.db.
 		QueryRow(
 			`SELECT country_code, national_number `+
-				`FROM user_phone_numbers `+
-				`WHERE user_id=$1 AND is_primary IS TRUE `+
+				`FROM `+userIdentifierPhoneNumberTableName+` `+
+				`WHERE user_id=$1 `+
 				`AND deletion_time IS NULL AND verification_time IS NOT NULL`,
 			userID).
 		Scan(&countryCode, &nationalNumber)
@@ -107,14 +108,14 @@ func (core *Core) GetUserPrimaryPhoneNumber(
 }
 
 // The ID of the user which provided phone number is their verified primary.
-func (core *Core) getUserIDByPrimaryPhoneNumber(
+func (core *Core) getUserIDByIdentifierPhoneNumber(
 	phoneNumber iam.PhoneNumber,
 ) (ownerUserID iam.UserID, err error) {
 	queryStr :=
 		`SELECT user_id ` +
-			`FROM user_phone_numbers ` +
+			`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
-			`AND is_primary IS TRUE AND deletion_time IS NULL ` +
+			`AND deletion_time IS NULL ` +
 			`AND verification_time IS NOT NULL`
 	err = core.db.
 		QueryRow(queryStr,
@@ -133,14 +134,14 @@ func (core *Core) getUserIDByPrimaryPhoneNumber(
 
 // The ID of the user which provided phone number is their primary,
 // verified or not.
-func (core *Core) getUserIDByPrimaryPhoneNumberAllowUnverified(
+func (core *Core) getUserIDByIdentifierPhoneNumberAllowUnverified(
 	phoneNumber iam.PhoneNumber,
 ) (ownerUserID iam.UserID, verified bool, err error) {
 	queryStr :=
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
-			`FROM user_phone_numbers ` +
+			`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
-			`AND is_primary IS TRUE AND deletion_time IS NULL ` +
+			`AND deletion_time IS NULL ` +
 			`ORDER BY creation_time DESC LIMIT 1`
 	err = core.db.
 		QueryRow(queryStr,
@@ -157,7 +158,7 @@ func (core *Core) getUserIDByPrimaryPhoneNumberAllowUnverified(
 	return
 }
 
-func (core *Core) SetUserPrimaryPhoneNumber(
+func (core *Core) SetUserIdentifierPhoneNumber(
 	callCtx iam.CallContext,
 	userID iam.UserID,
 	phoneNumber iam.PhoneNumber,
@@ -173,11 +174,11 @@ func (core *Core) SetUserPrimaryPhoneNumber(
 	}
 
 	//TODO: prone to race condition. solution: simply call
-	// setUserPrimaryPhoneNumber and translate the error.
+	// setUserIdentifierPhoneNumber and translate the error.
 	existingOwnerUserID, err := core.
-		getUserIDByPrimaryPhoneNumber(phoneNumber)
+		getUserIDByIdentifierPhoneNumber(phoneNumber)
 	if err != nil {
-		return 0, nil, errors.Wrap("getUserIDByPrimaryPhoneNumber", err)
+		return 0, nil, errors.Wrap("getUserIDByIdentifierPhoneNumber", err)
 	}
 	if existingOwnerUserID.IsValid() {
 		if existingOwnerUserID != authCtx.UserID {
@@ -186,10 +187,10 @@ func (core *Core) SetUserPrimaryPhoneNumber(
 		return 0, nil, nil
 	}
 
-	alreadyVerified, err := core.setUserPrimaryPhoneNumber(
+	alreadyVerified, err := core.setUserIdentifierPhoneNumber(
 		authCtx.Actor(), authCtx.UserID, phoneNumber)
 	if err != nil {
-		return 0, nil, errors.Wrap("setUserPrimaryPhoneNumber", err)
+		return 0, nil, errors.Wrap("setUserIdentifierPhoneNumber", err)
 	}
 	if alreadyVerified {
 		return 0, nil, nil
@@ -212,7 +213,7 @@ func (core *Core) SetUserPrimaryPhoneNumber(
 	return
 }
 
-func (core *Core) setUserPrimaryPhoneNumber(
+func (core *Core) setUserIdentifierPhoneNumber(
 	actor iam.Actor,
 	userID iam.UserID,
 	phoneNumber iam.PhoneNumber,
@@ -220,11 +221,11 @@ func (core *Core) setUserPrimaryPhoneNumber(
 	tNow := time.Now().UTC()
 
 	xres, err := core.db.Exec(
-		`INSERT INTO user_phone_numbers (`+
-			`user_id, country_code, national_number, raw_input, is_primary, `+
+		`INSERT INTO `+userIdentifierPhoneNumberTableName+` (`+
+			`user_id, country_code, national_number, raw_input, `+
 			`creation_time, creation_user_id, creation_terminal_id `+
 			`) VALUES (`+
-			`$1, $2, $3, $4, $5, $6, $7, $8`+
+			`$1, $2, $3, $4, $5, $6, $7`+
 			`) `+
 			`ON CONFLICT (user_id, country_code, national_number) WHERE deletion_time IS NULL `+
 			`DO NOTHING`,
@@ -232,7 +233,6 @@ func (core *Core) setUserPrimaryPhoneNumber(
 		phoneNumber.CountryCode(),
 		phoneNumber.NationalNumber(),
 		phoneNumber.RawInput(),
-		true,
 		tNow,
 		actor.UserID,
 		actor.TerminalID)
@@ -250,8 +250,8 @@ func (core *Core) setUserPrimaryPhoneNumber(
 
 	err = core.db.QueryRow(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
-			`FROM user_phone_numbers `+
-			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3 AND is_primary IS TRUE`,
+			`FROM `+userIdentifierPhoneNumberTableName+` `+
+			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3`,
 		userID, phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&alreadyVerified)
 	if err != nil {
@@ -317,7 +317,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 	var xres sql.Result
 
 	xres, err = core.db.Exec(
-		`UPDATE user_phone_numbers SET (`+
+		`UPDATE `+userIdentifierPhoneNumberTableName+` SET (`+
 			`verification_time, verification_id`+
 			`) = ( `+
 			`$1, $2`+
@@ -333,7 +333,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == "user_phone_numbers_country_code_national_number_uidx" {
+			pqErr.Constraint == userIdentifierPhoneNumberTableName+`_country_code_national_number_uidx` {
 			return false, errors.ArgMsg("phoneNumber", "conflict")
 		}
 		return false, err

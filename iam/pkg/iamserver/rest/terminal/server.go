@@ -231,7 +231,7 @@ func (restSrv *Server) postTerminalsSecret(
 	}
 
 	termSecret, _, err := restSrv.serverCore.
-		ConfirmTerminalAuthorization(reqCtx, userTermID, linkConfirmReq.Code)
+		ConfirmTerminalRegistrationVerification(reqCtx, userTermID, linkConfirmReq.Code)
 	if err != nil {
 		switch err {
 		case iam.ErrTerminalVerificationCodeMismatch:
@@ -352,7 +352,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	}
 
 	terminalID, _, codeExpiry, err := restSrv.serverCore.
-		StartTerminalAuthorizationByPhoneNumber(
+		StartTerminalRegistrationByPhoneNumber(
 			reqCtx, authClient.ID, phoneNumber,
 			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
 			termLangTags, verificationMethods)
@@ -427,7 +427,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	}
 
 	terminalID, _, codeExpiry, err := restSrv.serverCore.
-		StartTerminalAuthorizationByEmailAddress(
+		StartTerminalRegistrationByEmailAddress(
 			reqCtx, authClient.ID, emailAddress,
 			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
 			termLangTags, verificationMethods)

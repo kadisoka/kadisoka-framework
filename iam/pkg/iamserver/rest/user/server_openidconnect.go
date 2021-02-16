@@ -47,7 +47,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	}
 
 	userPhoneNumber, err := restSrv.serverCore.
-		GetUserPrimaryPhoneNumber(reqCtx, requestedUserID)
+		GetUserIdentifierPhoneNumber(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User phone number fetch")
@@ -65,7 +65,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	//TODO(exa): should get display email address instead of primary
 	// email address for this use case.
 	userEmailAddress, err := restSrv.serverCore.
-		GetUserPrimaryEmailAddress(reqCtx, requestedUserID)
+		GetUserIdentifierEmailAddress(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User email address fetch")

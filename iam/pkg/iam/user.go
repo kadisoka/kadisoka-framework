@@ -8,12 +8,12 @@ type UserService interface {
 	UserAccountService
 	UserProfileService
 
-	GetUserPrimaryPhoneNumber(
+	GetUserIdentifierPhoneNumber(
 		callCtx CallContext,
 		userID UserID,
 	) (*PhoneNumber, error)
 
-	GetUserPrimaryEmailAddress(
+	GetUserIdentifierEmailAddress(
 		callCtx CallContext,
 		userID UserID,
 	) (*EmailAddress, error)
@@ -31,13 +31,12 @@ type UserTerminalService interface {
 }
 
 var (
-	ErrUserPrimaryPhoneNumberConflict = errors.EntMsg("user primary phone number", "conflict")
+	ErrUserIdentifierPhoneNumberConflict = errors.EntMsg("user identifier phone number", "conflict")
 )
 
-type UserPhoneNumber struct {
+type UserIdentifierPhoneNumber struct {
 	UserID      UserID
 	PhoneNumber PhoneNumber
-	IsPrimary   bool
 }
 
 // JSONV1 models

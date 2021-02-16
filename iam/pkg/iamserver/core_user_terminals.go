@@ -2,8 +2,8 @@ package iamserver
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 

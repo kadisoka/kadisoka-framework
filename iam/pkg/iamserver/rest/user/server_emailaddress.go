@@ -88,19 +88,19 @@ func (restSrv *Server) handleSetEmailAddress(
 	}
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
-		SetUserPrimaryEmailAddress(
+		SetUserIdentifierEmailAddress(
 			reqCtx, authCtx.UserID, emailAddress, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
-				Warn().Msgf("SetUserPrimaryEmailAddress to %v: %v",
+				Warn().Msgf("SetUserIdentifierEmailAddress to %v: %v",
 				emailAddress, err)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
-			Error().Msgf("SetUserPrimaryEmailAddress to %v: %v",
+			Error().Msgf("SetUserIdentifierEmailAddress to %v: %v",
 			emailAddress, err)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)

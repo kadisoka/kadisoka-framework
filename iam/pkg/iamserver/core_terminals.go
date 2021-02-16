@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"golang.org/x/text/language"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
@@ -42,7 +42,7 @@ func (core *Core) AuthenticateTerminal(
 	return storedSecret == terminalSecret, ownerUserID, nil
 }
 
-func (core *Core) StartTerminalAuthorizationByPhoneNumber(
+func (core *Core) StartTerminalRegistrationByPhoneNumber(
 	callCtx iam.CallContext,
 	clientID iam.ClientID,
 	phoneNumber iam.PhoneNumber,
@@ -62,7 +62,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 
 	// Get the existing owner, whether already verified or not.
 	existingOwnerUserID, _, err := core.
-		getUserIDByPrimaryPhoneNumberAllowUnverified(phoneNumber)
+		getUserIDByIdentifierPhoneNumberAllowUnverified(phoneNumber)
 	if err != nil {
 		panic(err)
 	}
@@ -80,7 +80,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 			panic(err)
 		}
 		_, err = core.
-			setUserPrimaryPhoneNumber(
+			setUserIdentifierPhoneNumber(
 				authCtx.Actor(), newUserID, phoneNumber)
 		if err != nil {
 			panic(err)
@@ -130,7 +130,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 	return
 }
 
-func (core *Core) StartTerminalAuthorizationByEmailAddress(
+func (core *Core) StartTerminalRegistrationByEmailAddress(
 	callCtx iam.CallContext,
 	clientID iam.ClientID,
 	emailAddress iam.EmailAddress,
@@ -150,7 +150,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 
 	// Get the existing owner, whether already verified or not.
 	existingOwnerUserID, _, err := core.
-		getUserIDByPrimaryEmailAddressAllowUnverified(emailAddress)
+		getUserIDByIdentifierEmailAddressAllowUnverified(emailAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -168,7 +168,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 			panic(err)
 		}
 		_, err = core.
-			setUserPrimaryEmailAddress(
+			setUserIdentifierEmailAddress(
 				authCtx.Actor(), newUserID, emailAddress)
 		if err != nil {
 			panic(err)
@@ -218,10 +218,10 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 	return
 }
 
-// ConfirmTerminalAuthorization confirms authorization for a terminal by
-// providing the verificationCode which was delivered through selected
-// channel when the authorization was created.
-func (core *Core) ConfirmTerminalAuthorization(
+// ConfirmTerminalRegistrationVerification confirms authorization of a
+// terminal by providing the verificationCode which was delivered through
+// selected channel when the authorization was created.
+func (core *Core) ConfirmTerminalRegistrationVerification(
 	callCtx iam.CallContext,
 	terminalID iam.TerminalID,
 	verificationCode string,
@@ -279,7 +279,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 			if !updated {
 				// Let's check if the email address is associated to other user
 				existingOwnerUserID, err := core.
-					getUserIDByPrimaryEmailAddress(*emailAddress)
+					getUserIDByIdentifierEmailAddress(*emailAddress)
 				if err != nil {
 					panic(err)
 				}
@@ -325,7 +325,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 			if !updated {
 				// Let's check if the phone number is associated to other user
 				existingOwnerUserID, err := core.
-					getUserIDByPrimaryPhoneNumber(*phoneNumber)
+					getUserIDByIdentifierPhoneNumber(*phoneNumber)
 				if err != nil {
 					panic(err)
 				}
