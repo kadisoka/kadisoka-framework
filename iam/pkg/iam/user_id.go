@@ -1,15 +1,16 @@
 package iam
 
 import (
+	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
 	"sync"
 
 	azcore "github.com/alloyzeus/go-azcore/azcore"
+	"github.com/alloyzeus/go-azcore/azcore/eid/integer/textencodings/crockford32"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
-
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 var (
@@ -93,11 +94,30 @@ func (id UserID) IDString() string {
 	return id.AZEIDString()
 }
 
+// AZEIDBinary returns a binary representation
+// of the instance as an EID.
+func (id UserID) AZEIDBinary() []byte {
+	buf := make([]byte, binary.MaxVarintLen64)
+	n := binary.PutUvarint(buf, uint64(id))
+	return buf[:n]
+}
+
 // AZEIDString returns a string representation
 // of the instance as an EID.
 func (id UserID) AZEIDString() string {
-	//TODO: custom encoding
-	return strconv.FormatInt(int64(id), 10)
+	return "ix-" + crockford32.EncodeInt64(int64(id))
+}
+
+// IsBot returns true if the User instance
+// this ID is for is a Bot User.
+//
+// Bot account is ....
+func (id UserID) IsBot() bool {
+	const mask = uint64(0) |
+		(uint64(1) << 61)
+	const flags = uint64(0) |
+		(uint64(1) << 61)
+	return (uint64(id) & mask) == flags
 }
 
 func UserIDFromString(s string) (UserID, error) {

@@ -4,8 +4,8 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
-	accesserrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/access"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
+	accesserrs "github.com/alloyzeus/go-azcore/azcore/errors/access"
 )
 
 // Error translates err into gRPC error.

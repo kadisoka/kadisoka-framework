@@ -3,9 +3,9 @@ package grpc
 import (
 	"context"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	pbtypes "github.com/gogo/protobuf/types"
 	grpcerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc/errors"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 	"golang.org/x/text/language"
 	"google.golang.org/grpc"

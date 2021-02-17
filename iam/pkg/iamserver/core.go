@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"

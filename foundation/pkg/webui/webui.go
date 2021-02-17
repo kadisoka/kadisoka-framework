@@ -15,10 +15,10 @@ import (
 	textt "text/template"
 
 	"github.com/OneOfOne/xxhash"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/oxtoacart/bpool"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 func NewServer(

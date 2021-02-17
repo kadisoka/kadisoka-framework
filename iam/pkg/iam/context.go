@@ -3,8 +3,9 @@ package iam
 import (
 	"context"
 
+	accesserrs "github.com/alloyzeus/go-azcore/azcore/errors/access"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
-	accesserrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/access"
 )
 
 var (

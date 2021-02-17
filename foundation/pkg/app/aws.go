@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 )
 
 // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html

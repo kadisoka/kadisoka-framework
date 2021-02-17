@@ -10,8 +10,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	imagesrv "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/image/server"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"

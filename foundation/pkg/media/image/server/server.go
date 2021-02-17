@@ -18,12 +18,12 @@ import (
 	"strings"
 
 	"github.com/OneOfOne/xxhash"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/richardlehane/crock32"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/logging"
 )
 

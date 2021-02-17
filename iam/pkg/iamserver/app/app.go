@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/rez-go/stev"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"

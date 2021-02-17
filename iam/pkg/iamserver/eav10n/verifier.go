@@ -10,6 +10,7 @@ import (
 	texttpl "text/template"
 	"time"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	awscreds "github.com/aws/aws-sdk-go/aws/credentials"
@@ -18,7 +19,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )

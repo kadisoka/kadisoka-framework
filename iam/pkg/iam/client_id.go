@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
 )
 

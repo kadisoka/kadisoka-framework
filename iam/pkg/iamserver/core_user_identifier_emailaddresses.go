@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/lib/pq"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 )

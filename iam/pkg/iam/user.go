@@ -1,7 +1,7 @@
 package iam
 
 import (
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 )
 
 type UserService interface {

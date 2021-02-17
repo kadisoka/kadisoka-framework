@@ -1,8 +1,9 @@
 package iam
 
 import (
+	"github.com/alloyzeus/go-azcore/azcore/errors"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 func NewAppSimple(envVarPrefix string) (*App, error) {

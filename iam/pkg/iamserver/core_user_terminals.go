@@ -1,9 +1,9 @@
 package iamserver
 
 import (
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 

@@ -3,9 +3,10 @@ package user
 import (
 	"net/http"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/emicklei/go-restful"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 type userProfileImagePutResponse struct {

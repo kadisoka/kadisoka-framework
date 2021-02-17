@@ -7,7 +7,7 @@ package realm
 import (
 	"github.com/rez-go/stev"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 )
 
 const EnvPrefixDefault = "REALM_"

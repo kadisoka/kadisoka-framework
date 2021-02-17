@@ -8,9 +8,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	grpcmd "google.golang.org/grpc/metadata"
+
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 )
 
 type ServiceClient interface {

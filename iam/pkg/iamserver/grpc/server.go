@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"google.golang.org/grpc"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 

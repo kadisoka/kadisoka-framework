@@ -1,15 +1,15 @@
 package iam
 
 import (
+	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
 	"sync"
 
 	azcore "github.com/alloyzeus/go-azcore/azcore"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
-
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 //region ID
@@ -49,6 +49,14 @@ func (TerminalID) AZAdjunctEntityID() {}
 // AZTerminalID is required for conformance with azcore.TerminalID.
 func (TerminalID) AZTerminalID() {}
 
+// AZEIDBinary returns a binary representation
+// of the instance as an EID.
+func (id TerminalID) AZEIDBinary() []byte {
+	buf := make([]byte, binary.MaxVarintLen64)
+	n := binary.PutUvarint(buf, uint64(id))
+	return buf[:n]
+}
+
 // AZEIDString returns a string representation
 // of the instance as an EID.
 func (id TerminalID) AZEIDString() string {
@@ -58,8 +66,7 @@ func (id TerminalID) AZEIDString() string {
 // AZAdjunctEntityIDString returns a string representation
 // of the instance as an AdjunctEntityID.
 func (id TerminalID) AZAdjunctEntityIDString() string {
-	//TODO: custom encoding
-	return strconv.FormatInt(int64(id), 10)
+	return "" + strconv.FormatInt(int64(id), 10)
 }
 
 // Equals is required as TerminalID is a value-object.

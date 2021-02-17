@@ -3,10 +3,10 @@ package minio
 import (
 	"io"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/minio/minio-go/v6"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
 )
 

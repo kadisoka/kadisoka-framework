@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"golang.org/x/text/language"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"

@@ -14,9 +14,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/square/go-jose/v3"
-
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 )
 
 var thumbprintHasher = crypto.SHA256

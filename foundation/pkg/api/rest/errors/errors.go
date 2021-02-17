@@ -3,9 +3,10 @@ package errors
 import (
 	"net/http"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
+	accesserrs "github.com/alloyzeus/go-azcore/azcore/errors/access"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
-	accesserrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/access"
 )
 
 const HTTPStatusUnknown = 0

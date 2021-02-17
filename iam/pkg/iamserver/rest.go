@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
-	dataerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/data"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
+	dataerrs "github.com/alloyzeus/go-azcore/azcore/errors/data"
+
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 

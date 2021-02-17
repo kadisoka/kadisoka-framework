@@ -4,11 +4,11 @@ import (
 	"crypto/rand"
 	"time"
 
+	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/lib/pq"
 	"github.com/square/go-jose/v3/jwt"
 
 	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 

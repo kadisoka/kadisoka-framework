@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/errors"
-	dataerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/errors/data"
+	"github.com/alloyzeus/go-azcore/azcore/errors"
+	dataerrs "github.com/alloyzeus/go-azcore/azcore/errors/data"
 )
 
 //NOTE: actually, it's not recommended to use regex to
