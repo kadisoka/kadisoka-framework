@@ -1,7 +1,6 @@
 package iam
 
 import (
-	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	azcore "github.com/alloyzeus/go-azcore/azcore"
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
+	protowire "google.golang.org/protobuf/encoding/protowire"
 )
 
 //region ID
@@ -32,6 +32,21 @@ func TerminalIDFromPrimitiveValue(v int64) TerminalID {
 	return TerminalID(v)
 }
 
+func TerminalIDFromAZWire(b []byte) (TerminalID, error) {
+	_, typ, n := protowire.ConsumeTag(b)
+	if n <= 0 {
+		return TerminalIDZero, TerminalIDWireDecodingArgumentError{}
+	}
+	if typ != protowire.VarintType {
+		return TerminalIDZero, TerminalIDWireDecodingArgumentError{}
+	}
+	e, n := protowire.ConsumeVarint(b)
+	if n <= 0 {
+		return TerminalIDZero, TerminalIDWireDecodingArgumentError{}
+	}
+	return TerminalID(e), nil
+}
+
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
 // this method instead of casting directly.
 func (id TerminalID) PrimitiveValue() int64 {
@@ -49,23 +64,29 @@ func (TerminalID) AZAdjunctEntityID() {}
 // AZTerminalID is required for conformance with azcore.TerminalID.
 func (TerminalID) AZTerminalID() {}
 
-// AZEIDBinary returns a binary representation
-// of the instance as an EID.
-func (id TerminalID) AZEIDBinary() []byte {
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, uint64(id))
-	return buf[:n]
+// AZWire returns a binary representation of the instance.
+//
+// AZWire is required for conformance
+// with azcore.AZWireObject.
+func (id TerminalID) AZWire() []byte {
+	var buf []byte
+	protowire.AppendTag(buf, protowire.Number(1), protowire.VarintType)
+	protowire.AppendVarint(buf, uint64(id))
+	return buf
 }
 
-// AZEIDString returns a string representation
-// of the instance as an EID.
-func (id TerminalID) AZEIDString() string {
-	return id.AZAdjunctEntityIDString()
+// UnmarshalAZWire is required for conformance
+// with azcore.AZWireObject.
+func (id *TerminalID) UnmarshalAZWire(b []byte) error {
+	i, err := TerminalIDFromAZWire(b)
+	if err == nil {
+		*id = i
+	}
+	return err
 }
 
-// AZAdjunctEntityIDString returns a string representation
-// of the instance as an AdjunctEntityID.
-func (id TerminalID) AZAdjunctEntityIDString() string {
+// AZString returns a string representation of the instance.
+func (id TerminalID) AZString() string {
 	return "" + strconv.FormatInt(int64(id), 10)
 }
 
@@ -95,6 +116,18 @@ func (id TerminalID) EqualsTerminalID(
 	other TerminalID,
 ) bool {
 	return id == other
+}
+
+type TerminalIDWireDecodingArgumentError struct{}
+
+var _ errors.ArgumentError = TerminalIDWireDecodingArgumentError{}
+
+func (TerminalIDWireDecodingArgumentError) ArgumentName() string {
+	return ""
+}
+
+func (TerminalIDWireDecodingArgumentError) Error() string {
+	return "TerminalIDWireDecodingArgumentError"
 }
 
 func TerminalIDFromString(s string) (TerminalID, error) {
@@ -302,20 +335,20 @@ func (refKey TerminalRefKey) EqualsTerminalRefKey(
 	return refKey.id == other.id
 }
 
-// RefKeyString returns an encoded representation of this instance.
+// AZWire is required for conformance
+// with azcore.AZWireObject.
+func (refKey TerminalRefKey) AZWire() []byte {
+	return refKey.id.AZWire()
+}
+
+// AZString returns an encoded representation of this instance.
 //
-// RefKeyString is required by azcore.RefKey.
-func (refKey TerminalRefKey) RefKeyString() string {
-	// TODO: refkeystring should be defined in the source as it needs
+// AZString is required for conformance with azcore.RefKey.
+func (refKey TerminalRefKey) AZString() string {
+	// TODO: refkeystring encoding/format should be defined in the source as it needs
 	// to be strictly consistent across implementations.
-	// something like /host1_type-host1_id/host2_type-host2_id/hostn_type-hostn_id/own_type-own_id
-	// or for global adjuncts /own_type-own_id
-	//
-	// note that a ref key might comprise of other ref keys. so, we will have
-	// something like A(B(C(), D()), E()). the default pattern must be able
-	// to accomodate such structure.
-	return "Terminal(" +
-		refKey.id.AZAdjunctEntityIDString() + ")"
+	return "Tx(" +
+		refKey.id.AZString() + ")"
 }
 
 //endregion

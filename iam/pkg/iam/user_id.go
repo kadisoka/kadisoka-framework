@@ -1,7 +1,6 @@
 package iam
 
 import (
-	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/alloyzeus/go-azcore/azcore/eid/integer/textencodings/crockford32"
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
+	protowire "google.golang.org/protobuf/encoding/protowire"
 )
 
 var (
@@ -36,6 +36,21 @@ const UserIDZero = UserID(0)
 // of UserID from its primitive value.
 func UserIDFromPrimitiveValue(v int64) UserID {
 	return UserID(v)
+}
+
+func UserIDFromAZWire(b []byte) (UserID, error) {
+	_, typ, n := protowire.ConsumeTag(b)
+	if n <= 0 {
+		return UserIDZero, UserIDWireDecodingArgumentError{}
+	}
+	if typ != protowire.VarintType {
+		return UserIDZero, UserIDWireDecodingArgumentError{}
+	}
+	e, n := protowire.ConsumeVarint(b)
+	if n <= 0 {
+		return UserIDZero, UserIDWireDecodingArgumentError{}
+	}
+	return UserID(e), nil
 }
 
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
@@ -89,22 +104,29 @@ func (id UserID) EqualsUserID(
 	return id == other
 }
 
-// IDString returns a string representation of this instance.
-func (id UserID) IDString() string {
-	return id.AZEIDString()
+// AZWire returns a binary representation of the instance.
+//
+// AZWire is required for conformance
+// with azcore.AZWireObject.
+func (id UserID) AZWire() []byte {
+	var buf []byte
+	protowire.AppendTag(buf, protowire.Number(1), protowire.VarintType)
+	protowire.AppendVarint(buf, uint64(id))
+	return buf
 }
 
-// AZEIDBinary returns a binary representation
-// of the instance as an EID.
-func (id UserID) AZEIDBinary() []byte {
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, uint64(id))
-	return buf[:n]
+// UnmarshalAZWire is required for conformance
+// with azcore.AZWireObject.
+func (id *UserID) UnmarshalAZWire(b []byte) error {
+	i, err := UserIDFromAZWire(b)
+	if err == nil {
+		*id = i
+	}
+	return err
 }
 
-// AZEIDString returns a string representation
-// of the instance as an EID.
-func (id UserID) AZEIDString() string {
+// AZString returns a string representation of the instance.
+func (id UserID) AZString() string {
 	return "ix-" + crockford32.EncodeInt64(int64(id))
 }
 
@@ -118,6 +140,18 @@ func (id UserID) IsBot() bool {
 	const flags = uint64(0) |
 		(uint64(1) << 61)
 	return (uint64(id) & mask) == flags
+}
+
+type UserIDWireDecodingArgumentError struct{}
+
+var _ errors.ArgumentError = UserIDWireDecodingArgumentError{}
+
+func (UserIDWireDecodingArgumentError) ArgumentName() string {
+	return ""
+}
+
+func (UserIDWireDecodingArgumentError) Error() string {
+	return "UserIDWireDecodingArgumentError"
 }
 
 func UserIDFromString(s string) (UserID, error) {
@@ -372,16 +406,27 @@ func (refKey UserRefKey) EqualsUserRefKey(
 	return other == refKey
 }
 
-// RefKeyString returns an encoded representation of this instance.
+// AZWire is required for conformance
+// with azcore.AZWireObject.
+func (refKey UserRefKey) AZWire() []byte {
+	return UserID(refKey).AZWire()
+}
+
+// UnmarshalAZWire is required for conformance
+// with azcore.AZWireObject.
+func (refKey *UserRefKey) UnmarshalAZWire(b []byte) error {
+	i, err := UserIDFromAZWire(b)
+	if err == nil {
+		*refKey = UserRefKey(i)
+	}
+	return err
+}
+
+// AZString returns an encoded representation of this instance.
 //
-// RefKeyString is required by azcore.RefKey.
-func (refKey UserRefKey) RefKeyString() string {
-	// TODO:
-	// something like /<pluralized type_name>/<id> or
-	// /<type_name><separator><id>
-	//
-	// might need to include version information (actually, use prefix option instead.).
-	return "User(" + UserID(refKey).AZEIDString() + ")"
+// AZString is required for conformance with azcore.RefKey.
+func (refKey UserRefKey) AZString() string {
+	return "User(" + UserID(refKey).AZString() + ")"
 }
 
 //endregion

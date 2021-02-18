@@ -4,9 +4,9 @@ go 1.15
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/alloyzeus/go-azcore v0.0.0-20210217081306-0c04ad4cf69e
+	github.com/alloyzeus/go-azcore v0.0.0-20210218073231-68d9781e8984
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.37.12
+	github.com/aws/aws-sdk-go v1.37.13
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
 	github.com/gabriel-vasile/mimetype v1.1.2
@@ -42,10 +42,11 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/image v0.0.0-20210216034530-4410531fe030 // indirect
-	golang.org/x/sys v0.0.0-20210217090653-ed5674b6da4a // indirect
+	golang.org/x/sys v0.0.0-20210217105451-b926d437f341 // indirect
 	golang.org/x/text v0.3.5
-	google.golang.org/genproto v0.0.0-20210212180131-e7f2df4ecc2d // indirect
+	google.golang.org/genproto v0.0.0-20210217220511-c18582744cc2 // indirect
 	google.golang.org/grpc v1.35.0
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
