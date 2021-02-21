@@ -1,13 +1,13 @@
 package iam
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
 	"sync"
 
 	azcore "github.com/alloyzeus/go-azcore/azcore"
-	"github.com/alloyzeus/go-azcore/azcore/eid/integer/textencodings/crockford32"
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
 	protowire "google.golang.org/protobuf/encoding/protowire"
@@ -24,13 +24,20 @@ var (
 // used to identify an instance of entity User.
 type UserID int64
 
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
 var _ azcore.EID = UserIDZero
 var _ azcore.EntityID = UserIDZero
+var _ azcore.AZWireUnmarshalable = &_UserIDZeroVar
 var _ azcore.UserID = UserIDZero
 
 // UserIDZero is the zero value
 // for UserID.
 const UserIDZero = UserID(0)
+
+// _UserIDZeroVar is used for testing
+// pointer-based interfaces conformance.
+var _UserIDZeroVar = UserIDZero
 
 // UserIDFromPrimitiveValue creates an instance
 // of UserID from its primitive value.
@@ -38,19 +45,23 @@ func UserIDFromPrimitiveValue(v int64) UserID {
 	return UserID(v)
 }
 
-func UserIDFromAZWire(b []byte) (UserID, error) {
+// UserIDFromAZWire creates UserID from
+// its azwire-encoded form.
+func UserIDFromAZWire(b []byte) (id UserID, readLen int, err error) {
 	_, typ, n := protowire.ConsumeTag(b)
 	if n <= 0 {
-		return UserIDZero, UserIDWireDecodingArgumentError{}
+		return UserIDZero, n, UserIDAZWireDecodingArgumentError{}
 	}
+	readLen = n
 	if typ != protowire.VarintType {
-		return UserIDZero, UserIDWireDecodingArgumentError{}
+		return UserIDZero, readLen, UserIDAZWireDecodingArgumentError{}
 	}
 	e, n := protowire.ConsumeVarint(b)
 	if n <= 0 {
-		return UserIDZero, UserIDWireDecodingArgumentError{}
+		return UserIDZero, readLen, UserIDAZWireDecodingArgumentError{}
 	}
-	return UserID(e), nil
+	readLen += n
+	return UserID(e), readLen, nil
 }
 
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
@@ -109,25 +120,29 @@ func (id UserID) EqualsUserID(
 // AZWire is required for conformance
 // with azcore.AZWireObject.
 func (id UserID) AZWire() []byte {
+	return id.AZWireField(1)
+}
+
+// AZWireField encode this instance as azwire with a specified field number.
+//
+// AZWire is required for conformance
+// with azcore.AZWireObject.
+func (id UserID) AZWireField(fieldNum int) []byte {
 	var buf []byte
-	protowire.AppendTag(buf, protowire.Number(1), protowire.VarintType)
-	protowire.AppendVarint(buf, uint64(id))
+	buf = protowire.AppendTag(buf, protowire.Number(fieldNum), protowire.VarintType)
+	buf = protowire.AppendVarint(buf, uint64(id))
 	return buf
 }
 
 // UnmarshalAZWire is required for conformance
-// with azcore.AZWireObject.
-func (id *UserID) UnmarshalAZWire(b []byte) error {
-	i, err := UserIDFromAZWire(b)
+// with azcore.AZWireUnmarshalable.
+func (id *UserID) UnmarshalAZWire(b []byte) (readLen int, err error) {
+	var i UserID
+	i, readLen, err = UserIDFromAZWire(b)
 	if err == nil {
 		*id = i
 	}
-	return err
-}
-
-// AZString returns a string representation of the instance.
-func (id UserID) AZString() string {
-	return "ix-" + crockford32.EncodeInt64(int64(id))
+	return readLen, err
 }
 
 // IsBot returns true if the User instance
@@ -140,6 +155,23 @@ func (id UserID) IsBot() bool {
 	const flags = uint64(0) |
 		(uint64(1) << 61)
 	return (uint64(id) & mask) == flags
+}
+
+type UserIDError interface {
+	error
+	UserIDError()
+}
+
+type UserIDAZWireDecodingArgumentError struct{}
+
+var _ UserIDError = UserIDAZWireDecodingArgumentError{}
+var _ errors.ArgumentError = UserIDAZWireDecodingArgumentError{}
+
+func (UserIDAZWireDecodingArgumentError) UserIDError()         {}
+func (UserIDAZWireDecodingArgumentError) ArgumentName() string { return "" }
+
+func (UserIDAZWireDecodingArgumentError) Error() string {
+	return "UserIDAZWireDecodingArgumentError"
 }
 
 type UserIDWireDecodingArgumentError struct{}
@@ -347,12 +379,17 @@ func userIDV0Decode(s string) (UserID, error) {
 // an instance of entity User system-wide.
 type UserRefKey UserID
 
-// To ensure that it conforms the interfaces
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
 var _ azcore.RefKey = _UserRefKeyZero
 var _ azcore.EntityRefKey = _UserRefKeyZero
+var _ azcore.AZWireUnmarshalable = &_UserRefKeyZeroVar
+var _ azcore.AZISUnmarshalable = &_UserRefKeyZeroVar
 var _ azcore.UserRefKey = _UserRefKeyZero
 
 const _UserRefKeyZero = UserRefKey(UserIDZero)
+
+var _UserRefKeyZeroVar = _UserRefKeyZero
 
 // UserRefKeyZero returns
 // a zero-valued instance of UserRefKey.
@@ -409,24 +446,105 @@ func (refKey UserRefKey) EqualsUserRefKey(
 // AZWire is required for conformance
 // with azcore.AZWireObject.
 func (refKey UserRefKey) AZWire() []byte {
-	return UserID(refKey).AZWire()
+	return refKey.AZWireField(1)
+}
+
+// AZWireField is required for conformance
+// with azcore.AZWireObject.
+func (refKey UserRefKey) AZWireField(fieldNum int) []byte {
+	return UserID(refKey).AZWireField(fieldNum)
+}
+
+// UserRefKeyFromAZWire creates UserRefKey from
+// its azwire-encoded form.
+func UserRefKeyFromAZWire(b []byte) (refKey UserRefKey, readLen int, err error) {
+	var id UserID
+	id, readLen, err = UserIDFromAZWire(b)
+	if err != nil {
+		return UserRefKeyZero(), readLen, UserRefKeyAZWireDecodingArgumentError{}
+	}
+	return UserRefKey(id), readLen, nil
 }
 
 // UnmarshalAZWire is required for conformance
-// with azcore.AZWireObject.
-func (refKey *UserRefKey) UnmarshalAZWire(b []byte) error {
-	i, err := UserIDFromAZWire(b)
+// with azcore.AZWireUnmarshalable.
+func (refKey *UserRefKey) UnmarshalAZWire(b []byte) (readLen int, err error) {
+	var i UserRefKey
+	i, readLen, err = UserRefKeyFromAZWire(b)
 	if err == nil {
-		*refKey = UserRefKey(i)
+		*refKey = i
+	}
+	return readLen, err
+}
+
+const _UserRefKeyAZISPrefix = "KUs0"
+
+// UserRefKeyFromAZIS creates UserRefKey from
+// its AZIS-encoded form.
+func UserRefKeyFromAZIS(s string) (UserRefKey, error) {
+	if !strings.HasPrefix(s, _UserRefKeyAZISPrefix) {
+		return UserRefKeyZero(), UserRefKeyAZISDecodingArgumentError{}
+	}
+	s = strings.TrimPrefix(s, _UserRefKeyAZISPrefix)
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		return UserRefKeyZero(), UserRefKeyAZISDecodingArgumentError{}
+	}
+	refKey, _, err := UserRefKeyFromAZWire(b)
+	if err != nil {
+		return UserRefKeyZero(), UserRefKeyAZISDecodingArgumentError{}
+	}
+	return refKey, nil
+}
+
+// AZIS returns an encoded representation of this instance.
+//
+// AZIS is required for conformance
+// with azcore.RefKey.
+func (refKey UserRefKey) AZIS() string {
+	wire := refKey.AZWire()
+	//TODO: configurable encoding
+	return _UserRefKeyAZISPrefix +
+		hex.EncodeToString(wire)
+}
+
+// UnmarshalAZIS is required for conformance
+// with azcore.AZISUnmarshalable.
+func (refKey *UserRefKey) UnmarshalAZIS(s string) error {
+	r, err := UserRefKeyFromAZIS(s)
+	if err == nil {
+		*refKey = r
 	}
 	return err
 }
 
-// AZString returns an encoded representation of this instance.
-//
-// AZString is required for conformance with azcore.RefKey.
-func (refKey UserRefKey) AZString() string {
-	return "User(" + UserID(refKey).AZString() + ")"
+type UserRefKeyError interface {
+	error
+	UserRefKeyError()
+}
+
+type UserRefKeyAZWireDecodingArgumentError struct{}
+
+var _ UserRefKeyError = UserRefKeyAZWireDecodingArgumentError{}
+var _ errors.ArgumentError = UserRefKeyAZWireDecodingArgumentError{}
+
+func (UserRefKeyAZWireDecodingArgumentError) UserRefKeyError()     {}
+func (UserRefKeyAZWireDecodingArgumentError) ArgumentName() string { return "" }
+
+func (UserRefKeyAZWireDecodingArgumentError) Error() string {
+	return "UserRefKeyAZWireDecodingArgumentError"
+}
+
+type UserRefKeyAZISDecodingArgumentError struct{}
+
+var _ UserRefKeyError = UserRefKeyAZISDecodingArgumentError{}
+var _ errors.ArgumentError = UserRefKeyAZISDecodingArgumentError{}
+
+func (UserRefKeyAZISDecodingArgumentError) UserRefKeyError()     {}
+func (UserRefKeyAZISDecodingArgumentError) ArgumentName() string { return "" }
+
+func (UserRefKeyAZISDecodingArgumentError) Error() string {
+	return "UserRefKeyAZISDecodingArgumentError"
 }
 
 //endregion

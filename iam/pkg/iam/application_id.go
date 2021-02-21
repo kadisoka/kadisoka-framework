@@ -1,17 +1,20 @@
 package iam
 
 import (
+	"encoding/hex"
 	"strconv"
+	"strings"
 
 	azcore "github.com/alloyzeus/go-azcore/azcore"
-	crockford32 "github.com/alloyzeus/go-azcore/azcore/eid/integer/textencodings/crockford32"
 	errors "github.com/alloyzeus/go-azcore/azcore/errors"
 	protowire "google.golang.org/protobuf/encoding/protowire"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azcore.AZCorePackageIsVersion1
+var _ = hex.ErrLength
 var _ = strconv.IntSize
+var _ = strings.Compare
 var _ = protowire.MinValidNumber
 
 // Entity Application.
@@ -24,12 +27,22 @@ var _ = protowire.MinValidNumber
 // used to identify an instance of entity Application.
 type ApplicationID int32
 
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
 var _ azcore.EID = ApplicationIDZero
 var _ azcore.EntityID = ApplicationIDZero
+var _ azcore.AZWireUnmarshalable = &_ApplicationIDZeroVar
+
+// In binary: 0b11111111111111111111111111
+const _ApplicationIDSignificantBitsMask uint32 = 0x3ffffff
 
 // ApplicationIDZero is the zero value
 // for ApplicationID.
 const ApplicationIDZero = ApplicationID(0)
+
+// _ApplicationIDZeroVar is used for testing
+// pointer-based interfaces conformance.
+var _ApplicationIDZeroVar = ApplicationIDZero
 
 // ApplicationIDFromPrimitiveValue creates an instance
 // of ApplicationID from its primitive value.
@@ -37,19 +50,23 @@ func ApplicationIDFromPrimitiveValue(v int32) ApplicationID {
 	return ApplicationID(v)
 }
 
-func ApplicationIDFromAZWire(b []byte) (ApplicationID, error) {
+// ApplicationIDFromAZWire creates ApplicationID from
+// its azwire-encoded form.
+func ApplicationIDFromAZWire(b []byte) (id ApplicationID, readLen int, err error) {
 	_, typ, n := protowire.ConsumeTag(b)
 	if n <= 0 {
-		return ApplicationIDZero, ApplicationIDWireDecodingArgumentError{}
+		return ApplicationIDZero, n, ApplicationIDAZWireDecodingArgumentError{}
 	}
+	readLen = n
 	if typ != protowire.VarintType {
-		return ApplicationIDZero, ApplicationIDWireDecodingArgumentError{}
+		return ApplicationIDZero, readLen, ApplicationIDAZWireDecodingArgumentError{}
 	}
-	e, n := protowire.ConsumeVarint(b)
+	e, n := protowire.ConsumeVarint(b[readLen:])
 	if n <= 0 {
-		return ApplicationIDZero, ApplicationIDWireDecodingArgumentError{}
+		return ApplicationIDZero, readLen, ApplicationIDAZWireDecodingArgumentError{}
 	}
-	return ApplicationID(e), nil
+	readLen += n
+	return ApplicationID(e), readLen, nil
 }
 
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
@@ -69,6 +86,13 @@ func (ApplicationID) AZEntityID() {}
 // IsZero is required as ApplicationID is a value-object.
 func (id ApplicationID) IsZero() bool {
 	return id == ApplicationIDZero
+}
+
+// IsValid returns true if this instance is valid independently as an ID.
+// It doesn't tell whether it refers to a valid instance of Application.
+func (id ApplicationID) IsValid() bool {
+	return int32(id) > 0 &&
+		(uint32(id)&_ApplicationIDSignificantBitsMask) != 0
 }
 
 // Equals is required as ApplicationID is a value-object.
@@ -104,25 +128,29 @@ func (id ApplicationID) EqualsApplicationID(
 // AZWire is required for conformance
 // with azcore.AZWireObject.
 func (id ApplicationID) AZWire() []byte {
+	return id.AZWireField(1)
+}
+
+// AZWireField encode this instance as azwire with a specified field number.
+//
+// AZWire is required for conformance
+// with azcore.AZWireObject.
+func (id ApplicationID) AZWireField(fieldNum int) []byte {
 	var buf []byte
-	protowire.AppendTag(buf, protowire.Number(1), protowire.VarintType)
-	protowire.AppendVarint(buf, uint64(id))
+	buf = protowire.AppendTag(buf, protowire.Number(fieldNum), protowire.VarintType)
+	buf = protowire.AppendVarint(buf, uint64(id))
 	return buf
 }
 
 // UnmarshalAZWire is required for conformance
-// with azcore.AZWireObject.
-func (id *ApplicationID) UnmarshalAZWire(b []byte) error {
-	i, err := ApplicationIDFromAZWire(b)
+// with azcore.AZWireUnmarshalable.
+func (id *ApplicationID) UnmarshalAZWire(b []byte) (readLen int, err error) {
+	var i ApplicationID
+	i, readLen, err = ApplicationIDFromAZWire(b)
 	if err == nil {
 		*id = i
 	}
-	return err
-}
-
-// AZString returns a string representation of the instance.
-func (id ApplicationID) AZString() string {
-	return "ap-" + crockford32.EncodeInt64(int64(id))
+	return readLen, err
 }
 
 // IsFirstParty returns true if the Application instance
@@ -221,16 +249,21 @@ func (id ApplicationID) IsConfidentialAuthorizationUserAgent() bool {
 	return (uint32(id) & mask) == flags
 }
 
-type ApplicationIDWireDecodingArgumentError struct{}
-
-var _ errors.ArgumentError = ApplicationIDWireDecodingArgumentError{}
-
-func (ApplicationIDWireDecodingArgumentError) ArgumentName() string {
-	return ""
+type ApplicationIDError interface {
+	error
+	ApplicationIDError()
 }
 
-func (ApplicationIDWireDecodingArgumentError) Error() string {
-	return "ApplicationIDWireDecodingArgumentError"
+type ApplicationIDAZWireDecodingArgumentError struct{}
+
+var _ ApplicationIDError = ApplicationIDAZWireDecodingArgumentError{}
+var _ errors.ArgumentError = ApplicationIDAZWireDecodingArgumentError{}
+
+func (ApplicationIDAZWireDecodingArgumentError) ApplicationIDError()  {}
+func (ApplicationIDAZWireDecodingArgumentError) ArgumentName() string { return "" }
+
+func (ApplicationIDAZWireDecodingArgumentError) Error() string {
+	return "ApplicationIDAZWireDecodingArgumentError"
 }
 
 //TODO: FromString, (Un)MarshalText, (Un)MarshalJSON
@@ -243,11 +276,16 @@ func (ApplicationIDWireDecodingArgumentError) Error() string {
 // an instance of entity Application system-wide.
 type ApplicationRefKey ApplicationID
 
-// To ensure that it conforms the interfaces
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
 var _ azcore.RefKey = _ApplicationRefKeyZero
 var _ azcore.EntityRefKey = _ApplicationRefKeyZero
+var _ azcore.AZWireUnmarshalable = &_ApplicationRefKeyZeroVar
+var _ azcore.AZISUnmarshalable = &_ApplicationRefKeyZeroVar
 
 const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDZero)
+
+var _ApplicationRefKeyZeroVar = _ApplicationRefKeyZero
 
 // ApplicationRefKeyZero returns
 // a zero-valued instance of ApplicationRefKey.
@@ -264,13 +302,18 @@ func (ApplicationRefKey) AZEntityRefKey() {}
 
 // ID is required for conformance with azcore.RefKey.
 func (refKey ApplicationRefKey) ID() azcore.EID {
-	v := ApplicationID(refKey)
-	return &v
+	return ApplicationID(refKey)
 }
 
 // IsZero is required as ApplicationRefKey is a value-object.
 func (refKey ApplicationRefKey) IsZero() bool {
 	return ApplicationID(refKey) == ApplicationIDZero
+}
+
+// IsValid returns true if this instance is valid independently as a ref-key.
+// It doesn't tell whether it refers to a valid instance of Application.
+func (refKey ApplicationRefKey) IsValid() bool {
+	return ApplicationID(refKey).IsValid()
 }
 
 // Equals is required for conformance with azcore.EntityRefKey.
@@ -300,27 +343,117 @@ func (refKey ApplicationRefKey) EqualsApplicationRefKey(
 // AZWire is required for conformance
 // with azcore.AZWireObject.
 func (refKey ApplicationRefKey) AZWire() []byte {
-	return ApplicationID(refKey).AZWire()
+	return refKey.AZWireField(1)
+}
+
+// AZWireField is required for conformance
+// with azcore.AZWireObject.
+func (refKey ApplicationRefKey) AZWireField(fieldNum int) []byte {
+	return ApplicationID(refKey).AZWireField(fieldNum)
+}
+
+// ApplicationRefKeyFromAZWire creates ApplicationRefKey from
+// its azwire-encoded form.
+func ApplicationRefKeyFromAZWire(b []byte) (refKey ApplicationRefKey, readLen int, err error) {
+	var id ApplicationID
+	id, readLen, err = ApplicationIDFromAZWire(b)
+	if err != nil {
+		return ApplicationRefKeyZero(), readLen, ApplicationRefKeyAZWireDecodingArgumentError{}
+	}
+	return ApplicationRefKey(id), readLen, nil
 }
 
 // UnmarshalAZWire is required for conformance
-// with azcore.AZWireObject.
-func (refKey *ApplicationRefKey) UnmarshalAZWire(b []byte) error {
-	i, err := ApplicationIDFromAZWire(b)
+// with azcore.AZWireUnmarshalable.
+func (refKey *ApplicationRefKey) UnmarshalAZWire(b []byte) (readLen int, err error) {
+	var i ApplicationRefKey
+	i, readLen, err = ApplicationRefKeyFromAZWire(b)
 	if err == nil {
-		*refKey = ApplicationRefKey(i)
+		*refKey = i
+	}
+	return readLen, err
+}
+
+const _ApplicationRefKeyAZISPrefix = "KAp0"
+
+// ApplicationRefKeyFromAZIS creates ApplicationRefKey from
+// its AZIS-encoded form.
+func ApplicationRefKeyFromAZIS(s string) (ApplicationRefKey, error) {
+	if s == "" {
+		return ApplicationRefKeyZero(), nil
+	}
+	if !strings.HasPrefix(s, _ApplicationRefKeyAZISPrefix) {
+		return ApplicationRefKeyZero(), ApplicationRefKeyAZISDecodingArgumentError{}
+	}
+	s = strings.TrimPrefix(s, _ApplicationRefKeyAZISPrefix)
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		return ApplicationRefKeyZero(), ApplicationRefKeyAZISDecodingArgumentError{}
+	}
+	refKey, _, err := ApplicationRefKeyFromAZWire(b)
+	if err != nil {
+		return ApplicationRefKeyZero(), ApplicationRefKeyAZISDecodingArgumentError{}
+	}
+	return refKey, nil
+}
+
+// AZIS returns an encoded representation of this instance. It returns empty
+// if IsValid returned false.
+//
+// AZIS is required for conformance
+// with azcore.RefKey.
+func (refKey ApplicationRefKey) AZIS() string {
+	if !refKey.IsValid() {
+		return ""
+	}
+	wire := refKey.AZWire()
+	//TODO: configurable encoding
+	return _ApplicationRefKeyAZISPrefix +
+		hex.EncodeToString(wire)
+}
+
+// UnmarshalAZIS is required for conformance
+// with azcore.AZISUnmarshalable.
+func (refKey *ApplicationRefKey) UnmarshalAZIS(s string) error {
+	r, err := ApplicationRefKeyFromAZIS(s)
+	if err == nil {
+		*refKey = r
 	}
 	return err
 }
 
-// AZString returns an encoded representation of this instance.
-//
-// AZString is required for conformance with azcore.RefKey.
-func (refKey ApplicationRefKey) AZString() string {
-	return "App(" + ApplicationID(refKey).AZString() + ")"
+type ApplicationRefKeyError interface {
+	error
+	ApplicationRefKeyError()
+}
+
+type ApplicationRefKeyAZWireDecodingArgumentError struct{}
+
+var _ ApplicationRefKeyError = ApplicationRefKeyAZWireDecodingArgumentError{}
+var _ errors.ArgumentError = ApplicationRefKeyAZWireDecodingArgumentError{}
+
+func (ApplicationRefKeyAZWireDecodingArgumentError) ApplicationRefKeyError() {}
+func (ApplicationRefKeyAZWireDecodingArgumentError) ArgumentName() string    { return "" }
+
+func (ApplicationRefKeyAZWireDecodingArgumentError) Error() string {
+	return "ApplicationRefKeyAZWireDecodingArgumentError"
+}
+
+type ApplicationRefKeyAZISDecodingArgumentError struct{}
+
+var _ ApplicationRefKeyError = ApplicationRefKeyAZISDecodingArgumentError{}
+var _ errors.ArgumentError = ApplicationRefKeyAZISDecodingArgumentError{}
+
+func (ApplicationRefKeyAZISDecodingArgumentError) ApplicationRefKeyError() {}
+func (ApplicationRefKeyAZISDecodingArgumentError) ArgumentName() string    { return "" }
+
+func (ApplicationRefKeyAZISDecodingArgumentError) Error() string {
+	return "ApplicationRefKeyAZISDecodingArgumentError"
 }
 
 //endregion
+
+//
 
 // func ApplicationRefKeyFromString(s string) (ApplicationRefKey, error) {
 // 	if s == "" {

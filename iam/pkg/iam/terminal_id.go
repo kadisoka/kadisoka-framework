@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -19,12 +20,19 @@ import (
 // scoped within its host entity(s).
 type TerminalID int64
 
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
 var _ azcore.EID = TerminalIDZero
 var _ azcore.AdjunctEntityID = TerminalIDZero
+var _ azcore.AZWireUnmarshalable = &_TerminalIDZeroVar
 var _ azcore.TerminalID = TerminalIDZero
 
 // TerminalIDZero is the zero value for TerminalID.
 const TerminalIDZero = TerminalID(0)
+
+// _TerminalIDZeroVar is used for testing
+// pointer-based interfaces conformance.
+var _TerminalIDZeroVar = TerminalIDZero
 
 // TerminalIDFromPrimitiveValue creates an instance
 // of TerminalID from its primitive value.
@@ -32,19 +40,21 @@ func TerminalIDFromPrimitiveValue(v int64) TerminalID {
 	return TerminalID(v)
 }
 
-func TerminalIDFromAZWire(b []byte) (TerminalID, error) {
+func TerminalIDFromAZWire(b []byte) (id TerminalID, readLen int, err error) {
 	_, typ, n := protowire.ConsumeTag(b)
 	if n <= 0 {
-		return TerminalIDZero, TerminalIDWireDecodingArgumentError{}
+		return TerminalIDZero, n, TerminalIDAZWireDecodingArgumentError{}
 	}
+	readLen = n
 	if typ != protowire.VarintType {
-		return TerminalIDZero, TerminalIDWireDecodingArgumentError{}
+		return TerminalIDZero, readLen, TerminalIDAZWireDecodingArgumentError{}
 	}
 	e, n := protowire.ConsumeVarint(b)
 	if n <= 0 {
-		return TerminalIDZero, TerminalIDWireDecodingArgumentError{}
+		return TerminalIDZero, readLen, TerminalIDAZWireDecodingArgumentError{}
 	}
-	return TerminalID(e), nil
+	readLen += n
+	return TerminalID(e), readLen, nil
 }
 
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
@@ -69,25 +79,29 @@ func (TerminalID) AZTerminalID() {}
 // AZWire is required for conformance
 // with azcore.AZWireObject.
 func (id TerminalID) AZWire() []byte {
+	return id.AZWireField(1)
+}
+
+// AZWireField encode this instance as azwire with a specified field number.
+//
+// AZWire is required for conformance
+// with azcore.AZWireObject.
+func (id TerminalID) AZWireField(fieldNum int) []byte {
 	var buf []byte
-	protowire.AppendTag(buf, protowire.Number(1), protowire.VarintType)
-	protowire.AppendVarint(buf, uint64(id))
+	buf = protowire.AppendTag(buf, protowire.Number(fieldNum), protowire.VarintType)
+	buf = protowire.AppendVarint(buf, uint64(id))
 	return buf
 }
 
 // UnmarshalAZWire is required for conformance
-// with azcore.AZWireObject.
-func (id *TerminalID) UnmarshalAZWire(b []byte) error {
-	i, err := TerminalIDFromAZWire(b)
+// with azcore.AZWireUnmarshalable.
+func (id *TerminalID) UnmarshalAZWire(b []byte) (readLen int, err error) {
+	var i TerminalID
+	i, readLen, err = TerminalIDFromAZWire(b)
 	if err == nil {
 		*id = i
 	}
-	return err
-}
-
-// AZString returns a string representation of the instance.
-func (id TerminalID) AZString() string {
-	return "" + strconv.FormatInt(int64(id), 10)
+	return readLen, err
 }
 
 // Equals is required as TerminalID is a value-object.
@@ -118,16 +132,16 @@ func (id TerminalID) EqualsTerminalID(
 	return id == other
 }
 
-type TerminalIDWireDecodingArgumentError struct{}
+type TerminalIDAZWireDecodingArgumentError struct{}
 
-var _ errors.ArgumentError = TerminalIDWireDecodingArgumentError{}
+var _ errors.ArgumentError = TerminalIDAZWireDecodingArgumentError{}
 
-func (TerminalIDWireDecodingArgumentError) ArgumentName() string {
+func (TerminalIDAZWireDecodingArgumentError) ArgumentName() string {
 	return ""
 }
 
-func (TerminalIDWireDecodingArgumentError) Error() string {
-	return "TerminalIDWireDecodingArgumentError"
+func (TerminalIDAZWireDecodingArgumentError) Error() string {
+	return "TerminalIDAZWireDecodingArgumentError"
 }
 
 func TerminalIDFromString(s string) (TerminalID, error) {
@@ -274,9 +288,12 @@ func NewTerminalRefKey(
 	}
 }
 
-// To ensure that it conforms the interfaces
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
 var _ azcore.RefKey = _TerminalRefKeyZero
 var _ azcore.AdjunctEntityRefKey = _TerminalRefKeyZero
+var _ azcore.AZWireUnmarshalable = &_TerminalRefKeyZero
+var _ azcore.AZISUnmarshalable = &_TerminalRefKeyZero
 var _ azcore.TerminalRefKey = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
@@ -338,17 +355,127 @@ func (refKey TerminalRefKey) EqualsTerminalRefKey(
 // AZWire is required for conformance
 // with azcore.AZWireObject.
 func (refKey TerminalRefKey) AZWire() []byte {
-	return refKey.id.AZWire()
+	return refKey.AZWireField(1)
 }
 
-// AZString returns an encoded representation of this instance.
+// AZWireField is required for conformance
+// with azcore.AZWireObject.
+func (refKey TerminalRefKey) AZWireField(fieldNum int) []byte {
+	return refKey.id.AZWireField(fieldNum)
+}
+
+// TerminalRefKeyFromAZWire creates TerminalRefKey from
+// its azwire-encoded form.
+func TerminalRefKeyFromAZWire(
+	b []byte,
+) (
+	refKey TerminalRefKey,
+	readLen int,
+	err error,
+) {
+	var readOffset int = 0
+	_, typ, n := protowire.ConsumeTag(b)
+	if n <= 0 {
+		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
+	}
+	readOffset += n
+	if typ != protowire.BytesType {
+		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
+	}
+	_, n = protowire.ConsumeVarint(b[readOffset:])
+	if n <= 0 {
+		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
+	}
+	readOffset += n
+
+	id, fieldLen, err := TerminalIDFromAZWire(b[readOffset:])
+	if err != nil {
+		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
+	}
+	readOffset += fieldLen
+
+	return TerminalRefKey{
+		id: id,
+	}, readOffset, nil
+}
+
+func (refKey *TerminalRefKey) UnmarshalAZWire(b []byte) (readLen int, err error) {
+	var r TerminalRefKey
+	r, readLen, err = TerminalRefKeyFromAZWire(b)
+	if err == nil {
+		*refKey = r
+	}
+	return readLen, err
+}
+
+const _TerminalRefKeyAZISPrefix = "KTx0"
+
+// TerminalRefKeyFromAZIS creates TerminalRefKey from
+// its AZIS-encoded form.
+func TerminalRefKeyFromAZIS(s string) (TerminalRefKey, error) {
+	if !strings.HasPrefix(s, _TerminalRefKeyAZISPrefix) {
+		return TerminalRefKeyZero(), TerminalRefKeyAZISDecodingArgumentError{}
+	}
+	s = strings.TrimPrefix(s, _TerminalRefKeyAZISPrefix)
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		return TerminalRefKeyZero(), TerminalRefKeyAZISDecodingArgumentError{}
+	}
+	refKey, _, err := TerminalRefKeyFromAZWire(b)
+	if err != nil {
+		return TerminalRefKeyZero(), TerminalRefKeyAZISDecodingArgumentError{}
+	}
+	return refKey, nil
+}
+
+// AZIS returns an encoded representation of this instance.
 //
-// AZString is required for conformance with azcore.RefKey.
-func (refKey TerminalRefKey) AZString() string {
-	// TODO: refkeystring encoding/format should be defined in the source as it needs
-	// to be strictly consistent across implementations.
-	return "Tx(" +
-		refKey.id.AZString() + ")"
+// AZIS is required for conformance
+// with azcore.RefKey.
+func (refKey TerminalRefKey) AZIS() string {
+	wire := refKey.AZWire()
+	//TODO: configurable encoding
+	return _TerminalRefKeyAZISPrefix +
+		hex.EncodeToString(wire)
+}
+
+// UnmarshalAZIS is required for conformance
+// with azcore.AZISUnmarshalable.
+func (refKey *TerminalRefKey) UnmarshalAZIS(s string) error {
+	r, err := TerminalRefKeyFromAZIS(s)
+	if err == nil {
+		*refKey = r
+	}
+	return err
+}
+
+type TerminalRefKeyError interface {
+	error
+	TerminalRefKeyError()
+}
+
+type TerminalRefKeyAZWireDecodingArgumentError struct{}
+
+var _ TerminalRefKeyError = TerminalRefKeyAZWireDecodingArgumentError{}
+var _ errors.ArgumentError = TerminalRefKeyAZWireDecodingArgumentError{}
+
+func (TerminalRefKeyAZWireDecodingArgumentError) TerminalRefKeyError() {}
+func (TerminalRefKeyAZWireDecodingArgumentError) ArgumentName() string { return "" }
+
+func (TerminalRefKeyAZWireDecodingArgumentError) Error() string {
+	return "TerminalRefKeyAZWireDecodingArgumentError"
+}
+
+type TerminalRefKeyAZISDecodingArgumentError struct{}
+
+var _ TerminalRefKeyError = TerminalRefKeyAZISDecodingArgumentError{}
+var _ errors.ArgumentError = TerminalRefKeyAZISDecodingArgumentError{}
+
+func (TerminalRefKeyAZISDecodingArgumentError) TerminalRefKeyError() {}
+func (TerminalRefKeyAZISDecodingArgumentError) ArgumentName() string { return "" }
+
+func (TerminalRefKeyAZISDecodingArgumentError) Error() string {
+	return "TerminalRefKeyAZISDecodingArgumentError"
 }
 
 //endregion

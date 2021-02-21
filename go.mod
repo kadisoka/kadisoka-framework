@@ -4,9 +4,9 @@ go 1.15
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/alloyzeus/go-azcore v0.0.0-20210218073231-68d9781e8984
+	github.com/alloyzeus/go-azcore v0.0.0-20210220100702-cc4746012901
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.37.13
+	github.com/aws/aws-sdk-go v1.37.15
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
 	github.com/gabriel-vasile/mimetype v1.1.2
@@ -40,14 +40,21 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/thoas/stats v0.0.0-20190407194641-965cb2de1678
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	golang.org/x/image v0.0.0-20210216034530-4410531fe030 // indirect
-	golang.org/x/sys v0.0.0-20210217105451-b926d437f341 // indirect
+	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
+	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d // indirect
+	golang.org/x/sys v0.0.0-20210220050731-9a76102bfb43 // indirect
 	golang.org/x/text v0.3.5
-	google.golang.org/genproto v0.0.0-20210217220511-c18582744cc2 // indirect
+	google.golang.org/genproto v0.0.0-20210219173056-d891e3cb3b5b // indirect
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+)
+
+replace (
+	// Remove when this is solved: https://github.com/etcd-io/etcd/issues/12650
+	github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.2
+	github.com/pressly/chi => github.com/go-chi/chi v0.0.0
 )
