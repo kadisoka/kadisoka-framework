@@ -33,8 +33,9 @@ var _ azcore.EID = ApplicationIDZero
 var _ azcore.EntityID = ApplicationIDZero
 var _ azcore.AZWireUnmarshalable = &_ApplicationIDZeroVar
 
-// In binary: 0b11111111111111111111111111
-const _ApplicationIDSignificantBitsMask uint32 = 0x3ffffff
+// _ApplicationIDSignificantBitsMask is used to
+// extract significant bits from an instance of ApplicationID.
+const _ApplicationIDSignificantBitsMask uint32 = 0b11_11111111_11111111_11111111
 
 // ApplicationIDZero is the zero value
 // for ApplicationID.
@@ -166,30 +167,24 @@ func (id *ApplicationID) UnmarshalAZWire(b []byte) (readLen int, err error) {
 // First-party applications could be in various forms, e.g.,
 // official mobile app, web app, or system dashboard.
 func (id ApplicationID) IsFirstParty() bool {
-	const mask = uint32(0) |
-		(uint32(1) << 30)
-	const flags = uint32(0) |
-		(uint32(1) << 30)
-	return (uint32(id) & mask) == flags
+	return (uint32(id) &
+		0b1000000_00000000_00000000_00000000) ==
+		0b1000000_00000000_00000000_00000000
 }
 
 // IsService returns true if the Application instance
 // this ID is for is a Service Application.
 //
-// Service application is an application which does not
+// A service application is an application which does not
 // represent user. Note that this is different from, e.g.,
 // bot, where it's a specialization of User; a bot is a User.
 //
-// All service applications are confidential as defined by
-// OAuth 2.0.
+// All service applications are confidential OAuth 2.0
+// clients.
 func (id ApplicationID) IsService() bool {
-	const mask = uint32(0) |
-		(uint32(1) << 29) |
-		(uint32(1) << 28)
-	const flags = uint32(0) |
-		(uint32(0) << 29) |
-		(uint32(1) << 28)
-	return (uint32(id) & mask) == flags
+	return (uint32(id) &
+		0b100000_00000000_00000000_00000000) ==
+		0b0
 }
 
 // IsUserAgent returns true if the Application instance
@@ -198,55 +193,48 @@ func (id ApplicationID) IsService() bool {
 // A user-agent application is an application which represents
 // the user it got authorized by.
 //
-// There are two types of user agent: public and confidential.
-// These types align with OAuth 2.0's.
+// There are two types of user agent based on the flow they use
+// to obtain authorization: public and confidential.
+// These types align with OAuth 2.0 client types.
 func (id ApplicationID) IsUserAgent() bool {
-	const mask = uint32(0) |
-		(uint32(1) << 29)
-	const flags = uint32(0) |
-		(uint32(1) << 29)
-	return (uint32(id) & mask) == flags
+	return (uint32(id) &
+		0b100000_00000000_00000000_00000000) ==
+		0b100000_00000000_00000000_00000000
 }
 
-// IsPublicAuthorizationUserAgent returns true if the Application instance
-// this ID is for is a PublicAuthorizationUserAgent Application.
+// IsUserAgentAuthorizationPublic returns true if the Application instance
+// this ID is for is a UserAgentAuthorizationPublic Application.
 //
-// A direct user-agent application is an application which
-// can be used by users to authenticate themselves to the system.
-// The application will automatically receive authorization upon
-// successful user authentication.
+// A public-authorization user-agent application is an
+// application which can be used by users to authenticate
+// themselves to the system. The application will automatically
+// receive authorization upon successful authentication of
+// the user.
 //
-// A direct user-agent credentials should never be assumed to
-// be secure, i.e., authorized direct user-agent application
-// has no strong identity. Access control checks should be
-// focused on testing the user's claims and less of the
+// A public-authorization user-agent credentials should
+// never be assumed to be secure, i.e., it can not securely
+// authenticate itself. An authorized application of this
+// kind has no strong identity. Access control checks should
+// be focused on testing the user's claims and less of the
 // application's claims.
-func (id ApplicationID) IsPublicAuthorizationUserAgent() bool {
-	const mask = uint32(0) |
-		(uint32(1) << 29) |
-		(uint32(1) << 28)
-	const flags = uint32(0) |
-		(uint32(1) << 29) |
-		(uint32(0) << 28)
-	return (uint32(id) & mask) == flags
+func (id ApplicationID) IsUserAgentAuthorizationPublic() bool {
+	return (uint32(id) &
+		0b110000_00000000_00000000_00000000) ==
+		0b100000_00000000_00000000_00000000
 }
 
-// IsConfidentialAuthorizationUserAgent returns true if the Application instance
-// this ID is for is a ConfidentialAuthorizationUserAgent Application.
+// IsUserAgentAuthorizationConfidential returns true if the Application instance
+// this ID is for is a UserAgentAuthorizationConfidential Application.
 //
-// A confidential user-agent application is a user-agent
-// application which could receive authorization from a
-// consenting user through 3-legged authorization flow. A
-// confidential user-agent can not be used for directly
+// A confidential-authorization user-agent application
+// is a user-agent application which could receive authorization
+// from a consenting user through 3-legged authorization flow.
+// A confidential user-agent can not be used for directly
 // performing user authentication.
-func (id ApplicationID) IsConfidentialAuthorizationUserAgent() bool {
-	const mask = uint32(0) |
-		(uint32(1) << 29) |
-		(uint32(1) << 28)
-	const flags = uint32(0) |
-		(uint32(1) << 29) |
-		(uint32(1) << 28)
-	return (uint32(id) & mask) == flags
+func (id ApplicationID) IsUserAgentAuthorizationConfidential() bool {
+	return (uint32(id) &
+		0b110000_00000000_00000000_00000000) ==
+		0b110000_00000000_00000000_00000000
 }
 
 type ApplicationIDError interface {
