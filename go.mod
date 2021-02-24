@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/alloyzeus/go-azcore v0.0.0-20210223151517-eee085b79c58
+	github.com/alloyzeus/go-azcore v0.0.0-20210224142040-1319b7cb1eb1
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/aws/aws-sdk-go v1.37.17
 	github.com/emicklei/go-restful v2.15.0+incompatible
@@ -29,7 +29,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nyaruka/phonenumbers v1.0.66
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
-	github.com/rez-go/crock32 v0.0.0-20200519153512-7e09d352e310
+	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
 	github.com/rez-go/stev v0.0.0-20200515184012-e0723a6f3c19
 	github.com/richardlehane/crock32 v1.0.1
@@ -42,7 +42,7 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
-	golang.org/x/net v0.0.0-20210222171744-9060382bd457 // indirect
+	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7 // indirect
 	golang.org/x/sys v0.0.0-20210223212115-eede4237b368 // indirect
 	golang.org/x/text v0.3.5
 	google.golang.org/genproto v0.0.0-20210223151946-22b48be4551b // indirect
