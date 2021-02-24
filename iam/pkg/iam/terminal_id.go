@@ -293,7 +293,7 @@ func NewTerminalRefKey(
 var _ azcore.RefKey = _TerminalRefKeyZero
 var _ azcore.AdjunctEntityRefKey = _TerminalRefKeyZero
 var _ azcore.AZWireUnmarshalable = &_TerminalRefKeyZero
-var _ azcore.AZISUnmarshalable = &_TerminalRefKeyZero
+var _ azcore.AZRSUnmarshalable = &_TerminalRefKeyZero
 var _ azcore.TerminalRefKey = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
@@ -408,41 +408,41 @@ func (refKey *TerminalRefKey) UnmarshalAZWire(b []byte) (readLen int, err error)
 	return readLen, err
 }
 
-const _TerminalRefKeyAZISPrefix = "KTx0"
+const _TerminalRefKeyAZRSPrefix = "KTx0"
 
-// TerminalRefKeyFromAZIS creates TerminalRefKey from
-// its AZIS-encoded form.
-func TerminalRefKeyFromAZIS(s string) (TerminalRefKey, error) {
-	if !strings.HasPrefix(s, _TerminalRefKeyAZISPrefix) {
-		return TerminalRefKeyZero(), TerminalRefKeyAZISDecodingArgumentError{}
+// TerminalRefKeyFromAZRS creates TerminalRefKey from
+// its AZRS-encoded form.
+func TerminalRefKeyFromAZRS(s string) (TerminalRefKey, error) {
+	if !strings.HasPrefix(s, _TerminalRefKeyAZRSPrefix) {
+		return TerminalRefKeyZero(), TerminalRefKeyAZRSDecodingArgumentError{}
 	}
-	s = strings.TrimPrefix(s, _TerminalRefKeyAZISPrefix)
+	s = strings.TrimPrefix(s, _TerminalRefKeyAZRSPrefix)
 	b, err := hex.DecodeString(s)
 	if err != nil {
-		return TerminalRefKeyZero(), TerminalRefKeyAZISDecodingArgumentError{}
+		return TerminalRefKeyZero(), TerminalRefKeyAZRSDecodingArgumentError{}
 	}
 	refKey, _, err := TerminalRefKeyFromAZWire(b)
 	if err != nil {
-		return TerminalRefKeyZero(), TerminalRefKeyAZISDecodingArgumentError{}
+		return TerminalRefKeyZero(), TerminalRefKeyAZRSDecodingArgumentError{}
 	}
 	return refKey, nil
 }
 
-// AZIS returns an encoded representation of this instance.
+// AZRS returns an encoded representation of this instance.
 //
-// AZIS is required for conformance
+// AZRS is required for conformance
 // with azcore.RefKey.
-func (refKey TerminalRefKey) AZIS() string {
+func (refKey TerminalRefKey) AZRS() string {
 	wire := refKey.AZWire()
 	//TODO: configurable encoding
-	return _TerminalRefKeyAZISPrefix +
+	return _TerminalRefKeyAZRSPrefix +
 		hex.EncodeToString(wire)
 }
 
-// UnmarshalAZIS is required for conformance
-// with azcore.AZISUnmarshalable.
-func (refKey *TerminalRefKey) UnmarshalAZIS(s string) error {
-	r, err := TerminalRefKeyFromAZIS(s)
+// UnmarshalAZRS is required for conformance
+// with azcore.AZRSUnmarshalable.
+func (refKey *TerminalRefKey) UnmarshalAZRS(s string) error {
+	r, err := TerminalRefKeyFromAZRS(s)
 	if err == nil {
 		*refKey = r
 	}
@@ -466,16 +466,16 @@ func (TerminalRefKeyAZWireDecodingArgumentError) Error() string {
 	return "TerminalRefKeyAZWireDecodingArgumentError"
 }
 
-type TerminalRefKeyAZISDecodingArgumentError struct{}
+type TerminalRefKeyAZRSDecodingArgumentError struct{}
 
-var _ TerminalRefKeyError = TerminalRefKeyAZISDecodingArgumentError{}
-var _ errors.ArgumentError = TerminalRefKeyAZISDecodingArgumentError{}
+var _ TerminalRefKeyError = TerminalRefKeyAZRSDecodingArgumentError{}
+var _ errors.ArgumentError = TerminalRefKeyAZRSDecodingArgumentError{}
 
-func (TerminalRefKeyAZISDecodingArgumentError) TerminalRefKeyError() {}
-func (TerminalRefKeyAZISDecodingArgumentError) ArgumentName() string { return "" }
+func (TerminalRefKeyAZRSDecodingArgumentError) TerminalRefKeyError() {}
+func (TerminalRefKeyAZRSDecodingArgumentError) ArgumentName() string { return "" }
 
-func (TerminalRefKeyAZISDecodingArgumentError) Error() string {
-	return "TerminalRefKeyAZISDecodingArgumentError"
+func (TerminalRefKeyAZRSDecodingArgumentError) Error() string {
+	return "TerminalRefKeyAZRSDecodingArgumentError"
 }
 
 //endregion

@@ -384,7 +384,7 @@ type UserRefKey UserID
 var _ azcore.RefKey = _UserRefKeyZero
 var _ azcore.EntityRefKey = _UserRefKeyZero
 var _ azcore.AZWireUnmarshalable = &_UserRefKeyZeroVar
-var _ azcore.AZISUnmarshalable = &_UserRefKeyZeroVar
+var _ azcore.AZRSUnmarshalable = &_UserRefKeyZeroVar
 var _ azcore.UserRefKey = _UserRefKeyZero
 
 const _UserRefKeyZero = UserRefKey(UserIDZero)
@@ -477,41 +477,41 @@ func (refKey *UserRefKey) UnmarshalAZWire(b []byte) (readLen int, err error) {
 	return readLen, err
 }
 
-const _UserRefKeyAZISPrefix = "KUs0"
+const _UserRefKeyAZRSPrefix = "KUs0"
 
-// UserRefKeyFromAZIS creates UserRefKey from
-// its AZIS-encoded form.
-func UserRefKeyFromAZIS(s string) (UserRefKey, error) {
-	if !strings.HasPrefix(s, _UserRefKeyAZISPrefix) {
-		return UserRefKeyZero(), UserRefKeyAZISDecodingArgumentError{}
+// UserRefKeyFromAZRS creates UserRefKey from
+// its AZRS-encoded form.
+func UserRefKeyFromAZRS(s string) (UserRefKey, error) {
+	if !strings.HasPrefix(s, _UserRefKeyAZRSPrefix) {
+		return UserRefKeyZero(), UserRefKeyAZRSDecodingArgumentError{}
 	}
-	s = strings.TrimPrefix(s, _UserRefKeyAZISPrefix)
+	s = strings.TrimPrefix(s, _UserRefKeyAZRSPrefix)
 	b, err := hex.DecodeString(s)
 	if err != nil {
-		return UserRefKeyZero(), UserRefKeyAZISDecodingArgumentError{}
+		return UserRefKeyZero(), UserRefKeyAZRSDecodingArgumentError{}
 	}
 	refKey, _, err := UserRefKeyFromAZWire(b)
 	if err != nil {
-		return UserRefKeyZero(), UserRefKeyAZISDecodingArgumentError{}
+		return UserRefKeyZero(), UserRefKeyAZRSDecodingArgumentError{}
 	}
 	return refKey, nil
 }
 
-// AZIS returns an encoded representation of this instance.
+// AZRS returns an encoded representation of this instance.
 //
-// AZIS is required for conformance
+// AZRS is required for conformance
 // with azcore.RefKey.
-func (refKey UserRefKey) AZIS() string {
+func (refKey UserRefKey) AZRS() string {
 	wire := refKey.AZWire()
 	//TODO: configurable encoding
-	return _UserRefKeyAZISPrefix +
+	return _UserRefKeyAZRSPrefix +
 		hex.EncodeToString(wire)
 }
 
-// UnmarshalAZIS is required for conformance
-// with azcore.AZISUnmarshalable.
-func (refKey *UserRefKey) UnmarshalAZIS(s string) error {
-	r, err := UserRefKeyFromAZIS(s)
+// UnmarshalAZRS is required for conformance
+// with azcore.AZRSUnmarshalable.
+func (refKey *UserRefKey) UnmarshalAZRS(s string) error {
+	r, err := UserRefKeyFromAZRS(s)
 	if err == nil {
 		*refKey = r
 	}
@@ -535,16 +535,16 @@ func (UserRefKeyAZWireDecodingArgumentError) Error() string {
 	return "UserRefKeyAZWireDecodingArgumentError"
 }
 
-type UserRefKeyAZISDecodingArgumentError struct{}
+type UserRefKeyAZRSDecodingArgumentError struct{}
 
-var _ UserRefKeyError = UserRefKeyAZISDecodingArgumentError{}
-var _ errors.ArgumentError = UserRefKeyAZISDecodingArgumentError{}
+var _ UserRefKeyError = UserRefKeyAZRSDecodingArgumentError{}
+var _ errors.ArgumentError = UserRefKeyAZRSDecodingArgumentError{}
 
-func (UserRefKeyAZISDecodingArgumentError) UserRefKeyError()     {}
-func (UserRefKeyAZISDecodingArgumentError) ArgumentName() string { return "" }
+func (UserRefKeyAZRSDecodingArgumentError) UserRefKeyError()     {}
+func (UserRefKeyAZRSDecodingArgumentError) ArgumentName() string { return "" }
 
-func (UserRefKeyAZISDecodingArgumentError) Error() string {
-	return "UserRefKeyAZISDecodingArgumentError"
+func (UserRefKeyAZRSDecodingArgumentError) Error() string {
+	return "UserRefKeyAZRSDecodingArgumentError"
 }
 
 //endregion

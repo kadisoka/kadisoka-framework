@@ -1,7 +1,6 @@
 package iam
 
 import (
-	"encoding/hex"
 	"strconv"
 	"strings"
 
@@ -12,7 +11,6 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azcore.AZCorePackageIsVersion1
-var _ = hex.ErrLength
 var _ = strconv.IntSize
 var _ = strings.Compare
 var _ = protowire.MinValidNumber
@@ -269,7 +267,7 @@ type ApplicationRefKey ApplicationID
 var _ azcore.RefKey = _ApplicationRefKeyZero
 var _ azcore.EntityRefKey = _ApplicationRefKeyZero
 var _ azcore.AZWireUnmarshalable = &_ApplicationRefKeyZeroVar
-var _ azcore.AZISUnmarshalable = &_ApplicationRefKeyZeroVar
+var _ azcore.AZRSUnmarshalable = &_ApplicationRefKeyZeroVar
 
 const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDZero)
 
@@ -362,54 +360,76 @@ func (refKey *ApplicationRefKey) UnmarshalAZWire(b []byte) (readLen int, err err
 	return readLen, err
 }
 
-const _ApplicationRefKeyAZISPrefix = "KAp0"
+const _ApplicationRefKeyAZRSPrefix = "KAp0"
 
-// ApplicationRefKeyFromAZIS creates ApplicationRefKey from
-// its AZIS-encoded form.
-func ApplicationRefKeyFromAZIS(s string) (ApplicationRefKey, error) {
+// ApplicationRefKeyFromAZRS creates ApplicationRefKey from
+// its AZRS-encoded form.
+func ApplicationRefKeyFromAZRS(s string) (ApplicationRefKey, error) {
 	if s == "" {
 		return ApplicationRefKeyZero(), nil
 	}
-	if !strings.HasPrefix(s, _ApplicationRefKeyAZISPrefix) {
-		return ApplicationRefKeyZero(), ApplicationRefKeyAZISDecodingArgumentError{}
+	if !strings.HasPrefix(s, _ApplicationRefKeyAZRSPrefix) {
+		return ApplicationRefKeyZero(), ApplicationRefKeyAZRSDecodingArgumentError{}
 	}
-	s = strings.TrimPrefix(s, _ApplicationRefKeyAZISPrefix)
-	b, err := hex.DecodeString(s)
+	s = strings.TrimPrefix(s, _ApplicationRefKeyAZRSPrefix)
+	b, err := azcore.AZRSDecode(s)
 	if err != nil {
-		return ApplicationRefKeyZero(), ApplicationRefKeyAZISDecodingArgumentError{}
+		return ApplicationRefKeyZero(), ApplicationRefKeyAZRSDecodingArgumentError{}
 	}
 	refKey, _, err := ApplicationRefKeyFromAZWire(b)
 	if err != nil {
-		return ApplicationRefKeyZero(), ApplicationRefKeyAZISDecodingArgumentError{}
+		return ApplicationRefKeyZero(), ApplicationRefKeyAZRSDecodingArgumentError{}
 	}
 	return refKey, nil
 }
 
-// AZIS returns an encoded representation of this instance. It returns empty
+// AZRS returns an encoded representation of this instance. It returns empty
 // if IsValid returned false.
 //
-// AZIS is required for conformance
+// AZRS is required for conformance
 // with azcore.RefKey.
-func (refKey ApplicationRefKey) AZIS() string {
+func (refKey ApplicationRefKey) AZRS() string {
 	if !refKey.IsValid() {
 		return ""
 	}
 	wire := refKey.AZWire()
 	//TODO: configurable encoding
-	return _ApplicationRefKeyAZISPrefix +
-		hex.EncodeToString(wire)
+	return _ApplicationRefKeyAZRSPrefix +
+		azcore.AZRSEncode(wire)
 }
 
-// UnmarshalAZIS is required for conformance
-// with azcore.AZISUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZIS(s string) error {
-	r, err := ApplicationRefKeyFromAZIS(s)
+// UnmarshalAZRS is required for conformance
+// with azcore.AZRSUnmarshalable.
+func (refKey *ApplicationRefKey) UnmarshalAZRS(s string) error {
+	r, err := ApplicationRefKeyFromAZRS(s)
 	if err == nil {
 		*refKey = r
 	}
 	return err
 }
 
+// MarshalJSON makes this type JSON-marshalable.
+func (refKey ApplicationRefKey) MarshalJSON() ([]byte, error) {
+	// We assume that there's no symbols in AZRS
+	return []byte("\"" + refKey.AZRS() + "\""), nil
+}
+
+// UnmarshalJSON parses a JSON value.
+func (refKey *ApplicationRefKey) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	if s == "" {
+		*refKey = ApplicationRefKeyZero()
+		return nil
+	}
+	i, err := ApplicationRefKeyFromAZRS(s)
+	if err == nil {
+		*refKey = i
+	}
+	return err
+}
+
+// ApplicationRefKeyError defines an interface for all
+// ApplicationRefKey-related errors.
 type ApplicationRefKeyError interface {
 	error
 	ApplicationRefKeyError()
@@ -427,16 +447,16 @@ func (ApplicationRefKeyAZWireDecodingArgumentError) Error() string {
 	return "ApplicationRefKeyAZWireDecodingArgumentError"
 }
 
-type ApplicationRefKeyAZISDecodingArgumentError struct{}
+type ApplicationRefKeyAZRSDecodingArgumentError struct{}
 
-var _ ApplicationRefKeyError = ApplicationRefKeyAZISDecodingArgumentError{}
-var _ errors.ArgumentError = ApplicationRefKeyAZISDecodingArgumentError{}
+var _ ApplicationRefKeyError = ApplicationRefKeyAZRSDecodingArgumentError{}
+var _ errors.ArgumentError = ApplicationRefKeyAZRSDecodingArgumentError{}
 
-func (ApplicationRefKeyAZISDecodingArgumentError) ApplicationRefKeyError() {}
-func (ApplicationRefKeyAZISDecodingArgumentError) ArgumentName() string    { return "" }
+func (ApplicationRefKeyAZRSDecodingArgumentError) ApplicationRefKeyError() {}
+func (ApplicationRefKeyAZRSDecodingArgumentError) ArgumentName() string    { return "" }
 
-func (ApplicationRefKeyAZISDecodingArgumentError) Error() string {
-	return "ApplicationRefKeyAZISDecodingArgumentError"
+func (ApplicationRefKeyAZRSDecodingArgumentError) Error() string {
+	return "ApplicationRefKeyAZRSDecodingArgumentError"
 }
 
 //endregion
