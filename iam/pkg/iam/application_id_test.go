@@ -25,19 +25,28 @@ func TestApplicationIDLimits(t *testing.T) {
 	assert.Equal(t, true, ApplicationID(0x01ffffff).IsValid())
 }
 
-func TestApplicationRefKeyAZRSEncoding(t *testing.T) {
-	assert.Equal(t, "", _ApplicationRefKeyZero.AZRS())
-	assert.Equal(t, "KAp0201", ApplicationRefKey(1).AZRS())
-	assert.Equal(t, "KAp0ht07", ApplicationRefKey(1000).AZRS())
-	assert.Equal(t, "KAp0hrg9", ApplicationRefKey(1250).AZRS())
-	assert.Equal(t, "KAp08g6081007", ApplicationRefKey(0x70000001).AZRS())
-	assert.Equal(t, "KAp08t2j81007", ApplicationRefKey(0x70001250).AZRS())
-	assert.Equal(t, "KAp08rq389007", ApplicationRefKey(0x70012345).AZRS())
-	assert.Equal(t, "KAp08z2p93007", ApplicationRefKey(0x70045678).AZRS())
+func TestApplicationRefKeyAZERTextEncoding(t *testing.T) {
+	assert.Equal(t, "", _ApplicationRefKeyZero.AZERText())
+	assert.Equal(t, "KAp02c000001", ApplicationRefKey(1).AZERText())
+	assert.Equal(t, "KAp02c000002", ApplicationRefKey(2).AZERText())
+	assert.Equal(t, "KAp02c000003", ApplicationRefKey(3).AZERText())
+	assert.Equal(t, "KAp02c000004", ApplicationRefKey(4).AZERText())
+	assert.Equal(t, "KAp02c000005", ApplicationRefKey(5).AZERText())
+	assert.Equal(t, "KAp02c0000z8", ApplicationRefKey(1000).AZERText())
+	assert.Equal(t, "KAp02c0000z9", ApplicationRefKey(1001).AZERText())
+	assert.Equal(t, "KAp02c0000za", ApplicationRefKey(1002).AZERText())
+	assert.Equal(t, "KAp02c0000zb", ApplicationRefKey(1003).AZERText())
+	assert.Equal(t, "KAp02c0000zc", ApplicationRefKey(1004).AZERText())
+	assert.Equal(t, "KAp02c0001ym", ApplicationRefKey(2004).AZERText())
+	assert.Equal(t, "KAp02c000172", ApplicationRefKey(1250).AZERText())
+	assert.Equal(t, "KAp02dr00001", ApplicationRefKey(0x70000001).AZERText())
+	assert.Equal(t, "KAp02dr004jg", ApplicationRefKey(0x70001250).AZERText())
+	assert.Equal(t, "KAp02dr028t5", ApplicationRefKey(0x70012345).AZERText())
+	assert.Equal(t, "KAp02dr08nkr", ApplicationRefKey(0x70045678).AZERText())
 }
 
-func TestApplicationRefKeyAZRSDecodingEmpty(t *testing.T) {
-	refKey, err := ApplicationRefKeyFromAZRS("")
+func TestApplicationRefKeyAZERTextDecodingEmpty(t *testing.T) {
+	refKey, err := ApplicationRefKeyFromAZERText("")
 	assert.Nil(t, err)
 	assert.Equal(t, _ApplicationRefKeyZero, refKey)
 	assert.Equal(t, true, refKey.Equal(_ApplicationRefKeyZero))
@@ -46,8 +55,8 @@ func TestApplicationRefKeyAZRSDecodingEmpty(t *testing.T) {
 	assert.Equal(t, true, refKey.EqualsApplicationRefKey(_ApplicationRefKeyZero))
 }
 
-func TestApplicationRefKeyAZRSDecodingValid(t *testing.T) {
-	refKey, err := ApplicationRefKeyFromAZRS("KAp0ht07")
+func TestApplicationRefKeyAZERTextDecodingValid(t *testing.T) {
+	refKey, err := ApplicationRefKeyFromAZERText("KAp02c0000z8")
 	assert.Nil(t, err)
 	assert.Equal(t, ApplicationRefKey(1000), refKey)
 	assert.Equal(t, false, refKey.Equal(_ApplicationRefKeyZero))
@@ -67,12 +76,12 @@ func TestApplicationRefKeyJSONEncodingValid(t *testing.T) {
 	refKey := ApplicationRefKey(0x70012345)
 	b, err := json.Marshal(&refKey)
 	assert.Nil(t, err)
-	assert.Equal(t, `"KAp08rq389007"`, string(b))
+	assert.Equal(t, `"KAp02dr028t5"`, string(b))
 }
 
 func TestApplicationRefKeyJSONDecodingValid(t *testing.T) {
 	var refKey ApplicationRefKey
-	err := json.Unmarshal([]byte(`"KAp08rq389007"`), &refKey)
+	err := json.Unmarshal([]byte(`"KAp02dr028t5"`), &refKey)
 	assert.Nil(t, err)
 	assert.Equal(t, true, refKey.Equals(ApplicationRefKey(0x70012345)))
 }

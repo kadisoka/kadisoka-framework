@@ -91,7 +91,8 @@ func (svc *Service) PutObject(
 	targetKey string, contentSource io.Reader,
 ) (finalURL string, err error) {
 	_, err = svc.minioClient.
-		PutObject(svc.bucketName, targetKey, contentSource, -1, minio.PutObjectOptions{})
+		PutObject(svc.bucketName, targetKey, contentSource, -1,
+			minio.PutObjectOptions{})
 	if err != nil {
 		return "", errors.Wrap("upload", err)
 	}

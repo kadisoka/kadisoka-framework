@@ -1,19 +1,23 @@
 package iam
 
 import (
-	"strconv"
+	"encoding/binary"
 	"strings"
 
 	azcore "github.com/alloyzeus/go-azcore/azcore"
+	azer "github.com/alloyzeus/go-azcore/azcore/azer"
 	errors "github.com/alloyzeus/go-azcore/azcore/errors"
-	protowire "google.golang.org/protobuf/encoding/protowire"
 )
 
-// Reference imports to suppress errors if they are not otherwise used.
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the azcore package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// azcore package needs to be updated.
 var _ = azcore.AZCorePackageIsVersion1
-var _ = strconv.IntSize
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ = azer.BinDataTypeUnspecified
 var _ = strings.Compare
-var _ = protowire.MinValidNumber
 
 // Entity Application.
 //
@@ -29,7 +33,7 @@ type ApplicationID int32
 // there's a bug in the generator.
 var _ azcore.EID = ApplicationIDZero
 var _ azcore.EntityID = ApplicationIDZero
-var _ azcore.AZWireUnmarshalable = &_ApplicationIDZeroVar
+var _ azer.BinFieldUnmarshalable = &_ApplicationIDZeroVar
 
 // _ApplicationIDSignificantBitsMask is used to
 // extract significant bits from an instance of ApplicationID.
@@ -49,23 +53,17 @@ func ApplicationIDFromPrimitiveValue(v int32) ApplicationID {
 	return ApplicationID(v)
 }
 
-// ApplicationIDFromAZWire creates ApplicationID from
-// its azwire-encoded form.
-func ApplicationIDFromAZWire(b []byte) (id ApplicationID, readLen int, err error) {
-	_, typ, n := protowire.ConsumeTag(b)
-	if n <= 0 {
-		return ApplicationIDZero, n, ApplicationIDAZWireDecodingArgumentError{}
+// ApplicationIDFromAZERBinField creates ApplicationID from
+// its azer-bin-field form.
+func ApplicationIDFromAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (id ApplicationID, readLen int, err error) {
+	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt32 {
+		return ApplicationID(0), 0,
+			errors.ArgMsg("typeHint", "unsupported")
 	}
-	readLen = n
-	if typ != protowire.VarintType {
-		return ApplicationIDZero, readLen, ApplicationIDAZWireDecodingArgumentError{}
-	}
-	e, n := protowire.ConsumeVarint(b[readLen:])
-	if n <= 0 {
-		return ApplicationIDZero, readLen, ApplicationIDAZWireDecodingArgumentError{}
-	}
-	readLen += n
-	return ApplicationID(e), readLen, nil
+	i := binary.BigEndian.Uint32(b)
+	return ApplicationID(i), 4, nil
 }
 
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
@@ -122,30 +120,20 @@ func (id ApplicationID) EqualsApplicationID(
 	return id == other
 }
 
-// AZWire returns a binary representation of the instance.
-//
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (id ApplicationID) AZWire() []byte {
-	return id.AZWireField(1)
+// AZERBinField is required for conformance
+// with azcore.EID.
+func (id ApplicationID) AZERBinField() ([]byte, azer.BinDataType) {
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b, uint32(id))
+	return b, azer.BinDataTypeInt32
 }
 
-// AZWireField encode this instance as azwire with a specified field number.
-//
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (id ApplicationID) AZWireField(fieldNum int) []byte {
-	var buf []byte
-	buf = protowire.AppendTag(buf, protowire.Number(fieldNum), protowire.VarintType)
-	buf = protowire.AppendVarint(buf, uint64(id))
-	return buf
-}
-
-// UnmarshalAZWire is required for conformance
-// with azcore.AZWireUnmarshalable.
-func (id *ApplicationID) UnmarshalAZWire(b []byte) (readLen int, err error) {
-	var i ApplicationID
-	i, readLen, err = ApplicationIDFromAZWire(b)
+// UnmarshalAZERBinField is required for conformance
+// with azer.BinFieldUnmarshalable.
+func (id *ApplicationID) UnmarshalAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := ApplicationIDFromAZERBinField(b, typeHint)
 	if err == nil {
 		*id = i
 	}
@@ -156,11 +144,12 @@ func (id *ApplicationID) UnmarshalAZWire(b []byte) (readLen int, err error) {
 // this ID is for is a FirstParty Application.
 //
 // FirstParty indicates that the application is a first-party
-// application, i.e., an application that we official support.
+// application, i.e., the application was provided by the realm.
 //
 // First-party applications, in contrast to third party
 // applications, are those of official applications, officially
-// supported applications, or internal-use only applications.
+// supported public applications, and internal-use only
+// applications.
 //
 // First-party applications could be in various forms, e.g.,
 // official mobile app, web app, or system dashboard.
@@ -178,7 +167,7 @@ func (id ApplicationID) IsFirstParty() bool {
 // bot, where it's a specialization of User; a bot is a User.
 //
 // All service applications are confidential OAuth 2.0
-// clients.
+// clients (RFC6749 section 2.1).
 func (id ApplicationID) IsService() bool {
 	return (uint32(id) &
 		0b100000_00000000_00000000_00000000) ==
@@ -193,7 +182,8 @@ func (id ApplicationID) IsService() bool {
 //
 // There are two types of user agent based on the flow they use
 // to obtain authorization: public and confidential.
-// These types align with OAuth 2.0 client types.
+// These types align with OAuth 2.0 client types (RFC6749
+// section 2.1).
 func (id ApplicationID) IsUserAgent() bool {
 	return (uint32(id) &
 		0b100000_00000000_00000000_00000000) ==
@@ -240,18 +230,6 @@ type ApplicationIDError interface {
 	ApplicationIDError()
 }
 
-type ApplicationIDAZWireDecodingArgumentError struct{}
-
-var _ ApplicationIDError = ApplicationIDAZWireDecodingArgumentError{}
-var _ errors.ArgumentError = ApplicationIDAZWireDecodingArgumentError{}
-
-func (ApplicationIDAZWireDecodingArgumentError) ApplicationIDError()  {}
-func (ApplicationIDAZWireDecodingArgumentError) ArgumentName() string { return "" }
-
-func (ApplicationIDAZWireDecodingArgumentError) Error() string {
-	return "ApplicationIDAZWireDecodingArgumentError"
-}
-
 //TODO: FromString, (Un)MarshalText, (Un)MarshalJSON
 
 //endregion
@@ -266,8 +244,6 @@ type ApplicationRefKey ApplicationID
 // there's a bug in the generator.
 var _ azcore.RefKey = _ApplicationRefKeyZero
 var _ azcore.EntityRefKey = _ApplicationRefKeyZero
-var _ azcore.AZWireUnmarshalable = &_ApplicationRefKeyZeroVar
-var _ azcore.AZRSUnmarshalable = &_ApplicationRefKeyZeroVar
 
 const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDZero)
 
@@ -326,82 +302,110 @@ func (refKey ApplicationRefKey) EqualsApplicationRefKey(
 	return other == refKey
 }
 
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (refKey ApplicationRefKey) AZWire() []byte {
-	return refKey.AZWireField(1)
+func (refKey ApplicationRefKey) AZERBin() []byte {
+	b := make([]byte, 4+1)
+	b[0] = azer.BinDataTypeInt32.Byte()
+	binary.BigEndian.PutUint32(b[1:], uint32(refKey))
+	return b
 }
 
-// AZWireField is required for conformance
-// with azcore.AZWireObject.
-func (refKey ApplicationRefKey) AZWireField(fieldNum int) []byte {
-	return ApplicationID(refKey).AZWireField(fieldNum)
-}
-
-// ApplicationRefKeyFromAZWire creates ApplicationRefKey from
-// its azwire-encoded form.
-func ApplicationRefKeyFromAZWire(b []byte) (refKey ApplicationRefKey, readLen int, err error) {
-	var id ApplicationID
-	id, readLen, err = ApplicationIDFromAZWire(b)
+func ApplicationRefKeyFromAZERBin(b []byte) (refKey ApplicationRefKey, readLen int, err error) {
+	typ, err := azer.BinDataTypeFromByte(b[0])
 	if err != nil {
-		return ApplicationRefKeyZero(), readLen, ApplicationRefKeyAZWireDecodingArgumentError{}
+		return _ApplicationRefKeyZero, 0,
+			errors.ArgWrap("", "type parsing", err)
 	}
-	return ApplicationRefKey(id), readLen, nil
+	if typ != azer.BinDataTypeInt32 {
+		return _ApplicationRefKeyZero, 0,
+			errors.Arg("", errors.EntMsg("type", "unsupported"))
+	}
+
+	i, readLen, err := ApplicationRefKeyFromAZERBinField(b[1:], typ)
+	if err != nil {
+		return _ApplicationRefKeyZero, 0,
+			errors.ArgWrap("", "id data parsing", err)
+	}
+
+	return ApplicationRefKey(i), 1 + readLen, nil
 }
 
-// UnmarshalAZWire is required for conformance
-// with azcore.AZWireUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZWire(b []byte) (readLen int, err error) {
-	var i ApplicationRefKey
-	i, readLen, err = ApplicationRefKeyFromAZWire(b)
+// UnmarshalAZERBin is required for conformance
+// with azcore.BinFieldUnmarshalable.
+func (refKey *ApplicationRefKey) UnmarshalAZERBin(b []byte) (readLen int, err error) {
+	i, readLen, err := ApplicationRefKeyFromAZERBin(b)
 	if err == nil {
 		*refKey = i
 	}
 	return readLen, err
 }
 
-const _ApplicationRefKeyAZRSPrefix = "KAp0"
+func (refKey ApplicationRefKey) AZERBinField() ([]byte, azer.BinDataType) {
+	return ApplicationID(refKey).AZERBinField()
+}
 
-// ApplicationRefKeyFromAZRS creates ApplicationRefKey from
-// its AZRS-encoded form.
-func ApplicationRefKeyFromAZRS(s string) (ApplicationRefKey, error) {
+func ApplicationRefKeyFromAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (refKey ApplicationRefKey, readLen int, err error) {
+	id, n, err := ApplicationIDFromAZERBinField(b, typeHint)
+	if err != nil {
+		return _ApplicationRefKeyZero, n, err
+	}
+	return ApplicationRefKey(id), n, nil
+}
+
+// UnmarshalAZERBinField is required for conformance
+// with azcore.BinFieldUnmarshalable.
+func (refKey *ApplicationRefKey) UnmarshalAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := ApplicationRefKeyFromAZERBinField(b, typeHint)
+	if err == nil {
+		*refKey = i
+	}
+	return readLen, err
+}
+
+const _ApplicationRefKeyAZERTextPrefix = "KAp0"
+
+// AZERText is required for conformance
+// with azcore.RefKey.
+func (refKey ApplicationRefKey) AZERText() string {
+	if !refKey.IsValid() {
+		return ""
+	}
+
+	return _ApplicationRefKeyAZERTextPrefix +
+		azer.TextEncode(refKey.AZERBin())
+}
+
+// ApplicationRefKeyFromAZERText creates a new instance of
+// ApplicationRefKey from its azer-text form.
+func ApplicationRefKeyFromAZERText(s string) (ApplicationRefKey, error) {
 	if s == "" {
 		return ApplicationRefKeyZero(), nil
 	}
-	if !strings.HasPrefix(s, _ApplicationRefKeyAZRSPrefix) {
-		return ApplicationRefKeyZero(), ApplicationRefKeyAZRSDecodingArgumentError{}
+	if !strings.HasPrefix(s, _ApplicationRefKeyAZERTextPrefix) {
+		return ApplicationRefKeyZero(),
+			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
 	}
-	s = strings.TrimPrefix(s, _ApplicationRefKeyAZRSPrefix)
-	b, err := azcore.AZRSDecode(s)
+	s = strings.TrimPrefix(s, _ApplicationRefKeyAZERTextPrefix)
+	b, err := azer.TextDecode(s)
 	if err != nil {
-		return ApplicationRefKeyZero(), ApplicationRefKeyAZRSDecodingArgumentError{}
+		return ApplicationRefKeyZero(),
+			errors.ArgWrap("", "data parsing", err)
 	}
-	refKey, _, err := ApplicationRefKeyFromAZWire(b)
+	refKey, _, err := ApplicationRefKeyFromAZERBin(b)
 	if err != nil {
-		return ApplicationRefKeyZero(), ApplicationRefKeyAZRSDecodingArgumentError{}
+		return ApplicationRefKeyZero(),
+			errors.ArgWrap("", "data decoding", err)
 	}
 	return refKey, nil
 }
 
-// AZRS returns an encoded representation of this instance. It returns empty
-// if IsValid returned false.
-//
-// AZRS is required for conformance
-// with azcore.RefKey.
-func (refKey ApplicationRefKey) AZRS() string {
-	if !refKey.IsValid() {
-		return ""
-	}
-	wire := refKey.AZWire()
-	//TODO: configurable encoding
-	return _ApplicationRefKeyAZRSPrefix +
-		azcore.AZRSEncode(wire)
-}
-
-// UnmarshalAZRS is required for conformance
-// with azcore.AZRSUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZRS(s string) error {
-	r, err := ApplicationRefKeyFromAZRS(s)
+// UnmarshalAZERText is required for conformance
+// with azer.TextUnmarshalable.
+func (refKey *ApplicationRefKey) UnmarshalAZERText(s string) error {
+	r, err := ApplicationRefKeyFromAZERText(s)
 	if err == nil {
 		*refKey = r
 	}
@@ -410,8 +414,8 @@ func (refKey *ApplicationRefKey) UnmarshalAZRS(s string) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey ApplicationRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in AZRS
-	return []byte("\"" + refKey.AZRS() + "\""), nil
+	// We assume that there's no symbols in azer-text
+	return []byte("\"" + refKey.AZERText() + "\""), nil
 }
 
 // UnmarshalJSON parses a JSON value.
@@ -421,7 +425,7 @@ func (refKey *ApplicationRefKey) UnmarshalJSON(b []byte) error {
 		*refKey = ApplicationRefKeyZero()
 		return nil
 	}
-	i, err := ApplicationRefKeyFromAZRS(s)
+	i, err := ApplicationRefKeyFromAZERText(s)
 	if err == nil {
 		*refKey = i
 	}
@@ -433,30 +437,6 @@ func (refKey *ApplicationRefKey) UnmarshalJSON(b []byte) error {
 type ApplicationRefKeyError interface {
 	error
 	ApplicationRefKeyError()
-}
-
-type ApplicationRefKeyAZWireDecodingArgumentError struct{}
-
-var _ ApplicationRefKeyError = ApplicationRefKeyAZWireDecodingArgumentError{}
-var _ errors.ArgumentError = ApplicationRefKeyAZWireDecodingArgumentError{}
-
-func (ApplicationRefKeyAZWireDecodingArgumentError) ApplicationRefKeyError() {}
-func (ApplicationRefKeyAZWireDecodingArgumentError) ArgumentName() string    { return "" }
-
-func (ApplicationRefKeyAZWireDecodingArgumentError) Error() string {
-	return "ApplicationRefKeyAZWireDecodingArgumentError"
-}
-
-type ApplicationRefKeyAZRSDecodingArgumentError struct{}
-
-var _ ApplicationRefKeyError = ApplicationRefKeyAZRSDecodingArgumentError{}
-var _ errors.ArgumentError = ApplicationRefKeyAZRSDecodingArgumentError{}
-
-func (ApplicationRefKeyAZRSDecodingArgumentError) ApplicationRefKeyError() {}
-func (ApplicationRefKeyAZRSDecodingArgumentError) ArgumentName() string    { return "" }
-
-func (ApplicationRefKeyAZRSDecodingArgumentError) Error() string {
-	return "ApplicationRefKeyAZRSDecodingArgumentError"
 }
 
 //endregion

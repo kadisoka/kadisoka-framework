@@ -22,21 +22,23 @@ func (core *Core) SetUserProfileImageByFile(
 	userID iam.UserID,
 	imageFile ProfileImageFile,
 ) (imageURL string, err error) {
+	//TODO: configurable
+	const bucketSubPath = "user_profile_images/"
+	const mediaType = mediapb.MediaType_IMAGE
+
+	mediaTypeInfo := media.GetMediaTypeInfo(mediaType)
+	if mediaTypeInfo == nil {
+		return "", errors.Msg("media type info unavailable") //.fields({mediaType: MediaType_IMAGE})
+	}
+
 	detectionBytes := make([]byte, 512)
 	_, err = imageFile.Read(detectionBytes)
 	if err != nil {
-		return "", errors.Wrap("file read", err)
+		return "", errors.Wrap("content type detection", err)
 	}
 	imageFile.Seek(0, io.SeekStart)
 
-	//TODO: configurable
-	const bucketSubPath = "user_profile_images/"
-	mediaTypeInfo := media.GetMediaTypeInfo(mediapb.MediaType_IMAGE)
-	if mediaTypeInfo == nil {
-		return "", errors.Msg("media type info unavailable")
-	}
 	contentType := media.DetectType(detectionBytes)
-
 	if !mediaTypeInfo.IsContentTypeAllowed(contentType) {
 		return "", errors.ArgMsg("imageFile", "media type not allowed")
 	}
@@ -48,7 +50,7 @@ func (core *Core) SetUserProfileImageByFile(
 		Upload(
 			path.Join(bucketSubPath, filename),
 			imageFile,
-			mediaTypeInfo.MediaType())
+			mediaType)
 	if err != nil {
 		return "", errors.Wrap("file store", err)
 	}

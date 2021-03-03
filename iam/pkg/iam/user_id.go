@@ -1,16 +1,16 @@
 package iam
 
 import (
-	"encoding/hex"
+	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
 	"sync"
 
 	azcore "github.com/alloyzeus/go-azcore/azcore"
+	azer "github.com/alloyzeus/go-azcore/azcore/azer"
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
-	protowire "google.golang.org/protobuf/encoding/protowire"
 )
 
 var (
@@ -28,8 +28,12 @@ type UserID int64
 // there's a bug in the generator.
 var _ azcore.EID = UserIDZero
 var _ azcore.EntityID = UserIDZero
-var _ azcore.AZWireUnmarshalable = &_UserIDZeroVar
+var _ azer.BinFieldUnmarshalable = &_UserIDZeroVar
 var _ azcore.UserID = UserIDZero
+
+// _UserIDSignificantBitsMask is used to
+// extract significant bits from an instance of UserID.
+const _UserIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111
 
 // UserIDZero is the zero value
 // for UserID.
@@ -45,23 +49,17 @@ func UserIDFromPrimitiveValue(v int64) UserID {
 	return UserID(v)
 }
 
-// UserIDFromAZWire creates UserID from
-// its azwire-encoded form.
-func UserIDFromAZWire(b []byte) (id UserID, readLen int, err error) {
-	_, typ, n := protowire.ConsumeTag(b)
-	if n <= 0 {
-		return UserIDZero, n, UserIDAZWireDecodingArgumentError{}
+// UserIDFromAZERBinField creates UserID from
+// its azer-bin-field form.
+func UserIDFromAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (id UserID, readLen int, err error) {
+	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt64 {
+		return UserID(0), 0,
+			errors.ArgMsg("typeHint", "unsupported")
 	}
-	readLen = n
-	if typ != protowire.VarintType {
-		return UserIDZero, readLen, UserIDAZWireDecodingArgumentError{}
-	}
-	e, n := protowire.ConsumeVarint(b)
-	if n <= 0 {
-		return UserIDZero, readLen, UserIDAZWireDecodingArgumentError{}
-	}
-	readLen += n
-	return UserID(e), readLen, nil
+	i := binary.BigEndian.Uint64(b)
+	return UserID(i), 8, nil
 }
 
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
@@ -85,6 +83,13 @@ func (UserID) AZUserID() {}
 // IsZero is required as UserID is a value-object.
 func (id UserID) IsZero() bool {
 	return id == UserIDZero
+}
+
+// IsValid returns true if this instance is valid independently as an ID.
+// It doesn't tell whether it refers to a valid instance of User.
+func (id UserID) IsValid() bool {
+	return int64(id) > 0 &&
+		(uint64(id)&_UserIDSignificantBitsMask) != 0
 }
 
 // Equals is required as UserID is a value-object.
@@ -115,30 +120,20 @@ func (id UserID) EqualsUserID(
 	return id == other
 }
 
-// AZWire returns a binary representation of the instance.
-//
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (id UserID) AZWire() []byte {
-	return id.AZWireField(1)
+// AZERBinField is required for conformance
+// with azcore.EID.
+func (id UserID) AZERBinField() ([]byte, azer.BinDataType) {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(id))
+	return b, azer.BinDataTypeInt64
 }
 
-// AZWireField encode this instance as azwire with a specified field number.
-//
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (id UserID) AZWireField(fieldNum int) []byte {
-	var buf []byte
-	buf = protowire.AppendTag(buf, protowire.Number(fieldNum), protowire.VarintType)
-	buf = protowire.AppendVarint(buf, uint64(id))
-	return buf
-}
-
-// UnmarshalAZWire is required for conformance
-// with azcore.AZWireUnmarshalable.
-func (id *UserID) UnmarshalAZWire(b []byte) (readLen int, err error) {
-	var i UserID
-	i, readLen, err = UserIDFromAZWire(b)
+// UnmarshalAZERBinField is required for conformance
+// with azer.BinFieldUnmarshalable.
+func (id *UserID) UnmarshalAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := UserIDFromAZERBinField(b, typeHint)
 	if err == nil {
 		*id = i
 	}
@@ -150,40 +145,14 @@ func (id *UserID) UnmarshalAZWire(b []byte) (readLen int, err error) {
 //
 // Bot account is ....
 func (id UserID) IsBot() bool {
-	const mask = uint64(0) |
-		(uint64(1) << 61)
-	const flags = uint64(0) |
-		(uint64(1) << 61)
-	return (uint64(id) & mask) == flags
+	return (uint64(id) &
+		0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000) ==
+		0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
 }
 
 type UserIDError interface {
 	error
 	UserIDError()
-}
-
-type UserIDAZWireDecodingArgumentError struct{}
-
-var _ UserIDError = UserIDAZWireDecodingArgumentError{}
-var _ errors.ArgumentError = UserIDAZWireDecodingArgumentError{}
-
-func (UserIDAZWireDecodingArgumentError) UserIDError()         {}
-func (UserIDAZWireDecodingArgumentError) ArgumentName() string { return "" }
-
-func (UserIDAZWireDecodingArgumentError) Error() string {
-	return "UserIDAZWireDecodingArgumentError"
-}
-
-type UserIDWireDecodingArgumentError struct{}
-
-var _ errors.ArgumentError = UserIDWireDecodingArgumentError{}
-
-func (UserIDWireDecodingArgumentError) ArgumentName() string {
-	return ""
-}
-
-func (UserIDWireDecodingArgumentError) Error() string {
-	return "UserIDWireDecodingArgumentError"
 }
 
 func UserIDFromString(s string) (UserID, error) {
@@ -193,7 +162,6 @@ func UserIDFromString(s string) (UserID, error) {
 	return userIDDecode(s)
 }
 
-func (id UserID) IsValid() bool    { return id > userIDReservedMax && id <= userIDMax }
 func (id UserID) IsNotValid() bool { return !id.IsValid() }
 
 func (id UserID) String() string {
@@ -383,8 +351,6 @@ type UserRefKey UserID
 // there's a bug in the generator.
 var _ azcore.RefKey = _UserRefKeyZero
 var _ azcore.EntityRefKey = _UserRefKeyZero
-var _ azcore.AZWireUnmarshalable = &_UserRefKeyZeroVar
-var _ azcore.AZRSUnmarshalable = &_UserRefKeyZeroVar
 var _ azcore.UserRefKey = _UserRefKeyZero
 
 const _UserRefKeyZero = UserRefKey(UserIDZero)
@@ -409,7 +375,8 @@ func (refKey UserRefKey) ID() azcore.EID {
 	return UserID(refKey)
 }
 
-// UserID is required for conformance with azcore.UserRefKey.
+// UserID is required for conformance
+// with azcore.UserRefKey.
 func (refKey UserRefKey) UserID() azcore.UserID {
 	return UserID(refKey)
 }
@@ -417,6 +384,12 @@ func (refKey UserRefKey) UserID() azcore.UserID {
 // IsZero is required as UserRefKey is a value-object.
 func (refKey UserRefKey) IsZero() bool {
 	return UserID(refKey) == UserIDZero
+}
+
+// IsValid returns true if this instance is valid independently as a ref-key.
+// It doesn't tell whether it refers to a valid instance of User.
+func (refKey UserRefKey) IsValid() bool {
+	return UserID(refKey).IsValid()
 }
 
 // Equals is required for conformance with azcore.EntityRefKey.
@@ -443,108 +416,141 @@ func (refKey UserRefKey) EqualsUserRefKey(
 	return other == refKey
 }
 
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (refKey UserRefKey) AZWire() []byte {
-	return refKey.AZWireField(1)
+func (refKey UserRefKey) AZERBin() []byte {
+	b := make([]byte, 8+1)
+	b[0] = azer.BinDataTypeInt64.Byte()
+	binary.BigEndian.PutUint64(b[1:], uint64(refKey))
+	return b
 }
 
-// AZWireField is required for conformance
-// with azcore.AZWireObject.
-func (refKey UserRefKey) AZWireField(fieldNum int) []byte {
-	return UserID(refKey).AZWireField(fieldNum)
-}
-
-// UserRefKeyFromAZWire creates UserRefKey from
-// its azwire-encoded form.
-func UserRefKeyFromAZWire(b []byte) (refKey UserRefKey, readLen int, err error) {
-	var id UserID
-	id, readLen, err = UserIDFromAZWire(b)
+func UserRefKeyFromAZERBin(b []byte) (refKey UserRefKey, readLen int, err error) {
+	typ, err := azer.BinDataTypeFromByte(b[0])
 	if err != nil {
-		return UserRefKeyZero(), readLen, UserRefKeyAZWireDecodingArgumentError{}
+		return _UserRefKeyZero, 0,
+			errors.ArgWrap("", "type parsing", err)
 	}
-	return UserRefKey(id), readLen, nil
+	if typ != azer.BinDataTypeInt64 {
+		return _UserRefKeyZero, 0,
+			errors.Arg("", errors.EntMsg("type", "unsupported"))
+	}
+
+	i, readLen, err := UserRefKeyFromAZERBinField(b[1:], typ)
+	if err != nil {
+		return _UserRefKeyZero, 0,
+			errors.ArgWrap("", "id data parsing", err)
+	}
+
+	return UserRefKey(i), 1 + readLen, nil
 }
 
-// UnmarshalAZWire is required for conformance
-// with azcore.AZWireUnmarshalable.
-func (refKey *UserRefKey) UnmarshalAZWire(b []byte) (readLen int, err error) {
-	var i UserRefKey
-	i, readLen, err = UserRefKeyFromAZWire(b)
+// UnmarshalAZERBin is required for conformance
+// with azcore.BinFieldUnmarshalable.
+func (refKey *UserRefKey) UnmarshalAZERBin(b []byte) (readLen int, err error) {
+	i, readLen, err := UserRefKeyFromAZERBin(b)
 	if err == nil {
 		*refKey = i
 	}
 	return readLen, err
 }
 
-const _UserRefKeyAZRSPrefix = "KUs0"
+func (refKey UserRefKey) AZERBinField() ([]byte, azer.BinDataType) {
+	return UserID(refKey).AZERBinField()
+}
 
-// UserRefKeyFromAZRS creates UserRefKey from
-// its AZRS-encoded form.
-func UserRefKeyFromAZRS(s string) (UserRefKey, error) {
-	if !strings.HasPrefix(s, _UserRefKeyAZRSPrefix) {
-		return UserRefKeyZero(), UserRefKeyAZRSDecodingArgumentError{}
-	}
-	s = strings.TrimPrefix(s, _UserRefKeyAZRSPrefix)
-	b, err := hex.DecodeString(s)
+func UserRefKeyFromAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (refKey UserRefKey, readLen int, err error) {
+	id, n, err := UserIDFromAZERBinField(b, typeHint)
 	if err != nil {
-		return UserRefKeyZero(), UserRefKeyAZRSDecodingArgumentError{}
+		return _UserRefKeyZero, n, err
 	}
-	refKey, _, err := UserRefKeyFromAZWire(b)
+	return UserRefKey(id), n, nil
+}
+
+// UnmarshalAZERBinField is required for conformance
+// with azcore.BinFieldUnmarshalable.
+func (refKey *UserRefKey) UnmarshalAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := UserRefKeyFromAZERBinField(b, typeHint)
+	if err == nil {
+		*refKey = i
+	}
+	return readLen, err
+}
+
+const _UserRefKeyAZERTextPrefix = "KUs0"
+
+// AZERText is required for conformance
+// with azcore.RefKey.
+func (refKey UserRefKey) AZERText() string {
+	if !refKey.IsValid() {
+		return ""
+	}
+
+	return _UserRefKeyAZERTextPrefix +
+		azer.TextEncode(refKey.AZERBin())
+}
+
+// UserRefKeyFromAZERText creates a new instance of
+// UserRefKey from its azer-text form.
+func UserRefKeyFromAZERText(s string) (UserRefKey, error) {
+	if s == "" {
+		return UserRefKeyZero(), nil
+	}
+	if !strings.HasPrefix(s, _UserRefKeyAZERTextPrefix) {
+		return UserRefKeyZero(),
+			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
+	}
+	s = strings.TrimPrefix(s, _UserRefKeyAZERTextPrefix)
+	b, err := azer.TextDecode(s)
 	if err != nil {
-		return UserRefKeyZero(), UserRefKeyAZRSDecodingArgumentError{}
+		return UserRefKeyZero(),
+			errors.ArgWrap("", "data parsing", err)
+	}
+	refKey, _, err := UserRefKeyFromAZERBin(b)
+	if err != nil {
+		return UserRefKeyZero(),
+			errors.ArgWrap("", "data decoding", err)
 	}
 	return refKey, nil
 }
 
-// AZRS returns an encoded representation of this instance.
-//
-// AZRS is required for conformance
-// with azcore.RefKey.
-func (refKey UserRefKey) AZRS() string {
-	wire := refKey.AZWire()
-	//TODO: configurable encoding
-	return _UserRefKeyAZRSPrefix +
-		hex.EncodeToString(wire)
-}
-
-// UnmarshalAZRS is required for conformance
-// with azcore.AZRSUnmarshalable.
-func (refKey *UserRefKey) UnmarshalAZRS(s string) error {
-	r, err := UserRefKeyFromAZRS(s)
+// UnmarshalAZERText is required for conformance
+// with azer.TextUnmarshalable.
+func (refKey *UserRefKey) UnmarshalAZERText(s string) error {
+	r, err := UserRefKeyFromAZERText(s)
 	if err == nil {
 		*refKey = r
 	}
 	return err
 }
 
+// MarshalJSON makes this type JSON-marshalable.
+func (refKey UserRefKey) MarshalJSON() ([]byte, error) {
+	// We assume that there's no symbols in azer-text
+	return []byte("\"" + refKey.AZERText() + "\""), nil
+}
+
+// UnmarshalJSON parses a JSON value.
+func (refKey *UserRefKey) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	if s == "" {
+		*refKey = UserRefKeyZero()
+		return nil
+	}
+	i, err := UserRefKeyFromAZERText(s)
+	if err == nil {
+		*refKey = i
+	}
+	return err
+}
+
+// UserRefKeyError defines an interface for all
+// UserRefKey-related errors.
 type UserRefKeyError interface {
 	error
 	UserRefKeyError()
-}
-
-type UserRefKeyAZWireDecodingArgumentError struct{}
-
-var _ UserRefKeyError = UserRefKeyAZWireDecodingArgumentError{}
-var _ errors.ArgumentError = UserRefKeyAZWireDecodingArgumentError{}
-
-func (UserRefKeyAZWireDecodingArgumentError) UserRefKeyError()     {}
-func (UserRefKeyAZWireDecodingArgumentError) ArgumentName() string { return "" }
-
-func (UserRefKeyAZWireDecodingArgumentError) Error() string {
-	return "UserRefKeyAZWireDecodingArgumentError"
-}
-
-type UserRefKeyAZRSDecodingArgumentError struct{}
-
-var _ UserRefKeyError = UserRefKeyAZRSDecodingArgumentError{}
-var _ errors.ArgumentError = UserRefKeyAZRSDecodingArgumentError{}
-
-func (UserRefKeyAZRSDecodingArgumentError) UserRefKeyError()     {}
-func (UserRefKeyAZRSDecodingArgumentError) ArgumentName() string { return "" }
-
-func (UserRefKeyAZRSDecodingArgumentError) Error() string {
-	return "UserRefKeyAZRSDecodingArgumentError"
 }
 
 //endregion

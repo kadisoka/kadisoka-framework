@@ -4,6 +4,7 @@
 // so that we will have a consistent API. Requests to this server will be
 // processed and then the request will be redirected to the actual server
 // with the appropriate URL.
+//TODO: compatibility mode: translation from parameters for other image servers.
 package server
 
 import (
@@ -63,11 +64,11 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := processingParameters{
-		Width:    widthDefault,
-		Height:   heightDefault,
-		Fit:      paramsFitDefault,
-		Scale:    paramsScaleDefault,
-		PadColor: nil,
+		Width:        widthDefault,
+		Height:       heightDefault,
+		Fit:          paramsFitDefault,
+		Scale:        paramsScaleDefault,
+		PaddingColor: nil,
 	}
 
 	reqQuery := r.URL.Query()
@@ -155,13 +156,14 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		params.Scale = paramsScaleDefault
 	}
 
-	encodedParams := params.Encode()
-	h := xxhash.ChecksumString64(encodedParams)
-	paramsKey := crock32.Encode(h)
+	// We use this to identify a variant. It's constructed from a normalized
+	// parameter set. This will be appended to the filename.
+	variantKey := handler.variantKeyFromParams(params)
 
 	reqPath := r.URL.Path
 	processedFilePath := filepath.
-		Join(handler.config.RawFilesDir, reqPath+"_1"+paramsKey)
+		Join(handler.config.RawFilesDir, reqPath+"_1"+variantKey)
+
 	processedFile, err := os.Open(processedFilePath)
 	if err != nil {
 		pathErr, ok := err.(*os.PathError)
@@ -179,31 +181,31 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rawFilePath := filepath.
+	srcImageFilePath := filepath.
 		Join(handler.config.RawFilesDir, reqPath)
 
-	mime, err := mimetype.DetectFile(rawFilePath)
+	mime, err := mimetype.DetectFile(srcImageFilePath)
 	if err != nil || mime == nil {
 		//TODO: check the error
 		log.Warn().Err(err).
-			Msgf("Unable to detect MIME of the file: %s", rawFilePath)
+			Msgf("Unable to detect MIME of the file: %s", srcImageFilePath)
 		http.Error(w, http.StatusText(http.StatusNotFound),
 			http.StatusNotFound)
 		return
 	}
 
-	rawImage, err := imgio.Open(rawFilePath)
+	srcImage, err := imgio.Open(srcImageFilePath)
 	if err != nil {
 		//TODO: check the error
 		log.Warn().Err(err).
-			Msgf("Unable to open the file: %s", rawFilePath)
+			Msgf("Unable to open the file: %s", srcImageFilePath)
 		http.Error(w, http.StatusText(http.StatusNotFound),
 			http.StatusNotFound)
 		return
 	}
 
-	srcImageWidth := rawImage.Bounds().Dx()
-	srcImageHeight := rawImage.Bounds().Dy()
+	srcImageWidth := srcImage.Bounds().Dx()
+	srcImageHeight := srcImage.Bounds().Dy()
 	srcImageAspectRatio := float32(srcImageWidth) / float32(srcImageHeight)
 
 	//TODO: support gif (animated?) and webp, and optimize the files.
@@ -226,20 +228,19 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if params.Scale == ScaleDirectionDown {
 		if srcImageWidth <= params.Width && srcImageHeight <= params.Height {
-			//TODO: check if padding we want some padding, otherwise
-			// simply save into the new location.
-			if params.PadColor != nil {
+			// Pad if requested, otherwise simply save into the new location.
+			if params.IsPaddingRequested() {
 				panic("TODO")
 			} else {
-				saveImageAndRespond(rawImage)
+				saveImageAndRespond(srcImage)
 				return
 			}
 		}
 		if params.Fit == FitModeContain {
 			wRatio := float32(srcImageWidth) / float32(params.Width)
 			hRatio := float32(srcImageHeight) / float32(params.Height)
-			//TODO: Pad
-			if params.PadColor != nil {
+			if params.IsPaddingRequested() {
+				panic("TODO: pad")
 			} else {
 				var scaledWidth, scaledHeight int
 				if wRatio > hRatio {
@@ -249,16 +250,17 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					scaledHeight = params.Height
 					scaledWidth = int(float32(scaledHeight) * srcImageAspectRatio)
 				}
-				outImage := transform.Resize(rawImage,
+				outImage := transform.Resize(srcImage,
 					scaledWidth, scaledHeight,
 					imageScaleDownAlg)
 				saveImageAndRespond(outImage)
 				return
 			}
 		} else if params.Fit == FitModeCrop {
-			//TODO:
-			// - never upscale. project into canvas, any excess will be trimmed.
-			// - do pad if necessary.
+			// - simply save if the image is smaller or has the same dimensions
+			//   as requested.
+			// - don't resize if the non-cropped side size is less than or
+			//   equal to the requested size. pad if requested.
 			wRatio := float32(srcImageWidth) / float32(params.Width)
 			hRatio := float32(srcImageHeight) / float32(params.Height)
 			var scaledWidth, scaledHeight int
@@ -273,16 +275,11 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 				scaledWidth = int(float32(scaledHeight) * srcImageAspectRatio)
 			}
-			//TODO:
-			// - simply save if the image is smaller or has the same dimensions
-			//   as requested.
-			// - don't resize if the non-cropped side size is less than or
-			//   equal to the requested size.
-			workImage := transform.Resize(rawImage, scaledWidth, scaledHeight,
+			workImage := transform.Resize(srcImage, scaledWidth, scaledHeight,
 				imageScaleDownAlg)
 			if scaledHeight <= params.Height && scaledWidth <= params.Width {
-				if params.PadColor != nil {
-					panic("TODO")
+				if params.IsPaddingRequested() {
+					panic("TODO: pad")
 				} else {
 					saveImageAndRespond(workImage)
 					return
@@ -321,7 +318,14 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, http.StatusText(http.StatusNotImplemented),
 		http.StatusNotImplemented)
 	return
+}
 
+func (handler *Handler) variantKeyFromParams(
+	params processingParameters,
+) string {
+	encodedParams := params.Encode()
+	h := xxhash.ChecksumString64(encodedParams)
+	return crock32.Encode(h)
 }
 
 var (
@@ -335,9 +339,10 @@ type processingParameters struct {
 	Fit    FitMode
 	Scale  ScaleDirection
 
-	// PadColor is used to fill the canvas outside the projected image.
-	// If this value is not provided, we won't pad the image.
-	PadColor *color.RGBA
+	// PaddingColor is used to fill the canvas outside the projected image.
+	// If this value is not provided, we won't pad the image. Use
+	// IsPaddingRequested method for determining if padding was requested.
+	PaddingColor *color.RGBA
 }
 
 func (params processingParameters) Encode() string {
@@ -346,10 +351,15 @@ func (params processingParameters) Encode() string {
 	values.Set("height", strconv.FormatInt(int64(params.Height), 10))
 	values.Set("fit", params.Fit.String())
 	values.Set("scale", params.Scale.String())
-	if params.PadColor != nil {
-		values.Set("pad", "#"+rgbaToARGBHex(*params.PadColor))
+	if params.PaddingColor != nil {
+		values.Set("padcol", "#"+rgbaToARGBHex(*params.PaddingColor))
 	}
 	return values.Encode()
+}
+
+// IsPaddingRequested returns true if padding was requested.
+func (params processingParameters) IsPaddingRequested() bool {
+	return params.PaddingColor != nil && params.PaddingColor.A > 0
 }
 
 type FitMode int

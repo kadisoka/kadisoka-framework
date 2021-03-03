@@ -187,7 +187,6 @@ func (svc *Service) Serve() error {
 // Shutdown conforms app.ServiceServer interface.
 func (svc *Service) Shutdown(ctx context.Context) error {
 	svc.shutdownOnce.Do(func() {
-		//TODO: mutex?
 		svc.shuttingDown = true
 		svc.httpServer.Shutdown(ctx)
 	})

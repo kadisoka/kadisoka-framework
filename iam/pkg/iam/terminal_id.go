@@ -1,16 +1,16 @@
 package iam
 
 import (
-	"encoding/hex"
+	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
 	"sync"
 
 	azcore "github.com/alloyzeus/go-azcore/azcore"
+	azer "github.com/alloyzeus/go-azcore/azcore/azer"
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/richardlehane/crock32"
-	protowire "google.golang.org/protobuf/encoding/protowire"
 )
 
 //region ID
@@ -24,8 +24,12 @@ type TerminalID int64
 // there's a bug in the generator.
 var _ azcore.EID = TerminalIDZero
 var _ azcore.AdjunctEntityID = TerminalIDZero
-var _ azcore.AZWireUnmarshalable = &_TerminalIDZeroVar
+var _ azer.BinFieldUnmarshalable = &_TerminalIDZeroVar
 var _ azcore.TerminalID = TerminalIDZero
+
+// _TerminalIDSignificantBitsMask is used to
+// extract significant bits from an instance of TerminalID.
+const _TerminalIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
 
 // TerminalIDZero is the zero value for TerminalID.
 const TerminalIDZero = TerminalID(0)
@@ -40,21 +44,17 @@ func TerminalIDFromPrimitiveValue(v int64) TerminalID {
 	return TerminalID(v)
 }
 
-func TerminalIDFromAZWire(b []byte) (id TerminalID, readLen int, err error) {
-	_, typ, n := protowire.ConsumeTag(b)
-	if n <= 0 {
-		return TerminalIDZero, n, TerminalIDAZWireDecodingArgumentError{}
+// TerminalIDFromAZERBinField creates TerminalID from
+// its azer-bin form.
+func TerminalIDFromAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (id TerminalID, readLen int, err error) {
+	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt64 {
+		return TerminalID(0), 0,
+			errors.ArgMsg("typeHint", "unsupported")
 	}
-	readLen = n
-	if typ != protowire.VarintType {
-		return TerminalIDZero, readLen, TerminalIDAZWireDecodingArgumentError{}
-	}
-	e, n := protowire.ConsumeVarint(b)
-	if n <= 0 {
-		return TerminalIDZero, readLen, TerminalIDAZWireDecodingArgumentError{}
-	}
-	readLen += n
-	return TerminalID(e), readLen, nil
+	i := binary.BigEndian.Uint64(b)
+	return TerminalID(i), 8, nil
 }
 
 // PrimitiveValue returns the ID in its primitive type. Prefer to use
@@ -71,33 +71,36 @@ func (TerminalID) AZEID() {}
 // for conformance with azcore.AdjunctEntityID.
 func (TerminalID) AZAdjunctEntityID() {}
 
-// AZTerminalID is required for conformance with azcore.TerminalID.
+// AZTerminalID is required for conformance
+// with azcore.TerminalID.
 func (TerminalID) AZTerminalID() {}
 
-// AZWire returns a binary representation of the instance.
-//
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (id TerminalID) AZWire() []byte {
-	return id.AZWireField(1)
+// IsZero is required as TerminalID is a value-object.
+func (id TerminalID) IsZero() bool {
+	return id == TerminalIDZero
 }
 
-// AZWireField encode this instance as azwire with a specified field number.
-//
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (id TerminalID) AZWireField(fieldNum int) []byte {
-	var buf []byte
-	buf = protowire.AppendTag(buf, protowire.Number(fieldNum), protowire.VarintType)
-	buf = protowire.AppendVarint(buf, uint64(id))
-	return buf
+// IsValid returns true if this instance is valid independently as an ID.
+// It doesn't tell whether it refers to a valid instance of Terminal.
+func (id TerminalID) IsValid() bool {
+	return int64(id) > 0 &&
+		(uint64(id)&_TerminalIDSignificantBitsMask) != 0
 }
 
-// UnmarshalAZWire is required for conformance
-// with azcore.AZWireUnmarshalable.
-func (id *TerminalID) UnmarshalAZWire(b []byte) (readLen int, err error) {
-	var i TerminalID
-	i, readLen, err = TerminalIDFromAZWire(b)
+// AZERBinField is required for conformance
+// with azcore.EID.
+func (id TerminalID) AZERBinField() ([]byte, azer.BinDataType) {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(id))
+	return b, azer.BinDataTypeInt64
+}
+
+// UnmarshalAZERBinField is required for conformance
+// with azer.BinFieldUnmarshalable.
+func (id *TerminalID) UnmarshalAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := TerminalIDFromAZERBinField(b, typeHint)
 	if err == nil {
 		*id = i
 	}
@@ -132,18 +135,6 @@ func (id TerminalID) EqualsTerminalID(
 	return id == other
 }
 
-type TerminalIDAZWireDecodingArgumentError struct{}
-
-var _ errors.ArgumentError = TerminalIDAZWireDecodingArgumentError{}
-
-func (TerminalIDAZWireDecodingArgumentError) ArgumentName() string {
-	return ""
-}
-
-func (TerminalIDAZWireDecodingArgumentError) Error() string {
-	return "TerminalIDAZWireDecodingArgumentError"
-}
-
 func TerminalIDFromString(s string) (TerminalID, error) {
 	if s == "" {
 		return TerminalIDZero, nil
@@ -163,11 +154,6 @@ func (id TerminalID) String() string {
 		return ""
 	}
 	return terminalIDEncode(id)
-}
-
-func (id TerminalID) IsValid() bool {
-	return (id&terminalInstanceIDMask) > 0 &&
-		id.ClientID().IsValid()
 }
 
 func (id TerminalID) IsNotValid() bool {
@@ -275,16 +261,22 @@ func terminalIDV0Decode(s string) (TerminalID, error) {
 // TerminalRefKey is used to identify
 // an instance of adjunct entity Terminal system-wide.
 type TerminalRefKey struct {
-	id TerminalID
+	application ApplicationRefKey
+	id          TerminalID
 }
+
+// The total number of fields in the struct.
+const _TerminalRefKeyFieldCount = 1 + 1
 
 // NewTerminalRefKey returns a new instance
 // of TerminalRefKey with the provided attribute values.
 func NewTerminalRefKey(
+	application ApplicationRefKey,
 	id TerminalID,
 ) TerminalRefKey {
 	return TerminalRefKey{
-		id: id,
+		application: application,
+		id:          id,
 	}
 }
 
@@ -292,12 +284,11 @@ func NewTerminalRefKey(
 // there's a bug in the generator.
 var _ azcore.RefKey = _TerminalRefKeyZero
 var _ azcore.AdjunctEntityRefKey = _TerminalRefKeyZero
-var _ azcore.AZWireUnmarshalable = &_TerminalRefKeyZero
-var _ azcore.AZRSUnmarshalable = &_TerminalRefKeyZero
 var _ azcore.TerminalRefKey = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
-	id: TerminalIDZero,
+	application: ApplicationRefKeyZero(),
+	id:          TerminalIDZero,
 }
 
 // TerminalRefKeyZero returns
@@ -318,23 +309,34 @@ func (refKey TerminalRefKey) ID() azcore.EID {
 	return refKey.id
 }
 
-// TerminalID is required for conformance with azcore.TerminalRefKey.
+// TerminalID is required for conformance
+// with azcore.TerminalRefKey.
 func (refKey TerminalRefKey) TerminalID() azcore.TerminalID {
 	return refKey.id
 }
 
 // IsZero is required as TerminalRefKey is a value-object.
 func (refKey TerminalRefKey) IsZero() bool {
-	return refKey.id == TerminalIDZero
+	return refKey.application.IsZero() &&
+		refKey.id == TerminalIDZero
+}
+
+// IsValid returns true if this instance is valid independently as a ref-key.
+// It doesn't tell whether it refers to a valid instance of Terminal.
+func (refKey TerminalRefKey) IsValid() bool {
+	return refKey.application.IsValid() &&
+		refKey.id.IsValid()
 }
 
 // Equals is required for conformance with azcore.AdjunctEntityRefKey.
 func (refKey TerminalRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(TerminalRefKey); ok {
-		return refKey.id == x.id
+		return refKey.application.EqualsApplicationRefKey(x.application) &&
+			refKey.id == x.id
 	}
 	if x, _ := other.(*TerminalRefKey); x != nil {
-		return refKey.id == x.id
+		return refKey.application.EqualsApplicationRefKey(x.application) &&
+			refKey.id == x.id
 	}
 	return false
 }
@@ -349,133 +351,214 @@ func (refKey TerminalRefKey) Equal(other interface{}) bool {
 func (refKey TerminalRefKey) EqualsTerminalRefKey(
 	other TerminalRefKey,
 ) bool {
-	return refKey.id == other.id
+	return refKey.application.EqualsApplicationRefKey(other.application) &&
+		refKey.id == other.id
 }
 
-// AZWire is required for conformance
-// with azcore.AZWireObject.
-func (refKey TerminalRefKey) AZWire() []byte {
-	return refKey.AZWireField(1)
+// AZERBin is required for conformance
+// with azcore.RefKey.
+func (refKey TerminalRefKey) AZERBin() []byte {
+	data, typ := refKey.AZERBinField()
+	out := []byte{typ.Byte()}
+	return append(out, data...)
 }
 
-// AZWireField is required for conformance
-// with azcore.AZWireObject.
-func (refKey TerminalRefKey) AZWireField(fieldNum int) []byte {
-	return refKey.id.AZWireField(fieldNum)
-}
-
-// TerminalRefKeyFromAZWire creates TerminalRefKey from
-// its azwire-encoded form.
-func TerminalRefKeyFromAZWire(
+// TerminalRefKeyFromAZERBin creates a new instance of
+// TerminalRefKey from its azer-bin form.
+func TerminalRefKeyFromAZERBin(
 	b []byte,
-) (
-	refKey TerminalRefKey,
-	readLen int,
-	err error,
-) {
-	var readOffset int = 0
-	_, typ, n := protowire.ConsumeTag(b)
-	if n <= 0 {
-		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
-	}
-	readOffset += n
-	if typ != protowire.BytesType {
-		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
-	}
-	_, n = protowire.ConsumeVarint(b[readOffset:])
-	if n <= 0 {
-		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
-	}
-	readOffset += n
-
-	id, fieldLen, err := TerminalIDFromAZWire(b[readOffset:])
+) (refKey TerminalRefKey, readLen int, err error) {
+	typ, err := azer.BinDataTypeFromByte(b[0])
 	if err != nil {
-		return TerminalRefKeyZero(), readOffset, TerminalRefKeyAZWireDecodingArgumentError{}
+		return TerminalRefKeyZero(), 0,
+			errors.ArgWrap("", "type parsing", err)
 	}
-	readOffset += fieldLen
+	if typ != azer.BinDataTypeArray {
+		return TerminalRefKeyZero(), 0,
+			errors.Arg("", errors.EntMsg("type", "unsupported"))
+	}
+
+	refKey, readLen, err = TerminalRefKeyFromAZERBinField(b[1:], typ)
+	return refKey, readLen + 1, err
+}
+
+// AZERBinField is required for conformance
+// with azcore.RefKey.
+func (refKey TerminalRefKey) AZERBinField() ([]byte, azer.BinDataType) {
+	var typesBytes []byte
+	var dataBytes []byte
+	var fieldBytes []byte
+	var fieldType azer.BinDataType
+
+	fieldBytes, fieldType = refKey.application.AZERBinField()
+	typesBytes = append(typesBytes, fieldType.Byte())
+	dataBytes = append(dataBytes, fieldBytes...)
+
+	fieldBytes, fieldType = refKey.id.AZERBinField()
+	typesBytes = append(typesBytes, fieldType.Byte())
+	dataBytes = append(dataBytes, fieldBytes...)
+
+	var out = []byte{byte(len(typesBytes))}
+	out = append(out, typesBytes...)
+	out = append(out, dataBytes...)
+	return out, azer.BinDataTypeArray
+}
+
+// TerminalRefKeyFromAZERBinField creates TerminalRefKey from
+// its azer-bin field form.
+func TerminalRefKeyFromAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (refKey TerminalRefKey, readLen int, err error) {
+	if typeHint != azer.BinDataTypeArray {
+		return TerminalRefKeyZero(), 0,
+			errors.Arg("", errors.EntMsg("type", "unsupported"))
+	}
+
+	arrayLen := int(b[0])
+	if arrayLen != _TerminalRefKeyFieldCount {
+		return TerminalRefKeyZero(), 0,
+			errors.Arg("", errors.EntMsg("field count", "mismatch"))
+	}
+
+	typeCursor := 1
+	dataCursor := typeCursor + arrayLen
+
+	var fieldType azer.BinDataType
+
+	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
+	if err != nil {
+		return TerminalRefKeyZero(), 0,
+			errors.ArgWrap("", "application ref-key type parsing", err)
+	}
+	typeCursor++
+	applicationRefKey, readLen, err := ApplicationRefKeyFromAZERBinField(
+		b[dataCursor:], fieldType)
+	if err != nil {
+		return TerminalRefKeyZero(), 0,
+			errors.ArgWrap("", "application ref-key data parsing", err)
+	}
+	dataCursor += readLen
+
+	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
+	if err != nil {
+		return TerminalRefKeyZero(), 0,
+			errors.ArgWrap("", "id type parsing", err)
+	}
+	typeCursor++
+	id, readLen, err := TerminalIDFromAZERBinField(
+		b[dataCursor:], fieldType)
+	if err != nil {
+		return TerminalRefKeyZero(), 0,
+			errors.ArgWrap("", "id data parsing", err)
+	}
+	dataCursor += readLen
 
 	return TerminalRefKey{
-		id: id,
-	}, readOffset, nil
+		application: applicationRefKey,
+		id:          id,
+	}, dataCursor, nil
 }
 
-func (refKey *TerminalRefKey) UnmarshalAZWire(b []byte) (readLen int, err error) {
-	var r TerminalRefKey
-	r, readLen, err = TerminalRefKeyFromAZWire(b)
+// UnmarshalAZERBinField is required for conformance
+// with azcore.BinFieldUnmarshalable.
+func (refKey *TerminalRefKey) UnmarshalAZERBinField(
+	b []byte, typeHint azer.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := TerminalRefKeyFromAZERBinField(b, typeHint)
 	if err == nil {
-		*refKey = r
+		*refKey = i
 	}
 	return readLen, err
 }
 
-const _TerminalRefKeyAZRSPrefix = "KTx0"
+const _TerminalRefKeyAZERTextPrefix = "KTx0"
 
-// TerminalRefKeyFromAZRS creates TerminalRefKey from
-// its AZRS-encoded form.
-func TerminalRefKeyFromAZRS(s string) (TerminalRefKey, error) {
-	if !strings.HasPrefix(s, _TerminalRefKeyAZRSPrefix) {
-		return TerminalRefKeyZero(), TerminalRefKeyAZRSDecodingArgumentError{}
+// AZERText is required for conformance
+// with azcore.RefKey.
+func (refKey TerminalRefKey) AZERText() string {
+	if !refKey.IsValid() {
+		return ""
 	}
-	s = strings.TrimPrefix(s, _TerminalRefKeyAZRSPrefix)
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		return TerminalRefKeyZero(), TerminalRefKeyAZRSDecodingArgumentError{}
+
+	return _TerminalRefKeyAZERTextPrefix +
+		azer.TextEncode(refKey.AZERBin())
+}
+
+// TerminalRefKeyFromAZERText creates a new instance of
+// TerminalRefKey from its azer-text form.
+func TerminalRefKeyFromAZERText(s string) (TerminalRefKey, error) {
+	if s == "" {
+		return TerminalRefKeyZero(), nil
 	}
-	refKey, _, err := TerminalRefKeyFromAZWire(b)
+	if !strings.HasPrefix(s, _TerminalRefKeyAZERTextPrefix) {
+		return TerminalRefKeyZero(),
+			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
+	}
+	s = strings.TrimPrefix(s, _TerminalRefKeyAZERTextPrefix)
+	b, err := azer.TextDecode(s)
 	if err != nil {
-		return TerminalRefKeyZero(), TerminalRefKeyAZRSDecodingArgumentError{}
+		return TerminalRefKeyZero(),
+			errors.ArgWrap("", "data parsing", err)
+	}
+	refKey, _, err := TerminalRefKeyFromAZERBin(b)
+	if err != nil {
+		return TerminalRefKeyZero(),
+			errors.ArgWrap("", "data decoding", err)
 	}
 	return refKey, nil
 }
 
-// AZRS returns an encoded representation of this instance.
-//
-// AZRS is required for conformance
-// with azcore.RefKey.
-func (refKey TerminalRefKey) AZRS() string {
-	wire := refKey.AZWire()
-	//TODO: configurable encoding
-	return _TerminalRefKeyAZRSPrefix +
-		hex.EncodeToString(wire)
-}
-
-// UnmarshalAZRS is required for conformance
-// with azcore.AZRSUnmarshalable.
-func (refKey *TerminalRefKey) UnmarshalAZRS(s string) error {
-	r, err := TerminalRefKeyFromAZRS(s)
+// UnmarshalAZERText is required for conformance
+// with azer.TextUnmarshalable.
+func (refKey *TerminalRefKey) UnmarshalAZERText(s string) error {
+	r, err := TerminalRefKeyFromAZERText(s)
 	if err == nil {
 		*refKey = r
 	}
 	return err
 }
 
+// MarshalJSON makes this type JSON-marshalable.
+func (refKey TerminalRefKey) MarshalJSON() ([]byte, error) {
+	// We assume that there's no symbols in AZRS
+	return []byte("\"" + refKey.AZERText() + "\""), nil
+}
+
+// UnmarshalJSON parses a JSON value.
+func (refKey *TerminalRefKey) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	if s == "" {
+		*refKey = TerminalRefKeyZero()
+		return nil
+	}
+	i, err := TerminalRefKeyFromAZERText(s)
+	if err == nil {
+		*refKey = i
+	}
+	return err
+}
+
+// Application returns instance's Application value.
+func (refKey TerminalRefKey) Application() ApplicationRefKey {
+	return refKey.application
+}
+
+// WithApplication returns a copy
+// of TerminalRefKey
+// with its application attribute set to the provided value.
+func (refKey TerminalRefKey) WithApplication(
+	application ApplicationRefKey,
+) TerminalRefKey {
+	return TerminalRefKey{
+		application: application,
+	}
+}
+
+// TerminalRefKeyError defines an interface for all
+// TerminalRefKey-related errors.
 type TerminalRefKeyError interface {
 	error
 	TerminalRefKeyError()
-}
-
-type TerminalRefKeyAZWireDecodingArgumentError struct{}
-
-var _ TerminalRefKeyError = TerminalRefKeyAZWireDecodingArgumentError{}
-var _ errors.ArgumentError = TerminalRefKeyAZWireDecodingArgumentError{}
-
-func (TerminalRefKeyAZWireDecodingArgumentError) TerminalRefKeyError() {}
-func (TerminalRefKeyAZWireDecodingArgumentError) ArgumentName() string { return "" }
-
-func (TerminalRefKeyAZWireDecodingArgumentError) Error() string {
-	return "TerminalRefKeyAZWireDecodingArgumentError"
-}
-
-type TerminalRefKeyAZRSDecodingArgumentError struct{}
-
-var _ TerminalRefKeyError = TerminalRefKeyAZRSDecodingArgumentError{}
-var _ errors.ArgumentError = TerminalRefKeyAZRSDecodingArgumentError{}
-
-func (TerminalRefKeyAZRSDecodingArgumentError) TerminalRefKeyError() {}
-func (TerminalRefKeyAZRSDecodingArgumentError) ArgumentName() string { return "" }
-
-func (TerminalRefKeyAZRSDecodingArgumentError) Error() string {
-	return "TerminalRefKeyAZRSDecodingArgumentError"
 }
 
 //endregion

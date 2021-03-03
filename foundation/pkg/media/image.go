@@ -1,15 +1,21 @@
 package media
 
 import (
-	"github.com/rez-go/crux-apis/crux/media/v1"
+	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 )
 
+//TODO:
+// - differentiate between formats with animation support
+// - mapping of input formats with output formats. e.g., we will allow a TIFF
+//   but we will serve it as PNG.
 var imageAllowedContentTypes = []string{"image/jpg", "image/jpeg", "image/png"}
 
 type imageMediaTypeInfo struct {
-	mediaType     mediapb.MediaType
-	directoryName string
+	mediaType mediapb.MediaType
+	storePath string
 }
+
+var _ MediaTypeInfo = &imageMediaTypeInfo{}
 
 func (typeInfo *imageMediaTypeInfo) MediaType() mediapb.MediaType {
 	if typeInfo.mediaType == mediapb.MediaType_MEDIA_TYPE_UNSPECIFIED {
@@ -17,11 +23,9 @@ func (typeInfo *imageMediaTypeInfo) MediaType() mediapb.MediaType {
 	}
 	return typeInfo.mediaType
 }
-func (typeInfo *imageMediaTypeInfo) DirectoryName() string {
-	if typeInfo.directoryName == "" {
-		panic("directory name is unspecified")
-	}
-	return typeInfo.directoryName
+
+func (typeInfo *imageMediaTypeInfo) StorePath() string {
+	return typeInfo.storePath
 }
 
 func (typeInfo *imageMediaTypeInfo) IsContentTypeAllowed(contentType string) bool {

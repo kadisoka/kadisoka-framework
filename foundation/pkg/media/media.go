@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/rez-go/crux-apis/crux/media/v1"
+	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 )
 
 func DetectType(buf []byte) string {
@@ -16,9 +16,9 @@ type MediaTypeInfo interface {
 	// MediaType returns the type of media for this info.
 	MediaType() mediapb.MediaType
 
-	// DirectoryName returns a string which usually used to construct
+	// StorePath returns a string which usually used to construct
 	// path for storing the media files.
-	DirectoryName() string
+	StorePath() string
 
 	// IsContentTypeAllowed returns true if the provided content type string
 	// is allowed for the media type.
@@ -27,8 +27,8 @@ type MediaTypeInfo interface {
 
 var mediaTypeRegistry = map[mediapb.MediaType]MediaTypeInfo{
 	mediapb.MediaType_IMAGE: &imageMediaTypeInfo{
-		mediaType:     mediapb.MediaType_IMAGE,
-		directoryName: "images"},
+		mediaType: mediapb.MediaType_IMAGE,
+		storePath: "images"},
 }
 
 func GetMediaTypeInfoByTypeName(mediaTypeName string) MediaTypeInfo {
