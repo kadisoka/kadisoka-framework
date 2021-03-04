@@ -110,8 +110,8 @@ func (authCtx Authorization) TerminalIDPtr() *TerminalID {
 	return authCtx.Session.terminal.IDPtr()
 }
 
-func (authCtx Authorization) ClientID() ClientID {
-	return authCtx.Session.terminal.id.ClientID()
+func (authCtx Authorization) ClientID() ApplicationID {
+	return authCtx.Session.terminal.application.ID()
 }
 
 // RawToken returns the token where this instance of Authorization

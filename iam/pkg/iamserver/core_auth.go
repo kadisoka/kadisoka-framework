@@ -14,7 +14,7 @@ import (
 
 func (core *Core) GenerateAccessTokenJWT(
 	callCtx iam.CallContext,
-	terminalID iam.TerminalID,
+	terminalRef iam.TerminalRefKey,
 	userRef iam.UserRefKey,
 	issueTime time.Time,
 ) (tokenString string, err error) {
@@ -34,22 +34,22 @@ func (core *Core) GenerateAccessTokenJWT(
 		return "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
 	}
 
-	authID, issueTime, err := core.
-		generateAuthorizationID(callCtx, terminalID)
+	sessionRef, issueTime, err := core.
+		generateAuthorizationID(callCtx, terminalRef, userRef)
 	if err != nil {
 		return "", err
 	}
 
 	tokenClaims := &iam.AccessTokenClaims{
 		Claims: jwt.Claims{
-			ID:       authID.String(),
+			ID:       sessionRef.AZERText(),
 			IssuedAt: jwt.NewNumericDate(issueTime),
 			Issuer:   core.RealmName(),
 			Expiry:   jwt.NewNumericDate(issueTime.Add(iam.AccessTokenTTLDefault)),
 			Subject:  userRef.AZERText(),
 		},
-		AuthorizedParty: terminalID.ClientID().String(),
-		TerminalID:      terminalID.String(),
+		AuthorizedParty: terminalRef.Application().AZERText(),
+		TerminalID:      terminalRef.AZERText(),
 	}
 
 	tokenString, err = jwt.Signed(signer).Claims(tokenClaims).CompactSerialize()
@@ -61,7 +61,7 @@ func (core *Core) GenerateAccessTokenJWT(
 
 func (core *Core) GenerateRefreshTokenJWT(
 	callCtx iam.CallContext,
-	terminalID iam.TerminalID,
+	terminalRef iam.TerminalRefKey,
 	terminalSecret string,
 	issueTime time.Time,
 ) (tokenString string, err error) {
@@ -80,7 +80,7 @@ func (core *Core) GenerateRefreshTokenJWT(
 	tokenClaims := &iam.RefreshTokenClaims{
 		NotBefore:      issueTime.Unix(),
 		ExpiresAt:      issueTime.Add(iam.RefreshTokenTTLDefault).Unix(),
-		TerminalID:     terminalID.String(),
+		TerminalID:     terminalRef.AZERText(),
 		TerminalSecret: terminalSecret,
 	}
 
@@ -93,33 +93,34 @@ func (core *Core) GenerateRefreshTokenJWT(
 
 func (core *Core) generateAuthorizationID(
 	callCtx iam.CallContext,
-	terminalID iam.TerminalID,
-) (authID iam.AuthorizationID, issueTime time.Time, err error) {
+	terminalRef iam.TerminalRefKey,
+	userRef iam.UserRefKey,
+) (sessionRef iam.SessionRefKey, issueTime time.Time, err error) {
 	authCtx := callCtx.Authorization()
 
 	const attemptNumMax = 3
 	timeZero := time.Time{}
 	tNow := timeZero
-	var instanceID iam.AuthorizationInstanceID
+	var sessionID iam.SessionID
 
 	//TODO: make this more random.
 	// Note:
 	// - 0xffffffffffffff00 - timestamp
 	// - 0x00000000000000ff - random
-	genInstanceID := func(ts int64) (iam.AuthorizationInstanceID, error) {
+	genSessionID := func(ts int64) (iam.SessionID, error) {
 		idBytes := make([]byte, 1)
 		_, err := rand.Read(idBytes)
 		if err != nil {
-			return iam.AuthorizationInstanceIDZero, errors.Wrap("generation", err)
+			return iam.SessionIDZero, errors.Wrap("generation", err)
 		}
-		return iam.AuthorizationInstanceID((ts << 8) | int64(idBytes[0])), nil
+		return iam.SessionID((ts << 8) | int64(idBytes[0])), nil
 	}
 
 	for attemptNum := 0; ; attemptNum++ {
 		tNow = time.Now().UTC()
-		instanceID, err = genInstanceID(tNow.Unix())
+		sessionID, err = genSessionID(tNow.Unix())
 		if err != nil {
-			return iam.AuthorizationIDZero, timeZero, err
+			return iam.SessionRefKeyZero(), timeZero, err
 		}
 		_, err = core.db.
 			Exec(
@@ -128,7 +129,7 @@ func (core *Core) generateAuthorizationID(
 					`) VALUES (`+
 					`$1, $2, $3, $4, $5`+
 					`)`,
-				terminalID, instanceID, tNow,
+				terminalRef.ID().PrimitiveValue(), sessionID.PrimitiveValue(), tNow,
 				authCtx.UserIDPtr(), authCtx.TerminalIDPtr())
 		if err == nil {
 			break
@@ -139,15 +140,12 @@ func (core *Core) generateAuthorizationID(
 			pqErr.Code == "23505" &&
 			pqErr.Constraint == "terminal_authorizations_pkey" {
 			if attemptNum >= attemptNumMax {
-				return iam.AuthorizationIDZero, timeZero, errors.Wrap("insert max attempts", err)
+				return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert max attempts", err)
 			}
 			continue
 		}
-		return iam.AuthorizationIDZero, timeZero, errors.Wrap("insert", err)
+		return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert", err)
 	}
 
-	return iam.AuthorizationID{
-		TerminalID: terminalID,
-		InstanceID: instanceID,
-	}, tNow, nil
+	return iam.NewSessionRefKey(terminalRef, userRef, sessionID), tNow, nil
 }

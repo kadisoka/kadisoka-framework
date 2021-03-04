@@ -220,7 +220,7 @@ func (restSrv *Server) postTerminalsSecret(
 		panic(err)
 	}
 
-	userTermID, err := iam.TerminalIDFromString(linkConfirmReq.TerminalID)
+	terminalRef, err := iam.TerminalRefKeyFromAZERText(linkConfirmReq.TerminalID)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Msgf("Unable to parse terminal ID %q", linkConfirmReq.TerminalID)
@@ -230,7 +230,7 @@ func (restSrv *Server) postTerminalsSecret(
 	}
 
 	termSecret, _, err := restSrv.serverCore.
-		ConfirmTerminalRegistrationVerification(reqCtx, userTermID, linkConfirmReq.Code)
+		ConfirmTerminalRegistrationVerification(reqCtx, terminalRef, linkConfirmReq.Code)
 	if err != nil {
 		switch err {
 		case iam.ErrTerminalVerificationCodeMismatch:
@@ -319,7 +319,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
 ) {
 	// Only for non-confidential user-agents
-	if clientID := authClient.ID; !clientID.IsPublic() && !clientID.IsUserAgent() {
+	if appRef := authClient.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf(
 			"Client %v is not allowed to use this verification resource type", authClient.ID)
@@ -350,7 +350,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 		}
 	}
 
-	terminalID, _, codeExpiry, err := restSrv.serverCore.
+	termRef, _, codeExpiry, err := restSrv.serverCore.
 		StartTerminalRegistrationByPhoneNumber(
 			reqCtx, authClient.ID, phoneNumber,
 			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
@@ -374,7 +374,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegisterPostResponseJSONV1{
-			TerminalID: terminalID.String(),
+			TerminalID: termRef.AZERText(),
 			CodeExpiry: codeExpiry,
 		})
 	return
@@ -387,7 +387,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	authClient *iam.Client,
 	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
 ) {
-	if clientID := authClient.ID; !clientID.IsPublic() && !clientID.IsUserAgent() {
+	if appRef := authClient.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf(
 			"Client %v is not allowed to use this verification resource type", authClient.ID)
@@ -425,7 +425,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 		}
 	}
 
-	terminalID, _, codeExpiry, err := restSrv.serverCore.
+	termRef, _, codeExpiry, err := restSrv.serverCore.
 		StartTerminalRegistrationByEmailAddress(
 			reqCtx, authClient.ID, emailAddress,
 			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
@@ -449,7 +449,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegisterPostResponseJSONV1{
-			TerminalID: terminalID.String(),
+			TerminalID: termRef.AZERText(),
 			CodeExpiry: codeExpiry,
 		})
 	return
@@ -462,7 +462,7 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
 ) {
 	// Only if the client is able to secure its credentials.
-	if !authClient.ID.IsConfidential() {
+	if !authClient.ID.ID().IsService() && !authClient.ID.ID().IsUserAgentAuthorizationConfidential() {
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is not allowed to use this verification resource type", authClient.ID)
 		rest.RespondTo(resp).EmptyError(
@@ -484,9 +484,9 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 	termLangStrings := restSrv.parseRequestAcceptLanguage(reqCtx, "")
 	termDisplayName := strings.TrimSpace(terminalRegisterReq.DisplayName)
 
-	termID, termSecret, err := restSrv.serverCore.
+	termRef, termSecret, err := restSrv.serverCore.
 		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-			ClientID:         authClient.ID,
+			ApplicationRef:   authClient.ID,
 			UserRef:          iam.UserRefKeyZero(),
 			DisplayName:      termDisplayName,
 			AcceptLanguage:   strings.Join(termLangStrings, ","),
@@ -499,7 +499,7 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegisterPostResponseJSONV1{
-			TerminalID:     termID.String(),
+			TerminalID:     termRef.AZERText(),
 			TerminalSecret: termSecret,
 		})
 	return

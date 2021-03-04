@@ -9,8 +9,8 @@ import (
 //TODO: some data should be taken from the context instead of
 // provided in here.
 type TerminalRegistrationInput struct {
-	ClientID iam.ClientID
-	UserRef  iam.UserRefKey
+	ApplicationRef iam.ApplicationRefKey
+	UserRef        iam.UserRefKey
 
 	DisplayName    string
 	AcceptLanguage string //TODO: remove this
@@ -22,10 +22,10 @@ type TerminalRegistrationInput struct {
 
 // terminalDBModel represents a row from 'terminals' table.
 type terminalDBModel struct {
-	ID       iam.TerminalID `db:"id"`
-	ClientID iam.ClientID   `db:"client_id"`
-	UserID   iam.UserID     `db:"user_id"`
-	Secret   string         `db:"secret"`
+	ID       iam.TerminalID    `db:"id"`
+	ClientID iam.ApplicationID `db:"client_id"`
+	UserID   iam.UserID        `db:"user_id"`
+	Secret   string            `db:"secret"`
 
 	DisplayName    string `db:"display_name"`
 	AcceptLanguage string `db:"accept_language"`

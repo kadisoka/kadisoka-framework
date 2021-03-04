@@ -26,7 +26,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	if reqClient != nil && reqClient.ID.IsValid() && (!reqClient.ID.IsUserAgent() || !reqClient.ID.IsConfidential()) {
+	if reqClient != nil && !reqClient.ID.ID().IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
 			Warn().Msgf("Client %v is not authorized to use grant type password", reqClient.ID)
 		oauth2.RespondTo(resp).ErrorCode(
@@ -85,7 +85,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	terminalIDStr string,
 	terminalSecret string,
 ) {
-	terminalID, err := iam.TerminalIDFromString(terminalIDStr)
+	termRef, err := iam.TerminalRefKeyFromAZERText(terminalIDStr)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Msgf("Unable to parse username %q as TerminalID: %v", terminalIDStr, err)
@@ -95,17 +95,17 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	}
 
 	authOK, userRef, err := restSrv.serverCore.
-		AuthenticateTerminal(terminalID, terminalSecret)
+		AuthenticateTerminal(termRef, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Msgf("Terminal %v authentication failed: %v", terminalID, err)
+			Error().Msgf("Terminal %v authentication failed: %v", termRef, err)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
 	}
 	if !authOK {
 		logCtx(reqCtx).
-			Warn().Msgf("Terminal %v authentication failed", terminalID)
+			Warn().Msgf("Terminal %v authentication failed", termRef)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
@@ -116,7 +116,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 			GetUserAccountState(userRef)
 		if err != nil {
 			logCtx(reqCtx).
-				Warn().Msgf("Terminal %v user account state: %v", terminalID, err)
+				Warn().Msgf("Terminal %v user account state: %v", termRef, err)
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorServerError)
 			return
@@ -137,9 +137,9 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	}
 
 	if reqClient != nil {
-		if reqClient.ID != terminalID.ClientID() {
+		if !reqClient.ID.EqualsApplicationRefKey(termRef.Application()) {
 			logCtx(reqCtx).
-				Error().Msgf("Terminal %v is not associated to client %v", terminalID, reqClient.ID)
+				Error().Msgf("Terminal %v is not associated to client %v", termRef, reqClient.ID)
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorServerError)
 			return
@@ -149,13 +149,13 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	issueTime := time.Now().UTC()
 
 	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, terminalID, userRef, issueTime)
+		GenerateAccessTokenJWT(reqCtx, termRef, userRef, issueTime)
 	if err != nil {
 		panic(err)
 	}
 
 	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(reqCtx, terminalID, terminalSecret, issueTime)
+		GenerateRefreshTokenJWT(reqCtx, termRef, terminalSecret, issueTime)
 	if err != nil {
 		panic(err)
 	}

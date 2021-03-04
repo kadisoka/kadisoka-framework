@@ -1,7 +1,7 @@
 package iam
 
 type Client struct {
-	ID                ClientID
+	ID                ApplicationRefKey
 	DisplayName       string
 	Secret            string
 	PlatformType      string // only for user-agent types
@@ -22,5 +22,5 @@ func (cl Client) HasOAuth2RedirectURI(redirectURI string) bool {
 }
 
 type ClientDataProvider interface {
-	GetClient(id ClientID) (*Client, error)
+	GetClient(id ApplicationRefKey) (*Client, error)
 }

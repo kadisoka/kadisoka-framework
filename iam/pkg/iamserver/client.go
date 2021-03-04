@@ -10,7 +10,7 @@ import (
 )
 
 type clientStaticDataProvider struct {
-	clients map[iam.ClientID]*iam.Client
+	clients map[iam.ApplicationRefKey]*iam.Client
 }
 
 func newClientStaticDataProviderFromCSVFileByName(
@@ -64,10 +64,10 @@ func newClientStaticDataProviderFromCSVFileByName(
 		return ls[idx]
 	}
 
-	clList := map[iam.ClientID]*iam.Client{}
+	clList := map[iam.ApplicationRefKey]*iam.Client{}
 	for _, r := range rows[skipRows:] {
-		var clID iam.ClientID
-		clID, err = iam.ClientIDFromString(r[0])
+		var clID iam.ApplicationRefKey
+		clID, err = iam.ApplicationRefKeyFromAZERText(r[0])
 		if err != nil {
 			return nil, err
 		}
@@ -119,8 +119,8 @@ func newClientStaticDataProviderFromCSVFileByName(
 }
 
 func (clientStaticDataStore *clientStaticDataProvider) GetClient(
-	clientID iam.ClientID,
+	appID iam.ApplicationRefKey,
 ) (*iam.Client, error) {
-	cl := clientStaticDataStore.clients[clientID]
+	cl := clientStaticDataStore.clients[appID]
 	return cl, nil
 }

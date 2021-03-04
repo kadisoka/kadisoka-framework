@@ -69,7 +69,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		return
 	}
 
-	clientID, err := iam.ClientIDFromString(val.ClientID)
+	appRef, err := iam.ApplicationRefKeyFromAZERText(val.ClientID)
 	if err != nil {
 		logReq(r).
 			Warn().Err(err).Msg("client_id malformed")
@@ -80,7 +80,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	if clientID.IsNotValid() {
+	if appRef.IsNotValid() {
 		logReq(r).
 			Warn().Err(err).Msg("client_id is invalid")
 		cbURL := val.RedirectURI + "?" + oauth2.MustQueryString(oauth2.ErrorResponse{
@@ -90,7 +90,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	clientData, err := restSrv.serverCore.ClientByID(clientID)
+	clientData, err := restSrv.serverCore.ApplicationByRefKey(appRef)
 	if err != nil || clientData == nil {
 		logReq(r).
 			Warn().Err(err).Msg("client_id does not refer a valid client")
@@ -138,11 +138,11 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		return
 	}
 
-	clientIDArgVal, _ := req.BodyParameter("client_id")
-	clientID, err := iam.ClientIDFromString(clientIDArgVal)
+	appRefArgVal, _ := req.BodyParameter("client_id")
+	appRef, err := iam.ApplicationRefKeyFromAZERText(appRefArgVal)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msgf("Invalid field form.client_id %v", clientIDArgVal)
+			Warn().Err(err).Msgf("Invalid field form.client_id %v", appRefArgVal)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -158,20 +158,20 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		return
 	}
 
-	client, err := restSrv.serverCore.ClientByID(clientID)
+	client, err := restSrv.serverCore.ApplicationByRefKey(appRef)
 	if err != nil {
 		panic(err)
 	}
 	if client == nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client ID: %v", clientID)
+			Warn().Msgf("Invalid client ID: %v", appRef)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
 	}
-	if !clientID.IsConfidential() && !clientID.IsUserAgent() {
+	if !appRef.ID().IsUserAgentAuthorizationConfidential() {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client type for ID %v", clientID)
+			Warn().Msgf("Invalid client type for ID %v", appRef)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -181,7 +181,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	if redirectURIStr != "" && !client.HasOAuth2RedirectURI(redirectURIStr) {
 		logCtx(reqCtx).
 			Warn().Msgf("Redirect URI mismatch for client %v. Got %v , expecting %v .",
-			clientID, redirectURIStr, client.OAuth2RedirectURI)
+			appRef, redirectURIStr, client.OAuth2RedirectURI)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -199,14 +199,14 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	authCtx := reqCtx.Authorization()
 	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx, "")
 	termDisplayName := ""
-	var terminalID iam.TerminalID
+	var termRef iam.TerminalRefKey
 
 	switch responseType {
 	case oauth2.ResponseTypeCode:
-		terminalID, _, err = restSrv.serverCore.
+		termRef, _, err = restSrv.serverCore.
 			RegisterTerminal(reqCtx,
 				iamserver.TerminalRegistrationInput{
-					ClientID:         clientID,
+					ApplicationRef:   appRef,
 					UserRef:          authCtx.UserRef(),
 					DisplayName:      termDisplayName,
 					AcceptLanguage:   strings.Join(preferredLanguages, ","),
@@ -218,14 +218,14 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		}
 
 		redirectURI.RawQuery = oauth2.MustQueryString(oauth2.AuthorizationResponse{
-			Code:  terminalID.String(),
+			Code:  termRef.AZERText(),
 			State: state,
 		})
 
 	case oauth2.ResponseTypeToken:
-		terminalID, _, err = restSrv.serverCore.
+		termRef, _, err = restSrv.serverCore.
 			RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-				ClientID:         clientID,
+				ApplicationRef:   appRef,
 				UserRef:          authCtx.UserRef(),
 				DisplayName:      termDisplayName,
 				AcceptLanguage:   strings.Join(preferredLanguages, ","),
@@ -239,7 +239,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		issueTime := time.Now().UTC()
 
 		tokenString, err := restSrv.serverCore.
-			GenerateAccessTokenJWT(reqCtx, terminalID, authCtx.UserRef(), issueTime)
+			GenerateAccessTokenJWT(reqCtx, termRef, authCtx.UserRef(), issueTime)
 		if err != nil {
 			panic(err)
 		}

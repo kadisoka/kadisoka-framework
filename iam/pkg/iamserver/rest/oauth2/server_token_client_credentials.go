@@ -33,7 +33,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	}
 
 	// To use this grant type, the client must be able to secure its credentials.
-	if !reqClient.ID.IsConfidential() {
+	if !reqClient.ID.ID().IsService() && !reqClient.ID.ID().IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
 			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqClient.ID)
 		oauth2.RespondTo(resp).ErrorCode(
@@ -61,9 +61,9 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx, "")
 	termDisplayName := ""
 
-	termID, termSecret, err := restSrv.serverCore.
+	termRef, termSecret, err := restSrv.serverCore.
 		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-			ClientID:         reqClient.ID,
+			ApplicationRef:   reqClient.ID,
 			UserRef:          authCtx.UserRef(),
 			DisplayName:      termDisplayName,
 			AcceptLanguage:   strings.Join(preferredLanguages, ","),
@@ -81,7 +81,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	issueTime := time.Now().UTC()
 
 	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, termID, authCtx.UserRef(), issueTime)
+		GenerateAccessTokenJWT(reqCtx, termRef, authCtx.UserRef(), issueTime)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Msgf("GenerateAccessTokenJWT: %v", err)
@@ -92,7 +92,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 
 	//TODO: properly get the secret
 	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(reqCtx, termID, termSecret, issueTime)
+		GenerateRefreshTokenJWT(reqCtx, termRef, termSecret, issueTime)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Msgf("GenerateRefreshTokenJWT: %v", err)
@@ -110,7 +110,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 				RefreshToken: refreshToken,
 			},
 			UserID:         authCtx.UserRef().AZERText(),
-			TerminalID:     termID.String(),
+			TerminalID:     termRef.AZERText(),
 			TerminalSecret: termSecret,
 		})
 }

@@ -87,9 +87,29 @@ func (id ApplicationID) IsZero() bool {
 
 // IsValid returns true if this instance is valid independently as an ID.
 // It doesn't tell whether it refers to a valid instance of Application.
+//
+// To elaborate, validity of a data depends on the perspective of the user.
+// For example, age 1000 is a valid as an instance of age, but on the context
+// of human living age, we can consider it as invalid.
+//
+// To use some analogy, a ticket has a date of validity for today, but
+// after it got checked in to the counter, it turns out that its serial number
+// is not registered in the issuer's database. The ticket claims that it's
+// valid, but it's considered invalid because it's a fake.
+//
+// Similarly, what is considered valid in this context here is that the data
+// contained in this instance doesn't break any rule for an instance of
+// ApplicationID. Whether the instance is valid for certain context,
+// it requires case-by-case validation which is out of the scope of this
+// method.
 func (id ApplicationID) IsValid() bool {
 	return int32(id) > 0 &&
 		(uint32(id)&_ApplicationIDSignificantBitsMask) != 0
+}
+
+// IsNotValid returns the negation of value returned by IsValid().
+func (id ApplicationID) IsNotValid() bool {
+	return !id.IsValid()
 }
 
 // Equals is required as ApplicationID is a value-object.
@@ -154,6 +174,12 @@ func (id *ApplicationID) UnmarshalAZERBinField(
 // First-party applications could be in various forms, e.g.,
 // official mobile app, web app, or system dashboard.
 func (id ApplicationID) IsFirstParty() bool {
+	return id.IsValid() && id.HasFirstPartyBits()
+}
+
+// HasFirstPartyBits is only checking the bits
+// without validating other information contained in the ID.
+func (id ApplicationID) HasFirstPartyBits() bool {
 	return (uint32(id) &
 		0b1000000_00000000_00000000_00000000) ==
 		0b1000000_00000000_00000000_00000000
@@ -169,6 +195,12 @@ func (id ApplicationID) IsFirstParty() bool {
 // All service applications are confidential OAuth 2.0
 // clients (RFC6749 section 2.1).
 func (id ApplicationID) IsService() bool {
+	return id.IsValid() && id.HasServiceBits()
+}
+
+// HasServiceBits is only checking the bits
+// without validating other information contained in the ID.
+func (id ApplicationID) HasServiceBits() bool {
 	return (uint32(id) &
 		0b100000_00000000_00000000_00000000) ==
 		0b0
@@ -185,6 +217,12 @@ func (id ApplicationID) IsService() bool {
 // These types align with OAuth 2.0 client types (RFC6749
 // section 2.1).
 func (id ApplicationID) IsUserAgent() bool {
+	return id.IsValid() && id.HasUserAgentBits()
+}
+
+// HasUserAgentBits is only checking the bits
+// without validating other information contained in the ID.
+func (id ApplicationID) HasUserAgentBits() bool {
 	return (uint32(id) &
 		0b100000_00000000_00000000_00000000) ==
 		0b100000_00000000_00000000_00000000
@@ -206,6 +244,12 @@ func (id ApplicationID) IsUserAgent() bool {
 // be focused on testing the user's claims and less of the
 // application's claims.
 func (id ApplicationID) IsUserAgentAuthorizationPublic() bool {
+	return id.IsValid() && id.HasUserAgentAuthorizationPublicBits()
+}
+
+// HasUserAgentAuthorizationPublicBits is only checking the bits
+// without validating other information contained in the ID.
+func (id ApplicationID) HasUserAgentAuthorizationPublicBits() bool {
 	return (uint32(id) &
 		0b110000_00000000_00000000_00000000) ==
 		0b100000_00000000_00000000_00000000
@@ -220,6 +264,12 @@ func (id ApplicationID) IsUserAgentAuthorizationPublic() bool {
 // A confidential user-agent can not be used for directly
 // performing user authentication.
 func (id ApplicationID) IsUserAgentAuthorizationConfidential() bool {
+	return id.IsValid() && id.HasUserAgentAuthorizationConfidentialBits()
+}
+
+// HasUserAgentAuthorizationConfidentialBits is only checking the bits
+// without validating other information contained in the ID.
+func (id ApplicationID) HasUserAgentAuthorizationConfidentialBits() bool {
 	return (uint32(id) &
 		0b110000_00000000_00000000_00000000) ==
 		0b110000_00000000_00000000_00000000
@@ -229,8 +279,6 @@ type ApplicationIDError interface {
 	error
 	ApplicationIDError()
 }
-
-//TODO: FromString, (Un)MarshalText, (Un)MarshalJSON
 
 //endregion
 
@@ -262,7 +310,20 @@ func (ApplicationRefKey) AZRefKey() {}
 // with azcore.EntityRefKey.
 func (ApplicationRefKey) AZEntityRefKey() {}
 
-func (refKey ApplicationRefKey) ID() ApplicationID { return ApplicationID(refKey) }
+// ID returns the scoped identifier of the entity.
+func (refKey ApplicationRefKey) ID() ApplicationID {
+	return ApplicationID(refKey)
+}
+
+// IDPtr returns a pointer to a copy of the ID if it's considered valid
+// otherwise it returns nil.
+func (refKey ApplicationRefKey) IDPtr() *ApplicationID {
+	if refKey.IsNotValid() {
+		return nil
+	}
+	i := refKey.ID()
+	return &i
+}
 
 // ID is required for conformance with azcore.RefKey.
 func (refKey ApplicationRefKey) EID() azcore.EID {
@@ -278,6 +339,11 @@ func (refKey ApplicationRefKey) IsZero() bool {
 // It doesn't tell whether it refers to a valid instance of Application.
 func (refKey ApplicationRefKey) IsValid() bool {
 	return ApplicationID(refKey).IsValid()
+}
+
+// IsNotValid returns the negation of value returned by IsValid().
+func (refKey ApplicationRefKey) IsNotValid() bool {
+	return !refKey.IsValid()
 }
 
 // Equals is required for conformance with azcore.EntityRefKey.
@@ -408,6 +474,20 @@ func ApplicationRefKeyFromAZERText(s string) (ApplicationRefKey, error) {
 // with azer.TextUnmarshalable.
 func (refKey *ApplicationRefKey) UnmarshalAZERText(s string) error {
 	r, err := ApplicationRefKeyFromAZERText(s)
+	if err == nil {
+		*refKey = r
+	}
+	return err
+}
+
+// MarshalText is for compatibility with Go's encoding.TextMarshaler
+func (refKey ApplicationRefKey) MarshalText() ([]byte, error) {
+	return []byte(refKey.AZERText()), nil
+}
+
+// UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
+func (refKey *ApplicationRefKey) UnmarshalText(b []byte) error {
+	r, err := ApplicationRefKeyFromAZERText(string(b))
 	if err == nil {
 		*refKey = r
 	}
