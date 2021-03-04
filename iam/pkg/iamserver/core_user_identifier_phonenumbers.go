@@ -72,7 +72,8 @@ func (core *Core) ListUsersByPhoneNumber(
 						"creation_user_id, creation_terminal_id"+
 						") VALUES ($1, $2, $3, $4, $5) "+
 						"ON CONFLICT ON CONSTRAINT user_contact_phone_numbers_pkey DO NOTHING",
-					authCtx.UserRef, pn.CountryCode(), pn.NationalNumber(), authCtx.UserRef, authCtx.TerminalID())
+					authCtx.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
+					authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
 				if err != nil {
 					logCtx(callCtx).Err(err).Str("phone_number", pn.String()).
 						Msg("User contact phone number store")

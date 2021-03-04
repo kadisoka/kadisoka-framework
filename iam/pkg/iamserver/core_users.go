@@ -172,7 +172,7 @@ func (core *Core) DeleteUserAccount(
 			"UPDATE users "+
 				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2, deletion_notes = $3 "+
 				"WHERE id = $1 AND deletion_time IS NULL",
-			authCtx.UserRef, authCtx.TerminalID(), input.DeletionNotes)
+			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), input.DeletionNotes)
 		if txErr != nil {
 			return txErr
 		}
@@ -187,7 +187,7 @@ func (core *Core) DeleteUserAccount(
 				`UPDATE `+userIdentifierPhoneNumberTableName+` `+
 					"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 					"WHERE user_id = $1 AND deletion_time IS NULL",
-				authCtx.UserRef)
+				authCtx.UserID().PrimitiveValue())
 		}
 
 		if txErr == nil {
@@ -195,7 +195,7 @@ func (core *Core) DeleteUserAccount(
 				"UPDATE user_profile_image_urls "+
 					"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 					"WHERE user_id = $1 AND deletion_time IS NULL",
-				authCtx.UserRef, authCtx.TerminalID())
+				authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
 		}
 
 		return txErr
@@ -235,7 +235,7 @@ func (core *Core) SetUserProfileImageURL(
 			"UPDATE user_profile_image_urls "+
 				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 				"WHERE user_id = $1 AND deletion_time IS NULL",
-			authCtx.UserRef, authCtx.TerminalID())
+			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
 		if txErr != nil {
 			return errors.Wrap("mark current profile image URL as deleted", txErr)
 		}
@@ -244,7 +244,8 @@ func (core *Core) SetUserProfileImageURL(
 				"INSERT INTO user_profile_image_urls "+
 					"(user_id, profile_image_url, creation_user_id, creation_terminal_id) VALUES "+
 					"($1, $2, $3, $4)",
-				authCtx.UserRef, profileImageURL, authCtx.UserRef, authCtx.TerminalID())
+				authCtx.UserID().PrimitiveValue(), profileImageURL,
+				authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
 			if txErr != nil {
 				return errors.Wrap("insert new profile image URL", txErr)
 			}

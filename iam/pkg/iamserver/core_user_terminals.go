@@ -15,7 +15,7 @@ func (core *Core) DeleteUserTerminalFCMRegistrationToken(
 		"UPDATE user_terminal_fcm_registration_tokens "+
 			"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 			"WHERE user_id = $3 AND terminal_id = $4 AND token = $5 AND deletion_time IS NULL",
-		authCtx.UserRef, authCtx.TerminalID(), userID, terminalID, token)
+		authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), userID, terminalID, token)
 	return err
 }
 
@@ -50,7 +50,7 @@ func (core *Core) ListUserTerminalIDFirebaseInstanceTokens(
 
 func (core *Core) SetUserTerminalFCMRegistrationToken(
 	callCtx iam.CallContext,
-	userRef iam.UserRefKey, terminalID iam.TerminalID, token string,
+	userRef iam.UserRefKey, terminalRef iam.TerminalRefKey, token string,
 ) error {
 	if callCtx == nil {
 		return errors.ArgMsg("callCtx", "missing")
@@ -62,7 +62,8 @@ func (core *Core) SetUserTerminalFCMRegistrationToken(
 			"UPDATE user_terminal_fcm_registration_tokens "+
 				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 				"WHERE user_id = $3 AND terminal_id = $4 AND deletion_time IS NULL",
-			authCtx.UserRef, authCtx.TerminalID(), userRef.ID().PrimitiveValue(), terminalID)
+			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+			userRef.ID().PrimitiveValue(), terminalRef.ID().PrimitiveValue())
 		if err != nil {
 			return err
 		}
@@ -73,7 +74,7 @@ func (core *Core) SetUserTerminalFCMRegistrationToken(
 			"INSERT INTO user_terminal_fcm_registration_tokens "+
 				"(user_id, terminal_id, creation_user_id, creation_terminal_id, token) "+
 				"VALUES ($1, $2, $3, $4, $5)",
-			userRef, terminalID, authCtx.UserRef, authCtx.TerminalID(), token)
+			userRef, terminalRef, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), token)
 		return err
 	})
 }

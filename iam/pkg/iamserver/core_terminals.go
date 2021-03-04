@@ -421,7 +421,8 @@ func (core *Core) RegisterTerminal(
 	if input.ApplicationRef.IsNotValid() {
 		return iam.TerminalRefKeyZero(), "", errors.Arg("input.ClientID", nil)
 	}
-	if input.UserRef.IsNotValid() && input.UserRef != 0 {
+	// Allow zero or a valid user ref.
+	if !input.UserRef.IsZero() && input.UserRef.IsNotValid() {
 		return iam.TerminalRefKeyZero(), "", errors.Arg("input.UserID", nil)
 	}
 
@@ -464,7 +465,7 @@ func (core *Core) RegisterTerminal(
 			`)`,
 		termID,
 		input.ApplicationRef,
-		input.UserRef,
+		input.UserRef.ID().PrimitiveValue(),
 		termSecret,
 		ctxTime,
 		authCtx.UserIDPtr(),
