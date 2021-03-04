@@ -87,6 +87,11 @@ func (id TerminalID) IsValid() bool {
 		(uint64(id)&_TerminalIDSignificantBitsMask) != 0
 }
 
+// IsNotValid returns the negation of value returned by IsValid().
+func (id TerminalID) IsNotValid() bool {
+	return !id.IsValid()
+}
+
 // AZERBinField is required for conformance
 // with azcore.EID.
 func (id TerminalID) AZERBinField() ([]byte, azer.BinDataType) {
@@ -154,10 +159,6 @@ func (id TerminalID) String() string {
 		return ""
 	}
 	return terminalIDEncode(id)
-}
-
-func (id TerminalID) IsNotValid() bool {
-	return !id.IsValid()
 }
 
 func (id TerminalID) ClientID() ClientID {
@@ -262,20 +263,23 @@ func terminalIDV0Decode(s string) (TerminalID, error) {
 // an instance of adjunct entity Terminal system-wide.
 type TerminalRefKey struct {
 	application ApplicationRefKey
+	user        UserRefKey
 	id          TerminalID
 }
 
 // The total number of fields in the struct.
-const _TerminalRefKeyFieldCount = 1 + 1
+const _TerminalRefKeyFieldCount = 2 + 1
 
 // NewTerminalRefKey returns a new instance
 // of TerminalRefKey with the provided attribute values.
 func NewTerminalRefKey(
 	application ApplicationRefKey,
+	user UserRefKey,
 	id TerminalID,
 ) TerminalRefKey {
 	return TerminalRefKey{
 		application: application,
+		user:        user,
 		id:          id,
 	}
 }
@@ -288,6 +292,7 @@ var _ azcore.TerminalRefKey = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
 	application: ApplicationRefKeyZero(),
+	user:        UserRefKeyZero(),
 	id:          TerminalIDZero,
 }
 
@@ -304,7 +309,20 @@ func (TerminalRefKey) AZRefKey() {}
 // by azcore.AdjunctEntityRefKey interface.
 func (TerminalRefKey) AZAdjunctEntityRefKey() {}
 
-func (refKey TerminalRefKey) ID() TerminalID { return refKey.id }
+// ID returns the scoped identifier of the entity.
+func (refKey TerminalRefKey) ID() TerminalID {
+	return refKey.id
+}
+
+// IDPtr returns a pointer to a copy of the ID if it's considered valid
+// otherwise it returns nil.
+func (refKey TerminalRefKey) IDPtr() *TerminalID {
+	if refKey.IsNotValid() {
+		return nil
+	}
+	i := refKey.ID()
+	return &i
+}
 
 // ID is required for conformance with azcore.RefKey.
 func (refKey TerminalRefKey) EID() azcore.EID {
@@ -320,6 +338,7 @@ func (refKey TerminalRefKey) TerminalID() azcore.TerminalID {
 // IsZero is required as TerminalRefKey is a value-object.
 func (refKey TerminalRefKey) IsZero() bool {
 	return refKey.application.IsZero() &&
+		refKey.user.IsZero() &&
 		refKey.id == TerminalIDZero
 }
 
@@ -327,17 +346,25 @@ func (refKey TerminalRefKey) IsZero() bool {
 // It doesn't tell whether it refers to a valid instance of Terminal.
 func (refKey TerminalRefKey) IsValid() bool {
 	return refKey.application.IsValid() &&
+		refKey.user.IsValid() &&
 		refKey.id.IsValid()
+}
+
+// IsNotValid returns the negation of value returned by IsValid().
+func (refKey TerminalRefKey) IsNotValid() bool {
+	return !refKey.IsValid()
 }
 
 // Equals is required for conformance with azcore.AdjunctEntityRefKey.
 func (refKey TerminalRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(TerminalRefKey); ok {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
+			refKey.user.EqualsUserRefKey(x.user) &&
 			refKey.id == x.id
 	}
 	if x, _ := other.(*TerminalRefKey); x != nil {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
+			refKey.user.EqualsUserRefKey(x.user) &&
 			refKey.id == x.id
 	}
 	return false
@@ -354,6 +381,7 @@ func (refKey TerminalRefKey) EqualsTerminalRefKey(
 	other TerminalRefKey,
 ) bool {
 	return refKey.application.EqualsApplicationRefKey(other.application) &&
+		refKey.user.EqualsUserRefKey(other.user) &&
 		refKey.id == other.id
 }
 
@@ -393,6 +421,10 @@ func (refKey TerminalRefKey) AZERBinField() ([]byte, azer.BinDataType) {
 	var fieldType azer.BinDataType
 
 	fieldBytes, fieldType = refKey.application.AZERBinField()
+	typesBytes = append(typesBytes, fieldType.Byte())
+	dataBytes = append(dataBytes, fieldBytes...)
+
+	fieldBytes, fieldType = refKey.user.AZERBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
@@ -444,6 +476,20 @@ func TerminalRefKeyFromAZERBinField(
 	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return TerminalRefKeyZero(), 0,
+			errors.ArgWrap("", "user ref-key type parsing", err)
+	}
+	typeCursor++
+	userRefKey, readLen, err := UserRefKeyFromAZERBinField(
+		b[dataCursor:], fieldType)
+	if err != nil {
+		return TerminalRefKeyZero(), 0,
+			errors.ArgWrap("", "user ref-key data parsing", err)
+	}
+	dataCursor += readLen
+
+	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
+	if err != nil {
+		return TerminalRefKeyZero(), 0,
 			errors.ArgWrap("", "id type parsing", err)
 	}
 	typeCursor++
@@ -457,6 +503,7 @@ func TerminalRefKeyFromAZERBinField(
 
 	return TerminalRefKey{
 		application: applicationRefKey,
+		user:        userRefKey,
 		id:          id,
 	}, dataCursor, nil
 }
@@ -520,9 +567,23 @@ func (refKey *TerminalRefKey) UnmarshalAZERText(s string) error {
 	return err
 }
 
+// MarshalText is for compatibility with Go's encoding.TextMarshaler
+func (refKey TerminalRefKey) MarshalText() ([]byte, error) {
+	return []byte(refKey.AZERText()), nil
+}
+
+// UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
+func (refKey *TerminalRefKey) UnmarshalText(b []byte) error {
+	r, err := TerminalRefKeyFromAZERText(string(b))
+	if err == nil {
+		*refKey = r
+	}
+	return err
+}
+
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey TerminalRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in AZRS
+	// We assume that there's no symbols in azer-text
 	return []byte("\"" + refKey.AZERText() + "\""), nil
 }
 
@@ -553,6 +614,24 @@ func (refKey TerminalRefKey) WithApplication(
 ) TerminalRefKey {
 	return TerminalRefKey{
 		application: application,
+		user:        refKey.user,
+	}
+}
+
+// User returns instance's User value.
+func (refKey TerminalRefKey) User() UserRefKey {
+	return refKey.user
+}
+
+// WithUser returns a copy
+// of TerminalRefKey
+// with its user attribute set to the provided value.
+func (refKey TerminalRefKey) WithUser(
+	user UserRefKey,
+) TerminalRefKey {
+	return TerminalRefKey{
+		application: refKey.application,
+		user:        user,
 	}
 }
 

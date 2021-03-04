@@ -104,7 +104,7 @@ func (core *Core) SetUserIdentifierEmailAddress(
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !userRef.EqualsUserRefKey(authCtx.UserRef) {
+	if !userRef.EqualsUserRefKey(authCtx.UserRef()) {
 		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 
@@ -114,14 +114,14 @@ func (core *Core) SetUserIdentifierEmailAddress(
 		return 0, nil, errors.Wrap("getUserIDByIdentifierEmailAddress", err)
 	}
 	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != authCtx.UserRef.ID() {
+		if existingOwnerUserID != authCtx.UserID() {
 			return 0, nil, errors.ArgMsg("emailAddress", "conflict")
 		}
 		return 0, nil, nil
 	}
 
 	alreadyVerified, err := core.setUserIdentifierEmailAddress(
-		callCtx, authCtx.UserRef, emailAddress)
+		callCtx, authCtx.UserRef(), emailAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -165,8 +165,8 @@ func (core *Core) setUserIdentifierEmailAddress(
 		emailAddress.DomainPart(),
 		emailAddress.RawInput(),
 		callCtx.RequestReceiveTime(),
-		callCtx.Authorization().UserRef.ID().PrimitiveValue(),
-		callCtx.Authorization().TerminalID())
+		callCtx.Authorization().UserID().PrimitiveValue(),
+		callCtx.Authorization().TerminalID().PrimitiveValue())
 	if err != nil {
 		return false, err
 	}
@@ -223,7 +223,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 	ctxTime := callCtx.RequestReceiveTime()
 	updated, err = core.
 		ensureUserEmailAddressVerifiedFlag(
-			authCtx.UserRef.ID(), *emailAddress,
+			authCtx.UserID(), *emailAddress,
 			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)

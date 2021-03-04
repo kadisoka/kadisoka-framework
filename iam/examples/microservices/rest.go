@@ -118,6 +118,6 @@ func (restSvc *RESTService) getHello(req *restful.Request, resp *restful.Respons
 	}
 
 	resp.WriteHeaderAndJson(http.StatusOK,
-		&helloGetResponse{Greetings: "Hello, user " + authCtx.UserRef.AZERText()},
+		&helloGetResponse{Greetings: "Hello, user " + authCtx.UserRef().AZERText()},
 		restful.MIME_JSON)
 }

@@ -207,7 +207,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 			RegisterTerminal(reqCtx,
 				iamserver.TerminalRegistrationInput{
 					ClientID:         clientID,
-					UserRef:          authCtx.UserRef,
+					UserRef:          authCtx.UserRef(),
 					DisplayName:      termDisplayName,
 					AcceptLanguage:   strings.Join(preferredLanguages, ","),
 					VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
@@ -226,7 +226,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		terminalID, _, err = restSrv.serverCore.
 			RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
 				ClientID:         clientID,
-				UserRef:          authCtx.UserRef,
+				UserRef:          authCtx.UserRef(),
 				DisplayName:      termDisplayName,
 				AcceptLanguage:   strings.Join(preferredLanguages, ","),
 				VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
@@ -239,7 +239,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		issueTime := time.Now().UTC()
 
 		tokenString, err := restSrv.serverCore.
-			GenerateAccessTokenJWT(reqCtx, terminalID, authCtx.UserRef, issueTime)
+			GenerateAccessTokenJWT(reqCtx, terminalID, authCtx.UserRef(), issueTime)
 		if err != nil {
 			panic(err)
 		}

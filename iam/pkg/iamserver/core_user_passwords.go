@@ -45,7 +45,7 @@ func (core *Core) SetUserPassword(
 	plainTextPassword string,
 ) error {
 	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() || !userRef.EqualsUserRefKey(authCtx.UserRef) {
+	if !authCtx.IsUserContext() || !userRef.EqualsUserRefKey(authCtx.UserRef()) {
 		return errors.New("forbidden")
 	}
 
@@ -61,7 +61,7 @@ func (core *Core) SetUserPassword(
 			`UPDATE user_passwords SET `+
 				`deletion_time = $1, deletion_user_id = $2, deletion_terminal_id = $3 `+
 				`WHERE user_id = $4 AND deletion_time IS NULL`,
-			ctxTime, authCtx.UserRef.ID().PrimitiveValue(), authCtx.TerminalID(), userRef)
+			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), userRef)
 		if txErr != nil {
 			return txErr
 		}
@@ -70,7 +70,7 @@ func (core *Core) SetUserPassword(
 				`(user_id, password, creation_time, creation_user_id, creation_terminal_id) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
 			userRef, hashedPassword,
-			ctxTime, authCtx.UserRef.ID().PrimitiveValue(), authCtx.TerminalID())
+			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
 		return nil
 	})
 }

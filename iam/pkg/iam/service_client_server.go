@@ -95,7 +95,7 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 	if claims.ID == "" {
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("jti", "empty"))
 	}
-	authID, err := AuthorizationIDFromString(claims.ID)
+	sessionRef, err := SessionRefKeyFromAZERText(claims.ID)
 	if err != nil {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("jti", dataerrs.Malformed(err)))
 	}
@@ -120,22 +120,21 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 		}
 	}
 
-	var terminalID TerminalID
+	var terminalRef TerminalRefKey
 	if claims.TerminalID == "" {
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("terminal_id", "empty"))
 	}
-	terminalID, err = TerminalIDFromString(claims.TerminalID)
+	terminalRef, err = TerminalRefKeyFromAZERText(claims.TerminalID)
 	if err != nil {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("terminal_id", dataerrs.Malformed(err)))
 	}
-	if terminalID.IsNotValid() {
+	if terminalRef.IsNotValid() {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("terminal_id", dataerrs.ErrMalformed))
 	}
 
 	return &Authorization{
-		AuthorizationID: authID,
-		UserRef:         userRef,
-		rawToken:        jwtStr,
+		Session:  sessionRef,
+		rawToken: jwtStr,
 	}, nil
 }
 

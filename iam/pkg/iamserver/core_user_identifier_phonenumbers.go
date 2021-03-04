@@ -174,7 +174,7 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !userRef.EqualsUserRefKey(authCtx.UserRef) {
+	if !userRef.EqualsUserRefKey(authCtx.UserRef()) {
 		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 
@@ -186,14 +186,14 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 		return 0, nil, errors.Wrap("getUserIDByIdentifierPhoneNumber", err)
 	}
 	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != authCtx.UserRef.ID() {
+		if existingOwnerUserID != authCtx.UserID() {
 			return 0, nil, errors.ArgMsg("phoneNumber", "conflict")
 		}
 		return 0, nil, nil
 	}
 
 	alreadyVerified, err := core.setUserIdentifierPhoneNumber(
-		callCtx, authCtx.UserRef, phoneNumber)
+		callCtx, authCtx.UserRef(), phoneNumber)
 	if err != nil {
 		return 0, nil, errors.Wrap("setUserIdentifierPhoneNumber", err)
 	}
@@ -239,8 +239,8 @@ func (core *Core) setUserIdentifierPhoneNumber(
 		phoneNumber.NationalNumber(),
 		phoneNumber.RawInput(),
 		ctxTime,
-		callCtx.Authorization().UserRef.ID().PrimitiveValue(),
-		callCtx.Authorization().TerminalID())
+		callCtx.Authorization().UserID().PrimitiveValue(),
+		callCtx.Authorization().TerminalID().PrimitiveValue())
 	if err != nil {
 		return false, err
 	}
@@ -297,7 +297,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 
 	updated, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
-			authCtx.UserRef.ID(), *phoneNumber,
+			authCtx.UserID(), *phoneNumber,
 			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)

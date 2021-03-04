@@ -246,7 +246,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 				http.StatusBadRequest)
 			return
 		}
-		requestedUserRef = authCtx.UserRef
+		requestedUserRef = authCtx.UserRef()
 	} else {
 		requestedUserRef, err = iam.UserRefKeyFromAZERText(requestedUserIDStr)
 		if err != nil {
@@ -419,7 +419,7 @@ func (restSrv *Server) getUserContacts(req *restful.Request, resp *restful.Respo
 	// - Retrieve list of user profile
 	// - Return as items of user contacts
 	contactUserIDs, err := restSrv.serverCore.GetUserContactUserIDs(
-		reqCtx, authCtx.UserRef)
+		reqCtx, authCtx.UserRef())
 
 	if err != nil {
 		logCtx(reqCtx).

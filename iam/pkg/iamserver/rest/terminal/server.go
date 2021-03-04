@@ -302,7 +302,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 
 	err = restSrv.serverCore.
 		SetUserTerminalFCMRegistrationToken(
-			reqCtx, authCtx.UserRef, authCtx.TerminalID(),
+			reqCtx, authCtx.UserRef(), authCtx.TerminalID(),
 			fcmRegTokenReq.Token)
 	if err != nil {
 		panic(err)

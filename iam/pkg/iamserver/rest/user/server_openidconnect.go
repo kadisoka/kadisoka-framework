@@ -31,7 +31,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 		return
 	}
 
-	requestedUserRef := authCtx.UserRef
+	requestedUserRef := authCtx.UserRef()
 
 	userBaseProfile, err := restSrv.serverCore.
 		GetUserBaseProfile(reqCtx, requestedUserRef)

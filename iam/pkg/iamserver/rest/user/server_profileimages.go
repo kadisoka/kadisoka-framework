@@ -50,7 +50,7 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 	defer uploadedFile.Close()
 
 	imageURL, err := restSrv.serverCore.
-		SetUserProfileImageByFile(reqCtx, authCtx.UserRef, uploadedFile)
+		SetUserProfileImageByFile(reqCtx, authCtx.UserRef(), uploadedFile)
 	if err != nil {
 		if errors.IsCallError(err) {
 			//TODO: translate the error

@@ -156,14 +156,14 @@ func (core *Core) getUserAccountState(
 
 func (core *Core) DeleteUserAccount(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 	input iam.UserAccountDeleteInput,
 ) (deleted bool, err error) {
 	if callCtx == nil {
 		return false, nil
 	}
 	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() || authCtx.UserRef.ID() != userID {
+	if !authCtx.IsUserContext() || !userRef.EqualsUserRefKey(authCtx.UserRef()) {
 		return false, nil
 	}
 
@@ -221,7 +221,7 @@ func (core *Core) SetUserProfileImageURL(
 		return iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !userRef.EqualsUserRefKey(authCtx.UserRef) {
+	if !userRef.EqualsUserRefKey(authCtx.UserRef()) {
 		return iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 	if profileImageURL != "" && !core.isUserProfileImageURLAllowed(profileImageURL) {

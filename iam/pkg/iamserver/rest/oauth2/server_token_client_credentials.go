@@ -64,7 +64,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	termID, termSecret, err := restSrv.serverCore.
 		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
 			ClientID:         reqClient.ID,
-			UserRef:          authCtx.UserRef,
+			UserRef:          authCtx.UserRef(),
 			DisplayName:      termDisplayName,
 			AcceptLanguage:   strings.Join(preferredLanguages, ","),
 			VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
@@ -81,7 +81,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	issueTime := time.Now().UTC()
 
 	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, termID, authCtx.UserRef, issueTime)
+		GenerateAccessTokenJWT(reqCtx, termID, authCtx.UserRef(), issueTime)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Msgf("GenerateAccessTokenJWT: %v", err)
@@ -109,7 +109,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         authCtx.UserRef.AZERText(),
+			UserID:         authCtx.UserRef().AZERText(),
 			TerminalID:     termID.String(),
 			TerminalSecret: termSecret,
 		})

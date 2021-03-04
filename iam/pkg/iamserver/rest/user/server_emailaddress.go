@@ -79,7 +79,7 @@ func (restSrv *Server) handleSetEmailAddress(
 				http.StatusBadRequest)
 			return
 		}
-		if targetUserRef != authCtx.UserRef {
+		if !targetUserRef.EqualsUserRefKey(authCtx.UserRef()) {
 			logCtx(reqCtx).Warn().Msgf("Setting other user's email address is not allowed")
 			rest.RespondTo(resp).EmptyError(
 				http.StatusForbidden)
@@ -89,7 +89,7 @@ func (restSrv *Server) handleSetEmailAddress(
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
 		SetUserIdentifierEmailAddress(
-			reqCtx, authCtx.UserRef, emailAddress, verificationMethods)
+			reqCtx, authCtx.UserRef(), emailAddress, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).

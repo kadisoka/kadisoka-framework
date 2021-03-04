@@ -71,12 +71,12 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 	if existingOwnerUserRef.IsValid() {
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
-		if authCtx.IsUserContext() && !existingOwnerUserRef.EqualsUserRefKey(authCtx.UserRef) {
+		if authCtx.IsUserContext() && !existingOwnerUserRef.EqualsUserRefKey(authCtx.UserRef()) {
 			return iam.TerminalIDZero, 0, nil, errors.ArgMsg("phoneNumber", "conflict")
 		}
 	} else {
 		newUserRef, err := core.
-			ensureOrNewUserRef(callCtx, authCtx.UserRef)
+			ensureOrNewUserRef(callCtx, authCtx.UserRef())
 		if err != nil {
 			panic(err)
 		}
@@ -153,12 +153,12 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 	if existingOwnerUserRef.IsValid() {
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
-		if authCtx.IsUserContext() && !existingOwnerUserRef.EqualsUserRefKey(authCtx.UserRef) {
+		if authCtx.IsUserContext() && !existingOwnerUserRef.EqualsUserRefKey(authCtx.UserRef()) {
 			return iam.TerminalIDZero, 0, nil, errors.ArgMsg("emailAddress", "conflict")
 		}
 	} else {
 		newUserRef, err := core.
-			ensureOrNewUserRef(callCtx, authCtx.UserRef)
+			ensureOrNewUserRef(callCtx, authCtx.UserRef())
 		if err != nil {
 			panic(err)
 		}
@@ -395,7 +395,7 @@ func (core *Core) GetTerminalInfo(
 		return nil, err
 	}
 
-	if ownerUserID != authCtx.UserRef.ID() {
+	if ownerUserID != authCtx.UserID() {
 		return nil, nil
 	}
 
