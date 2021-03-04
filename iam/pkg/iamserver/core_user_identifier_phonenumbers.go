@@ -42,15 +42,19 @@ func (core *Core) ListUsersByPhoneNumber(
 
 	userPhoneNumberList := []iam.UserIdentifierPhoneNumber{}
 	for userPhoneNumberRows.Next() {
-		var userPhoneNumber iam.UserIdentifierPhoneNumber
+		uid := iam.UserIDZero
 		var countryCode int32
 		var nationalNumber int64
 		err = userPhoneNumberRows.Scan(
-			&userPhoneNumber.UserID, &countryCode, &nationalNumber)
+			&uid, &countryCode, &nationalNumber)
 		if err != nil {
 			panic(err)
 		}
-		userPhoneNumber.PhoneNumber = iam.NewPhoneNumber(countryCode, nationalNumber)
+		var userPhoneNumber iam.UserIdentifierPhoneNumber
+		userPhoneNumber = iam.UserIdentifierPhoneNumber{
+			UserRef:     iam.UserRefKey(uid),
+			PhoneNumber: iam.NewPhoneNumber(countryCode, nationalNumber),
+		}
 		userPhoneNumberList = append(userPhoneNumberList, userPhoneNumber)
 	}
 	if err = userPhoneNumberRows.Err(); err != nil {
@@ -68,7 +72,7 @@ func (core *Core) ListUsersByPhoneNumber(
 						"creation_user_id, creation_terminal_id"+
 						") VALUES ($1, $2, $3, $4, $5) "+
 						"ON CONFLICT ON CONSTRAINT user_contact_phone_numbers_pkey DO NOTHING",
-					authCtx.UserID, pn.CountryCode(), pn.NationalNumber(), authCtx.UserID, authCtx.TerminalID())
+					authCtx.UserRef, pn.CountryCode(), pn.NationalNumber(), authCtx.UserRef, authCtx.TerminalID())
 				if err != nil {
 					logCtx(callCtx).Err(err).Str("phone_number", pn.String()).
 						Msg("User contact phone number store")
@@ -85,7 +89,7 @@ func (core *Core) ListUsersByPhoneNumber(
 // for login, for display, for notification, for recovery, etc)
 func (core *Core) GetUserIdentifierPhoneNumber(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 ) (*iam.PhoneNumber, error) {
 	var countryCode int32
 	var nationalNumber int64
@@ -95,7 +99,7 @@ func (core *Core) GetUserIdentifierPhoneNumber(
 				`FROM `+userIdentifierPhoneNumberTableName+` `+
 				`WHERE user_id=$1 `+
 				`AND deletion_time IS NULL AND verification_time IS NOT NULL`,
-			userID).
+			userRef.ID().PrimitiveValue()).
 		Scan(&countryCode, &nationalNumber)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -136,13 +140,14 @@ func (core *Core) getUserIDByIdentifierPhoneNumber(
 // verified or not.
 func (core *Core) getUserIDByIdentifierPhoneNumberAllowUnverified(
 	phoneNumber iam.PhoneNumber,
-) (ownerUserID iam.UserID, verified bool, err error) {
+) (ownerUserRef iam.UserRefKey, verified bool, err error) {
 	queryStr :=
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
 			`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
 			`AND deletion_time IS NULL ` +
 			`ORDER BY creation_time DESC LIMIT 1`
+	var ownerUserID iam.UserID
 	err = core.db.
 		QueryRow(queryStr,
 			phoneNumber.CountryCode(),
@@ -150,17 +155,17 @@ func (core *Core) getUserIDByIdentifierPhoneNumberAllowUnverified(
 		Scan(&ownerUserID, &verified)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return iam.UserIDZero, false, nil
+			return iam.UserRefKeyZero(), false, nil
 		}
-		return iam.UserIDZero, false, err
+		return iam.UserRefKeyZero(), false, err
 	}
 
-	return
+	return iam.UserRefKey(ownerUserID), verified, nil
 }
 
 func (core *Core) SetUserIdentifierPhoneNumber(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 	phoneNumber iam.PhoneNumber,
 	verificationMethods []pnv10n.VerificationMethod,
 ) (verificationID int64, codeExpiry *time.Time, err error) {
@@ -169,7 +174,7 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if userID != authCtx.UserID {
+	if !userRef.EqualsUserRefKey(authCtx.UserRef) {
 		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 
@@ -181,14 +186,14 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 		return 0, nil, errors.Wrap("getUserIDByIdentifierPhoneNumber", err)
 	}
 	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != authCtx.UserID {
+		if existingOwnerUserID != authCtx.UserRef.ID() {
 			return 0, nil, errors.ArgMsg("phoneNumber", "conflict")
 		}
 		return 0, nil, nil
 	}
 
 	alreadyVerified, err := core.setUserIdentifierPhoneNumber(
-		authCtx.Actor(), authCtx.UserID, phoneNumber)
+		callCtx, authCtx.UserRef, phoneNumber)
 	if err != nil {
 		return 0, nil, errors.Wrap("setUserIdentifierPhoneNumber", err)
 	}
@@ -214,11 +219,11 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 }
 
 func (core *Core) setUserIdentifierPhoneNumber(
-	actor iam.Actor,
-	userID iam.UserID,
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
 	phoneNumber iam.PhoneNumber,
 ) (alreadyVerified bool, err error) {
-	tNow := time.Now().UTC()
+	ctxTime := callCtx.RequestReceiveTime()
 
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userIdentifierPhoneNumberTableName+` (`+
@@ -229,13 +234,13 @@ func (core *Core) setUserIdentifierPhoneNumber(
 			`) `+
 			`ON CONFLICT (user_id, country_code, national_number) WHERE deletion_time IS NULL `+
 			`DO NOTHING`,
-		userID,
+		userRef.ID().PrimitiveValue(),
 		phoneNumber.CountryCode(),
 		phoneNumber.NationalNumber(),
 		phoneNumber.RawInput(),
-		tNow,
-		actor.UserID,
-		actor.TerminalID)
+		ctxTime,
+		callCtx.Authorization().UserRef.ID().PrimitiveValue(),
+		callCtx.Authorization().TerminalID())
 	if err != nil {
 		return false, err
 	}
@@ -252,7 +257,7 @@ func (core *Core) setUserIdentifierPhoneNumber(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userIdentifierPhoneNumberTableName+` `+
 			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3`,
-		userID, phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
+		userRef.ID().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -282,7 +287,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		return false, errors.Wrap("pnVerifier.ConfirmVerification", err)
 	}
 
-	tNow := time.Now().UTC()
+	ctxTime := callCtx.RequestReceiveTime()
 	phoneNumber, err := core.pnVerifier.
 		GetPhoneNumberByVerificationID(verificationID)
 	// An unexpected condition which could cause bad state
@@ -292,8 +297,8 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 
 	updated, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
-			authCtx.UserID, *phoneNumber,
-			&tNow, verificationID)
+			authCtx.UserRef.ID(), *phoneNumber,
+			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)
 	}

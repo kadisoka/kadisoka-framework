@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/alloyzeus/go-azcore v0.0.0-20210227015736-4a815f2b6b4b
+	github.com/alloyzeus/go-azcore v0.0.0-20210303210139-b33258f41739
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/aws/aws-sdk-go v1.37.17
 	github.com/emicklei/go-restful v2.15.0+incompatible

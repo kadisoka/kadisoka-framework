@@ -15,7 +15,8 @@ import (
 func (core *Core) GenerateAccessTokenJWT(
 	callCtx iam.CallContext,
 	terminalID iam.TerminalID,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
+	issueTime time.Time,
 ) (tokenString string, err error) {
 	if callCtx == nil {
 		return "", errors.ArgMsg("callCtx", "missing")
@@ -45,7 +46,7 @@ func (core *Core) GenerateAccessTokenJWT(
 			IssuedAt: jwt.NewNumericDate(issueTime),
 			Issuer:   core.RealmName(),
 			Expiry:   jwt.NewNumericDate(issueTime.Add(iam.AccessTokenTTLDefault)),
-			Subject:  userID.String(),
+			Subject:  userRef.AZERText(),
 		},
 		AuthorizedParty: terminalID.ClientID().String(),
 		TerminalID:      terminalID.String(),
@@ -59,8 +60,10 @@ func (core *Core) GenerateAccessTokenJWT(
 }
 
 func (core *Core) GenerateRefreshTokenJWT(
+	callCtx iam.CallContext,
 	terminalID iam.TerminalID,
 	terminalSecret string,
+	issueTime time.Time,
 ) (tokenString string, err error) {
 	jwtKeyChain := core.JWTKeyChain()
 	if jwtKeyChain == nil {
@@ -73,11 +76,6 @@ func (core *Core) GenerateRefreshTokenJWT(
 	if signer == nil {
 		return "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
 	}
-
-	//TODO: issue time should be from arg so both access token and refresh
-	// token would have the exact same issue time if they were issued at
-	// the same time.
-	issueTime := time.Now().UTC()
 
 	tokenClaims := &iam.RefreshTokenClaims{
 		NotBefore:      issueTime.Unix(),
@@ -130,7 +128,8 @@ func (core *Core) generateAuthorizationID(
 					`) VALUES (`+
 					`$1, $2, $3, $4, $5`+
 					`)`,
-				terminalID, instanceID, tNow, authCtx.UserIDPtr(), authCtx.TerminalIDPtr())
+				terminalID, instanceID, tNow,
+				authCtx.UserIDPtr(), authCtx.TerminalIDPtr())
 		if err == nil {
 			break
 		}

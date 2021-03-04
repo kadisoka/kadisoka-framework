@@ -87,9 +87,29 @@ func (id UserID) IsZero() bool {
 
 // IsValid returns true if this instance is valid independently as an ID.
 // It doesn't tell whether it refers to a valid instance of User.
+//
+// To elaborate, validity of a data depends on the perspective of the user.
+// For example, age 1000 is a valid as an instance of age, but on the context
+// of human living age, we can consider it as invalid.
+//
+// To use some analogy, a ticket has a date of validity for today, but
+// after it got checked in to the counter, it turns out that its serial number
+// is not registered in the issuer's database. The ticket claims that it's
+// valid, but it's considered invalid because it's a fake.
+//
+// Similarly, what is considered valid in this context here is that the data
+// contained in this instance doesn't break any rule for an instance of
+// UserID. Whether the instance is valid for certain context,
+// it requires case-by-case validation which is out of the scope of this
+// method.
 func (id UserID) IsValid() bool {
 	return int64(id) > 0 &&
 		(uint64(id)&_UserIDSignificantBitsMask) != 0
+}
+
+// IsNotValid returns the negation of value returned by IsValid().
+func (id UserID) IsNotValid() bool {
+	return !id.IsValid()
 }
 
 // Equals is required as UserID is a value-object.
@@ -145,6 +165,12 @@ func (id *UserID) UnmarshalAZERBinField(
 //
 // Bot account is ....
 func (id UserID) IsBot() bool {
+	return id.IsValid() && id.HasBotBits()
+}
+
+// HasBotBits is only checking the bits
+// without validating other information contained in the ID.
+func (id UserID) HasBotBits() bool {
 	return (uint64(id) &
 		0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000) ==
 		0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
@@ -155,57 +181,12 @@ type UserIDError interface {
 	UserIDError()
 }
 
-func UserIDFromString(s string) (UserID, error) {
-	if s == "" {
-		return UserIDZero, nil
-	}
-	return userIDDecode(s)
-}
-
-func (id UserID) IsNotValid() bool { return !id.IsValid() }
-
-func (id UserID) String() string {
-	if id.IsNotValid() {
-		return ""
-	}
-	return userIDEncode(id)
-}
-
 func (id UserID) IsNormalAccount() bool {
-	return id.IsValid() && id > userIDServiceMax
+	return id.IsValid() && !id.HasBotBits()
 }
 
 func (id UserID) IsServiceAccount() bool {
-	return id.IsValid() && id <= userIDServiceMax
-}
-
-func (id UserID) MarshalText() ([]byte, error) {
-	return []byte(id.String()), nil
-}
-
-func (id *UserID) UnmarshalText(b []byte) error {
-	i, err := UserIDFromString(string(b))
-	if err == nil {
-		*id = i
-	}
-	return err
-}
-
-func (id UserID) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + id.String() + `"`), nil
-}
-
-func (id *UserID) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), `"`)
-	if s == "" {
-		*id = UserIDZero
-		return nil
-	}
-	i, err := UserIDFromString(s)
-	if err == nil {
-		*id = i
-	}
-	return err
+	return id.IsBot()
 }
 
 var (
@@ -370,8 +351,22 @@ func (UserRefKey) AZRefKey() {}
 // with azcore.EntityRefKey.
 func (UserRefKey) AZEntityRefKey() {}
 
+// ID returns the scoped identifier of the entity.
+func (refKey UserRefKey) ID() UserID {
+	return UserID(refKey)
+}
+
+// IDPtr returns a pointer to a copy of the ID if it's considered valid.
+func (refKey UserRefKey) IDPtr() *UserID {
+	if refKey.IsNotValid() {
+		return nil
+	}
+	i := refKey.ID()
+	return &i
+}
+
 // ID is required for conformance with azcore.RefKey.
-func (refKey UserRefKey) ID() azcore.EID {
+func (refKey UserRefKey) EID() azcore.EID {
 	return UserID(refKey)
 }
 
@@ -390,6 +385,11 @@ func (refKey UserRefKey) IsZero() bool {
 // It doesn't tell whether it refers to a valid instance of User.
 func (refKey UserRefKey) IsValid() bool {
 	return UserID(refKey).IsValid()
+}
+
+// IsNotValid returns the negation of value returned by IsValid().
+func (refKey UserRefKey) IsNotValid() bool {
+	return !refKey.IsValid()
 }
 
 // Equals is required for conformance with azcore.EntityRefKey.
@@ -520,6 +520,20 @@ func UserRefKeyFromAZERText(s string) (UserRefKey, error) {
 // with azer.TextUnmarshalable.
 func (refKey *UserRefKey) UnmarshalAZERText(s string) error {
 	r, err := UserRefKeyFromAZERText(s)
+	if err == nil {
+		*refKey = r
+	}
+	return err
+}
+
+// MarshalText is for compatibility with Go's encoding.TextMarshaler
+func (refKey UserRefKey) MarshalText() ([]byte, error) {
+	return []byte(refKey.AZERText()), nil
+}
+
+// UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
+func (refKey *UserRefKey) UnmarshalText(b []byte) error {
+	r, err := UserRefKeyFromAZERText(string(b))
 	if err == nil {
 		*refKey = r
 	}

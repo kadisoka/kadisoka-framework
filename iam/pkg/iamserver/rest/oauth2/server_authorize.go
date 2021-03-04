@@ -197,7 +197,6 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 
 	state, _ := req.BodyParameter("state")
 	authCtx := reqCtx.Authorization()
-	tNow := time.Now().UTC()
 	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx, "")
 	termDisplayName := ""
 	var terminalID iam.TerminalID
@@ -205,19 +204,15 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	switch responseType {
 	case oauth2.ResponseTypeCode:
 		terminalID, _, err = restSrv.serverCore.
-			RegisterTerminal(iamserver.TerminalRegistrationInput{
-				ClientID:           clientID,
-				UserID:             authCtx.UserID,
-				DisplayName:        termDisplayName,
-				AcceptLanguage:     strings.Join(preferredLanguages, ","),
-				CreationTime:       tNow,
-				CreationUserID:     authCtx.UserIDPtr(),
-				CreationTerminalID: authCtx.TerminalIDPtr(),
-				CreationIPAddress:  reqCtx.RemoteAddress(),
-				CreationUserAgent:  strings.TrimSpace(req.Request.UserAgent()),
-				VerificationType:   iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
-				VerificationID:     0,
-			})
+			RegisterTerminal(reqCtx,
+				iamserver.TerminalRegistrationInput{
+					ClientID:         clientID,
+					UserRef:          authCtx.UserRef,
+					DisplayName:      termDisplayName,
+					AcceptLanguage:   strings.Join(preferredLanguages, ","),
+					VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
+					VerificationID:   0,
+				})
 		if err != nil {
 			panic(err)
 		}
@@ -229,25 +224,22 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 
 	case oauth2.ResponseTypeToken:
 		terminalID, _, err = restSrv.serverCore.
-			RegisterTerminal(iamserver.TerminalRegistrationInput{
-				ClientID:           clientID,
-				UserID:             authCtx.UserID,
-				DisplayName:        termDisplayName,
-				AcceptLanguage:     strings.Join(preferredLanguages, ","),
-				CreationTime:       tNow,
-				CreationUserID:     authCtx.UserIDPtr(),
-				CreationTerminalID: authCtx.TerminalIDPtr(),
-				CreationIPAddress:  reqCtx.RemoteAddress(),
-				CreationUserAgent:  strings.TrimSpace(req.Request.UserAgent()),
-				VerificationType:   iam.TerminalVerificationResourceTypeOAuthImplicit,
-				VerificationID:     0,
+			RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
+				ClientID:         clientID,
+				UserRef:          authCtx.UserRef,
+				DisplayName:      termDisplayName,
+				AcceptLanguage:   strings.Join(preferredLanguages, ","),
+				VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
+				VerificationID:   0,
 			})
 		if err != nil {
 			panic(err)
 		}
 
+		issueTime := time.Now().UTC()
+
 		tokenString, err := restSrv.serverCore.
-			GenerateAccessTokenJWT(reqCtx, terminalID, authCtx.UserID)
+			GenerateAccessTokenJWT(reqCtx, terminalID, authCtx.UserRef, issueTime)
 		if err != nil {
 			panic(err)
 		}

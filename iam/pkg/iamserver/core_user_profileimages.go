@@ -19,7 +19,7 @@ type ProfileImageFile interface {
 
 func (core *Core) SetUserProfileImageByFile(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 	imageFile ProfileImageFile,
 ) (imageURL string, err error) {
 	//TODO: configurable
@@ -55,7 +55,7 @@ func (core *Core) SetUserProfileImageByFile(
 		return "", errors.Wrap("file store", err)
 	}
 
-	err = core.SetUserProfileImageURL(callCtx, userID, imageKey)
+	err = core.SetUserProfileImageURL(callCtx, userRef, imageKey)
 	if err != nil {
 		return "", errors.Wrap("user profile image URL update", err)
 	}

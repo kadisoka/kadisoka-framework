@@ -37,7 +37,7 @@ type Authorization struct {
 
 	// If the authorized party represents a user, this
 	// filed holds the ID of the authorized user.
-	UserID UserID `json:"sub,omitempty"`
+	UserRef UserRefKey `json:"sub,omitempty"`
 
 	// Scope, expiry time
 
@@ -60,33 +60,39 @@ func (authCtx Authorization) IsNotValid() bool {
 
 func (authCtx Authorization) Actor() Actor {
 	return Actor{
-		UserID:     authCtx.UserID,
-		TerminalID: authCtx.AuthorizationID.TerminalID,
+		UserRef:     authCtx.UserRef,
+		TerminalRef: authCtx.AuthorizationID.TerminalID,
 	}
 }
 
 // IsUserContext is used to determine if this context represents a user.
 func (authCtx Authorization) IsUserContext() bool {
-	if authCtx.ClientID().IsUserAgent() && authCtx.UserID.IsValid() {
+	if authCtx.ClientID().IsUserAgent() && authCtx.UserRef.IsValid() {
 		return true
 	}
 	return false
 }
 
 func (authCtx Authorization) IsServiceClientContext() bool {
-	if authCtx.ClientID().IsService() && authCtx.UserID.IsNotValid() {
+	if authCtx.ClientID().IsService() && authCtx.UserRef.IsNotValid() {
 		return true
 	}
 	return false
 }
 
-// UserIDPtr returns a pointer to a new copy of user ID. The
-// returned value is non-nil when the user ID is valid.
-func (authCtx Authorization) UserIDPtr() *UserID {
-	if authCtx.UserID.IsValid() {
-		return &authCtx.UserID
+// UserRefKeyPtr returns a pointer to a new copy of user ID. The
+// returned value is non-nil when the user ref-key is valid.
+func (authCtx Authorization) UserRefKeyPtr() *UserRefKey {
+	if authCtx.UserRef.IsValid() {
+		return &authCtx.UserRef
 	}
 	return nil
+}
+
+// UserIDPtr returns a pointer to a new copy of user ID. The
+// returned value is non-nil when the user ref-key is valid.
+func (authCtx Authorization) UserIDPtr() *UserID {
+	return authCtx.UserRef.IDPtr()
 }
 
 func (authCtx Authorization) TerminalID() TerminalID {

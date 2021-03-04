@@ -6,8 +6,8 @@ import (
 
 func (core *Core) GetUserContactUserIDs(
 	callCtx iam.CallContext,
-	userID iam.UserID,
-) ([]iam.UserID, error) {
+	userRef iam.UserRefKey,
+) ([]iam.UserRefKey, error) {
 	userIDRows, err := core.db.
 		Query(
 			`SELECT DISTINCT `+
@@ -24,24 +24,24 @@ func (core *Core) GetUserContactUserIDs(
 				`WHERE `+
 				`  cp.user_id = $1 `+
 				`ORDER BY ph.user_id ASC`,
-			userID)
+			userRef.ID().PrimitiveValue())
 	if err != nil {
 		return nil, err
 	}
 	defer userIDRows.Close()
 
-	var userIDs []iam.UserID
+	var userRefs []iam.UserRefKey
 	for userIDRows.Next() {
-		var userIDStr iam.UserID
-		err = userIDRows.Scan(&userIDStr)
+		uid := iam.UserIDZero
+		err = userIDRows.Scan(&uid)
 		if err != nil {
 			panic(err)
 		}
-		userIDs = append(userIDs, userIDStr)
+		userRefs = append(userRefs, iam.UserRefKey(uid))
 	}
 	if err = userIDRows.Err(); err != nil {
 		return nil, err
 	}
 
-	return userIDs, nil
+	return userRefs, nil
 }

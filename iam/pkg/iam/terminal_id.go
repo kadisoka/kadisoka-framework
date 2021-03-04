@@ -304,8 +304,10 @@ func (TerminalRefKey) AZRefKey() {}
 // by azcore.AdjunctEntityRefKey interface.
 func (TerminalRefKey) AZAdjunctEntityRefKey() {}
 
+func (refKey TerminalRefKey) ID() TerminalID { return refKey.id }
+
 // ID is required for conformance with azcore.RefKey.
-func (refKey TerminalRefKey) ID() azcore.EID {
+func (refKey TerminalRefKey) EID() azcore.EID {
 	return refKey.id
 }
 

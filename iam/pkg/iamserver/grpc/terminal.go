@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"time"
 
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	pbtypes "github.com/gogo/protobuf/types"
@@ -160,7 +161,7 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
-	authOK, userID, err := authServer.iamServerCore.
+	authOK, userRef, err := authServer.iamServerCore.
 		AuthenticateTerminal(termID, reqProto.TerminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
@@ -173,9 +174,9 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
-	if userID.IsValid() {
+	if userRef.IsValid() {
 		userAccountState, err := authServer.iamServerCore.
-			GetUserAccountState(userID)
+			GetUserAccountState(userRef)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).Str("terminal", termID.String()).Msg("Terminal user account state")
@@ -189,14 +190,15 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 				status = "deleted"
 			}
 			logCtx(reqCtx).
-				Warn().Str("terminal", termID.String()).Str("user", userID.String()).
+				Warn().Str("terminal", termID.String()).Str("user", userRef.AZERText()).
 				Msg("Terminal user account " + status)
 			return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 		}
 	}
 
+	issueTime := time.Now().UTC()
 	tokenString, err := authServer.iamServerCore.
-		GenerateAccessTokenJWT(reqCtx, termID, userID)
+		GenerateAccessTokenJWT(reqCtx, termID, userRef, issueTime)
 	if err != nil {
 		panic(err)
 	}
@@ -204,7 +206,7 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 	return &iampb.GenerateAccessTokenByTerminalCredentialsResponse{
 		AccessToken: tokenString,
 		AuthorizationData: &iampb.AuthorizationData{
-			SubjectUserId: userID.String(),
+			SubjectUserId: userRef.AZERText(),
 		},
 	}, nil
 }

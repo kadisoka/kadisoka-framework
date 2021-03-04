@@ -58,23 +58,17 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		return
 	}
 
-	tNow := time.Now().UTC()
 	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx, "")
 	termDisplayName := ""
 
 	termID, termSecret, err := restSrv.serverCore.
-		RegisterTerminal(iamserver.TerminalRegistrationInput{
-			ClientID:           reqClient.ID,
-			UserID:             authCtx.UserID,
-			DisplayName:        termDisplayName,
-			AcceptLanguage:     strings.Join(preferredLanguages, ","),
-			CreationTime:       tNow,
-			CreationUserID:     authCtx.UserIDPtr(),
-			CreationTerminalID: authCtx.TerminalIDPtr(),
-			CreationIPAddress:  reqCtx.RemoteAddress(),
-			CreationUserAgent:  strings.TrimSpace(req.Request.UserAgent()),
-			VerificationType:   iam.TerminalVerificationResourceTypeOAuthClientCredentials,
-			VerificationID:     0,
+		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
+			ClientID:         reqClient.ID,
+			UserRef:          authCtx.UserRef,
+			DisplayName:      termDisplayName,
+			AcceptLanguage:   strings.Join(preferredLanguages, ","),
+			VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
+			VerificationID:   0,
 		})
 	if err != nil {
 		logCtx(reqCtx).
@@ -84,8 +78,10 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		return
 	}
 
+	issueTime := time.Now().UTC()
+
 	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, termID, authCtx.UserID)
+		GenerateAccessTokenJWT(reqCtx, termID, authCtx.UserRef, issueTime)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Msgf("GenerateAccessTokenJWT: %v", err)
@@ -96,7 +92,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 
 	//TODO: properly get the secret
 	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(termID, termSecret)
+		GenerateRefreshTokenJWT(reqCtx, termID, termSecret, issueTime)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Msgf("GenerateRefreshTokenJWT: %v", err)
@@ -113,7 +109,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         authCtx.UserID.String(),
+			UserID:         authCtx.UserRef.AZERText(),
 			TerminalID:     termID.String(),
 			TerminalSecret: termSecret,
 		})

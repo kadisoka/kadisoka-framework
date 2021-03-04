@@ -237,7 +237,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	var requestedUserID iam.UserID
+	var requestedUserRef iam.UserRefKey
 	if requestedUserIDStr == "me" {
 		if !reqCtx.IsUserContext() {
 			logCtx(reqCtx).
@@ -246,9 +246,9 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 				http.StatusBadRequest)
 			return
 		}
-		requestedUserID = authCtx.UserID
+		requestedUserRef = authCtx.UserRef
 	} else {
-		requestedUserID, err = iam.UserIDFromString(requestedUserIDStr)
+		requestedUserRef, err = iam.UserRefKeyFromAZERText(requestedUserIDStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).Msg("Invalid parameter value path.user-id")
@@ -260,7 +260,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 
 	if acceptType := req.Request.Header.Get("Accept"); acceptType == "application/x-protobuf" {
 		userInfo, err := restSrv.serverCore.
-			GetUserInfoV1(reqCtx, requestedUserID)
+			GetUserInfoV1(reqCtx, requestedUserRef)
 		if err != nil {
 			panic(err)
 		}
@@ -269,7 +269,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	}
 
 	userBaseProfile, err := restSrv.serverCore.
-		GetUserBaseProfile(reqCtx, requestedUserID)
+		GetUserBaseProfile(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User base profile fetch")
@@ -281,7 +281,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	restUserProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile)
 
 	userPhoneNumber, err := restSrv.serverCore.
-		GetUserIdentifierPhoneNumber(reqCtx, requestedUserID)
+		GetUserIdentifierPhoneNumber(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User phone number fetch")
@@ -296,7 +296,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	//TODO(exa): should get display email address instead of primary
 	// email address for this use case.
 	userEmailAddress, err := restSrv.serverCore.
-		GetUserIdentifierEmailAddress(reqCtx, requestedUserID)
+		GetUserIdentifierEmailAddress(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User email address fetch")
@@ -388,7 +388,7 @@ func (restSrv *Server) getUsersByPhoneNumbers(req *restful.Request, resp *restfu
 	for _, userPhoneNumberModel := range userPhoneNumberModelList {
 		phoneNumber := userPhoneNumberModel.PhoneNumber
 		responseList = append(responseList, iam.UserPhoneNumberJSONV1{
-			UserID:      userPhoneNumberModel.UserID.String(),
+			UserID:      userPhoneNumberModel.UserRef.AZERText(),
 			PhoneNumber: inputMap[phoneNumber.String()],
 		})
 	}
@@ -419,7 +419,7 @@ func (restSrv *Server) getUserContacts(req *restful.Request, resp *restful.Respo
 	// - Retrieve list of user profile
 	// - Return as items of user contacts
 	contactUserIDs, err := restSrv.serverCore.GetUserContactUserIDs(
-		reqCtx, authCtx.UserID)
+		reqCtx, authCtx.UserRef)
 
 	if err != nil {
 		logCtx(reqCtx).

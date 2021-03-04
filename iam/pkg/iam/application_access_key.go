@@ -187,8 +187,10 @@ func (ApplicationAccessKeyRefKey) AZRefKey() {}
 // by azcore.AdjunctEntityRefKey interface.
 func (ApplicationAccessKeyRefKey) AZAdjunctEntityRefKey() {}
 
+func (refKey ApplicationAccessKeyRefKey) ID() ApplicationAccessKeyID { return refKey.id }
+
 // ID is required for conformance with azcore.RefKey.
-func (refKey ApplicationAccessKeyRefKey) ID() azcore.EID {
+func (refKey ApplicationAccessKeyRefKey) EID() azcore.EID {
 	return refKey.id
 }
 

@@ -121,7 +121,7 @@ func (verifier *Verifier) StartVerification(
 	}
 	authCtx := callCtx.Authorization()
 
-	tNow := time.Now().UTC()
+	ctxTime := callCtx.RequestReceiveTime()
 
 	var prevAttempts int16
 	var prevVerificationID int64
@@ -138,7 +138,7 @@ func (verifier *Verifier) StartVerification(
 		Scan(&prevVerificationID, &prevCodeExpiry, &prevAttempts)
 	if err == nil {
 		// Return previous verification code
-		if prevAttempts > 0 && prevCodeExpiry.After(tNow.Add(-10*time.Second)) {
+		if prevAttempts > 0 && prevCodeExpiry.After(ctxTime.Add(-10*time.Second)) {
 			return prevVerificationID, &prevCodeExpiry, nil
 		}
 	}
@@ -150,7 +150,7 @@ func (verifier *Verifier) StartVerification(
 	code := verifier.generateVerificationCode()
 	// Truncate because sub-ms value might be problematic
 	// for some parsers. To minute because it's more humane.
-	codeExp := tNow.Add(codeTTL).Truncate(time.Minute)
+	codeExp := ctxTime.Add(codeTTL).Truncate(time.Minute)
 	codeExpiry = &codeExp
 
 	err = verifier.db.
@@ -163,8 +163,8 @@ func (verifier *Verifier) StartVerification(
 				"RETURNING id",
 			phoneNumber.CountryCode(),
 			phoneNumber.NationalNumber(),
-			tNow,
-			authCtx.UserID,
+			ctxTime,
+			authCtx.UserRef.ID().PrimitiveValue(),
 			authCtx.TerminalID(),
 			code,
 			codeExp,
@@ -194,8 +194,8 @@ func (verifier *Verifier) ConfirmVerification(
 	}
 	authCtx := callCtx.Authorization()
 
+	ctxTime := callCtx.RequestReceiveTime()
 	var dbData verificationDBModel
-	tNow := time.Now().UTC()
 
 	err := verifier.db.QueryRowx(
 		`UPDATE phone_number_verifications `+
@@ -214,7 +214,7 @@ func (verifier *Verifier) ConfirmVerification(
 	if dbData.Code != code {
 		return ErrVerificationCodeMismatch
 	}
-	if dbData.CodeExpiry != nil && dbData.CodeExpiry.Before(tNow) {
+	if dbData.CodeExpiry != nil && dbData.CodeExpiry.Before(ctxTime) {
 		// Delete?
 		return ErrVerificationCodeExpired
 	}
@@ -227,7 +227,7 @@ func (verifier *Verifier) ConfirmVerification(
 		"UPDATE phone_number_verifications "+
 			"SET confirmation_time = $1, confirmation_user_id = $2, confirmation_terminal_id = $3 "+
 			"WHERE id = $4 AND confirmation_time IS NULL",
-		tNow, authCtx.UserIDPtr(), authCtx.TerminalIDPtr(), verificationID)
+		ctxTime, authCtx.UserIDPtr(), authCtx.TerminalIDPtr(), verificationID)
 	return err //TODO: determine if it's race-condition
 }
 

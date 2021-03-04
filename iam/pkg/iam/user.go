@@ -35,7 +35,7 @@ var (
 )
 
 type UserIdentifierPhoneNumber struct {
-	UserID      UserID
+	UserRef     UserRefKey
 	PhoneNumber PhoneNumber
 }
 

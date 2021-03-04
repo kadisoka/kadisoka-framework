@@ -12,11 +12,16 @@ type UserProfileService interface {
 	GetUserBaseProfile(
 		callCtx CallContext,
 		userID UserID,
-	) (*UserBaseProfile, error)
+	) (*UserBaseProfileData, error)
 }
 
-type UserBaseProfile struct {
-	ID              UserID
+type userBaseProfile struct {
+	RefKey UserRefKey
+	UserBaseProfileData
+}
+
+type UserBaseProfileData struct {
+	RefKey          UserRefKey
 	DisplayName     string
 	ProfileImageURL string
 	IsDeleted       bool
@@ -32,12 +37,12 @@ type UserJSONV1 struct {
 	EmailAddress    string `json:"email_address,omitempty"`
 }
 
-func UserJSONV1FromBaseProfile(model *UserBaseProfile) *UserJSONV1 {
+func UserJSONV1FromBaseProfile(model *UserBaseProfileData) *UserJSONV1 {
 	if model == nil {
 		return nil
 	}
 	return &UserJSONV1{
-		ID:              model.ID.String(),
+		ID:              model.RefKey.AZERText(),
 		DisplayName:     model.DisplayName,
 		ProfileImageURL: model.ProfileImageURL,
 	}

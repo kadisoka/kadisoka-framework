@@ -6,18 +6,14 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
+//TODO: some data should be taken from the context instead of
+// provided in here.
 type TerminalRegistrationInput struct {
 	ClientID iam.ClientID
-	UserID   iam.UserID
+	UserRef  iam.UserRefKey
 
 	DisplayName    string
-	AcceptLanguage string
-
-	CreationTime       time.Time
-	CreationUserID     *iam.UserID
-	CreationTerminalID *iam.TerminalID
-	CreationIPAddress  string
-	CreationUserAgent  string
+	AcceptLanguage string //TODO: remove this
 
 	VerificationType string
 	VerificationID   int64

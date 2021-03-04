@@ -41,7 +41,7 @@ func (logger Logger) WithContext(
 	if iamCtx, _ := ctx.(iam.CallContext); iamCtx != nil {
 		if authCtx := iamCtx.Authorization(); authCtx.IsValid() {
 			logCtx = logCtx.
-				Str("user", authCtx.UserID.String()).
+				Str("user", authCtx.UserRef.AZERText()).
 				Str("terminal", authCtx.TerminalID().String()).
 				Str("auth", authCtx.AuthorizationID.String())
 		}

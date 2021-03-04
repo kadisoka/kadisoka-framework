@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"time"
 
 	accesserrs "github.com/alloyzeus/go-azcore/azcore/errors/access"
 
@@ -37,21 +38,25 @@ func newCallContext(
 	ctx context.Context,
 	authCtx *Authorization,
 	remoteAddress string,
+	remoteEnvString string,
 	requestID *api.RequestID,
 ) CallContext {
 	if authCtx == nil {
 		panic("authCtx must not be nil")
 	}
-	return &callContext{ctx, authCtx, remoteAddress, requestID}
+	return &callContext{ctx, authCtx, remoteAddress, remoteEnvString,
+		requestID, time.Now().UTC()}
 }
 
 var _ CallContext = &callContext{}
 
 type callContext struct {
 	context.Context
-	authorization *Authorization
-	remoteAddress string
-	requestID     *api.RequestID
+	authorization      *Authorization
+	remoteAddress      string
+	remoteEnvString    string
+	requestID          *api.RequestID
+	requestReceiveTime time.Time
 }
 
 func (ctx callContext) Authorization() Authorization {
@@ -72,3 +77,7 @@ func (ctx *callContext) MethodName() string { return "" }
 func (ctx *callContext) RequestID() *api.RequestID { return ctx.requestID }
 
 func (ctx *callContext) RemoteAddress() string { return ctx.remoteAddress }
+
+func (ctx *callContext) RemoteEnvironmentString() string { return ctx.remoteEnvString }
+
+func (ctx *callContext) RequestReceiveTime() time.Time { return ctx.requestReceiveTime }

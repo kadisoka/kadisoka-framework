@@ -262,8 +262,10 @@ func (ApplicationRefKey) AZRefKey() {}
 // with azcore.EntityRefKey.
 func (ApplicationRefKey) AZEntityRefKey() {}
 
+func (refKey ApplicationRefKey) ID() ApplicationID { return ApplicationID(refKey) }
+
 // ID is required for conformance with azcore.RefKey.
-func (refKey ApplicationRefKey) ID() azcore.EID {
+func (refKey ApplicationRefKey) EID() azcore.EID {
 	return ApplicationID(refKey)
 }
 

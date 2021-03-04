@@ -6,8 +6,6 @@ import (
 	"github.com/emicklei/go-restful"
 	oidc "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/openid/connect"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
-
-	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
 //TODO: the details would be depends on the type of the client:
@@ -33,11 +31,10 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 		return
 	}
 
-	var requestedUserID iam.UserID
-	requestedUserID = authCtx.UserID
+	requestedUserRef := authCtx.UserRef
 
 	userBaseProfile, err := restSrv.serverCore.
-		GetUserBaseProfile(reqCtx, requestedUserID)
+		GetUserBaseProfile(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User base profile fetch")
@@ -47,7 +44,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	}
 
 	userPhoneNumber, err := restSrv.serverCore.
-		GetUserIdentifierPhoneNumber(reqCtx, requestedUserID)
+		GetUserIdentifierPhoneNumber(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User phone number fetch")
@@ -65,7 +62,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	//TODO(exa): should get display email address instead of primary
 	// email address for this use case.
 	userEmailAddress, err := restSrv.serverCore.
-		GetUserIdentifierEmailAddress(reqCtx, requestedUserID)
+		GetUserIdentifierEmailAddress(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User email address fetch")
@@ -81,7 +78,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	}
 
 	userInfo := oidc.StandardClaims{
-		Sub:                 requestedUserID.String(),
+		Sub:                 requestedUserRef.AZERText(),
 		Name:                userBaseProfile.DisplayName,
 		Email:               emailAddressStr,
 		EmailVerified:       emailAddressVerified,

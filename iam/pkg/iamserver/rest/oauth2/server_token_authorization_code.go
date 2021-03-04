@@ -4,6 +4,7 @@ package oauth2
 
 import (
 	"strings"
+	"time"
 
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/emicklei/go-restful"
@@ -122,7 +123,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		return
 	}
 
-	terminalSecret, userID, err := restSrv.serverCore.
+	terminalSecret, userRef, err := restSrv.serverCore.
 		ConfirmTerminalRegistrationVerification(reqCtx, terminalID, authCode)
 	if err != nil {
 		switch err {
@@ -157,14 +158,16 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		return
 	}
 
+	issueTime := time.Now().UTC()
+
 	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, terminalID, userID)
+		GenerateAccessTokenJWT(reqCtx, terminalID, userRef, issueTime)
 	if err != nil {
 		panic(err)
 	}
 
 	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(terminalID, terminalSecret)
+		GenerateRefreshTokenJWT(reqCtx, terminalID, terminalSecret, issueTime)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Msgf("GenerateRefreshTokenJWT: %v", err)
@@ -181,7 +184,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         userID.String(),
+			UserID:         userRef.AZERText(),
 			TerminalSecret: terminalSecret,
 		})
 }

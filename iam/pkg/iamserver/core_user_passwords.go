@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/argon2"
@@ -42,26 +41,27 @@ var passwordHashingParams = argon2PasswordHashingParams{
 
 func (core *Core) SetUserPassword(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 	plainTextPassword string,
 ) error {
 	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() || authCtx.UserID != userID {
+	if !authCtx.IsUserContext() || !userRef.EqualsUserRefKey(authCtx.UserRef) {
 		return errors.New("forbidden")
 	}
+
+	ctxTime := callCtx.RequestReceiveTime()
 
 	hashedPassword, err := core.hashPassword(plainTextPassword)
 	if err != nil {
 		return err
 	}
 
-	tNow := time.Now().UTC()
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, txErr := core.db.Exec(
 			`UPDATE user_passwords SET `+
 				`deletion_time = $1, deletion_user_id = $2, deletion_terminal_id = $3 `+
 				`WHERE user_id = $4 AND deletion_time IS NULL`,
-			tNow, authCtx.UserID, authCtx.TerminalID(), userID)
+			ctxTime, authCtx.UserRef.ID().PrimitiveValue(), authCtx.TerminalID(), userRef)
 		if txErr != nil {
 			return txErr
 		}
@@ -69,17 +69,17 @@ func (core *Core) SetUserPassword(
 			`INSERT INTO user_passwords `+
 				`(user_id, password, creation_time, creation_user_id, creation_terminal_id) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
-			userID, hashedPassword,
-			tNow, authCtx.UserID, authCtx.TerminalID())
+			userRef, hashedPassword,
+			ctxTime, authCtx.UserRef.ID().PrimitiveValue(), authCtx.TerminalID())
 		return nil
 	})
 }
 
 func (core *Core) MatchUserPassword(
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 	plainTextPassword string,
 ) (ok bool, err error) {
-	hashedPassword, err := core.getUserHashedPassword(userID)
+	hashedPassword, err := core.getUserHashedPassword(userRef.ID())
 	if err != nil {
 		return false, err
 	}

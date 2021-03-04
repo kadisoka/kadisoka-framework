@@ -4,6 +4,7 @@ package oauth2
 
 import (
 	"strings"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
@@ -93,7 +94,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		return
 	}
 
-	authOK, userID, err := restSrv.serverCore.
+	authOK, userRef, err := restSrv.serverCore.
 		AuthenticateTerminal(terminalID, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
@@ -110,9 +111,9 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		return
 	}
 
-	if userID.IsValid() {
+	if userRef.IsValid() {
 		userAccountState, err := restSrv.serverCore.
-			GetUserAccountState(userID)
+			GetUserAccountState(userRef)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Msgf("Terminal %v user account state: %v", terminalID, err)
@@ -128,7 +129,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 				status = "deleted"
 			}
 			logCtx(reqCtx).
-				Warn().Msgf("User %v %s", userID, status)
+				Warn().Msgf("User %v %s", userRef, status)
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorInvalidGrant)
 			return
@@ -145,14 +146,16 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		}
 	}
 
+	issueTime := time.Now().UTC()
+
 	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, terminalID, userID)
+		GenerateAccessTokenJWT(reqCtx, terminalID, userRef, issueTime)
 	if err != nil {
 		panic(err)
 	}
 
 	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(terminalID, terminalSecret)
+		GenerateRefreshTokenJWT(reqCtx, terminalID, terminalSecret, issueTime)
 	if err != nil {
 		panic(err)
 	}
@@ -165,6 +168,6 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID: userID.String(),
+			UserID: userRef.AZERText(),
 		})
 }

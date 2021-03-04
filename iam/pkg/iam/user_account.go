@@ -19,11 +19,11 @@ type UserAccountStateService interface {
 	// GetUserAccountState checks if the provided user ID is valid and whether
 	// the account is deleted.
 	//
-	// This method returns nil if the userID is not referencing to any valid
+	// This method returns nil if the userRef is not referencing to any valid
 	// user account.
 	GetUserAccountState(
 		/*callCtx CallContext,*/ //TODO: call context
-		userID UserID,
+		userRef UserRefKey,
 	) (*UserAccountState, error)
 }
 
@@ -41,7 +41,7 @@ type UserAccountStateServiceClientCore struct {
 }
 
 func (uaStateSvcClient *UserAccountStateServiceClientCore) GetUserAccountState(
-	userID UserID,
+	_ UserRefKey,
 ) (*UserAccountState, error) {
 	return &UserAccountState{false}, nil
 }

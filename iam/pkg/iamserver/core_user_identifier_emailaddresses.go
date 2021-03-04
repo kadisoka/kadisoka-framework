@@ -17,7 +17,7 @@ const userIdentifierEmailAddressTableName = `user_identifier_email_addresses`
 // for login / primary, for display / contact, for actual mailing, for recovery, etc)
 func (core *Core) GetUserIdentifierEmailAddress(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 ) (*iam.EmailAddress, error) {
 	var rawInput string
 	err := core.db.
@@ -26,7 +26,7 @@ func (core *Core) GetUserIdentifierEmailAddress(
 				`FROM `+userIdentifierEmailAddressTableName+` `+
 				`WHERE user_id=$1 `+
 				`AND deletion_time IS NULL AND verification_time IS NOT NULL`,
-			userID).
+			userRef.ID().PrimitiveValue()).
 		Scan(&rawInput)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -70,31 +70,32 @@ func (core *Core) getUserIDByIdentifierEmailAddress(
 // verified or not.
 func (core *Core) getUserIDByIdentifierEmailAddressAllowUnverified(
 	emailAddress iam.EmailAddress,
-) (ownerUserID iam.UserID, verified bool, err error) {
+) (ownerUserRef iam.UserRefKey, verified bool, err error) {
 	queryStr :=
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
 			`FROM ` + userIdentifierEmailAddressTableName + ` ` +
 			`WHERE local_part = $1 AND domain_part = $2 ` +
 			`AND deletion_time IS NULL ` +
 			`ORDER BY creation_time DESC LIMIT 1`
+	var ownerUserID iam.UserID
 	err = core.db.
 		QueryRow(queryStr,
 			emailAddress.LocalPart(),
 			emailAddress.DomainPart()).
-		Scan(&ownerUserID, &verified)
+		Scan(&ownerUserRef, &verified)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return iam.UserIDZero, false, nil
+			return iam.UserRefKeyZero(), false, nil
 		}
-		return iam.UserIDZero, false, err
+		return iam.UserRefKeyZero(), false, err
 	}
 
-	return
+	return iam.UserRefKey(ownerUserID), verified, nil
 }
 
 func (core *Core) SetUserIdentifierEmailAddress(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 	emailAddress iam.EmailAddress,
 	verificationMethods []eav10n.VerificationMethod,
 ) (verificationID int64, codeExpiry *time.Time, err error) {
@@ -103,7 +104,7 @@ func (core *Core) SetUserIdentifierEmailAddress(
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if userID != authCtx.UserID {
+	if !userRef.EqualsUserRefKey(authCtx.UserRef) {
 		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 
@@ -113,14 +114,14 @@ func (core *Core) SetUserIdentifierEmailAddress(
 		return 0, nil, errors.Wrap("getUserIDByIdentifierEmailAddress", err)
 	}
 	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != authCtx.UserID {
+		if existingOwnerUserID != authCtx.UserRef.ID() {
 			return 0, nil, errors.ArgMsg("emailAddress", "conflict")
 		}
 		return 0, nil, nil
 	}
 
 	alreadyVerified, err := core.setUserIdentifierEmailAddress(
-		authCtx.Actor(), authCtx.UserID, emailAddress)
+		callCtx, authCtx.UserRef, emailAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -146,12 +147,10 @@ func (core *Core) SetUserIdentifierEmailAddress(
 }
 
 func (core *Core) setUserIdentifierEmailAddress(
-	actor iam.Actor,
-	userID iam.UserID,
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
 	emailAddress iam.EmailAddress,
 ) (alreadyVerified bool, err error) {
-	tNow := time.Now().UTC()
-
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userIdentifierEmailAddressTableName+` (`+
 			`user_id, local_part, domain_part, raw_input, `+
@@ -161,13 +160,13 @@ func (core *Core) setUserIdentifierEmailAddress(
 			`) `+
 			`ON CONFLICT (user_id, local_part, domain_part) WHERE deletion_time IS NULL `+
 			`DO NOTHING`,
-		userID,
+		userRef.ID().PrimitiveValue(),
 		emailAddress.LocalPart(),
 		emailAddress.DomainPart(),
 		emailAddress.RawInput(),
-		tNow,
-		actor.UserID,
-		actor.TerminalID)
+		callCtx.RequestReceiveTime(),
+		callCtx.Authorization().UserRef.ID().PrimitiveValue(),
+		callCtx.Authorization().TerminalID())
 	if err != nil {
 		return false, err
 	}
@@ -184,7 +183,7 @@ func (core *Core) setUserIdentifierEmailAddress(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userIdentifierEmailAddressTableName+` `+
 			`WHERE user_id = $1 AND local_part = $2 AND domain_part = $3`,
-		userID, emailAddress.LocalPart(), emailAddress.DomainPart()).
+		userRef, emailAddress.LocalPart(), emailAddress.DomainPart()).
 		Scan(&alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -214,7 +213,6 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 		return false, errors.Wrap("eaVerifier.ConfirmVerification", err)
 	}
 
-	tNow := time.Now().UTC()
 	emailAddress, err := core.eaVerifier.
 		GetEmailAddressByVerificationID(verificationID)
 	// An unexpected condition which could cause bad state
@@ -222,10 +220,11 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 		panic(err)
 	}
 
+	ctxTime := callCtx.RequestReceiveTime()
 	updated, err = core.
 		ensureUserEmailAddressVerifiedFlag(
-			authCtx.UserID, *emailAddress,
-			&tNow, verificationID)
+			authCtx.UserRef.ID(), *emailAddress,
+			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)
 	}

@@ -16,14 +16,14 @@ import (
 
 func (core *Core) GetUserBaseProfile(
 	callCtx iam.CallContext,
-	userID iam.UserID,
-) (*iam.UserBaseProfile, error) {
+	userID iam.UserRefKey,
+) (*iam.UserBaseProfileData, error) {
 	if callCtx == nil {
 		return nil, errors.ArgMsg("callCtx", "missing")
 	}
 	//TODO(exa): ensure that the context user has the privilege
 
-	var user iam.UserBaseProfile
+	var user iam.UserBaseProfileData
 	var displayName *string
 	var profileImageURL *string
 
@@ -37,7 +37,7 @@ func (core *Core) GetUserBaseProfile(
 				`LEFT JOIN user_profile_image_urls upiu ON upiu.user_id = ua.id AND upiu.deletion_time IS NULL `+
 				`WHERE ua.id = $1`,
 			userID).
-		Scan(&user.ID, &user.IsDeleted, &displayName, &profileImageURL)
+		Scan(&user.RefKey, &user.IsDeleted, &displayName, &profileImageURL)
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -63,20 +63,20 @@ func (core *Core) GetUserBaseProfile(
 // If it's required only to determine the existence of the ID,
 // IsUserIDRegistered is generally more efficient.
 func (core *Core) GetUserAccountState(
-	id iam.UserID,
+	userRef iam.UserRefKey,
 ) (*iam.UserAccountState, error) {
 	idRegistered := false
 	idRegisteredCacheHit := false
 	accountDeleted := false
 	accountDeletedCacheHit := false
 	// Look up for an user ID in the cache.
-	if _, idRegistered = core.registeredUserIDCache.Get(id); idRegistered {
+	if _, idRegistered = core.registeredUserIDCache.Get(userRef); idRegistered {
 		// User ID is positively registered.
 		idRegisteredCacheHit = true
 	}
 
 	// Look up in the cache
-	if _, accountDeleted := core.deletedUserAccountIDCache.Get(id); accountDeleted {
+	if _, accountDeleted := core.deletedUserAccountIDCache.Get(userRef); accountDeleted {
 		// Account is positively deleted
 		accountDeletedCacheHit = true
 	}
@@ -92,16 +92,16 @@ func (core *Core) GetUserAccountState(
 
 	var err error
 	idRegistered, accountDeleted, err = core.
-		getUserAccountState(id)
+		getUserAccountState(userRef.ID())
 	if err != nil {
 		return nil, err
 	}
 
 	if !idRegisteredCacheHit && idRegistered {
-		core.registeredUserIDCache.Add(id, nil)
+		core.registeredUserIDCache.Add(userRef, nil)
 	}
 	if !accountDeletedCacheHit && accountDeleted {
-		core.deletedUserAccountIDCache.Add(id, nil)
+		core.deletedUserAccountIDCache.Add(userRef, nil)
 	}
 
 	if !idRegistered {
@@ -163,7 +163,7 @@ func (core *Core) DeleteUserAccount(
 		return false, nil
 	}
 	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() || authCtx.UserID != userID {
+	if !authCtx.IsUserContext() || authCtx.UserRef.ID() != userID {
 		return false, nil
 	}
 
@@ -172,7 +172,7 @@ func (core *Core) DeleteUserAccount(
 			"UPDATE users "+
 				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2, deletion_notes = $3 "+
 				"WHERE id = $1 AND deletion_time IS NULL",
-			authCtx.UserID, authCtx.TerminalID(), input.DeletionNotes)
+			authCtx.UserRef, authCtx.TerminalID(), input.DeletionNotes)
 		if txErr != nil {
 			return txErr
 		}
@@ -187,7 +187,7 @@ func (core *Core) DeleteUserAccount(
 				`UPDATE `+userIdentifierPhoneNumberTableName+` `+
 					"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 					"WHERE user_id = $1 AND deletion_time IS NULL",
-				authCtx.UserID)
+				authCtx.UserRef)
 		}
 
 		if txErr == nil {
@@ -195,7 +195,7 @@ func (core *Core) DeleteUserAccount(
 				"UPDATE user_profile_image_urls "+
 					"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 					"WHERE user_id = $1 AND deletion_time IS NULL",
-				authCtx.UserID, authCtx.TerminalID())
+				authCtx.UserRef, authCtx.TerminalID())
 		}
 
 		return txErr
@@ -211,7 +211,7 @@ func (core *Core) DeleteUserAccount(
 
 func (core *Core) SetUserProfileImageURL(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userRef iam.UserRefKey,
 	profileImageURL string,
 ) error {
 	authCtx := callCtx.Authorization()
@@ -221,7 +221,7 @@ func (core *Core) SetUserProfileImageURL(
 		return iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if authCtx.UserID != userID {
+	if !userRef.EqualsUserRefKey(authCtx.UserRef) {
 		return iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 	if profileImageURL != "" && !core.isUserProfileImageURLAllowed(profileImageURL) {
@@ -235,7 +235,7 @@ func (core *Core) SetUserProfileImageURL(
 			"UPDATE user_profile_image_urls "+
 				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
 				"WHERE user_id = $1 AND deletion_time IS NULL",
-			authCtx.UserID, authCtx.TerminalID())
+			authCtx.UserRef, authCtx.TerminalID())
 		if txErr != nil {
 			return errors.Wrap("mark current profile image URL as deleted", txErr)
 		}
@@ -244,7 +244,7 @@ func (core *Core) SetUserProfileImageURL(
 				"INSERT INTO user_profile_image_urls "+
 					"(user_id, profile_image_url, creation_user_id, creation_terminal_id) VALUES "+
 					"($1, $2, $3, $4)",
-				authCtx.UserID, profileImageURL, authCtx.UserID, authCtx.TerminalID())
+				authCtx.UserRef, profileImageURL, authCtx.UserRef, authCtx.TerminalID())
 			if txErr != nil {
 				return errors.Wrap("insert new profile image URL", txErr)
 			}
@@ -255,7 +255,7 @@ func (core *Core) SetUserProfileImageURL(
 
 func (core *Core) GetUserInfoV1(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userID iam.UserRefKey,
 ) (*iampb.UserInfoData, error) {
 	//TODO: access control
 
@@ -297,7 +297,7 @@ func (core *Core) GetUserInfoV1(
 
 func (core *Core) GetUserContactInformation(
 	callCtx iam.CallContext,
-	userID iam.UserID,
+	userID iam.UserRefKey,
 ) (*iampb.UserContactInfoData, error) {
 	//TODO: access control
 	userPhoneNumber, err := core.
@@ -318,42 +318,33 @@ func (core *Core) isUserProfileImageURLAllowed(profileImageURL string) bool {
 	return true
 }
 
-func (core *Core) ensureOrNewUserID(
+func (core *Core) ensureOrNewUserRef(
 	callCtx iam.CallContext,
-	userID iam.UserID,
-) (iam.UserID, error) {
+	userRef iam.UserRefKey,
+) (iam.UserRefKey, error) {
 	if callCtx == nil {
-		return iam.UserIDZero, errors.ArgMsg("callCtx", "missing")
+		return iam.UserRefKeyZero(), errors.ArgMsg("callCtx", "missing")
 	}
-	if userID.IsValid() {
-		if !core.IsUserIDRegistered(userID) {
-			return iam.UserIDZero, nil
+	if userRef.IsValid() {
+		if !core.IsUserIDRegistered(userRef.ID()) {
+			return iam.UserRefKeyZero(), nil
 		}
-		return userID, nil
+		return userRef, nil
 	}
-
-	authCtx := callCtx.Authorization()
 
 	var err error
-	tNow := time.Now().UTC()
-	userID, err = core.CreateUserAccount(
-		authCtx.UserID,
-		authCtx.TerminalID(),
-		tNow,
-	)
+	userRef, err = core.CreateUserAccount(callCtx)
 	if err != nil {
-		return iam.UserIDZero, err
+		return iam.UserRefKeyZero(), err
 	}
 
-	return userID, nil
+	return userRef, nil
 }
 
 func (core *Core) CreateUserAccount(
-	creationUserID iam.UserID,
-	creationTerminalID iam.TerminalID,
-	timestamp time.Time,
-) (iam.UserID, error) {
-	userID, err := core.generateUserID()
+	callCtx iam.CallContext,
+) (iam.UserRefKey, error) {
+	newUserID, err := core.generateUserID()
 	if err != nil {
 		panic(err)
 	}
@@ -366,12 +357,15 @@ func (core *Core) CreateUserAccount(
 				`) VALUES (`+
 				`$1, $2, $3, $4`+
 				`)`,
-			userID, timestamp, creationUserID, creationTerminalID)
+			newUserID,
+			callCtx.RequestReceiveTime(),
+			callCtx.Authorization().UserIDPtr(),
+			callCtx.Authorization().TerminalIDPtr())
 	if err != nil {
-		return iam.UserIDZero, err
+		return iam.UserRefKeyZero(), err
 	}
 
-	return userID, nil
+	return iam.UserRefKey(newUserID), nil
 }
 
 func (core *Core) generateUserID() (iam.UserID, error) {

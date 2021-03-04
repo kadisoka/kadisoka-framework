@@ -101,14 +101,14 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 	}
 	//TODO(exa): check if the authorization instance id has been revoked
 
-	var userID UserID
+	var userRef UserRefKey
 	if claims.Subject != "" {
-		userID, err = UserIDFromString(claims.Subject)
+		userRef, err = UserRefKeyFromAZERText(claims.Subject)
 		if err != nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "malformed"))
 		}
 		userAccountState, err := svcClServer.userAccountStateService.
-			GetUserAccountState(userID)
+			GetUserAccountState(userRef)
 		if err != nil {
 			return emptyAuthCtx, errors.Wrap("account state query", err)
 		}
@@ -134,7 +134,7 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 
 	return &Authorization{
 		AuthorizationID: authID,
-		UserID:          userID,
+		UserRef:         userRef,
 		rawToken:        jwtStr,
 	}, nil
 }
@@ -159,12 +159,12 @@ func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
 
 	authCtx, err := svcClServer.authorizationFromGRPCContext(grpcCallCtx)
 	if err != nil {
-		return newCallContext(grpcCallCtx, authCtx, remoteAddr, nil), err
+		return newCallContext(grpcCallCtx, authCtx, remoteAddr, "", nil), err
 	}
 	var requestID *api.RequestID
 	md, ok := grpcmd.FromIncomingContext(grpcCallCtx)
 	if !ok {
-		return newCallContext(grpcCallCtx, authCtx, remoteAddr, nil), nil
+		return newCallContext(grpcCallCtx, authCtx, remoteAddr, "", nil), nil
 	}
 	reqIDStrs := md.Get("request-id")
 	if len(reqIDStrs) == 0 {
@@ -174,15 +174,16 @@ func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
 		reqIDStr := reqIDStrs[0]
 		u, err := uuid.Parse(reqIDStr)
 		if err != nil {
-			return newCallContext(grpcCallCtx, authCtx, remoteAddr, nil),
+			return newCallContext(grpcCallCtx, authCtx, remoteAddr, "", nil),
 				ReqFieldErr("Request-ID", dataerrs.Malformed(err))
 		}
 		if isValidRequestID(u) {
-			return newCallContext(grpcCallCtx, authCtx, remoteAddr, nil), ReqFieldErr("Request-ID", nil)
+			return newCallContext(grpcCallCtx, authCtx, remoteAddr, "", nil),
+				ReqFieldErr("Request-ID", nil)
 		}
 		requestID = &u
 	}
-	return newCallContext(grpcCallCtx, authCtx, remoteAddr, requestID), err
+	return newCallContext(grpcCallCtx, authCtx, remoteAddr, "", requestID), err
 }
 
 func (svcClServer *ServiceClientServerCore) authorizationFromGRPCContext(
@@ -261,16 +262,17 @@ func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
 	if requestIDStr != "" {
 		u, err := uuid.Parse(requestIDStr)
 		if err != nil {
-			return newCallContext(ctx, authCtx, remoteAddr, nil),
+			return newCallContext(ctx, authCtx, remoteAddr, req.UserAgent(), nil),
 				ReqFieldErr("Request-ID", dataerrs.Malformed(err))
 		}
 		if isValidRequestID(u) {
-			return newCallContext(ctx, authCtx, remoteAddr, nil), ReqFieldErr("Request-ID", nil)
+			return newCallContext(ctx, authCtx, remoteAddr, req.UserAgent(), nil),
+				ReqFieldErr("Request-ID", nil)
 		}
 		requestID = &u
 	}
 
-	return newCallContext(ctx, authCtx, remoteAddr, requestID), err
+	return newCallContext(ctx, authCtx, remoteAddr, req.UserAgent(), requestID), err
 }
 
 func isValidRequestID(u uuid.UUID) bool {

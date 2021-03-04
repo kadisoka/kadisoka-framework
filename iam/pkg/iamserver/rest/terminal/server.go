@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/alloyzeus/go-azcore/azcore/errors"
 	"github.com/emicklei/go-restful"
@@ -303,7 +302,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 
 	err = restSrv.serverCore.
 		SetUserTerminalFCMRegistrationToken(
-			reqCtx, authCtx.UserID, authCtx.TerminalID(),
+			reqCtx, authCtx.UserRef, authCtx.TerminalID(),
 			fcmRegTokenReq.Token)
 	if err != nil {
 		panic(err)
@@ -481,30 +480,18 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 		return
 	}
 
-	tNow := time.Now().UTC()
+	//TODO: get from CallCtx
 	termLangStrings := restSrv.parseRequestAcceptLanguage(reqCtx, "")
-
 	termDisplayName := strings.TrimSpace(terminalRegisterReq.DisplayName)
-	var ipAddress string
-	var userAgent string
-	if httpReq := reqCtx.HTTPRequest(); httpReq != nil {
-		ipAddress = reqCtx.RemoteAddress()
-		userAgent = httpReq.UserAgent()
-	}
 
 	termID, termSecret, err := restSrv.serverCore.
-		RegisterTerminal(iamserver.TerminalRegistrationInput{
-			ClientID:           authClient.ID,
-			UserID:             iam.UserIDZero,
-			DisplayName:        termDisplayName,
-			AcceptLanguage:     strings.Join(termLangStrings, ","),
-			CreationTime:       tNow,
-			CreationUserID:     authCtx.UserIDPtr(),
-			CreationTerminalID: authCtx.TerminalIDPtr(),
-			CreationIPAddress:  ipAddress,
-			CreationUserAgent:  userAgent,
-			VerificationType:   terminalRegisterReq.VerificationResourceType,
-			VerificationID:     0,
+		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
+			ClientID:         authClient.ID,
+			UserRef:          iam.UserRefKeyZero(),
+			DisplayName:      termDisplayName,
+			AcceptLanguage:   strings.Join(termLangStrings, ","),
+			VerificationType: terminalRegisterReq.VerificationResourceType,
+			VerificationID:   0,
 		})
 	if err != nil {
 		panic(err)

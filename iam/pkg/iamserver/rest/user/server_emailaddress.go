@@ -72,14 +72,14 @@ func (restSrv *Server) handleSetEmailAddress(
 	}
 
 	if targetUserIDStr := req.PathParameter("user-id"); targetUserIDStr != "" && targetUserIDStr != "me" {
-		targetUserID, err := iam.UserIDFromString(targetUserIDStr)
+		targetUserRef, err := iam.UserRefKeyFromAZERText(targetUserIDStr)
 		if err != nil {
 			logCtx(reqCtx).Warn().Msgf("Invalid user ID: %v", err)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
-		if targetUserID != authCtx.UserID {
+		if targetUserRef != authCtx.UserRef {
 			logCtx(reqCtx).Warn().Msgf("Setting other user's email address is not allowed")
 			rest.RespondTo(resp).EmptyError(
 				http.StatusForbidden)
@@ -89,7 +89,7 @@ func (restSrv *Server) handleSetEmailAddress(
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
 		SetUserIdentifierEmailAddress(
-			reqCtx, authCtx.UserID, emailAddress, verificationMethods)
+			reqCtx, authCtx.UserRef, emailAddress, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
