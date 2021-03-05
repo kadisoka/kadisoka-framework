@@ -366,7 +366,7 @@ func (core *Core) CreateUserAccount(
 		return iam.UserRefKeyZero(), err
 	}
 
-	return iam.UserRefKey(newUserID), nil
+	return iam.NewUserRefKey(newUserID), nil
 }
 
 func (core *Core) generateUserID() (iam.UserID, error) {

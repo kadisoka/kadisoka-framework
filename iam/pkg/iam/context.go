@@ -22,8 +22,9 @@ var (
 
 func NewEmptyCallContext(ctx context.Context) CallContext {
 	return &callContext{
-		Context:       ctx,
-		authorization: newEmptyAuthorization(),
+		Context:            ctx,
+		authorization:      newEmptyAuthorization(),
+		requestReceiveTime: time.Now().UTC(),
 	}
 }
 

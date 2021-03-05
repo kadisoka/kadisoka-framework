@@ -1,5 +1,10 @@
 package iam
 
+import (
+	"crypto/rand"
+	"encoding/binary"
+)
+
 type Client struct {
 	ID                ApplicationRefKey
 	DisplayName       string
@@ -23,4 +28,33 @@ func (cl Client) HasOAuth2RedirectURI(redirectURI string) bool {
 
 type ClientDataProvider interface {
 	GetClient(id ApplicationRefKey) (*Client, error)
+}
+
+// GenerateApplicationRefKey generates a new ApplicationRefKey. Note that this function is
+// not consulting any database. To ensure that the generated ApplicationRefKey is
+// unique, check the client database.
+func GenerateApplicationRefKey(firstParty bool, clientTyp string) ApplicationRefKey {
+	var typeInfo uint32
+	if firstParty {
+		typeInfo = _ApplicationIDFirstPartyBits
+	}
+	switch clientTyp {
+	case "service":
+		typeInfo |= _ApplicationIDServiceBits
+	case "ua-public":
+		typeInfo |= _ApplicationIDUserAgentAuthorizationPublicBits
+	case "ua-confidential":
+		typeInfo |= _ApplicationIDUserAgentAuthorizationConfidentialBits
+	default:
+		panic("Unsupported client app type")
+	}
+	instIDBytes := make([]byte, 4)
+	_, err := rand.Read(instIDBytes[1:])
+	if err != nil {
+		panic(err)
+	}
+	//TODO: reserve some ranges (?)
+	instID := binary.BigEndian.Uint32(instIDBytes) & 0x00ff_ffff
+	appID := ApplicationIDFromPrimitiveValue(int32(typeInfo | instID))
+	return NewApplicationRefKey(appID)
 }

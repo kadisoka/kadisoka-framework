@@ -177,12 +177,15 @@ func (id ApplicationID) IsFirstParty() bool {
 	return id.IsValid() && id.HasFirstPartyBits()
 }
 
+const _ApplicationIDFirstPartyMask = 0b1000000_00000000_00000000_00000000
+const _ApplicationIDFirstPartyBits = 0b1000000_00000000_00000000_00000000
+
 // HasFirstPartyBits is only checking the bits
 // without validating other information contained in the ID.
 func (id ApplicationID) HasFirstPartyBits() bool {
 	return (uint32(id) &
-		0b1000000_00000000_00000000_00000000) ==
-		0b1000000_00000000_00000000_00000000
+		_ApplicationIDFirstPartyMask) ==
+		_ApplicationIDFirstPartyBits
 }
 
 // IsService returns true if the Application instance
@@ -198,12 +201,15 @@ func (id ApplicationID) IsService() bool {
 	return id.IsValid() && id.HasServiceBits()
 }
 
+const _ApplicationIDServiceMask = 0b100000_00000000_00000000_00000000
+const _ApplicationIDServiceBits = 0b0
+
 // HasServiceBits is only checking the bits
 // without validating other information contained in the ID.
 func (id ApplicationID) HasServiceBits() bool {
 	return (uint32(id) &
-		0b100000_00000000_00000000_00000000) ==
-		0b0
+		_ApplicationIDServiceMask) ==
+		_ApplicationIDServiceBits
 }
 
 // IsUserAgent returns true if the Application instance
@@ -220,12 +226,15 @@ func (id ApplicationID) IsUserAgent() bool {
 	return id.IsValid() && id.HasUserAgentBits()
 }
 
+const _ApplicationIDUserAgentMask = 0b100000_00000000_00000000_00000000
+const _ApplicationIDUserAgentBits = 0b100000_00000000_00000000_00000000
+
 // HasUserAgentBits is only checking the bits
 // without validating other information contained in the ID.
 func (id ApplicationID) HasUserAgentBits() bool {
 	return (uint32(id) &
-		0b100000_00000000_00000000_00000000) ==
-		0b100000_00000000_00000000_00000000
+		_ApplicationIDUserAgentMask) ==
+		_ApplicationIDUserAgentBits
 }
 
 // IsUserAgentAuthorizationPublic returns true if the Application instance
@@ -247,12 +256,15 @@ func (id ApplicationID) IsUserAgentAuthorizationPublic() bool {
 	return id.IsValid() && id.HasUserAgentAuthorizationPublicBits()
 }
 
+const _ApplicationIDUserAgentAuthorizationPublicMask = 0b110000_00000000_00000000_00000000
+const _ApplicationIDUserAgentAuthorizationPublicBits = 0b100000_00000000_00000000_00000000
+
 // HasUserAgentAuthorizationPublicBits is only checking the bits
 // without validating other information contained in the ID.
 func (id ApplicationID) HasUserAgentAuthorizationPublicBits() bool {
 	return (uint32(id) &
-		0b110000_00000000_00000000_00000000) ==
-		0b100000_00000000_00000000_00000000
+		_ApplicationIDUserAgentAuthorizationPublicMask) ==
+		_ApplicationIDUserAgentAuthorizationPublicBits
 }
 
 // IsUserAgentAuthorizationConfidential returns true if the Application instance
@@ -267,12 +279,15 @@ func (id ApplicationID) IsUserAgentAuthorizationConfidential() bool {
 	return id.IsValid() && id.HasUserAgentAuthorizationConfidentialBits()
 }
 
+const _ApplicationIDUserAgentAuthorizationConfidentialMask = 0b110000_00000000_00000000_00000000
+const _ApplicationIDUserAgentAuthorizationConfidentialBits = 0b110000_00000000_00000000_00000000
+
 // HasUserAgentAuthorizationConfidentialBits is only checking the bits
 // without validating other information contained in the ID.
 func (id ApplicationID) HasUserAgentAuthorizationConfidentialBits() bool {
 	return (uint32(id) &
-		0b110000_00000000_00000000_00000000) ==
-		0b110000_00000000_00000000_00000000
+		_ApplicationIDUserAgentAuthorizationConfidentialMask) ==
+		_ApplicationIDUserAgentAuthorizationConfidentialBits
 }
 
 type ApplicationIDError interface {
@@ -287,6 +302,14 @@ type ApplicationIDError interface {
 // ApplicationRefKey is used to identify
 // an instance of entity Application system-wide.
 type ApplicationRefKey ApplicationID
+
+// NewApplicationRefKey returns a new instance
+// of ApplicationRefKey with the provided attribute values.
+func NewApplicationRefKey(
+	id ApplicationID,
+) ApplicationRefKey {
+	return ApplicationRefKey(id)
+}
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
@@ -325,7 +348,7 @@ func (refKey ApplicationRefKey) IDPtr() *ApplicationID {
 	return &i
 }
 
-// ID is required for conformance with azcore.RefKey.
+// EID is required for conformance with azcore.RefKey.
 func (refKey ApplicationRefKey) EID() azcore.EID {
 	return ApplicationID(refKey)
 }

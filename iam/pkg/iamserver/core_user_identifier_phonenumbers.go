@@ -52,7 +52,7 @@ func (core *Core) ListUsersByPhoneNumber(
 		}
 		var userPhoneNumber iam.UserIdentifierPhoneNumber
 		userPhoneNumber = iam.UserIdentifierPhoneNumber{
-			UserRef:     iam.UserRefKey(uid),
+			UserRef:     iam.NewUserRefKey(uid),
 			PhoneNumber: iam.NewPhoneNumber(countryCode, nationalNumber),
 		}
 		userPhoneNumberList = append(userPhoneNumberList, userPhoneNumber)
@@ -161,7 +161,7 @@ func (core *Core) getUserIDByIdentifierPhoneNumberAllowUnverified(
 		return iam.UserRefKeyZero(), false, err
 	}
 
-	return iam.UserRefKey(ownerUserID), verified, nil
+	return iam.NewUserRefKey(ownerUserID), verified, nil
 }
 
 func (core *Core) SetUserIdentifierPhoneNumber(

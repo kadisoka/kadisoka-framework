@@ -37,7 +37,7 @@ func (core *Core) GetUserContactUserIDs(
 		if err != nil {
 			panic(err)
 		}
-		userRefs = append(userRefs, iam.UserRefKey(uid))
+		userRefs = append(userRefs, iam.NewUserRefKey(uid))
 	}
 	if err = userIDRows.Err(); err != nil {
 		return nil, err

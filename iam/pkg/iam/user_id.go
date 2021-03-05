@@ -193,6 +193,14 @@ func (id UserID) IsServiceAccount() bool {
 // an instance of entity User system-wide.
 type UserRefKey UserID
 
+// NewUserRefKey returns a new instance
+// of UserRefKey with the provided attribute values.
+func NewUserRefKey(
+	id UserID,
+) UserRefKey {
+	return UserRefKey(id)
+}
+
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
 var _ azcore.RefKey = _UserRefKeyZero

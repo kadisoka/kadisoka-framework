@@ -40,7 +40,7 @@ func (core *Core) AuthenticateTerminal(
 		return false, iam.UserRefKeyZero(), err
 	}
 
-	return storedSecret == terminalSecret, iam.UserRefKey(ownerUserID), nil
+	return storedSecret == terminalSecret, iam.NewUserRefKey(ownerUserID), nil
 }
 
 func (core *Core) StartTerminalRegistrationByPhoneNumber(
@@ -343,7 +343,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 		panic(err)
 	}
 
-	return termSecret, iam.UserRefKey(userTermModel.UserID), nil
+	return termSecret, iam.NewUserRefKey(userTermModel.UserID), nil
 }
 
 func (core *Core) getTerminal(id iam.TerminalID) (*terminalDBModel, error) {
@@ -530,13 +530,13 @@ func (core *Core) setUserTerminalVerified(
 }
 
 func (core *Core) generateTerminalID() (iam.TerminalID, error) {
-	b := make([]byte, 4)
-	_, err := rand.Read(b)
+	b := make([]byte, 8)
+	_, err := rand.Read(b[2:])
 	if err != nil {
 		panic(err)
 	}
-	h := uint64(binary.BigEndian.Uint32(b)) & 0x7fffffff // ensure sign bit is cleared
-	return iam.TerminalID(h), nil
+	h := binary.BigEndian.Uint64(b) & 0x7fff_ffff_ffff_ffff // ensure sign bit is cleared
+	return iam.TerminalIDFromPrimitiveValue(int64(h)), nil
 }
 
 func (core *Core) generateTerminalSecret() string {

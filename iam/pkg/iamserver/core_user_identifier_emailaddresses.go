@@ -90,7 +90,7 @@ func (core *Core) getUserIDByIdentifierEmailAddressAllowUnverified(
 		return iam.UserRefKeyZero(), false, err
 	}
 
-	return iam.UserRefKey(ownerUserID), verified, nil
+	return iam.NewUserRefKey(ownerUserID), verified, nil
 }
 
 func (core *Core) SetUserIdentifierEmailAddress(

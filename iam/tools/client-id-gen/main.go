@@ -1,23 +1,33 @@
 package main
 
-// func main() {
-// 	if len(os.Args) < 2 {
-// 		fmt.Fprintf(os.Stderr, "Invalid number of arguments\n")
-// 		os.Exit(-1)
-// 	}
-// 	clientID := iam.GenerateClientID(os.Args[1])
-// 	clientSecret := genSecret(16)
-// 	fmt.Fprintf(os.Stdout, "%s\n%s\n", clientID.String(), clientSecret)
-// }
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
+	"os"
 
-// func genSecret(len int) string {
-// 	if len == 0 {
-// 		len = 16
-// 	}
-// 	b := make([]byte, len)
-// 	_, err := rand.Read(b)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return base64.RawURLEncoding.EncodeToString(b)
-// }
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+)
+
+func main() {
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "Invalid number of arguments\n")
+		os.Exit(-1)
+	}
+	firstParty := os.Args[1] == "true"
+	clientID := iam.GenerateApplicationRefKey(firstParty, os.Args[2])
+	clientSecret := genSecret(16)
+	fmt.Fprintf(os.Stdout, "%s\n%s\n", clientID.AZERText(), clientSecret)
+}
+
+func genSecret(len int) string {
+	if len == 0 {
+		len = 16
+	}
+	b := make([]byte, len)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return base64.RawURLEncoding.EncodeToString(b)
+}
