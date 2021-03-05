@@ -167,23 +167,20 @@ func (id SessionID) EqualsSessionID(
 // an instance of adjunct entity Session system-wide.
 type SessionRefKey struct {
 	terminal TerminalRefKey
-	user     UserRefKey
 	id       SessionID
 }
 
 // The total number of fields in the struct.
-const _SessionRefKeyFieldCount = 2 + 1
+const _SessionRefKeyFieldCount = 1 + 1
 
 // NewSessionRefKey returns a new instance
 // of SessionRefKey with the provided attribute values.
 func NewSessionRefKey(
 	terminal TerminalRefKey,
-	user UserRefKey,
 	id SessionID,
 ) SessionRefKey {
 	return SessionRefKey{
 		terminal: terminal,
-		user:     user,
 		id:       id,
 	}
 }
@@ -196,7 +193,6 @@ var _ azcore.SessionRefKey = _SessionRefKeyZero
 
 var _SessionRefKeyZero = SessionRefKey{
 	terminal: TerminalRefKeyZero(),
-	user:     UserRefKeyZero(),
 	id:       SessionIDZero,
 }
 
@@ -228,7 +224,7 @@ func (refKey SessionRefKey) IDPtr() *SessionID {
 	return &i
 }
 
-// ID is required for conformance with azcore.RefKey.
+// EID is required for conformance with azcore.RefKey.
 func (refKey SessionRefKey) EID() azcore.EID {
 	return refKey.id
 }
@@ -242,7 +238,6 @@ func (refKey SessionRefKey) SessionID() azcore.SessionID {
 // IsZero is required as SessionRefKey is a value-object.
 func (refKey SessionRefKey) IsZero() bool {
 	return refKey.terminal.IsZero() &&
-		refKey.user.IsZero() &&
 		refKey.id == SessionIDZero
 }
 
@@ -250,7 +245,6 @@ func (refKey SessionRefKey) IsZero() bool {
 // It doesn't tell whether it refers to a valid instance of Session.
 func (refKey SessionRefKey) IsValid() bool {
 	return refKey.terminal.IsValid() &&
-		refKey.user.IsValid() &&
 		refKey.id.IsValid()
 }
 
@@ -263,12 +257,10 @@ func (refKey SessionRefKey) IsNotValid() bool {
 func (refKey SessionRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(SessionRefKey); ok {
 		return refKey.terminal.EqualsTerminalRefKey(x.terminal) &&
-			refKey.user.EqualsUserRefKey(x.user) &&
 			refKey.id == x.id
 	}
 	if x, _ := other.(*SessionRefKey); x != nil {
 		return refKey.terminal.EqualsTerminalRefKey(x.terminal) &&
-			refKey.user.EqualsUserRefKey(x.user) &&
 			refKey.id == x.id
 	}
 	return false
@@ -285,7 +277,6 @@ func (refKey SessionRefKey) EqualsSessionRefKey(
 	other SessionRefKey,
 ) bool {
 	return refKey.terminal.EqualsTerminalRefKey(other.terminal) &&
-		refKey.user.EqualsUserRefKey(other.user) &&
 		refKey.id == other.id
 }
 
@@ -325,10 +316,6 @@ func (refKey SessionRefKey) AZERBinField() ([]byte, azer.BinDataType) {
 	var fieldType azer.BinDataType
 
 	fieldBytes, fieldType = refKey.terminal.AZERBinField()
-	typesBytes = append(typesBytes, fieldType.Byte())
-	dataBytes = append(dataBytes, fieldBytes...)
-
-	fieldBytes, fieldType = refKey.user.AZERBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
@@ -380,20 +367,6 @@ func SessionRefKeyFromAZERBinField(
 	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return SessionRefKeyZero(), 0,
-			errors.ArgWrap("", "user ref-key type parsing", err)
-	}
-	typeCursor++
-	userRefKey, readLen, err := UserRefKeyFromAZERBinField(
-		b[dataCursor:], fieldType)
-	if err != nil {
-		return SessionRefKeyZero(), 0,
-			errors.ArgWrap("", "user ref-key data parsing", err)
-	}
-	dataCursor += readLen
-
-	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
-	if err != nil {
-		return SessionRefKeyZero(), 0,
 			errors.ArgWrap("", "id type parsing", err)
 	}
 	typeCursor++
@@ -407,7 +380,6 @@ func SessionRefKeyFromAZERBinField(
 
 	return SessionRefKey{
 		terminal: terminalRefKey,
-		user:     userRefKey,
 		id:       id,
 	}, dataCursor, nil
 }
@@ -518,24 +490,7 @@ func (refKey SessionRefKey) WithTerminal(
 ) SessionRefKey {
 	return SessionRefKey{
 		terminal: terminal,
-		user:     refKey.user,
-	}
-}
-
-// User returns instance's User value.
-func (refKey SessionRefKey) User() UserRefKey {
-	return refKey.user
-}
-
-// WithUser returns a copy
-// of SessionRefKey
-// with its user attribute set to the provided value.
-func (refKey SessionRefKey) WithUser(
-	user UserRefKey,
-) SessionRefKey {
-	return SessionRefKey{
-		terminal: refKey.terminal,
-		user:     user,
+		id:       refKey.id,
 	}
 }
 

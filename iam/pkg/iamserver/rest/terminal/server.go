@@ -106,7 +106,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 func (restSrv *Server) postTerminalsRegister(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqClient, err := restSrv.serverCore.
+	reqApp, err := restSrv.serverCore.
 		RequestClient(req.Request)
 	if err != nil {
 		logReq(req.Request).
@@ -121,7 +121,7 @@ func (restSrv *Server) postTerminalsRegister(
 		return
 	}
 
-	if reqClient == nil {
+	if reqApp == nil {
 		logReq(req.Request).
 			Warn().Msg("No authorized client")
 		rest.RespondTo(resp).EmptyError(
@@ -167,12 +167,12 @@ func (restSrv *Server) postTerminalsRegister(
 	if terminalRegisterReq.VerificationResourceType == "" {
 		if iam.IsValidEmailAddress(terminalRegisterReq.VerificationResourceName) {
 			restSrv.handleTerminalRegisterByEmailAddress(
-				resp, reqCtx, reqClient, terminalRegisterReq)
+				resp, reqCtx, reqApp, terminalRegisterReq)
 			return
 		}
 		if _, err := iam.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName); err == nil {
 			restSrv.handleTerminalRegisterByPhoneNumber(
-				resp, reqCtx, reqClient, terminalRegisterReq)
+				resp, reqCtx, reqApp, terminalRegisterReq)
 			return
 		}
 
@@ -186,11 +186,11 @@ func (restSrv *Server) postTerminalsRegister(
 	switch terminalRegisterReq.VerificationResourceType {
 	case iam.TerminalVerificationResourceTypeEmailAddress:
 		restSrv.handleTerminalRegisterByEmailAddress(
-			resp, reqCtx, reqClient, terminalRegisterReq)
+			resp, reqCtx, reqApp, terminalRegisterReq)
 		return
 	case iam.TerminalVerificationResourceTypePhoneNumber:
 		restSrv.handleTerminalRegisterByPhoneNumber(
-			resp, reqCtx, reqClient, terminalRegisterReq)
+			resp, reqCtx, reqApp, terminalRegisterReq)
 		return
 
 	default:
@@ -315,7 +315,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	resp *restful.Response,
 	reqCtx *iam.RESTRequestContext,
-	authClient *iam.Client,
+	authClient *iam.Application,
 	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
 ) {
 	// Only for non-confidential user-agents
@@ -384,7 +384,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	resp *restful.Response,
 	reqCtx *iam.RESTRequestContext,
-	authClient *iam.Client,
+	authClient *iam.Application,
 	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
 ) {
 	if appRef := authClient.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
@@ -458,7 +458,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 func (restSrv *Server) handleTerminalRegisterByImplicit(
 	resp *restful.Response,
 	reqCtx *iam.RESTRequestContext,
-	authClient *iam.Client,
+	authClient *iam.Application,
 	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
 ) {
 	// Only if the client is able to secure its credentials.

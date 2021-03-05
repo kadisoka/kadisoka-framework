@@ -5,8 +5,7 @@ import (
 	"encoding/binary"
 )
 
-type Client struct {
-	ID                ApplicationRefKey
+type ApplicationData struct {
 	DisplayName       string
 	Secret            string
 	PlatformType      string // only for user-agent types
@@ -14,7 +13,7 @@ type Client struct {
 	OAuth2RedirectURI []string
 }
 
-func (cl Client) HasOAuth2RedirectURI(redirectURI string) bool {
+func (cl ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
 	if cl.OAuth2RedirectURI == nil {
 		return false
 	}
@@ -26,8 +25,13 @@ func (cl Client) HasOAuth2RedirectURI(redirectURI string) bool {
 	return false
 }
 
+type Application struct {
+	ID   ApplicationRefKey
+	Data ApplicationData
+}
+
 type ClientDataProvider interface {
-	GetClient(id ApplicationRefKey) (*Client, error)
+	GetApplication(id ApplicationRefKey) (*Application, error)
 }
 
 // GenerateApplicationRefKey generates a new ApplicationRefKey. Note that this function is

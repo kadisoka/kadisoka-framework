@@ -16,9 +16,9 @@ import (
 func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqClient, err := restSrv.serverCore.
+	reqApp, err := restSrv.serverCore.
 		RequestClient(req.Request)
-	if reqClient == nil {
+	if reqApp == nil {
 		if err != nil {
 			logReq(req.Request).
 				Warn().Err(err).Msg("Client authentication")
@@ -42,9 +42,9 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	var termRef iam.TerminalRefKey
 	if strings.HasPrefix(authCode, "otp:") {
 		// Only for non-confidential user-agents
-		if appRef := reqClient.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
+		if appRef := reqApp.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
 			logReq(req.Request).
-				Warn().Msgf("Client %v is not allowed to use grant type 'authorization_code'", reqClient.ID)
+				Warn().Msgf("Client %v is not allowed to use grant type 'authorization_code'", reqApp.ID)
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
 			return
@@ -69,9 +69,9 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		authCode = parts[2]
 	} else {
 		// Only for confidential user-agents
-		if appRef := reqClient.ID; !appRef.ID().IsUserAgentAuthorizationConfidential() {
+		if appRef := reqApp.ID; !appRef.ID().IsUserAgentAuthorizationConfidential() {
 			logReq(req.Request).
-				Warn().Msgf("Client %v is not allowed to use grant type 'authorization_code'", reqClient.ID)
+				Warn().Msgf("Client %v is not allowed to use grant type 'authorization_code'", reqApp.ID)
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
 			return
@@ -106,18 +106,18 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	}
 
 	redirectURI := req.Request.FormValue("redirect_uri")
-	if redirectURI != "" && reqClient.HasOAuth2RedirectURI(redirectURI) {
+	if redirectURI != "" && reqApp.Data.HasOAuth2RedirectURI(redirectURI) {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid redirect_uri: %s (wants %s)", redirectURI, reqClient.OAuth2RedirectURI)
+			Warn().Msgf("Invalid redirect_uri: %s (wants %s)", redirectURI, reqApp.Data.OAuth2RedirectURI)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidRequest)
 		return
 	}
 
 	clientAZERText := req.Request.FormValue("client_id")
-	if clientAZERText != "" && clientAZERText != reqClient.ID.AZERText() {
+	if clientAZERText != "" && clientAZERText != reqApp.ID.AZERText() {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZERText, reqClient.ID)
+			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZERText, reqApp.ID)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidClient)
 		return

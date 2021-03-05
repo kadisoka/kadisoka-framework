@@ -147,5 +147,5 @@ func (core *Core) generateAuthorizationID(
 		return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert", err)
 	}
 
-	return iam.NewSessionRefKey(terminalRef, userRef, sessionID), tNow, nil
+	return iam.NewSessionRefKey(terminalRef, sessionID), tNow, nil
 }

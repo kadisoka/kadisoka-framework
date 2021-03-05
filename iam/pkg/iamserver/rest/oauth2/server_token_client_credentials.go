@@ -16,9 +16,9 @@ import (
 func (restSrv *Server) handleTokenRequestByClientCredentials(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqClient, err := restSrv.serverCore.
+	reqApp, err := restSrv.serverCore.
 		RequestClient(req.Request)
-	if reqClient == nil {
+	if reqApp == nil {
 		if err != nil {
 			logReq(req.Request).
 				Warn().Err(err).Msg("Client authentication")
@@ -33,9 +33,9 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	}
 
 	// To use this grant type, the client must be able to secure its credentials.
-	if !reqClient.ID.ID().IsService() && !reqClient.ID.ID().IsUserAgentAuthorizationConfidential() {
+	if !reqApp.ID.ID().IsService() && !reqApp.ID.ID().IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
-			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqClient.ID)
+			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqApp.ID)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
 		return
@@ -63,7 +63,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 
 	termRef, termSecret, err := restSrv.serverCore.
 		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-			ApplicationRef:   reqClient.ID,
+			ApplicationRef:   reqApp.ID,
 			UserRef:          authCtx.UserRef(),
 			DisplayName:      termDisplayName,
 			AcceptLanguage:   strings.Join(preferredLanguages, ","),

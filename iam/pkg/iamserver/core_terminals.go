@@ -474,7 +474,7 @@ func (core *Core) RegisterTerminal(
 		callCtx.RemoteEnvironmentString(),
 		input.DisplayName,
 		input.AcceptLanguage, //TODO: get from context
-		clientInfo.PlatformType,
+		clientInfo.Data.PlatformType,
 		input.VerificationType,
 		input.VerificationID,
 		input.VerificationTime)

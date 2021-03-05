@@ -53,47 +53,47 @@ func (authCtx Authorization) IsNotValid() bool {
 
 func (authCtx Authorization) Actor() Actor {
 	return Actor{
-		UserRef:     authCtx.Session.user,
+		UserRef:     authCtx.Session.terminal.user,
 		TerminalRef: authCtx.Session.terminal,
 	}
 }
 
 // IsUserContext is used to determine if this context represents a user.
 func (authCtx Authorization) IsUserContext() bool {
-	if authCtx.ClientID().IsUserAgent() && authCtx.Session.user.IsValid() {
+	if authCtx.ClientID().IsUserAgent() && authCtx.Session.terminal.user.IsValid() {
 		return true
 	}
 	return false
 }
 
 func (authCtx Authorization) IsServiceClientContext() bool {
-	if authCtx.ClientID().IsService() && authCtx.Session.user.IsNotValid() {
+	if authCtx.ClientID().IsService() && authCtx.Session.terminal.user.IsNotValid() {
 		return true
 	}
 	return false
 }
 
 func (authCtx Authorization) UserRef() UserRefKey {
-	return authCtx.Session.user
+	return authCtx.Session.terminal.user
 }
 
 // UserRefKeyPtr returns a pointer to a new copy of user ID. The
 // returned value is non-nil when the user ref-key is valid.
 func (authCtx Authorization) UserRefKeyPtr() *UserRefKey {
-	if authCtx.Session.user.IsValid() {
-		return &authCtx.Session.user
+	if authCtx.Session.terminal.user.IsValid() {
+		return &authCtx.Session.terminal.user
 	}
 	return nil
 }
 
 func (authCtx Authorization) UserID() UserID {
-	return authCtx.Session.user.ID()
+	return authCtx.Session.terminal.user.ID()
 }
 
 // UserIDPtr returns a pointer to a new copy of user ID. The
 // returned value is non-nil when the user ref-key is valid.
 func (authCtx Authorization) UserIDPtr() *UserID {
-	return authCtx.Session.user.IDPtr()
+	return authCtx.Session.terminal.user.IDPtr()
 }
 
 func (authCtx Authorization) TerminalRef() TerminalRefKey {

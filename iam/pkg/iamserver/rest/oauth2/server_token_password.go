@@ -15,7 +15,7 @@ import (
 func (restSrv *Server) handleTokenRequestByPasswordGrant(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqClient, err := restSrv.serverCore.
+	reqApp, err := restSrv.serverCore.
 		RequestClient(req.Request)
 	if err != nil {
 		logReq(req.Request).
@@ -26,9 +26,9 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	if reqClient != nil && !reqClient.ID.ID().IsUserAgentAuthorizationConfidential() {
+	if reqApp != nil && !reqApp.ID.ID().IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
-			Warn().Msgf("Client %v is not authorized to use grant type password", reqClient.ID)
+			Warn().Msgf("Client %v is not authorized to use grant type password", reqApp.ID)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
 		return
@@ -64,7 +64,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		switch names[0] {
 		case "terminal":
 			restSrv.handleTokenRequestByPasswordGrantWithTerminalCreds(
-				reqCtx, resp, reqClient, names[1], password)
+				reqCtx, resp, reqApp, names[1], password)
 			return
 		default:
 			logReq(req.Request).
@@ -81,7 +81,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	reqCtx *iam.RESTRequestContext,
 	resp *restful.Response,
-	reqClient *iam.Client,
+	reqApp *iam.Application,
 	terminalIDStr string,
 	terminalSecret string,
 ) {
@@ -136,10 +136,10 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		}
 	}
 
-	if reqClient != nil {
-		if !reqClient.ID.EqualsApplicationRefKey(termRef.Application()) {
+	if reqApp != nil {
+		if !reqApp.ID.EqualsApplicationRefKey(termRef.Application()) {
 			logCtx(reqCtx).
-				Error().Msgf("Terminal %v is not associated to client %v", termRef, reqClient.ID)
+				Error().Msgf("Terminal %v is not associated to client %v", termRef, reqApp.ID)
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorServerError)
 			return

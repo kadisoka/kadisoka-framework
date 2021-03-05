@@ -36,7 +36,7 @@ func RESTServiceServerWith(iamServerCore *Core) *RESTServiceServerBase {
 // will be a valid client and err will be nil.
 func (svcBase *RESTServiceServerBase) RequestClient(
 	req *http.Request,
-) (client *iam.Client, err error) {
+) (client *iam.Application, err error) {
 	authorizationHeader := req.Header.Get("Authorization")
 	if authorizationHeader == "" {
 		return nil, nil
@@ -75,7 +75,7 @@ func (svcBase *RESTServiceServerBase) RequestClient(
 	if client == nil {
 		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("username", "reference invalid"))
 	}
-	if len(creds) == 0 || creds[1] != client.Secret {
+	if len(creds) == 0 || creds[1] != client.Data.Secret {
 		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("password", "mismatch"))
 	}
 

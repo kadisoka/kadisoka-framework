@@ -10,7 +10,7 @@ import (
 )
 
 type clientStaticDataProvider struct {
-	clients map[iam.ApplicationRefKey]*iam.Client
+	clients map[iam.ApplicationRefKey]*iam.ApplicationData
 }
 
 func newClientStaticDataProviderFromCSVFileByName(
@@ -64,7 +64,7 @@ func newClientStaticDataProviderFromCSVFileByName(
 		return ls[idx]
 	}
 
-	clList := map[iam.ApplicationRefKey]*iam.Client{}
+	clList := map[iam.ApplicationRefKey]*iam.ApplicationData{}
 	for _, r := range rows[skipRows:] {
 		var clID iam.ApplicationRefKey
 		clID, err = iam.ApplicationRefKeyFromAZERText(r[0])
@@ -105,8 +105,7 @@ func newClientStaticDataProviderFromCSVFileByName(
 			}
 		}
 
-		clList[clID] = &iam.Client{
-			ID:                clID,
+		clList[clID] = &iam.ApplicationData{
 			DisplayName:       indexexdValue(r, displayNameIdx),
 			Secret:            indexexdValue(r, secretIdx),
 			PlatformType:      indexexdValue(r, platformTypeIdx),
@@ -118,9 +117,13 @@ func newClientStaticDataProviderFromCSVFileByName(
 	return &clientStaticDataProvider{clList}, nil
 }
 
-func (clientStaticDataStore *clientStaticDataProvider) GetClient(
+func (clientStaticDataStore *clientStaticDataProvider) GetApplication(
 	appID iam.ApplicationRefKey,
-) (*iam.Client, error) {
+) (*iam.Application, error) {
 	cl := clientStaticDataStore.clients[appID]
-	return cl, nil
+	if cl == nil {
+		return nil, nil
+	}
+	app := &iam.Application{ID: appID, Data: *cl}
+	return app, nil
 }
