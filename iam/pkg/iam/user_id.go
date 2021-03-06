@@ -29,7 +29,7 @@ var _ azcore.UserID = UserIDZero
 
 // _UserIDSignificantBitsMask is used to
 // extract significant bits from an instance of UserID.
-const _UserIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111
+const UserIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111
 
 // UserIDZero is the zero value
 // for UserID.
@@ -100,7 +100,7 @@ func (id UserID) IsZero() bool {
 // method.
 func (id UserID) IsValid() bool {
 	return int64(id) > 0 &&
-		(uint64(id)&_UserIDSignificantBitsMask) != 0
+		(uint64(id)&UserIDSignificantBitsMask) != 0
 }
 
 // IsNotValid returns the negation of value returned by IsValid().

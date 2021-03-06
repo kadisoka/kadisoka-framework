@@ -59,15 +59,15 @@ func (core *Core) SetUserPassword(
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, txErr := core.db.Exec(
 			`UPDATE user_passwords SET `+
-				`deletion_time = $1, deletion_user_id = $2, deletion_terminal_id = $3 `+
-				`WHERE user_id = $4 AND deletion_time IS NULL`,
+				`d_ts = $1, d_uid = $2, d_tid = $3 `+
+				`WHERE user_id = $4 AND d_ts IS NULL`,
 			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), userRef)
 		if txErr != nil {
 			return txErr
 		}
 		_, txErr = core.db.Exec(
 			`INSERT INTO user_passwords `+
-				`(user_id, password, creation_time, creation_user_id, creation_terminal_id) `+
+				`(user_id, password, c_ts, c_uid, c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
 			userRef, hashedPassword,
 			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
@@ -96,7 +96,7 @@ func (core *Core) getUserHashedPassword(
 		QueryRow(
 			`SELECT password `+
 				`FROM user_passwords `+
-				`WHERE user_id = $1 AND deletion_time IS NULL`,
+				`WHERE user_id = $1 AND d_ts IS NULL`,
 			userID).
 		Scan(&hashedPassword)
 	if err != nil {

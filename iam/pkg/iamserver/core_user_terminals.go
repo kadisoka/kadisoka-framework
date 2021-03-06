@@ -8,14 +8,18 @@ import (
 )
 
 func (core *Core) DeleteUserTerminalFCMRegistrationToken(
-	authCtx *iam.Authorization,
-	userID iam.UserID, terminalID iam.TerminalID, token string,
+	callCtx iam.CallContext,
+	userID iam.UserID,
+	terminalID iam.TerminalID,
+	token string,
 ) error {
+	authCtx := callCtx.Authorization()
 	_, err := core.db.Exec(
 		"UPDATE user_terminal_fcm_registration_tokens "+
-			"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
-			"WHERE user_id = $3 AND terminal_id = $4 AND token = $5 AND deletion_time IS NULL",
-		authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), userID, terminalID, token)
+			"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+			"WHERE user_id = $4 AND terminal_id = $5 AND token = $6 AND d_ts IS NULL",
+		callCtx.RequestReceiveTime(), authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+		userID, terminalID, token)
 	return err
 }
 
@@ -25,19 +29,21 @@ func (core *Core) ListUserTerminalIDFirebaseInstanceTokens(
 	//TODO: use cache service
 
 	userTermRows, err := core.db.Query(
-		"SELECT tid.id, tid.platform_type, tft.token FROM terminals tid "+
+		`SELECT tid.id, tft.token `+
+			`FROM `+terminalTableName+` tid `+
 			"JOIN user_terminal_fcm_registration_tokens tft "+
-			"ON tft.terminal_id=tid.id AND tft.deletion_time IS NULL "+
+			"ON tft.terminal_id=tid.id AND tft.d_ts IS NULL "+
 			"WHERE tid.user_id=$1 AND tid.verification_time IS NOT NULL",
 		ownerUserID)
 	if err != nil {
 		return nil, err
 	}
 	defer userTermRows.Close()
+
 	var result []iam.TerminalIDFirebaseInstanceToken
 	for userTermRows.Next() {
 		var item iam.TerminalIDFirebaseInstanceToken
-		if err = userTermRows.Scan(&item.TerminalID, &item.PlatformType, &item.Token); err != nil {
+		if err = userTermRows.Scan(&item.TerminalID, &item.Token); err != nil {
 			return nil, err
 		}
 		result = append(result, item)
@@ -45,6 +51,7 @@ func (core *Core) ListUserTerminalIDFirebaseInstanceTokens(
 	if err = userTermRows.Err(); err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
@@ -60,9 +67,9 @@ func (core *Core) SetUserTerminalFCMRegistrationToken(
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
 			"UPDATE user_terminal_fcm_registration_tokens "+
-				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
-				"WHERE user_id = $3 AND terminal_id = $4 AND deletion_time IS NULL",
-			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+				"WHERE user_id = $4 AND terminal_id = $5 AND d_ts IS NULL",
+			callCtx.RequestReceiveTime(), authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
 			userRef.ID().PrimitiveValue(), terminalRef.ID().PrimitiveValue())
 		if err != nil {
 			return err
@@ -72,9 +79,11 @@ func (core *Core) SetUserTerminalFCMRegistrationToken(
 		}
 		_, err = tx.Exec(
 			"INSERT INTO user_terminal_fcm_registration_tokens "+
-				"(user_id, terminal_id, creation_user_id, creation_terminal_id, token) "+
+				"(user_id, terminal_id, c_uid, c_tid, token) "+
 				"VALUES ($1, $2, $3, $4, $5)",
-			userRef, terminalRef, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), token)
+			userRef, terminalRef,
+			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+			token)
 		return err
 	})
 }

@@ -16,11 +16,11 @@ func (core *Core) GetUserContactUserIDs(
 				`JOIN `+userIdentifierPhoneNumberTableName+` AS ph ON `+
 				`  ph.country_code = cp.contact_country_code `+
 				`  AND ph.national_number = cp.contact_national_number `+
-				`  AND ph.deletion_time IS NULL `+
+				`  AND ph.d_ts IS NULL `+
 				`  AND ph.verification_time IS NOT NULL `+
-				`JOIN users AS usr ON `+
+				`JOIN `+userTableName+` AS usr ON `+
 				`  usr.id = ph.user_id `+
-				`  AND usr.deletion_time IS NULL `+
+				`  AND usr.d_ts IS NULL `+
 				`WHERE `+
 				`  cp.user_id = $1 `+
 				`ORDER BY ph.user_id ASC`,

@@ -146,7 +146,7 @@ func (verifier *Verifier) StartVerification(
 	err = verifier.db.
 		QueryRow(
 			`INSERT INTO email_address_verifications `+
-				`(local_part, domain_part, code, code_expiry, attempts_remaining, creation_time, creation_user_id, creation_terminal_id) `+
+				`(local_part, domain_part, code, code_expiry, attempts_remaining, c_ts, c_uid, c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5, $6, $7, $8) `+
 				`RETURNING id`,
 			emailAddress.LocalPart(),

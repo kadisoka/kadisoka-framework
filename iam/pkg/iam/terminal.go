@@ -38,9 +38,8 @@ type TerminalInfo struct {
 }
 
 type TerminalIDFirebaseInstanceToken struct {
-	TerminalID   TerminalID
-	PlatformType string
-	Token        string
+	TerminalID TerminalID
+	Token      string
 }
 
 // JSONV1 models

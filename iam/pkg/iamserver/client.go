@@ -105,6 +105,7 @@ func newClientStaticDataProviderFromCSVFileByName(
 			}
 		}
 
+		//TODO: validate platform type with clID
 		clList[clID] = &iam.ApplicationData{
 			DisplayName:       indexexdValue(r, displayNameIdx),
 			Secret:            indexexdValue(r, secretIdx),

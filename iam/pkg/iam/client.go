@@ -58,7 +58,7 @@ func GenerateApplicationRefKey(firstParty bool, clientTyp string) ApplicationRef
 		panic(err)
 	}
 	//TODO: reserve some ranges (?)
-	instID := binary.BigEndian.Uint32(instIDBytes) & 0x00ff_ffff
+	instID := binary.BigEndian.Uint32(instIDBytes) & _ApplicationIDSignificantBitsMask
 	appID := ApplicationIDFromPrimitiveValue(int32(typeInfo | instID))
 	return NewApplicationRefKey(appID)
 }

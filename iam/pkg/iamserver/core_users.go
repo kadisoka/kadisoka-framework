@@ -14,6 +14,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
+const userTableName = "user_t"
+
 func (core *Core) GetUserBaseProfile(
 	callCtx iam.CallContext,
 	userID iam.UserRefKey,
@@ -30,11 +32,11 @@ func (core *Core) GetUserBaseProfile(
 	err := core.db.
 		QueryRow(
 			`SELECT ua.id, `+
-				`CASE WHEN ua.deletion_time IS NULL THEN false ELSE true END AS is_deleted, `+
+				`CASE WHEN ua.d_ts IS NULL THEN false ELSE true END AS is_deleted, `+
 				`udn.display_name, upiu.profile_image_url `+
-				`FROM users AS ua `+
-				`LEFT JOIN user_display_names udn ON udn.user_id = ua.id AND udn.deletion_time IS NULL `+
-				`LEFT JOIN user_profile_image_urls upiu ON upiu.user_id = ua.id AND upiu.deletion_time IS NULL `+
+				`FROM `+userTableName+` AS ua `+
+				`LEFT JOIN user_display_names udn ON udn.user_id = ua.id AND udn.d_ts IS NULL `+
+				`LEFT JOIN user_profile_image_urls upiu ON upiu.user_id = ua.id AND upiu.d_ts IS NULL `+
 				`WHERE ua.id = $1`,
 			userID).
 		Scan(&user.RefKey, &user.IsDeleted, &displayName, &profileImageURL)
@@ -140,8 +142,8 @@ func (core *Core) getUserAccountState(
 ) (idRegistered, accountDeleted bool, err error) {
 	err = core.db.
 		QueryRow(
-			`SELECT CASE WHEN deletion_time IS NULL THEN false ELSE true END `+
-				`FROM users WHERE id = $1`,
+			`SELECT CASE WHEN d_ts IS NULL THEN false ELSE true END `+
+				`FROM `+userTableName+` WHERE id = $1`,
 			id).
 		Scan(&accountDeleted)
 	if err == sql.ErrNoRows {
@@ -169,10 +171,13 @@ func (core *Core) DeleteUserAccount(
 
 	err = doTx(core.db, func(dbTx *sqlx.Tx) error {
 		xres, txErr := dbTx.Exec(
-			"UPDATE users "+
-				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2, deletion_notes = $3 "+
-				"WHERE id = $1 AND deletion_time IS NULL",
-			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), input.DeletionNotes)
+			`UPDATE `+userTableName+` `+
+				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
+				"WHERE id = $2 AND d_ts IS NULL",
+			callCtx.RequestReceiveTime(),
+			authCtx.UserID().PrimitiveValue(),
+			authCtx.TerminalID().PrimitiveValue(),
+			input.DeletionNotes)
 		if txErr != nil {
 			return txErr
 		}
@@ -185,17 +190,21 @@ func (core *Core) DeleteUserAccount(
 		if txErr == nil {
 			_, txErr = dbTx.Exec(
 				`UPDATE `+userIdentifierPhoneNumberTableName+` `+
-					"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
-					"WHERE user_id = $1 AND deletion_time IS NULL",
-				authCtx.UserID().PrimitiveValue())
+					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+					"WHERE user_id = $2 AND d_ts IS NULL",
+				callCtx.RequestReceiveTime(),
+				authCtx.UserID().PrimitiveValue(),
+				authCtx.TerminalID().PrimitiveValue())
 		}
 
 		if txErr == nil {
 			_, txErr = dbTx.Exec(
 				"UPDATE user_profile_image_urls "+
-					"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
-					"WHERE user_id = $1 AND deletion_time IS NULL",
-				authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
+					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+					"WHERE user_id = $2 AND d_ts IS NULL",
+				callCtx.RequestReceiveTime(),
+				authCtx.UserID().PrimitiveValue(),
+				authCtx.TerminalID().PrimitiveValue())
 		}
 
 		return txErr
@@ -233,16 +242,18 @@ func (core *Core) SetUserProfileImageURL(
 	return doTx(core.db, func(dbTx *sqlx.Tx) error {
 		_, txErr := dbTx.Exec(
 			"UPDATE user_profile_image_urls "+
-				"SET deletion_time = now(), deletion_user_id = $1, deletion_terminal_id = $2 "+
-				"WHERE user_id = $1 AND deletion_time IS NULL",
-			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
+				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+				"WHERE user_id = $2 AND d_ts IS NULL",
+			callCtx.RequestReceiveTime(),
+			authCtx.UserID().PrimitiveValue(),
+			authCtx.TerminalID().PrimitiveValue())
 		if txErr != nil {
 			return errors.Wrap("mark current profile image URL as deleted", txErr)
 		}
 		if profileImageURL != "" {
 			_, txErr = dbTx.Exec(
 				"INSERT INTO user_profile_image_urls "+
-					"(user_id, profile_image_url, creation_user_id, creation_terminal_id) VALUES "+
+					"(user_id, profile_image_url, c_uid, c_tid) VALUES "+
 					"($1, $2, $3, $4)",
 				authCtx.UserID().PrimitiveValue(), profileImageURL,
 				authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
@@ -353,8 +364,8 @@ func (core *Core) CreateUserAccount(
 	//TODO: if id conflict, generate another id and retry
 	_, err = core.db.
 		Exec(
-			`INSERT INTO users (`+
-				`id, creation_time, creation_user_id, creation_terminal_id`+
+			`INSERT INTO `+userTableName+` (`+
+				`id, c_ts, c_uid, c_tid`+
 				`) VALUES (`+
 				`$1, $2, $3, $4`+
 				`)`,
@@ -402,6 +413,6 @@ func (core *Core) generateUserIDImpl() (iam.UserID, error) {
 		panic(err)
 	}
 	copy(idBytes[4:], hashPart)
-	idUint := binary.BigEndian.Uint64(idBytes) & 0x7fffffffffffffff // ensure sign bit is cleared
+	idUint := binary.BigEndian.Uint64(idBytes) & iam.UserIDSignificantBitsMask
 	return iam.UserID(idUint), nil
 }

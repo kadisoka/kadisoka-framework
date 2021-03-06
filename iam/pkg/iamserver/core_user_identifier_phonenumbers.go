@@ -33,7 +33,7 @@ func (core *Core) ListUsersByPhoneNumber(
 				`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
 				`WHERE (country_code, national_number) ` +
 				`IN (VALUES ` + phoneNumberSliceToSQLSetString(phoneNumbers) + `) ` +
-				`AND deletion_time IS NULL AND verification_time IS NOT NULL ` +
+				`AND d_ts IS NULL AND verification_time IS NOT NULL ` +
 				`LIMIT ` + strconv.Itoa(len(phoneNumbers)))
 	if err != nil {
 		panic(err)
@@ -69,7 +69,7 @@ func (core *Core) ListUsersByPhoneNumber(
 				_, err = core.db.Exec(
 					"INSERT INTO user_contact_phone_numbers ("+
 						"user_id, contact_country_code, contact_national_number, "+
-						"creation_user_id, creation_terminal_id"+
+						"c_uid, c_tid"+
 						") VALUES ($1, $2, $3, $4, $5) "+
 						"ON CONFLICT ON CONSTRAINT user_contact_phone_numbers_pkey DO NOTHING",
 					authCtx.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
@@ -99,7 +99,7 @@ func (core *Core) GetUserIdentifierPhoneNumber(
 			`SELECT country_code, national_number `+
 				`FROM `+userIdentifierPhoneNumberTableName+` `+
 				`WHERE user_id=$1 `+
-				`AND deletion_time IS NULL AND verification_time IS NOT NULL`,
+				`AND d_ts IS NULL AND verification_time IS NOT NULL`,
 			userRef.ID().PrimitiveValue()).
 		Scan(&countryCode, &nationalNumber)
 	if err != nil {
@@ -120,7 +120,7 @@ func (core *Core) getUserIDByIdentifierPhoneNumber(
 		`SELECT user_id ` +
 			`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
-			`AND deletion_time IS NULL ` +
+			`AND d_ts IS NULL ` +
 			`AND verification_time IS NOT NULL`
 	err = core.db.
 		QueryRow(queryStr,
@@ -146,8 +146,8 @@ func (core *Core) getUserIDByIdentifierPhoneNumberAllowUnverified(
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
 			`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
-			`AND deletion_time IS NULL ` +
-			`ORDER BY creation_time DESC LIMIT 1`
+			`AND d_ts IS NULL ` +
+			`ORDER BY c_ts DESC LIMIT 1`
 	var ownerUserID iam.UserID
 	err = core.db.
 		QueryRow(queryStr,
@@ -229,11 +229,11 @@ func (core *Core) setUserIdentifierPhoneNumber(
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userIdentifierPhoneNumberTableName+` (`+
 			`user_id, country_code, national_number, raw_input, `+
-			`creation_time, creation_user_id, creation_terminal_id `+
+			`c_ts, c_uid, c_tid `+
 			`) VALUES (`+
 			`$1, $2, $3, $4, $5, $6, $7`+
 			`) `+
-			`ON CONFLICT (user_id, country_code, national_number) WHERE deletion_time IS NULL `+
+			`ON CONFLICT (user_id, country_code, national_number) WHERE d_ts IS NULL `+
 			`DO NOTHING`,
 		userRef.ID().PrimitiveValue(),
 		phoneNumber.CountryCode(),
@@ -329,7 +329,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 			`$1, $2`+
 			`) WHERE user_id = $3 `+
 			`AND country_code = $4 AND national_number = $5 `+
-			`AND deletion_time IS NULL AND verification_time IS NULL`,
+			`AND d_ts IS NULL AND verification_time IS NULL`,
 		verificationTime,
 		verificationID,
 		userID,

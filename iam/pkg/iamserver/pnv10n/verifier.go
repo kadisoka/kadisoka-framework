@@ -157,7 +157,7 @@ func (verifier *Verifier) StartVerification(
 		QueryRow(
 			"INSERT INTO phone_number_verifications ("+
 				"country_code, national_number, "+
-				"creation_time, creation_user_id, creation_terminal_id, "+
+				"c_ts, c_uid, c_tid, "+
 				"code, code_expiry, attempts_remaining"+
 				") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "+
 				"RETURNING id",
@@ -257,7 +257,7 @@ func (verifier *Verifier) GetVerificationCodeByPhoneNumber(
 			"FROM phone_number_verifications "+
 			"WHERE country_code = $1 AND national_number = $2 "+
 			"AND confirmation_time IS NULL "+
-			"ORDER BY creation_time DESC LIMIT 1",
+			"ORDER BY c_ts DESC LIMIT 1",
 		phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&code)
 	if err == sql.ErrNoRows {

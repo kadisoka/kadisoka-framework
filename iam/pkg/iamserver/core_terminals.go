@@ -20,6 +20,8 @@ var (
 	errTerminalVerificationConfirmationReplayed = errors.EntMsg("terminal verification confirmation", "replayed")
 )
 
+const terminalTableName = "terminal_t"
+
 func (core *Core) AuthenticateTerminal(
 	terminalRef iam.TerminalRefKey,
 	terminalSecret string,
@@ -29,7 +31,7 @@ func (core *Core) AuthenticateTerminal(
 	err = core.db.
 		QueryRow(
 			`SELECT user_id, secret `+
-				`FROM terminals `+
+				`FROM `+terminalTableName+` `+
 				`WHERE id=$1`,
 			terminalRef.ID().PrimitiveValue()).
 		Scan(&ownerUserID, &storedSecret)
@@ -351,11 +353,11 @@ func (core *Core) getTerminal(id iam.TerminalID) (*terminalDBModel, error) {
 	var ut terminalDBModel
 	err = core.db.QueryRowx(
 		`SELECT `+
-			`id, client_id, user_id, secret, `+
-			`creation_time, creation_user_id, creation_terminal_id, creation_ip_address, `+
-			`display_name, accept_language, platform_type, `+
+			`id, application_id, user_id, secret, `+
+			`c_ts, c_uid, c_tid, c_origin_address, `+
+			`display_name, accept_language, `+
 			`verification_type, verification_id, verification_time `+
-			`FROM terminals `+
+			`FROM `+terminalTableName+` `+
 			`WHERE id = $1`,
 		id).StructScan(&ut)
 	if err != nil {
@@ -385,7 +387,7 @@ func (core *Core) GetTerminalInfo(
 	var acceptLanguage string
 	err := core.db.QueryRow(
 		`SELECT user_id, display_name, accept_language `+
-			`FROM terminals `+
+			`FROM `+terminalTableName+` `+
 			`WHERE id = $1`,
 		terminalID).
 		Scan(&ownerUserID, &displayName, &acceptLanguage)
@@ -454,14 +456,14 @@ func (core *Core) RegisterTerminal(
 	//TODO: if id conflict, generate another id and retry
 	termID, err := core.generateTerminalID()
 	_, err = core.db.Exec(
-		`INSERT INTO terminals (`+
-			`id, client_id, user_id, secret, `+
-			`creation_time, creation_user_id, creation_terminal_id, `+
-			`creation_ip_address, creation_user_agent, `+
-			`display_name, accept_language, platform_type, `+
+		`INSERT INTO `+terminalTableName+` (`+
+			`id, application_id, user_id, secret, `+
+			`c_ts, c_uid, c_tid, `+
+			`c_origin_address, c_origin_env, `+
+			`display_name, accept_language, `+
 			`verification_type, verification_id, verification_time `+
 			`) VALUES (`+
-			`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15`+
+			`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14`+
 			`)`,
 		termID,
 		input.ApplicationRef,
@@ -474,7 +476,6 @@ func (core *Core) RegisterTerminal(
 		callCtx.RemoteEnvironmentString(),
 		input.DisplayName,
 		input.AcceptLanguage, //TODO: get from context
-		clientInfo.Data.PlatformType,
 		input.VerificationType,
 		input.VerificationID,
 		input.VerificationTime)
@@ -501,8 +502,9 @@ func (core *Core) setUserTerminalVerified(
 	termSecret := core.generateTerminalSecret() //TODO(exa): JWT (or something similar)
 	xres, err := core.db.
 		Exec(
-			"UPDATE terminals SET (secret, verification_time) = ($1, $2) "+
-				"WHERE id = $3 AND verification_time IS NULL",
+			`UPDATE `+terminalTableName+` `+
+				`SET (secret, verification_time) = ($1, $2) `+
+				`WHERE id = $3 AND verification_time IS NULL`,
 			termSecret, callCtx.RequestReceiveTime(), terminalID)
 	if err != nil {
 		return "", err
@@ -518,7 +520,8 @@ func (core *Core) setUserTerminalVerified(
 		}
 		err = core.db.
 			QueryRow(
-				`SELECT secret FROM terminals WHERE id = $1`,
+				`SELECT secret FROM `+terminalTableName+` `+
+					`WHERE id = $1`,
 				terminalID).
 			Scan(&termSecret)
 		if err != nil {
@@ -535,7 +538,7 @@ func (core *Core) generateTerminalID() (iam.TerminalID, error) {
 	if err != nil {
 		panic(err)
 	}
-	h := binary.BigEndian.Uint64(b) & 0x7fff_ffff_ffff_ffff // ensure sign bit is cleared
+	h := binary.BigEndian.Uint64(b) & iam.TerminalIDSignificantBitsMask
 	return iam.TerminalIDFromPrimitiveValue(int64(h)), nil
 }
 
@@ -554,7 +557,7 @@ func (core *Core) getTerminalAcceptLanguages(
 	var acceptLanguage string
 	err := core.db.QueryRow(
 		`SELECT accept_language `+
-			`FROM terminals `+
+			`FROM `+terminalTableName+` `+
 			`WHERE id = $1`,
 		id).Scan(&acceptLanguage)
 	if err != nil {

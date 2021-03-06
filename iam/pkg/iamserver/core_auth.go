@@ -12,6 +12,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
+const sessionTableName = "session_t"
+
 func (core *Core) GenerateAccessTokenJWT(
 	callCtx iam.CallContext,
 	terminalRef iam.TerminalRefKey,
@@ -35,7 +37,7 @@ func (core *Core) GenerateAccessTokenJWT(
 	}
 
 	sessionRef, issueTime, err := core.
-		generateAuthorizationID(callCtx, terminalRef, userRef)
+		issueSession(callCtx, terminalRef, userRef)
 	if err != nil {
 		return "", err
 	}
@@ -91,7 +93,7 @@ func (core *Core) GenerateRefreshTokenJWT(
 	return
 }
 
-func (core *Core) generateAuthorizationID(
+func (core *Core) issueSession(
 	callCtx iam.CallContext,
 	terminalRef iam.TerminalRefKey,
 	userRef iam.UserRefKey,
@@ -100,10 +102,11 @@ func (core *Core) generateAuthorizationID(
 
 	const attemptNumMax = 3
 	timeZero := time.Time{}
-	tNow := timeZero
+	sessionStartTime := timeZero
 	var sessionID iam.SessionID
 
-	//TODO: make this more random.
+	//TODO: make this more random. using timestamp might cause some security
+	// and/or privacy issue.
 	// Note:
 	// - 0xffffffffffffff00 - timestamp
 	// - 0x00000000000000ff - random
@@ -113,24 +116,25 @@ func (core *Core) generateAuthorizationID(
 		if err != nil {
 			return iam.SessionIDZero, errors.Wrap("generation", err)
 		}
-		return iam.SessionID((ts << 8) | int64(idBytes[0])), nil
+		bits := ((ts << 8) | int64(idBytes[0])) & int64(iam.SessionIDSignificantBitsMask)
+		return iam.SessionID(bits), nil
 	}
 
 	for attemptNum := 0; ; attemptNum++ {
-		tNow = time.Now().UTC()
-		sessionID, err = genSessionID(tNow.Unix())
+		sessionStartTime = time.Now().UTC()
+		sessionID, err = genSessionID(sessionStartTime.Unix())
 		if err != nil {
 			return iam.SessionRefKeyZero(), timeZero, err
 		}
 		_, err = core.db.
 			Exec(
-				`INSERT INTO terminal_authorizations (`+
-					`terminal_id, authorization_id, creation_time, creation_user_id, creation_terminal_id`+
+				`INSERT INTO `+sessionTableName+` (`+
+					`terminal_id, id, c_ts, c_uid, c_tid`+
 					`) VALUES (`+
 					`$1, $2, $3, $4, $5`+
 					`)`,
-				terminalRef.ID().PrimitiveValue(), sessionID.PrimitiveValue(), tNow,
-				authCtx.UserIDPtr(), authCtx.TerminalIDPtr())
+				terminalRef.ID().PrimitiveValue(), sessionID.PrimitiveValue(),
+				sessionStartTime, authCtx.UserIDPtr(), authCtx.TerminalIDPtr())
 		if err == nil {
 			break
 		}
@@ -138,7 +142,7 @@ func (core *Core) generateAuthorizationID(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == "terminal_authorizations_pkey" {
+			pqErr.Constraint == sessionTableName+"_pkey" {
 			if attemptNum >= attemptNumMax {
 				return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert max attempts", err)
 			}
@@ -147,5 +151,5 @@ func (core *Core) generateAuthorizationID(
 		return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert", err)
 	}
 
-	return iam.NewSessionRefKey(terminalRef, sessionID), tNow, nil
+	return iam.NewSessionRefKey(terminalRef, sessionID), sessionStartTime, nil
 }

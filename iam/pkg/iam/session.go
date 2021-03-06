@@ -46,9 +46,9 @@ var _ azcore.AdjunctEntityID = SessionIDZero
 var _ azer.BinFieldUnmarshalable = &_SessionIDZeroVar
 var _ azcore.SessionID = SessionIDZero
 
-// _SessionIDSignificantBitsMask is used to
+// SessionIDSignificantBitsMask is used to
 // extract significant bits from an instance of SessionID.
-const _SessionIDSignificantBitsMask uint32 = 0b11111111_11111111_11111111
+const SessionIDSignificantBitsMask uint32 = 0b11111111_11111111_11111111
 
 // SessionIDZero is the zero value for SessionID.
 const SessionIDZero = SessionID(0)
@@ -103,7 +103,7 @@ func (id SessionID) IsZero() bool {
 // It doesn't tell whether it refers to a valid instance of Session.
 func (id SessionID) IsValid() bool {
 	return int32(id) > 0 &&
-		(uint32(id)&_SessionIDSignificantBitsMask) != 0
+		(uint32(id)&SessionIDSignificantBitsMask) != 0
 }
 
 // IsNotValid returns the negation of value returned by IsValid().

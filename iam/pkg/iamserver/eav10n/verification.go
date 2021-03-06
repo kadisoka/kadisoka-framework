@@ -29,9 +29,9 @@ type verificationDBModel struct {
 	Code                   string          `db:"code"`
 	CodeExpiry             *time.Time      `db:"code_expiry"`
 	AttemptsRemaining      int16           `db:"attempts_remaining"`
-	CreationTime           time.Time       `db:"creation_time"`
-	CreationUserID         *iam.UserID     `db:"creation_user_id"`
-	CreationTerminalID     *iam.TerminalID `db:"creation_terminal_id"`
+	CreationTime           time.Time       `db:"c_ts"`
+	CreationUserID         *iam.UserID     `db:"c_uid"`
+	CreationTerminalID     *iam.TerminalID `db:"c_tid"`
 	ConfirmationTime       *time.Time      `db:"confirmation_time"`
 	ConfirmationUserID     *iam.UserID     `db:"confirmation_user_id"`
 	ConfirmationTerminalID *iam.TerminalID `db:"confirmation_terminal_id"`

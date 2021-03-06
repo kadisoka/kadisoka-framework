@@ -23,9 +23,9 @@ var _ azcore.AdjunctEntityID = TerminalIDZero
 var _ azer.BinFieldUnmarshalable = &_TerminalIDZeroVar
 var _ azcore.TerminalID = TerminalIDZero
 
-// _TerminalIDSignificantBitsMask is used to
+// TerminalIDSignificantBitsMask is used to
 // extract significant bits from an instance of TerminalID.
-const _TerminalIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
+const TerminalIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
 
 // TerminalIDZero is the zero value for TerminalID.
 const TerminalIDZero = TerminalID(0)
@@ -80,7 +80,7 @@ func (id TerminalID) IsZero() bool {
 // It doesn't tell whether it refers to a valid instance of Terminal.
 func (id TerminalID) IsValid() bool {
 	return int64(id) > 0 &&
-		(uint64(id)&_TerminalIDSignificantBitsMask) != 0
+		(uint64(id)&TerminalIDSignificantBitsMask) != 0
 }
 
 // IsNotValid returns the negation of value returned by IsValid().
