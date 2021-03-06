@@ -7,7 +7,7 @@ package realm
 import (
 	"github.com/rez-go/stev"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
 const EnvPrefixDefault = "REALM_"

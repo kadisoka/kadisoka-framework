@@ -1,7 +1,7 @@
 package iam
 
 import (
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
 type Error struct {

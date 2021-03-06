@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"

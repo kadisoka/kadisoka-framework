@@ -7,8 +7,8 @@ github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tN
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
-github.com/alloyzeus/go-azcore v0.0.0-20210303210139-b33258f41739 h1:QQO0upvi9w1xV84ldK1fzSdz6klAf1vPufXKzZq9L7o=
-github.com/alloyzeus/go-azcore v0.0.0-20210303210139-b33258f41739/go.mod h1:ANTZ1QDF1lx3ARt0R/v2rhq6FlWK5TYtNnuU+0PuRsM=
+github.com/alloyzeus/go-azfl v0.0.0-20210306140744-dcc1bd4a25a3 h1:W4AqcaKlQGFoaf217uSWLhB/+8zKkfq26CKQum48jzY=
+github.com/alloyzeus/go-azfl v0.0.0-20210306140744-dcc1bd4a25a3/go.mod h1:ToBUfNimypK9SnpgrWbPzBImVlqlVGS5uCm7k2WGGsQ=
 github.com/anthonynsimon/bild v0.13.0 h1:mN3tMaNds1wBWi1BrJq0ipDBhpkooYfu7ZFSMhXt1C8=
 github.com/anthonynsimon/bild v0.13.0/go.mod h1:tpzzp0aYkAsMi1zmfhimaDyX1xjn2OUc1AJZK/TF0AE=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=

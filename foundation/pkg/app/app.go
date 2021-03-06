@@ -5,7 +5,7 @@ package app
 import (
 	"sync"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/rez-go/stev"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"

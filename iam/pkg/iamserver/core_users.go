@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/jmoiron/sqlx"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 	"golang.org/x/crypto/blake2b"

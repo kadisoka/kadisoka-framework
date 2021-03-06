@@ -11,7 +11,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 

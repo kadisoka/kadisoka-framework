@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"strings"
 
-	azcore "github.com/alloyzeus/go-azcore/azcore"
-	azer "github.com/alloyzeus/go-azcore/azcore/azer"
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	azfl "github.com/alloyzeus/go-azfl/azfl"
+	azer "github.com/alloyzeus/go-azfl/azfl/azer"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
 var (
@@ -22,10 +22,10 @@ type UserID int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azcore.EID = UserIDZero
-var _ azcore.EntityID = UserIDZero
+var _ azfl.EID = UserIDZero
+var _ azfl.EntityID = UserIDZero
 var _ azer.BinFieldUnmarshalable = &_UserIDZeroVar
-var _ azcore.UserID = UserIDZero
+var _ azfl.UserID = UserIDZero
 
 // _UserIDSignificantBitsMask is used to
 // extract significant bits from an instance of UserID.
@@ -65,15 +65,15 @@ func (id UserID) PrimitiveValue() int64 {
 }
 
 // AZEID is required for conformance
-// with azcore.EID.
+// with azfl.EID.
 func (UserID) AZEID() {}
 
 // AZEntityID is required for conformance
-// with azcore.EntityID.
+// with azfl.EntityID.
 func (UserID) AZEntityID() {}
 
 // AZUserID is required for conformance
-// with azcore.UserID.
+// with azfl.UserID.
 func (UserID) AZUserID() {}
 
 // IsZero is required as UserID is a value-object.
@@ -137,7 +137,7 @@ func (id UserID) EqualsUserID(
 }
 
 // AZERBinField is required for conformance
-// with azcore.EID.
+// with azfl.EID.
 func (id UserID) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(id))
@@ -203,9 +203,9 @@ func NewUserRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azcore.RefKey = _UserRefKeyZero
-var _ azcore.EntityRefKey = _UserRefKeyZero
-var _ azcore.UserRefKey = _UserRefKeyZero
+var _ azfl.RefKey = _UserRefKeyZero
+var _ azfl.EntityRefKey = _UserRefKeyZero
+var _ azfl.UserRefKey = _UserRefKeyZero
 
 const _UserRefKeyZero = UserRefKey(UserIDZero)
 
@@ -217,11 +217,11 @@ func UserRefKeyZero() UserRefKey {
 	return _UserRefKeyZero
 }
 
-// AZRefKey is required for conformance with azcore.RefKey.
+// AZRefKey is required for conformance with azfl.RefKey.
 func (UserRefKey) AZRefKey() {}
 
 // AZEntityRefKey is required for conformance
-// with azcore.EntityRefKey.
+// with azfl.EntityRefKey.
 func (UserRefKey) AZEntityRefKey() {}
 
 // ID returns the scoped identifier of the entity.
@@ -238,14 +238,14 @@ func (refKey UserRefKey) IDPtr() *UserID {
 	return &i
 }
 
-// ID is required for conformance with azcore.RefKey.
-func (refKey UserRefKey) EID() azcore.EID {
+// ID is required for conformance with azfl.RefKey.
+func (refKey UserRefKey) EID() azfl.EID {
 	return UserID(refKey)
 }
 
 // UserID is required for conformance
-// with azcore.UserRefKey.
-func (refKey UserRefKey) UserID() azcore.UserID {
+// with azfl.UserRefKey.
+func (refKey UserRefKey) UserID() azfl.UserID {
 	return UserID(refKey)
 }
 
@@ -265,7 +265,7 @@ func (refKey UserRefKey) IsNotValid() bool {
 	return !refKey.IsValid()
 }
 
-// Equals is required for conformance with azcore.EntityRefKey.
+// Equals is required for conformance with azfl.EntityRefKey.
 func (refKey UserRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(UserRefKey); ok {
 		return x == refKey
@@ -276,7 +276,7 @@ func (refKey UserRefKey) Equals(other interface{}) bool {
 	return false
 }
 
-// Equal is required for conformance with azcore.EntityRefKey.
+// Equal is required for conformance with azfl.EntityRefKey.
 func (refKey UserRefKey) Equal(other interface{}) bool {
 	return refKey.Equals(other)
 }
@@ -317,7 +317,7 @@ func UserRefKeyFromAZERBin(b []byte) (refKey UserRefKey, readLen int, err error)
 }
 
 // UnmarshalAZERBin is required for conformance
-// with azcore.BinFieldUnmarshalable.
+// with azfl.BinFieldUnmarshalable.
 func (refKey *UserRefKey) UnmarshalAZERBin(b []byte) (readLen int, err error) {
 	i, readLen, err := UserRefKeyFromAZERBin(b)
 	if err == nil {
@@ -341,7 +341,7 @@ func UserRefKeyFromAZERBinField(
 }
 
 // UnmarshalAZERBinField is required for conformance
-// with azcore.BinFieldUnmarshalable.
+// with azfl.BinFieldUnmarshalable.
 func (refKey *UserRefKey) UnmarshalAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (readLen int, err error) {
@@ -355,7 +355,7 @@ func (refKey *UserRefKey) UnmarshalAZERBinField(
 const _UserRefKeyAZERTextPrefix = "KUs0"
 
 // AZERText is required for conformance
-// with azcore.RefKey.
+// with azfl.RefKey.
 func (refKey UserRefKey) AZERText() string {
 	if !refKey.IsValid() {
 		return ""

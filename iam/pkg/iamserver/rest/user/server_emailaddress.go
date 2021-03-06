@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 

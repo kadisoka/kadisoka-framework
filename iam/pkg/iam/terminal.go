@@ -3,7 +3,7 @@ package iam
 import (
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"golang.org/x/text/language"
 )
 

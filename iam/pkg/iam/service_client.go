@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	grpcmd "google.golang.org/grpc/metadata"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"

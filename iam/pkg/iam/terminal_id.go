@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"strings"
 
-	azcore "github.com/alloyzeus/go-azcore/azcore"
-	azer "github.com/alloyzeus/go-azcore/azcore/azer"
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	azfl "github.com/alloyzeus/go-azfl/azfl"
+	azer "github.com/alloyzeus/go-azfl/azfl/azer"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
 //region ID
@@ -18,10 +18,10 @@ type TerminalID int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azcore.EID = TerminalIDZero
-var _ azcore.AdjunctEntityID = TerminalIDZero
+var _ azfl.EID = TerminalIDZero
+var _ azfl.AdjunctEntityID = TerminalIDZero
 var _ azer.BinFieldUnmarshalable = &_TerminalIDZeroVar
-var _ azcore.TerminalID = TerminalIDZero
+var _ azfl.TerminalID = TerminalIDZero
 
 // TerminalIDSignificantBitsMask is used to
 // extract significant bits from an instance of TerminalID.
@@ -60,15 +60,15 @@ func (id TerminalID) PrimitiveValue() int64 {
 }
 
 // AZEID is required
-// for conformance with azcore.EID.
+// for conformance with azfl.EID.
 func (TerminalID) AZEID() {}
 
 // AZAdjunctEntityID is required
-// for conformance with azcore.AdjunctEntityID.
+// for conformance with azfl.AdjunctEntityID.
 func (TerminalID) AZAdjunctEntityID() {}
 
 // AZTerminalID is required for conformance
-// with azcore.TerminalID.
+// with azfl.TerminalID.
 func (TerminalID) AZTerminalID() {}
 
 // IsZero is required as TerminalID is a value-object.
@@ -89,7 +89,7 @@ func (id TerminalID) IsNotValid() bool {
 }
 
 // AZERBinField is required for conformance
-// with azcore.EID.
+// with azfl.EID.
 func (id TerminalID) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(id))
@@ -167,9 +167,9 @@ func NewTerminalRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azcore.RefKey = _TerminalRefKeyZero
-var _ azcore.AdjunctEntityRefKey = _TerminalRefKeyZero
-var _ azcore.TerminalRefKey = _TerminalRefKeyZero
+var _ azfl.RefKey = _TerminalRefKeyZero
+var _ azfl.AdjunctEntityRefKey = _TerminalRefKeyZero
+var _ azfl.TerminalRefKey = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
 	application: ApplicationRefKeyZero(),
@@ -183,11 +183,11 @@ func TerminalRefKeyZero() TerminalRefKey {
 	return _TerminalRefKeyZero
 }
 
-// AZRefKey is required by azcore.RefKey interface.
+// AZRefKey is required by azfl.RefKey interface.
 func (TerminalRefKey) AZRefKey() {}
 
 // AZAdjunctEntityRefKey is required
-// by azcore.AdjunctEntityRefKey interface.
+// by azfl.AdjunctEntityRefKey interface.
 func (TerminalRefKey) AZAdjunctEntityRefKey() {}
 
 // ID returns the scoped identifier of the entity.
@@ -205,14 +205,14 @@ func (refKey TerminalRefKey) IDPtr() *TerminalID {
 	return &i
 }
 
-// ID is required for conformance with azcore.RefKey.
-func (refKey TerminalRefKey) EID() azcore.EID {
+// ID is required for conformance with azfl.RefKey.
+func (refKey TerminalRefKey) EID() azfl.EID {
 	return refKey.id
 }
 
 // TerminalID is required for conformance
-// with azcore.TerminalRefKey.
-func (refKey TerminalRefKey) TerminalID() azcore.TerminalID {
+// with azfl.TerminalRefKey.
+func (refKey TerminalRefKey) TerminalID() azfl.TerminalID {
 	return refKey.id
 }
 
@@ -236,7 +236,7 @@ func (refKey TerminalRefKey) IsNotValid() bool {
 	return !refKey.IsValid()
 }
 
-// Equals is required for conformance with azcore.AdjunctEntityRefKey.
+// Equals is required for conformance with azfl.AdjunctEntityRefKey.
 func (refKey TerminalRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(TerminalRefKey); ok {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
@@ -251,7 +251,7 @@ func (refKey TerminalRefKey) Equals(other interface{}) bool {
 	return false
 }
 
-// Equal is required for conformance with azcore.AdjunctEntityRefKey.
+// Equal is required for conformance with azfl.AdjunctEntityRefKey.
 func (refKey TerminalRefKey) Equal(other interface{}) bool {
 	return refKey.Equals(other)
 }
@@ -267,7 +267,7 @@ func (refKey TerminalRefKey) EqualsTerminalRefKey(
 }
 
 // AZERBin is required for conformance
-// with azcore.RefKey.
+// with azfl.RefKey.
 func (refKey TerminalRefKey) AZERBin() []byte {
 	data, typ := refKey.AZERBinField()
 	out := []byte{typ.Byte()}
@@ -294,7 +294,7 @@ func TerminalRefKeyFromAZERBin(
 }
 
 // AZERBinField is required for conformance
-// with azcore.RefKey.
+// with azfl.RefKey.
 func (refKey TerminalRefKey) AZERBinField() ([]byte, azer.BinDataType) {
 	var typesBytes []byte
 	var dataBytes []byte
@@ -390,7 +390,7 @@ func TerminalRefKeyFromAZERBinField(
 }
 
 // UnmarshalAZERBinField is required for conformance
-// with azcore.BinFieldUnmarshalable.
+// with azfl.BinFieldUnmarshalable.
 func (refKey *TerminalRefKey) UnmarshalAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (readLen int, err error) {
@@ -404,7 +404,7 @@ func (refKey *TerminalRefKey) UnmarshalAZERBinField(
 const _TerminalRefKeyAZERTextPrefix = "KTx0"
 
 // AZERText is required for conformance
-// with azcore.RefKey.
+// with azfl.RefKey.
 func (refKey TerminalRefKey) AZERText() string {
 	if !refKey.IsValid() {
 		return ""

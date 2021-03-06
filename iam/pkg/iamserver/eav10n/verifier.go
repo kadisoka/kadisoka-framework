@@ -10,7 +10,7 @@ import (
 	texttpl "text/template"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	awscreds "github.com/aws/aws-sdk-go/aws/credentials"

@@ -4,16 +4,16 @@ import (
 	"encoding/binary"
 	"strings"
 
-	azcore "github.com/alloyzeus/go-azcore/azcore"
-	azer "github.com/alloyzeus/go-azcore/azcore/azer"
-	errors "github.com/alloyzeus/go-azcore/azcore/errors"
+	azfl "github.com/alloyzeus/go-azfl/azfl"
+	azer "github.com/alloyzeus/go-azfl/azfl/azer"
+	errors "github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
 // This is a compile-time assertion to ensure that this generated file
-// is compatible with the azcore package it is being compiled against.
+// is compatible with the azfl package it is being compiled against.
 // A compilation error at this line likely means your copy of the
-// azcore package needs to be updated.
-var _ = azcore.AZCorePackageIsVersion1
+// azfl package needs to be updated.
+var _ = azfl.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azer.BinDataTypeUnspecified
@@ -30,8 +30,8 @@ type ApplicationAccessKeyID int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azcore.EID = ApplicationAccessKeyIDZero
-var _ azcore.AdjunctEntityID = ApplicationAccessKeyIDZero
+var _ azfl.EID = ApplicationAccessKeyIDZero
+var _ azfl.AdjunctEntityID = ApplicationAccessKeyIDZero
 var _ azer.BinFieldUnmarshalable = &_ApplicationAccessKeyIDZeroVar
 
 // _ApplicationAccessKeyIDSignificantBitsMask is used to
@@ -71,11 +71,11 @@ func (id ApplicationAccessKeyID) PrimitiveValue() int64 {
 }
 
 // AZEID is required
-// for conformance with azcore.EID.
+// for conformance with azfl.EID.
 func (ApplicationAccessKeyID) AZEID() {}
 
 // AZAdjunctEntityID is required
-// for conformance with azcore.AdjunctEntityID.
+// for conformance with azfl.AdjunctEntityID.
 func (ApplicationAccessKeyID) AZAdjunctEntityID() {}
 
 // IsZero is required as ApplicationAccessKeyID is a value-object.
@@ -91,7 +91,7 @@ func (id ApplicationAccessKeyID) IsValid() bool {
 }
 
 // AZERBinField is required for conformance
-// with azcore.EID.
+// with azfl.EID.
 func (id ApplicationAccessKeyID) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(id))
@@ -166,8 +166,8 @@ func NewApplicationAccessKeyRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azcore.RefKey = _ApplicationAccessKeyRefKeyZero
-var _ azcore.AdjunctEntityRefKey = _ApplicationAccessKeyRefKeyZero
+var _ azfl.RefKey = _ApplicationAccessKeyRefKeyZero
+var _ azfl.AdjunctEntityRefKey = _ApplicationAccessKeyRefKeyZero
 
 var _ApplicationAccessKeyRefKeyZero = ApplicationAccessKeyRefKey{
 	application: ApplicationRefKeyZero(),
@@ -180,17 +180,17 @@ func ApplicationAccessKeyRefKeyZero() ApplicationAccessKeyRefKey {
 	return _ApplicationAccessKeyRefKeyZero
 }
 
-// AZRefKey is required by azcore.RefKey interface.
+// AZRefKey is required by azfl.RefKey interface.
 func (ApplicationAccessKeyRefKey) AZRefKey() {}
 
 // AZAdjunctEntityRefKey is required
-// by azcore.AdjunctEntityRefKey interface.
+// by azfl.AdjunctEntityRefKey interface.
 func (ApplicationAccessKeyRefKey) AZAdjunctEntityRefKey() {}
 
 func (refKey ApplicationAccessKeyRefKey) ID() ApplicationAccessKeyID { return refKey.id }
 
-// ID is required for conformance with azcore.RefKey.
-func (refKey ApplicationAccessKeyRefKey) EID() azcore.EID {
+// ID is required for conformance with azfl.RefKey.
+func (refKey ApplicationAccessKeyRefKey) EID() azfl.EID {
 	return refKey.id
 }
 
@@ -207,7 +207,7 @@ func (refKey ApplicationAccessKeyRefKey) IsValid() bool {
 		refKey.id.IsValid()
 }
 
-// Equals is required for conformance with azcore.AdjunctEntityRefKey.
+// Equals is required for conformance with azfl.AdjunctEntityRefKey.
 func (refKey ApplicationAccessKeyRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(ApplicationAccessKeyRefKey); ok {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
@@ -220,7 +220,7 @@ func (refKey ApplicationAccessKeyRefKey) Equals(other interface{}) bool {
 	return false
 }
 
-// Equal is required for conformance with azcore.AdjunctEntityRefKey.
+// Equal is required for conformance with azfl.AdjunctEntityRefKey.
 func (refKey ApplicationAccessKeyRefKey) Equal(other interface{}) bool {
 	return refKey.Equals(other)
 }
@@ -235,7 +235,7 @@ func (refKey ApplicationAccessKeyRefKey) EqualsApplicationAccessKeyRefKey(
 }
 
 // AZERBin is required for conformance
-// with azcore.RefKey.
+// with azfl.RefKey.
 func (refKey ApplicationAccessKeyRefKey) AZERBin() []byte {
 	data, typ := refKey.AZERBinField()
 	out := []byte{typ.Byte()}
@@ -262,7 +262,7 @@ func ApplicationAccessKeyRefKeyFromAZERBin(
 }
 
 // AZERBinField is required for conformance
-// with azcore.RefKey.
+// with azfl.RefKey.
 func (refKey ApplicationAccessKeyRefKey) AZERBinField() ([]byte, azer.BinDataType) {
 	var typesBytes []byte
 	var dataBytes []byte
@@ -339,7 +339,7 @@ func ApplicationAccessKeyRefKeyFromAZERBinField(
 }
 
 // UnmarshalAZERBinField is required for conformance
-// with azcore.BinFieldUnmarshalable.
+// with azfl.BinFieldUnmarshalable.
 func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (readLen int, err error) {
@@ -353,7 +353,7 @@ func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZERBinField(
 const _ApplicationAccessKeyRefKeyAZERTextPrefix = "KAK0"
 
 // AZERText is required for conformance
-// with azcore.RefKey.
+// with azfl.RefKey.
 func (refKey ApplicationAccessKeyRefKey) AZERText() string {
 	if !refKey.IsValid() {
 		return ""

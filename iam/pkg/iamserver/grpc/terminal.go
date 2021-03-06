@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	pbtypes "github.com/gogo/protobuf/types"
 	grpcerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc/errors"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"

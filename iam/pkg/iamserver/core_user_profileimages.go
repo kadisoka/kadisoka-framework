@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/media"

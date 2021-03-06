@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"

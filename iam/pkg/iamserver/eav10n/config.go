@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/rez-go/stev"
 )
 

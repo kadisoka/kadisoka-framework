@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/OneOfOne/xxhash"
-	"github.com/alloyzeus/go-azcore/azcore/errors"
+	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/gabriel-vasile/mimetype"
