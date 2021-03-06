@@ -88,9 +88,9 @@ CREATE TABLE session_t (
     CHECK (terminal_id > 0 AND id > 0)
 );
 
-CREATE TABLE user_terminal_fcm_registration_tokens (
-    user_id      bigint NOT NULL,
+CREATE TABLE terminal_fcm_registration_token_t (
     terminal_id  bigint NOT NULL,
+    user_id      bigint NOT NULL,
     token        text NOT NULL,
 
     c_ts   timestamp with time zone NOT NULL DEFAULT now(),
@@ -101,9 +101,12 @@ CREATE TABLE user_terminal_fcm_registration_tokens (
     d_uid  bigint,
     d_tid  bigint
 );
-CREATE UNIQUE INDEX user_terminal_fcm_registration_tokens_pidx
-    ON user_terminal_fcm_registration_tokens (user_id, terminal_id)
+CREATE UNIQUE INDEX terminal_fcm_registration_token_t_pidx
+    ON terminal_fcm_registration_token_t (terminal_id)
     WHERE d_ts IS NULL;
+CREATE INDEX terminal_fcm_registration_token_t_user_idx
+    ON terminal_fcm_registration_token_t (user_id)
+    WHERE user_id is NOT NULL AND d_ts IS NULL;
 
 CREATE TABLE phone_number_verifications (
     id                        bigserial PRIMARY KEY,

@@ -41,7 +41,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 	// - if provided redirect_uri is empty, use client's data
 	// - if we have no valid redirect_uri, show error page
 
-	//TODO: support OOB
+	//TODO: support OOB redirect scheme
 	if val.RedirectURI != "" && !strings.HasPrefix(val.RedirectURI, "http") {
 		logReq(r).
 			Warn().Msg("redirect_uri invalid")
@@ -224,14 +224,15 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 
 	case oauth2.ResponseTypeToken:
 		termRef, _, err = restSrv.serverCore.
-			RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-				ApplicationRef:   appRef,
-				UserRef:          authCtx.UserRef(),
-				DisplayName:      termDisplayName,
-				AcceptLanguage:   strings.Join(preferredLanguages, ","),
-				VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
-				VerificationID:   0,
-			})
+			RegisterTerminal(reqCtx,
+				iamserver.TerminalRegistrationInput{
+					ApplicationRef:   appRef,
+					UserRef:          authCtx.UserRef(),
+					DisplayName:      termDisplayName,
+					AcceptLanguage:   strings.Join(preferredLanguages, ","),
+					VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
+					VerificationID:   0,
+				})
 		if err != nil {
 			panic(err)
 		}

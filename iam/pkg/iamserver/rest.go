@@ -22,8 +22,8 @@ func RESTServiceServerWith(iamServerCore *Core) *RESTServiceServerBase {
 	return &RESTServiceServerBase{iamServerCore}
 }
 
-// RequestClient returns a Client info which identified by Basic authorization
-// header.
+// RequestApplication returns a Client info which identified by Basic
+// authorization header field.
 //
 // If the authorization is not provided, the returned client will be nil,
 // and the err value will be nil.
@@ -34,7 +34,7 @@ func RESTServiceServerWith(iamServerCore *Core) *RESTServiceServerBase {
 //
 // If the authorization is provided and it's valid, the returned client
 // will be a valid client and err will be nil.
-func (svcBase *RESTServiceServerBase) RequestClient(
+func (svcBase *RESTServiceServerBase) RequestApplication(
 	req *http.Request,
 ) (client *iam.Application, err error) {
 	authorizationHeader := req.Header.Get("Authorization")
@@ -80,15 +80,4 @@ func (svcBase *RESTServiceServerBase) RequestClient(
 	}
 
 	return client, nil
-}
-
-// RequestHasNoAuthorization checks if the request header with key
-// Authorization has non empty value. This DOES NOT check if it's valid
-// or not.
-func (svcBase *RESTServiceServerBase) RequestHasNoAuthorization(req *http.Request) bool {
-	if req == nil {
-		return true
-	}
-	authHeaderVal := req.Header.Get("Authorization")
-	return authHeaderVal == ""
 }

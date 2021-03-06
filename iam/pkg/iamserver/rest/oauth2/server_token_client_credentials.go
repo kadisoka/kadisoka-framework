@@ -17,7 +17,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	req *restful.Request, resp *restful.Response,
 ) {
 	reqApp, err := restSrv.serverCore.
-		RequestClient(req.Request)
+		RequestApplication(req.Request)
 	if reqApp == nil {
 		if err != nil {
 			logReq(req.Request).

@@ -160,11 +160,13 @@ func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
 	if err != nil {
 		return newCallContext(grpcCallCtx, authCtx, remoteAddr, "", nil), err
 	}
+
 	var requestID *api.RequestID
 	md, ok := grpcmd.FromIncomingContext(grpcCallCtx)
 	if !ok {
 		return newCallContext(grpcCallCtx, authCtx, remoteAddr, "", nil), nil
 	}
+
 	reqIDStrs := md.Get("request-id")
 	if len(reqIDStrs) == 0 {
 		reqIDStrs = md.Get("x-request-id")
@@ -211,6 +213,7 @@ func (svcClServer *ServiceClientServerCore) authorizationFromGRPCContext(
 	return svcClServer.AuthorizationFromJWTString(token)
 }
 
+// RESTRequestContext creates a call context which represents an HTTP request.
 func (svcClServer *ServiceClientServerCore) RESTRequestContext(
 	req *http.Request,
 ) (*RESTRequestContext, error) {
@@ -224,33 +227,15 @@ func (svcClServer *ServiceClientServerCore) RESTRequestContext(
 func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
 	req *http.Request,
 ) (CallContext, error) {
-	if _, ok := req.Header["Authorization"]; !ok {
-		return nil, nil
-	}
-
 	ctx := req.Context()
+	authCtx := newEmptyAuthorization()
 
-	authorization := strings.TrimSpace(req.Header.Get("Authorization"))
-	//NOTE: for testing using Swagger UI, the header might be set
-	// even though after it has been cleared.
-	if authorization == "" {
-		return nil, nil
-	}
-
-	authParts := strings.SplitN(authorization, " ", 2)
-	if len(authParts) != 2 {
-		return nil, ErrReqFieldAuthorizationMalformed
-	}
-	if authParts[0] != "Bearer" {
-		return nil, ErrReqFieldAuthorizationTypeUnsupported
-	}
-
-	jwtStr := strings.TrimSpace(authParts[1])
-	authCtx, err := svcClServer.AuthorizationFromJWTString(jwtStr)
 	remoteAddr := realip.FromRequest(req)
 	if remoteAddr == "" {
 		remoteAddr = req.RemoteAddr
 	}
+
+	remoteEnvString := req.UserAgent()
 
 	// Get from query too?
 	var requestID *api.RequestID
@@ -261,17 +246,43 @@ func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
 	if requestIDStr != "" {
 		u, err := uuid.Parse(requestIDStr)
 		if err != nil {
-			return newCallContext(ctx, authCtx, remoteAddr, req.UserAgent(), nil),
+			return newCallContext(ctx, authCtx, remoteAddr, remoteEnvString, nil),
 				ReqFieldErr("Request-ID", dataerrs.Malformed(err))
 		}
 		if isValidRequestID(u) {
-			return newCallContext(ctx, authCtx, remoteAddr, req.UserAgent(), nil),
+			return newCallContext(ctx, authCtx, remoteAddr, remoteEnvString, nil),
 				ReqFieldErr("Request-ID", nil)
 		}
 		requestID = &u
 	}
 
-	return newCallContext(ctx, authCtx, remoteAddr, req.UserAgent(), requestID), err
+	authorization := strings.TrimSpace(req.Header.Get("Authorization"))
+	if authorization != "" {
+		authParts := strings.SplitN(authorization, " ", 2)
+		if len(authParts) != 2 {
+			return newCallContext(ctx, authCtx, remoteAddr, remoteEnvString, nil),
+				ErrReqFieldAuthorizationMalformed
+		}
+		if authParts[0] != "Bearer" {
+			return newCallContext(ctx, authCtx, remoteAddr, remoteEnvString, nil),
+				ErrReqFieldAuthorizationTypeUnsupported
+		}
+
+		jwtStr := strings.TrimSpace(authParts[1])
+		var err error
+		authCtx, err = svcClServer.AuthorizationFromJWTString(jwtStr)
+		if err != nil {
+			return newCallContext(ctx, authCtx, remoteAddr, remoteEnvString, nil),
+				ErrReqFieldAuthorizationMalformed
+		}
+
+		//TODO: validate authCtx
+	}
+	if authCtx == nil {
+		authCtx = newEmptyAuthorization()
+	}
+
+	return newCallContext(ctx, authCtx, remoteAddr, remoteEnvString, requestID), nil
 }
 
 func isValidRequestID(u uuid.UUID) bool {

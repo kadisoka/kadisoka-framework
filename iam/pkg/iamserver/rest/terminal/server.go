@@ -107,7 +107,7 @@ func (restSrv *Server) postTerminalsRegister(
 	req *restful.Request, resp *restful.Response,
 ) {
 	reqApp, err := restSrv.serverCore.
-		RequestClient(req.Request)
+		RequestApplication(req.Request)
 	if err != nil {
 		logReq(req.Request).
 			Warn().Err(err).Msg("Client authentication")
@@ -137,6 +137,7 @@ func (restSrv *Server) postTerminalsRegister(
 			http.StatusInternalServerError)
 		return
 	}
+
 	authCtx := reqCtx.Authorization()
 	if authCtx.IsValid() {
 		logCtx(reqCtx).
@@ -301,8 +302,8 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 	}
 
 	err = restSrv.serverCore.
-		SetUserTerminalFCMRegistrationToken(
-			reqCtx, authCtx.UserRef(), authCtx.TerminalRef(),
+		SetTerminalFCMRegistrationToken(
+			reqCtx, authCtx.TerminalRef(), authCtx.UserRef(),
 			fcmRegTokenReq.Token)
 	if err != nil {
 		panic(err)
