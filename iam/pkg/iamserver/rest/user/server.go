@@ -24,13 +24,17 @@ var (
 	logCtx = log.WithContext
 )
 
+type ServerConfig struct {
+	ServePath string
+}
+
 func NewServer(
-	basePath string,
 	iamServerCore *iamserver.Core,
+	config ServerConfig,
 ) *Server {
 	return &Server{
 		serverCore:    iamserver.RESTServiceServerWith(iamServerCore),
-		basePath:      basePath,
+		basePath:      config.ServePath,
 		eTagResponder: rest.NewETagResponder(512),
 	}
 }
@@ -281,7 +285,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	restUserProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile)
 
 	userPhoneNumber, err := restSrv.serverCore.
-		GetUserIdentifierPhoneNumber(reqCtx, requestedUserRef)
+		GetUserKeyPhoneNumber(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User phone number fetch")
@@ -296,7 +300,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	//TODO(exa): should get display email address instead of primary
 	// email address for this use case.
 	userEmailAddress, err := restSrv.serverCore.
-		GetUserIdentifierEmailAddress(reqCtx, requestedUserRef)
+		GetUserKeyEmailAddress(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User email address fetch")
@@ -440,7 +444,7 @@ func (restSrv *Server) getUserContacts(req *restful.Request, resp *restful.Respo
 			userProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile)
 
 			userPhoneNumber, err := restSrv.serverCore.
-				GetUserIdentifierPhoneNumber(reqCtx, contactUserID)
+				GetUserKeyPhoneNumber(reqCtx, contactUserID)
 
 			if err != nil {
 				panic(err)

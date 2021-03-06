@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful"
-	"github.com/emicklei/go-restful-openapi"
+	restfulspec "github.com/emicklei/go-restful-openapi"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
 
@@ -19,19 +19,23 @@ var (
 	logReq = log.WithRequest
 )
 
+type ServerConfig struct {
+	ServePath string
+	SignInURL string
+}
+
 // New instantiates an Server.
 func NewServer(
-	basePath string,
 	iamServerCore *iamserver.Core,
-	signInURL string,
+	config ServerConfig,
 ) (*Server, error) {
 	if !iamServerCore.JWTKeyChain().CanSign() {
 		return nil, apperrs.NewConfigurationMsg("JWT key chain is required")
 	}
 	return &Server{
 		iamserver.RESTServiceServerWith(iamServerCore),
-		basePath,
-		signInURL,
+		config.ServePath,
+		config.SignInURL,
 	}, nil
 }
 

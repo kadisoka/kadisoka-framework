@@ -12,7 +12,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const sessionTableName = "session_t"
+const sessionTableName = "session_dt"
 
 func (core *Core) GenerateAccessTokenJWT(
 	callCtx iam.CallContext,

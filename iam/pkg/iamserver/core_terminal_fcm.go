@@ -7,7 +7,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const terminalFCMRegistrationTokenTableName = "terminal_fcm_registration_token_t"
+const terminalFCMRegistrationTokenTableName = "terminal_fcm_registration_token_dt"
 
 func (core *Core) DisposeTerminalFCMRegistrationToken(
 	callCtx iam.CallContext,

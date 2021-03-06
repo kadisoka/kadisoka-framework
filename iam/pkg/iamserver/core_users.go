@@ -14,7 +14,9 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const userTableName = "user_t"
+const userTableName = "user_dt"
+const userProfileDisplayNameTableName = "user_display_name_dt"
+const userProfileImageKeyTableName = "user_profile_image_key_dt"
 
 func (core *Core) GetUserBaseProfile(
 	callCtx iam.CallContext,
@@ -33,10 +35,12 @@ func (core *Core) GetUserBaseProfile(
 		QueryRow(
 			`SELECT ua.id, `+
 				`CASE WHEN ua.d_ts IS NULL THEN false ELSE true END AS is_deleted, `+
-				`udn.display_name, upiu.profile_image_url `+
+				`udn.display_name, upiu.profile_image_key `+
 				`FROM `+userTableName+` AS ua `+
-				`LEFT JOIN user_display_names udn ON udn.user_id = ua.id AND udn.d_ts IS NULL `+
-				`LEFT JOIN user_profile_image_urls upiu ON upiu.user_id = ua.id AND upiu.d_ts IS NULL `+
+				`LEFT JOIN `+userProfileDisplayNameTableName+` udn ON udn.user_id = ua.id `+
+				`AND udn.d_ts IS NULL `+
+				`LEFT JOIN `+userProfileImageKeyTableName+` upiu ON upiu.user_id = ua.id `+
+				`AND upiu.d_ts IS NULL `+
 				`WHERE ua.id = $1`,
 			userID).
 		Scan(&user.RefKey, &user.IsDeleted, &displayName, &profileImageURL)
@@ -189,7 +193,7 @@ func (core *Core) DeleteUserAccount(
 
 		if txErr == nil {
 			_, txErr = dbTx.Exec(
-				`UPDATE `+userIdentifierPhoneNumberTableName+` `+
+				`UPDATE `+userKeyPhoneNumberTableName+` `+
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestReceiveTime(),
@@ -199,7 +203,7 @@ func (core *Core) DeleteUserAccount(
 
 		if txErr == nil {
 			_, txErr = dbTx.Exec(
-				"UPDATE user_profile_image_urls "+
+				`UPDATE `+userProfileImageKeyTableName+` `+
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestReceiveTime(),
@@ -241,7 +245,7 @@ func (core *Core) SetUserProfileImageURL(
 
 	return doTx(core.db, func(dbTx *sqlx.Tx) error {
 		_, txErr := dbTx.Exec(
-			"UPDATE user_profile_image_urls "+
+			`UPDATE `+userKeyPhoneNumberTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE user_id = $2 AND d_ts IS NULL",
 			callCtx.RequestReceiveTime(),
@@ -252,8 +256,8 @@ func (core *Core) SetUserProfileImageURL(
 		}
 		if profileImageURL != "" {
 			_, txErr = dbTx.Exec(
-				"INSERT INTO user_profile_image_urls "+
-					"(user_id, profile_image_url, c_uid, c_tid) VALUES "+
+				`INSERT INTO `+userProfileImageKeyTableName+` `+
+					"(user_id, profile_image_key, c_uid, c_tid) VALUES "+
 					"($1, $2, $3, $4)",
 				authCtx.UserID().PrimitiveValue(), profileImageURL,
 				authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
@@ -313,9 +317,9 @@ func (core *Core) GetUserContactInformation(
 ) (*iampb.UserContactInfoData, error) {
 	//TODO: access control
 	userPhoneNumber, err := core.
-		GetUserIdentifierPhoneNumber(callCtx, userID)
+		GetUserKeyPhoneNumber(callCtx, userID)
 	if err != nil {
-		return nil, errors.Wrap("get user identifier phone number", err)
+		return nil, errors.Wrap("get user key phone number", err)
 	}
 	if userPhoneNumber == nil {
 		return nil, nil

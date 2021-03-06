@@ -24,13 +24,18 @@ var (
 	logReq = log.WithRequest
 )
 
+type ServerConfig struct {
+	ServePath string
+}
+
 func NewServer(
-	basePath string,
 	iamServerCore *iamserver.Core,
+	config ServerConfig,
 ) *Server {
 	return &Server{
 		iamserver.RESTServiceServerWith(iamServerCore),
-		basePath}
+		config.ServePath,
+	}
 }
 
 type Server struct {

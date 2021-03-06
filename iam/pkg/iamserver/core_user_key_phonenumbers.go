@@ -13,14 +13,16 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
-const userIdentifierPhoneNumberTableName = `user_identifier_phone_numbers`
+// Key phone number is a phone number which can be used to sign in.
+
+const userKeyPhoneNumberTableName = `user_key_phone_number_dt`
 
 func (core *Core) ListUsersByPhoneNumber(
 	callCtx iam.CallContext,
 	phoneNumbers []iam.PhoneNumber,
-) ([]iam.UserIdentifierPhoneNumber, error) {
+) ([]iam.UserKeyPhoneNumber, error) {
 	if len(phoneNumbers) == 0 {
-		return []iam.UserIdentifierPhoneNumber{}, nil
+		return []iam.UserKeyPhoneNumber{}, nil
 	}
 	authCtx := callCtx.Authorization()
 
@@ -30,7 +32,7 @@ func (core *Core) ListUsersByPhoneNumber(
 	userPhoneNumberRows, err := core.db.
 		Queryx(
 			`SELECT user_id, country_code, national_number ` +
-				`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
+				`FROM ` + userKeyPhoneNumberTableName + ` ` +
 				`WHERE (country_code, national_number) ` +
 				`IN (VALUES ` + phoneNumberSliceToSQLSetString(phoneNumbers) + `) ` +
 				`AND d_ts IS NULL AND verification_time IS NOT NULL ` +
@@ -40,7 +42,7 @@ func (core *Core) ListUsersByPhoneNumber(
 	}
 	defer userPhoneNumberRows.Close()
 
-	userPhoneNumberList := []iam.UserIdentifierPhoneNumber{}
+	userPhoneNumberList := []iam.UserKeyPhoneNumber{}
 	for userPhoneNumberRows.Next() {
 		uid := iam.UserIDZero
 		var countryCode int32
@@ -50,8 +52,8 @@ func (core *Core) ListUsersByPhoneNumber(
 		if err != nil {
 			panic(err)
 		}
-		var userPhoneNumber iam.UserIdentifierPhoneNumber
-		userPhoneNumber = iam.UserIdentifierPhoneNumber{
+		var userPhoneNumber iam.UserKeyPhoneNumber
+		userPhoneNumber = iam.UserKeyPhoneNumber{
 			UserRef:     iam.NewUserRefKey(uid),
 			PhoneNumber: iam.NewPhoneNumber(countryCode, nationalNumber),
 		}
@@ -67,11 +69,11 @@ func (core *Core) ListUsersByPhoneNumber(
 		go func() {
 			for _, pn := range phoneNumbers {
 				_, err = core.db.Exec(
-					"INSERT INTO user_contact_phone_numbers ("+
+					`INSERT INTO `+userContactPhoneNumberTableName+` (`+
 						"user_id, contact_country_code, contact_national_number, "+
 						"c_uid, c_tid"+
 						") VALUES ($1, $2, $3, $4, $5) "+
-						"ON CONFLICT ON CONSTRAINT user_contact_phone_numbers_pkey DO NOTHING",
+						`ON CONFLICT ON CONSTRAINT `+userContactPhoneNumberTableName+`_pkey DO NOTHING`,
 					authCtx.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
 					authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
 				if err != nil {
@@ -88,7 +90,7 @@ func (core *Core) ListUsersByPhoneNumber(
 //TODO: allow non-verified (let the caller decide with the status)
 // there should be getters for different purpose (e.g.,
 // for login, for display, for notification, for recovery, etc)
-func (core *Core) GetUserIdentifierPhoneNumber(
+func (core *Core) GetUserKeyPhoneNumber(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 ) (*iam.PhoneNumber, error) {
@@ -97,7 +99,7 @@ func (core *Core) GetUserIdentifierPhoneNumber(
 	err := core.db.
 		QueryRow(
 			`SELECT country_code, national_number `+
-				`FROM `+userIdentifierPhoneNumberTableName+` `+
+				`FROM `+userKeyPhoneNumberTableName+` `+
 				`WHERE user_id=$1 `+
 				`AND d_ts IS NULL AND verification_time IS NOT NULL`,
 			userRef.ID().PrimitiveValue()).
@@ -113,12 +115,12 @@ func (core *Core) GetUserIdentifierPhoneNumber(
 }
 
 // The ID of the user which provided phone number is their verified primary.
-func (core *Core) getUserIDByIdentifierPhoneNumber(
+func (core *Core) getUserIDByKeyPhoneNumber(
 	phoneNumber iam.PhoneNumber,
 ) (ownerUserID iam.UserID, err error) {
 	queryStr :=
 		`SELECT user_id ` +
-			`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
+			`FROM ` + userKeyPhoneNumberTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
 			`AND d_ts IS NULL ` +
 			`AND verification_time IS NOT NULL`
@@ -139,12 +141,12 @@ func (core *Core) getUserIDByIdentifierPhoneNumber(
 
 // The ID of the user which provided phone number is their primary,
 // verified or not.
-func (core *Core) getUserIDByIdentifierPhoneNumberAllowUnverified(
+func (core *Core) getUserIDByKeyPhoneNumberAllowUnverified(
 	phoneNumber iam.PhoneNumber,
 ) (ownerUserRef iam.UserRefKey, verified bool, err error) {
 	queryStr :=
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
-			`FROM ` + userIdentifierPhoneNumberTableName + ` ` +
+			`FROM ` + userKeyPhoneNumberTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
 			`AND d_ts IS NULL ` +
 			`ORDER BY c_ts DESC LIMIT 1`
@@ -164,7 +166,7 @@ func (core *Core) getUserIDByIdentifierPhoneNumberAllowUnverified(
 	return iam.NewUserRefKey(ownerUserID), verified, nil
 }
 
-func (core *Core) SetUserIdentifierPhoneNumber(
+func (core *Core) SetUserKeyPhoneNumber(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 	phoneNumber iam.PhoneNumber,
@@ -180,11 +182,11 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 	}
 
 	//TODO: prone to race condition. solution: simply call
-	// setUserIdentifierPhoneNumber and translate the error.
+	// setUserKeyPhoneNumber and translate the error.
 	existingOwnerUserID, err := core.
-		getUserIDByIdentifierPhoneNumber(phoneNumber)
+		getUserIDByKeyPhoneNumber(phoneNumber)
 	if err != nil {
-		return 0, nil, errors.Wrap("getUserIDByIdentifierPhoneNumber", err)
+		return 0, nil, errors.Wrap("getUserIDByKeyPhoneNumber", err)
 	}
 	if existingOwnerUserID.IsValid() {
 		if existingOwnerUserID != authCtx.UserID() {
@@ -193,10 +195,10 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 		return 0, nil, nil
 	}
 
-	alreadyVerified, err := core.setUserIdentifierPhoneNumber(
+	alreadyVerified, err := core.setUserKeyPhoneNumber(
 		callCtx, authCtx.UserRef(), phoneNumber)
 	if err != nil {
-		return 0, nil, errors.Wrap("setUserIdentifierPhoneNumber", err)
+		return 0, nil, errors.Wrap("setUserKeyPhoneNumber", err)
 	}
 	if alreadyVerified {
 		return 0, nil, nil
@@ -219,7 +221,7 @@ func (core *Core) SetUserIdentifierPhoneNumber(
 	return
 }
 
-func (core *Core) setUserIdentifierPhoneNumber(
+func (core *Core) setUserKeyPhoneNumber(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 	phoneNumber iam.PhoneNumber,
@@ -227,7 +229,7 @@ func (core *Core) setUserIdentifierPhoneNumber(
 	ctxTime := callCtx.RequestReceiveTime()
 
 	xres, err := core.db.Exec(
-		`INSERT INTO `+userIdentifierPhoneNumberTableName+` (`+
+		`INSERT INTO `+userKeyPhoneNumberTableName+` (`+
 			`user_id, country_code, national_number, raw_input, `+
 			`c_ts, c_uid, c_tid `+
 			`) VALUES (`+
@@ -256,7 +258,7 @@ func (core *Core) setUserIdentifierPhoneNumber(
 
 	err = core.db.QueryRow(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
-			`FROM `+userIdentifierPhoneNumberTableName+` `+
+			`FROM `+userKeyPhoneNumberTableName+` `+
 			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3`,
 		userRef.ID().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&alreadyVerified)
@@ -323,7 +325,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 	var xres sql.Result
 
 	xres, err = core.db.Exec(
-		`UPDATE `+userIdentifierPhoneNumberTableName+` SET (`+
+		`UPDATE `+userKeyPhoneNumberTableName+` SET (`+
 			`verification_time, verification_id`+
 			`) = ( `+
 			`$1, $2`+
@@ -339,7 +341,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == userIdentifierPhoneNumberTableName+`_country_code_national_number_uidx` {
+			pqErr.Constraint == userKeyPhoneNumberTableName+`_country_code_national_number_uidx` {
 			return false, errors.ArgMsg("phoneNumber", "conflict")
 		}
 		return false, err

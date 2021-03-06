@@ -23,6 +23,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
+const verificationTableName = "email_address_verification_dt"
+
 func NewVerifier(
 	realmInfo realm.Info,
 	db *sqlx.DB,
@@ -119,7 +121,7 @@ func (verifier *Verifier) StartVerification(
 	err = verifier.db.
 		QueryRow(
 			"SELECT id, code_expiry, attempts_remaining "+
-				"FROM email_address_verifications "+
+				`FROM `+verificationTableName+` `+
 				"WHERE local_part = $1 AND domain_part = $2 AND confirmation_time IS NULL "+
 				"ORDER BY id DESC "+
 				"LIMIT 1",
@@ -145,18 +147,20 @@ func (verifier *Verifier) StartVerification(
 
 	err = verifier.db.
 		QueryRow(
-			`INSERT INTO email_address_verifications `+
-				`(local_part, domain_part, code, code_expiry, attempts_remaining, c_ts, c_uid, c_tid) `+
-				`VALUES ($1, $2, $3, $4, $5, $6, $7, $8) `+
-				`RETURNING id`,
+			`INSERT INTO `+verificationTableName+` (`+
+				`local_part, domain_part, `+
+				"c_ts, c_uid, c_tid, "+
+				"code, code_expiry, attempts_remaining"+
+				") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "+
+				"RETURNING id",
 			emailAddress.LocalPart(),
 			emailAddress.DomainPart(),
-			code,
-			codeExp,
-			verifier.confirmationAttemptsMax,
 			ctxTime,
 			authCtx.UserIDPtr(),
 			authCtx.TerminalIDPtr(),
+			code,
+			codeExp,
+			verifier.confirmationAttemptsMax,
 		).Scan(&id)
 	if err != nil {
 		return 0, nil, err
@@ -196,7 +200,7 @@ func (verifier *Verifier) ConfirmVerification(
 	var dbData verificationDBModel
 
 	err := verifier.db.QueryRowx(
-		`UPDATE email_address_verifications `+
+		`UPDATE `+verificationTableName+` `+
 			`SET attempts_remaining = attempts_remaining - 1 `+
 			`WHERE id = $1 `+
 			`RETURNING *`,
@@ -221,7 +225,7 @@ func (verifier *Verifier) ConfirmVerification(
 	}
 
 	_, err = verifier.db.Exec(
-		`UPDATE email_address_verifications `+
+		`UPDATE `+verificationTableName+` `+
 			"SET confirmation_time = $1, confirmation_user_id = $2, confirmation_terminal_id = $3 "+
 			"WHERE id = $4 AND confirmation_time IS NULL",
 		ctxTime, authCtx.UserIDPtr(), authCtx.TerminalIDPtr(), verificationID)
@@ -316,8 +320,6 @@ func (verifier *Verifier) sendVerificationEmail(
 			default:
 				return errors.Wrap("SendEmail", aerr)
 			}
-		} else {
-			return err
 		}
 		return err
 	}
@@ -331,7 +333,7 @@ func (verifier *Verifier) GetEmailAddressByVerificationID(
 	var localPart, domainPart string
 	err := verifier.db.QueryRow(
 		`SELECT local_part, domain_part `+
-			`FROM email_address_verifications `+
+			`FROM `+verificationTableName+` `+
 			`WHERE id = $1 `,
 		verificationID).
 		Scan(&localPart, &domainPart)

@@ -4,7 +4,7 @@
 BEGIN;
 ------
 
-CREATE TABLE user_t (
+CREATE TABLE user_dt (
     id       bigint PRIMARY KEY,
 
     c_ts     timestamp with time zone NOT NULL DEFAULT now(),
@@ -19,11 +19,11 @@ CREATE TABLE user_t (
     CHECK (id > 0)
 );
 
-CREATE TABLE user_identifier_phone_numbers (
-    user_id            bigint NOT NULL,
-    country_code       integer NOT NULL,
-    national_number    bigint NOT NULL, -- libphonenumber says uint64
-    raw_input          text NOT NULL, 
+CREATE TABLE user_key_phone_number_dt (
+    user_id          bigint NOT NULL,
+    country_code     integer NOT NULL,
+    national_number  bigint NOT NULL, -- libphonenumber says uint64
+    raw_input        text NOT NULL, 
 
     c_ts    timestamp with time zone NOT NULL DEFAULT now(),
     c_uid   bigint NOT NULL,
@@ -37,19 +37,19 @@ CREATE TABLE user_identifier_phone_numbers (
     verification_time  timestamp with time zone
 );
 -- Each user can only have one reference to the same phone number
-CREATE UNIQUE INDEX user_identifier_phone_numbers_pidx
-    ON user_identifier_phone_numbers (user_id, country_code, national_number)
+CREATE UNIQUE INDEX user_key_phone_number_dt_pidx
+    ON user_key_phone_number_dt (user_id, country_code, national_number)
     WHERE d_ts IS NULL;
 -- Each user has only one non-deleted-verified phone number
-CREATE UNIQUE INDEX user_identifier_phone_numbers_user_id_uidx
-    ON user_identifier_phone_numbers (user_id)
+CREATE UNIQUE INDEX user_key_phone_number_dt_user_id_uidx
+    ON user_key_phone_number_dt (user_id)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
 -- One instance for an non-deleted-verified phone number
-CREATE UNIQUE INDEX user_identifier_phone_numbers_country_code_national_number_uidx
-    ON user_identifier_phone_numbers (country_code, national_number)
+CREATE UNIQUE INDEX user_key_phone_number_dt_country_code_national_number_uidx
+    ON user_key_phone_number_dt (country_code, national_number)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
 
-CREATE TABLE terminal_t (
+CREATE TABLE terminal_dt (
     application_id     integer NOT NULL,
     user_id            bigint, --TODO: not null. use zero if it's for non-user
     id                 bigint PRIMARY KEY,
@@ -69,10 +69,10 @@ CREATE TABLE terminal_t (
 
     CHECK (application_id > 0 AND id > 0)
 );
-CREATE INDEX ON terminal_t (user_id)
+CREATE INDEX ON terminal_dt (user_id)
     WHERE verification_time IS NOT NULL;
 
-CREATE TABLE session_t (
+CREATE TABLE session_dt (
     terminal_id  bigint NOT NULL,
     id           bigint NOT NULL,
 
@@ -88,7 +88,7 @@ CREATE TABLE session_t (
     CHECK (terminal_id > 0 AND id > 0)
 );
 
-CREATE TABLE terminal_fcm_registration_token_t (
+CREATE TABLE terminal_fcm_registration_token_dt (
     terminal_id  bigint NOT NULL,
     user_id      bigint NOT NULL,
     token        text NOT NULL,
@@ -101,20 +101,20 @@ CREATE TABLE terminal_fcm_registration_token_t (
     d_uid  bigint,
     d_tid  bigint
 );
-CREATE UNIQUE INDEX terminal_fcm_registration_token_t_pidx
-    ON terminal_fcm_registration_token_t (terminal_id)
+CREATE UNIQUE INDEX terminal_fcm_registration_token_dt_pidx
+    ON terminal_fcm_registration_token_dt (terminal_id)
     WHERE d_ts IS NULL;
-CREATE INDEX terminal_fcm_registration_token_t_user_idx
-    ON terminal_fcm_registration_token_t (user_id)
+CREATE INDEX terminal_fcm_registration_token_dt_user_idx
+    ON terminal_fcm_registration_token_dt (user_id)
     WHERE user_id is NOT NULL AND d_ts IS NULL;
 
-CREATE TABLE phone_number_verifications (
-    id                        bigserial PRIMARY KEY,
-    country_code              integer NOT NULL,
-    national_number           bigint NOT NULL,
-    code                      text NOT NULL,
-    code_expiry               timestamp with time zone,
-    attempts_remaining        smallint NOT NULL DEFAULT 3,
+CREATE TABLE phone_number_verification_dt (
+    id                  bigserial PRIMARY KEY,
+    country_code        integer NOT NULL,
+    national_number     bigint NOT NULL,
+    code                text NOT NULL,
+    code_expiry         timestamp with time zone,
+    attempts_remaining  smallint NOT NULL DEFAULT 3,
 
     c_ts   timestamp with time zone NOT NULL DEFAULT now(),
     c_uid  bigint,
@@ -125,7 +125,7 @@ CREATE TABLE phone_number_verifications (
     confirmation_terminal_id  bigint
 );
 
-CREATE TABLE user_contact_phone_numbers (
+CREATE TABLE user_contact_phone_number_dt (
     user_id                  bigint NOT NULL,
     contact_country_code     integer NOT NULL,
     contact_national_number  bigint NOT NULL,
@@ -138,7 +138,7 @@ CREATE TABLE user_contact_phone_numbers (
 );
 
 -- user profile
-CREATE TABLE user_display_names (
+CREATE TABLE user_display_name_dt (
     user_id       bigint NOT NULL,
     display_name  text NOT NULL,
 
@@ -150,12 +150,13 @@ CREATE TABLE user_display_names (
     d_uid  bigint,
     d_tid  bigint
 );
-CREATE UNIQUE INDEX user_display_names_pidx ON user_display_names (user_id)
+CREATE UNIQUE INDEX user_display_name_dt_pidx
+    ON user_display_name_dt (user_id)
     WHERE d_ts IS NULL;
 
-CREATE TABLE user_profile_image_urls (
+CREATE TABLE user_profile_image_key_dt (
     user_id            bigint NOT NULL,
-    profile_image_url  text NOT NULL,
+    profile_image_key  text NOT NULL,
 
     c_ts   timestamp with time zone NOT NULL DEFAULT now(),
     c_uid  bigint NOT NULL,
@@ -165,11 +166,12 @@ CREATE TABLE user_profile_image_urls (
     d_uid  bigint,
     d_tid  bigint
 );
-CREATE UNIQUE INDEX user_profile_image_urls_pidx ON user_profile_image_urls (user_id)
+CREATE UNIQUE INDEX user_profile_image_key_dt_pidx
+    ON user_profile_image_key_dt (user_id)
     WHERE d_ts IS NULL;
 
 -- user email
-CREATE TABLE user_identifier_email_addresses (
+CREATE TABLE user_key_email_address_dt (
     user_id      bigint NOT NULL,
     local_part   text NOT NULL,
     domain_part  text NOT NULL,
@@ -187,19 +189,19 @@ CREATE TABLE user_identifier_email_addresses (
     verification_time  timestamp with time zone
 );
 -- Each user can only have one reference to the same email address
-CREATE UNIQUE INDEX user_identifier_email_addresses_pidx
-    ON user_identifier_email_addresses (user_id, local_part, domain_part)
+CREATE UNIQUE INDEX user_key_email_address_dt_pidx
+    ON user_key_email_address_dt (user_id, local_part, domain_part)
     WHERE d_ts IS NULL;
 -- Each user has only one non-deleted-verified email address
-CREATE UNIQUE INDEX user_identifier_email_addresses_user_id_uidx
-    ON user_identifier_email_addresses (user_id)
+CREATE UNIQUE INDEX user_key_email_address_dt_user_id_uidx
+    ON user_key_email_address_dt (user_id)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
 -- One instance for an non-deleted-verified email address
-CREATE UNIQUE INDEX user_identifier_email_addresses_local_part_domain_part_uidx
-    ON user_identifier_email_addresses (local_part, domain_part)
+CREATE UNIQUE INDEX user_key_email_address_dt_local_part_domain_part_uidx
+    ON user_key_email_address_dt (local_part, domain_part)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
 
-CREATE TABLE email_address_verifications (
+CREATE TABLE email_address_verification_dt (
     id                  bigserial PRIMARY KEY,
     local_part          text NOT NULL,
     domain_part         text NOT NULL,
@@ -218,7 +220,7 @@ CREATE TABLE email_address_verifications (
 
 -- user password
 --TODO: passwords for different purposes?
-CREATE TABLE user_passwords (
+CREATE TABLE user_password_dt (
     user_id   bigint NOT NULL,
     password  text NOT NULL,
 
@@ -230,7 +232,7 @@ CREATE TABLE user_passwords (
     d_uid  bigint,
     d_tid  bigint
 );
-CREATE UNIQUE INDEX ON user_passwords (user_id)
+CREATE UNIQUE INDEX ON user_password_dt (user_id)
     WHERE d_ts IS NULL;
 
 ----

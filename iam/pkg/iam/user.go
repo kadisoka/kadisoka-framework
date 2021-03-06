@@ -8,12 +8,12 @@ type UserService interface {
 	UserAccountService
 	UserProfileService
 
-	GetUserIdentifierPhoneNumber(
+	GetUserKeyPhoneNumber(
 		callCtx CallContext,
 		userID UserID,
 	) (*PhoneNumber, error)
 
-	GetUserIdentifierEmailAddress(
+	GetUserKeyEmailAddress(
 		callCtx CallContext,
 		userID UserID,
 	) (*EmailAddress, error)
@@ -31,10 +31,10 @@ type UserTerminalService interface {
 }
 
 var (
-	ErrUserIdentifierPhoneNumberConflict = errors.EntMsg("user identifier phone number", "conflict")
+	ErrUserKeyPhoneNumberConflict = errors.EntMsg("user key phone number", "conflict")
 )
 
-type UserIdentifierPhoneNumber struct {
+type UserKeyPhoneNumber struct {
 	UserRef     UserRefKey
 	PhoneNumber PhoneNumber
 }

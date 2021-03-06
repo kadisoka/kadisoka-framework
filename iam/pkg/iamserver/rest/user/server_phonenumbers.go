@@ -59,19 +59,19 @@ func (restSrv *Server) putUserPhoneNumber(
 	}
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
-		SetUserIdentifierPhoneNumber(
+		SetUserKeyPhoneNumber(
 			reqCtx, authCtx.UserRef(), phoneNumber, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
-				Warn().Msgf("SetUserIdentifierPhoneNumber to %v: %v",
+				Warn().Msgf("SetUserKeyPhoneNumber to %v: %v",
 				phoneNumber, err)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
-			Error().Msgf("SetUserIdentifierPhoneNumber to %v: %v",
+			Error().Msgf("SetUserKeyPhoneNumber to %v: %v",
 			phoneNumber, err)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)

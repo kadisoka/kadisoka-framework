@@ -1,6 +1,7 @@
 package iamserver
 
 import (
+	"crypto/subtle"
 	"encoding/base64"
 	"net/http"
 	"strings"
@@ -75,7 +76,7 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 	if client == nil {
 		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("username", "reference invalid"))
 	}
-	if len(creds) == 0 || creds[1] != client.Data.Secret {
+	if len(creds) == 0 || subtle.ConstantTimeCompare([]byte(creds[1]), []byte(client.Data.Secret)) != 1 {
 		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("password", "mismatch"))
 	}
 

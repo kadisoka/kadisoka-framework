@@ -31,7 +31,7 @@ type argon2PasswordHashingParams struct {
 }
 
 //TODO:make this configurable
-var passwordHashingParams = argon2PasswordHashingParams{
+var argon2PasswordHashingParamsDefault = argon2PasswordHashingParams{
 	Memory:      64 * 1024,
 	Iterations:  3,
 	Parallelism: 2,
@@ -39,10 +39,12 @@ var passwordHashingParams = argon2PasswordHashingParams{
 	KeyLength:   32,
 }
 
+const userPasswordTableName = "user_password_dt"
+
 func (core *Core) SetUserPassword(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-	plainTextPassword string,
+	clearTextPassword string,
 ) error {
 	authCtx := callCtx.Authorization()
 	if !authCtx.IsUserContext() || !userRef.EqualsUserRefKey(authCtx.UserRef()) {
@@ -51,25 +53,26 @@ func (core *Core) SetUserPassword(
 
 	ctxTime := callCtx.RequestReceiveTime()
 
-	hashedPassword, err := core.hashPassword(plainTextPassword)
+	passwordHash, err := core.hashPassword(clearTextPassword)
 	if err != nil {
 		return err
 	}
 
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, txErr := core.db.Exec(
-			`UPDATE user_passwords SET `+
+			`UPDATE `+userPasswordTableName+` SET `+
 				`d_ts = $1, d_uid = $2, d_tid = $3 `+
 				`WHERE user_id = $4 AND d_ts IS NULL`,
-			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(), userRef)
+			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+			userRef.ID().PrimitiveValue())
 		if txErr != nil {
 			return txErr
 		}
 		_, txErr = core.db.Exec(
-			`INSERT INTO user_passwords `+
+			`INSERT INTO `+userPasswordTableName+` `+
 				`(user_id, password, c_ts, c_uid, c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
-			userRef, hashedPassword,
+			userRef.ID().PrimitiveValue(), passwordHash,
 			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
 		return nil
 	})
@@ -77,25 +80,25 @@ func (core *Core) SetUserPassword(
 
 func (core *Core) MatchUserPassword(
 	userRef iam.UserRefKey,
-	plainTextPassword string,
+	clearTextPassword string,
 ) (ok bool, err error) {
-	hashedPassword, err := core.getUserHashedPassword(userRef.ID())
+	passwordHash, err := core.getUserPasswordHash(userRef.ID())
 	if err != nil {
 		return false, err
 	}
-	if hashedPassword == "" && plainTextPassword == hashedPassword {
+	if passwordHash == "" && clearTextPassword == passwordHash {
 		return true, err
 	}
-	return core.comparePasswordAndHashedPassword(plainTextPassword, hashedPassword)
+	return core.matchPasswordAndPasswordHash(clearTextPassword, passwordHash)
 }
 
-func (core *Core) getUserHashedPassword(
+func (core *Core) getUserPasswordHash(
 	userID iam.UserID,
 ) (hashedPassword string, err error) {
 	err = core.db.
 		QueryRow(
 			`SELECT password `+
-				`FROM user_passwords `+
+				`FROM `+userPasswordTableName+` `+
 				`WHERE user_id = $1 AND d_ts IS NULL`,
 			userID).
 		Scan(&hashedPassword)
@@ -111,8 +114,8 @@ func (core *Core) getUserHashedPassword(
 
 func (core *Core) hashPassword(
 	password string,
-) (encodedHashedPassword string, err error) {
-	params := passwordHashingParams
+) (encodedPasswordHash string, err error) {
+	params := argon2PasswordHashingParamsDefault
 
 	// generate a chryptographically secure random salt
 	salt, err := core.generatePasswordSalt(params.SaltLength)
@@ -130,16 +133,16 @@ func (core *Core) hashPassword(
 	)
 
 	// Base64 encode the salt and hashed password.
-	b64Salt := argon2PasswordHashParamsEncoding.EncodeToString(salt)
-	b64Hash := argon2PasswordHashParamsEncoding.EncodeToString(hash)
+	saltB64 := argon2PasswordHashParamsEncoding.EncodeToString(salt)
+	hashB64 := argon2PasswordHashParamsEncoding.EncodeToString(hash)
 
 	// Return string using the standard encoded hash representation.
-	encodedHashedPassword = fmt.Sprintf(
+	encodedPasswordHash = fmt.Sprintf(
 		"$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
 		argon2.Version, params.Memory, params.Iterations, params.Parallelism,
-		b64Salt, b64Hash)
+		saltB64, hashB64)
 
-	return encodedHashedPassword, nil
+	return encodedPasswordHash, nil
 }
 
 func (core *Core) generatePasswordSalt(n uint32) ([]byte, error) {
@@ -148,40 +151,39 @@ func (core *Core) generatePasswordSalt(n uint32) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return b, nil
 }
 
-func (core *Core) comparePasswordAndHashedPassword(
-	password, encodedHashedPassword string,
+func (core *Core) matchPasswordAndPasswordHash(
+	clearTextPassword, encodedPasswordHash string,
 ) (match bool, err error) {
 	// Extract the parameters, salt and derived key from the encoded password
 	// hash
-	if encodedHashedPassword == "" {
+	if encodedPasswordHash == "" {
 		return false, nil
 	}
 
 	params, salt, hash, err := core.
-		decodePasswordHash(encodedHashedPassword)
+		decodePasswordHash(encodedPasswordHash)
 	if err != nil {
 		return false, err
 	}
 
 	// Derive the key from the other password using the same parameters
-	otherHash := argon2.IDKey([]byte(password), salt,
+	otherHash := argon2.IDKey([]byte(clearTextPassword), salt,
 		params.Iterations, params.Memory, params.Parallelism, params.KeyLength)
 
-	if subtle.ConstantTimeCompare(hash, otherHash) == 1 {
-		return true, nil
+	if subtle.ConstantTimeCompare(hash, otherHash) != 1 {
+		return false, nil
 	}
 
-	return false, nil
+	return true, nil
 }
 
 func (core *Core) decodePasswordHash(
-	encodedHashedPassword string,
+	encodedPasswordHash string,
 ) (params *argon2PasswordHashingParams, salt, hash []byte, err error) {
-	vals := strings.Split(encodedHashedPassword, "$")
+	vals := strings.Split(encodedPasswordHash, "$")
 
 	if len(vals) != 6 {
 		return nil, nil, nil, ErrPasswordHashFormatInvalid

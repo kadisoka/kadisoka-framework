@@ -97,7 +97,7 @@ func NewServer(
 	config ServerConfig,
 	realmInfo realm.Info,
 	iamServerCore *iamserver.Core,
-	webUIURLs *iam.WebUIURLs, //TODO: add this to server core
+	webUIURLs *iam.WebUIURLs, //TODO: add this to server core or add to ServerConfig
 ) (*Server, error) {
 	if webUIURLs == nil || webUIURLs.SignIn == "" {
 		return nil, errors.Msg("requires valid web UI config")
@@ -183,15 +183,25 @@ func initRESTV1Services(
 	signInURL string,
 ) {
 	log.Info().Msg("Initializing terminal service...")
-	terminalSrv := terminal.NewServer(servePath+"/terminals", iamServerCore)
+	terminalSrv := terminal.NewServer(iamServerCore,
+		terminal.ServerConfig{
+			ServePath: servePath + "/terminals",
+		})
 	container.Add(terminalSrv.RestfulWebService())
 
 	log.Info().Msg("Initializing user service...")
-	userSrv := user.NewServer(servePath+"/users", iamServerCore)
+	userSrv := user.NewServer(iamServerCore,
+		user.ServerConfig{
+			ServePath: servePath + "/users",
+		})
 	container.Add(userSrv.RestfulWebService())
 
 	log.Info().Msg("Initializing OAuth 2.0 service...")
-	oauth2Srv, err := oauth2.NewServer(servePath+"/oauth2", iamServerCore, signInURL)
+	oauth2Srv, err := oauth2.NewServer(iamServerCore,
+		oauth2.ServerConfig{
+			ServePath: servePath + "/oauth2",
+			SignInURL: signInURL,
+		})
 	if err != nil {
 		log.Fatal().Err(err).Msg("OAuth 2.0 service initialization")
 	}
@@ -218,7 +228,8 @@ func processSwaggerSpec(
 		},
 	}
 	for k := range swaggerSpec.Paths.Paths {
-		swaggerSpec.Paths.Paths[k] = processOpenAPIPath(swaggerSpec.Paths.Paths[k], secDefs)
+		swaggerSpec.Paths.Paths[k] = processOpenAPIPath(
+			swaggerSpec.Paths.Paths[k], secDefs)
 	}
 	swaggerSpec.SecurityDefinitions = secDefs
 }

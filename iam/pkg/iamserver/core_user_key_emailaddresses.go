@@ -11,11 +11,11 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 )
 
-const userIdentifierEmailAddressTableName = `user_identifier_email_addresses`
+// Key email address is an email address which can be used to sign in.
 
-//TODO(exa): there should be getters for different purpose (e.g.,
-// for login / primary, for display / contact, for actual mailing, for recovery, etc)
-func (core *Core) GetUserIdentifierEmailAddress(
+const userKeyEmailAddressTableName = `user_key_email_address_dt`
+
+func (core *Core) GetUserKeyEmailAddress(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 ) (*iam.EmailAddress, error) {
@@ -23,7 +23,7 @@ func (core *Core) GetUserIdentifierEmailAddress(
 	err := core.db.
 		QueryRow(
 			`SELECT raw_input `+
-				`FROM `+userIdentifierEmailAddressTableName+` `+
+				`FROM `+userKeyEmailAddressTableName+` `+
 				`WHERE user_id=$1 `+
 				`AND d_ts IS NULL AND verification_time IS NOT NULL`,
 			userRef.ID().PrimitiveValue()).
@@ -42,12 +42,12 @@ func (core *Core) GetUserIdentifierEmailAddress(
 }
 
 // The ID of the user which provided email address is their verified primary.
-func (core *Core) getUserIDByIdentifierEmailAddress(
+func (core *Core) getUserIDByKeyEmailAddress(
 	emailAddress iam.EmailAddress,
 ) (ownerUserID iam.UserID, err error) {
 	queryStr :=
 		`SELECT user_id ` +
-			`FROM ` + userIdentifierEmailAddressTableName + ` ` +
+			`FROM ` + userKeyEmailAddressTableName + ` ` +
 			`WHERE local_part = $1 AND domain_part = $2 ` +
 			`AND d_ts IS NULL ` +
 			`AND verification_time IS NOT NULL`
@@ -68,12 +68,12 @@ func (core *Core) getUserIDByIdentifierEmailAddress(
 
 // The ID of the user which provided email address is their primary,
 // verified or not.
-func (core *Core) getUserIDByIdentifierEmailAddressAllowUnverified(
+func (core *Core) getUserIDByKeyEmailAddressAllowUnverified(
 	emailAddress iam.EmailAddress,
 ) (ownerUserRef iam.UserRefKey, verified bool, err error) {
 	queryStr :=
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
-			`FROM ` + userIdentifierEmailAddressTableName + ` ` +
+			`FROM ` + userKeyEmailAddressTableName + ` ` +
 			`WHERE local_part = $1 AND domain_part = $2 ` +
 			`AND d_ts IS NULL ` +
 			`ORDER BY c_ts DESC LIMIT 1`
@@ -93,7 +93,7 @@ func (core *Core) getUserIDByIdentifierEmailAddressAllowUnverified(
 	return iam.NewUserRefKey(ownerUserID), verified, nil
 }
 
-func (core *Core) SetUserIdentifierEmailAddress(
+func (core *Core) SetUserKeyEmailAddress(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 	emailAddress iam.EmailAddress,
@@ -109,9 +109,9 @@ func (core *Core) SetUserIdentifierEmailAddress(
 	}
 
 	existingOwnerUserID, err := core.
-		getUserIDByIdentifierEmailAddress(emailAddress)
+		getUserIDByKeyEmailAddress(emailAddress)
 	if err != nil {
-		return 0, nil, errors.Wrap("getUserIDByIdentifierEmailAddress", err)
+		return 0, nil, errors.Wrap("getUserIDByKeyEmailAddress", err)
 	}
 	if existingOwnerUserID.IsValid() {
 		if existingOwnerUserID != authCtx.UserID() {
@@ -120,7 +120,7 @@ func (core *Core) SetUserIdentifierEmailAddress(
 		return 0, nil, nil
 	}
 
-	alreadyVerified, err := core.setUserIdentifierEmailAddress(
+	alreadyVerified, err := core.setUserKeyEmailAddress(
 		callCtx, authCtx.UserRef(), emailAddress)
 	if err != nil {
 		panic(err)
@@ -146,13 +146,13 @@ func (core *Core) SetUserIdentifierEmailAddress(
 	return
 }
 
-func (core *Core) setUserIdentifierEmailAddress(
+func (core *Core) setUserKeyEmailAddress(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 	emailAddress iam.EmailAddress,
 ) (alreadyVerified bool, err error) {
 	xres, err := core.db.Exec(
-		`INSERT INTO `+userIdentifierEmailAddressTableName+` (`+
+		`INSERT INTO `+userKeyEmailAddressTableName+` (`+
 			`user_id, local_part, domain_part, raw_input, `+
 			`c_ts, c_uid, c_tid `+
 			`) VALUES (`+
@@ -181,7 +181,7 @@ func (core *Core) setUserIdentifierEmailAddress(
 
 	err = core.db.QueryRow(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
-			`FROM `+userIdentifierEmailAddressTableName+` `+
+			`FROM `+userKeyEmailAddressTableName+` `+
 			`WHERE user_id = $1 AND local_part = $2 AND domain_part = $3`,
 		userRef, emailAddress.LocalPart(), emailAddress.DomainPart()).
 		Scan(&alreadyVerified)
@@ -242,7 +242,7 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 	var xres sql.Result
 
 	xres, err = core.db.Exec(
-		`UPDATE `+userIdentifierEmailAddressTableName+` SET (`+
+		`UPDATE `+userKeyEmailAddressTableName+` SET (`+
 			`verification_time, verification_id`+
 			`) = ( `+
 			`$1, $2`+
@@ -258,7 +258,7 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == userIdentifierEmailAddressTableName+`_local_part_domain_part_uidx` {
+			pqErr.Constraint == userKeyEmailAddressTableName+`_local_part_domain_part_uidx` {
 			return false, errors.ArgMsg("emailAddress", "conflict")
 		}
 		return false, err

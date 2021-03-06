@@ -20,7 +20,7 @@ var (
 	errTerminalVerificationConfirmationReplayed = errors.EntMsg("terminal verification confirmation", "replayed")
 )
 
-const terminalTableName = "terminal_t"
+const terminalTableName = "terminal_dt"
 
 func (core *Core) AuthenticateTerminal(
 	terminalRef iam.TerminalRefKey,
@@ -65,7 +65,7 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 
 	// Get the existing owner, whether already verified or not.
 	existingOwnerUserRef, _, err := core.
-		getUserIDByIdentifierPhoneNumberAllowUnverified(phoneNumber)
+		getUserIDByKeyPhoneNumberAllowUnverified(phoneNumber)
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +83,7 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 			panic(err)
 		}
 		_, err = core.
-			setUserIdentifierPhoneNumber(
+			setUserKeyPhoneNumber(
 				callCtx, newUserRef, phoneNumber)
 		if err != nil {
 			panic(err)
@@ -147,7 +147,7 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 
 	// Get the existing owner, whether already verified or not.
 	existingOwnerUserRef, _, err := core.
-		getUserIDByIdentifierEmailAddressAllowUnverified(emailAddress)
+		getUserIDByKeyEmailAddressAllowUnverified(emailAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -165,7 +165,7 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 			panic(err)
 		}
 		_, err = core.
-			setUserIdentifierEmailAddress(
+			setUserKeyEmailAddress(
 				callCtx, newUserRef, emailAddress)
 		if err != nil {
 			panic(err)
@@ -271,7 +271,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 			if !updated {
 				// Let's check if the email address is associated to other user
 				existingOwnerUserID, err := core.
-					getUserIDByIdentifierEmailAddress(*emailAddress)
+					getUserIDByKeyEmailAddress(*emailAddress)
 				if err != nil {
 					panic(err)
 				}
@@ -317,7 +317,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 			if !updated {
 				// Let's check if the phone number is associated to other user
 				existingOwnerUserID, err := core.
-					getUserIDByIdentifierPhoneNumber(*phoneNumber)
+					getUserIDByKeyPhoneNumber(*phoneNumber)
 				if err != nil {
 					panic(err)
 				}
