@@ -164,7 +164,7 @@ func (core *Core) setUserKeyEmailAddress(
 		emailAddress.LocalPart(),
 		emailAddress.DomainPart(),
 		emailAddress.RawInput(),
-		callCtx.RequestReceiveTime(),
+		callCtx.RequestInfo().ReceiveTime,
 		callCtx.Authorization().UserID().PrimitiveValue(),
 		callCtx.Authorization().TerminalID().PrimitiveValue())
 	if err != nil {
@@ -220,7 +220,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 		panic(err)
 	}
 
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 	updated, err = core.
 		ensureUserEmailAddressVerifiedFlag(
 			authCtx.UserID(), *emailAddress,

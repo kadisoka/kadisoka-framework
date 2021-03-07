@@ -14,7 +14,8 @@ import (
 // automatically adds the name of the package where this function was called,
 // not when logging.
 func NewPkgLogger() Logger {
-	return Logger{PkgLogger: foundationlog.NewPkgLoggerInternal(foundationlog.CallerPkgName())}
+	return Logger{PkgLogger: foundationlog.
+		NewPkgLoggerInternal(foundationlog.CallerPkgName())}
 }
 
 // Logger wraps other logger to provide additional functionalities.
@@ -57,12 +58,12 @@ func (logger Logger) WithContext(
 			Str("url", urlStr)
 		if !hasAuth {
 			logCtx = logCtx.
-				Str("remote_addr", ctx.RemoteAddress()).
+				Str("remote_addr", ctx.OriginInfo().Address).
 				Str("user_agent", req.UserAgent())
 		}
 	}
 
-	if reqID := ctx.RequestID(); reqID != nil {
+	if reqID := ctx.RequestInfo().ID; reqID != nil {
 		logCtx = logCtx.
 			Str("request_id", reqID.String())
 	}

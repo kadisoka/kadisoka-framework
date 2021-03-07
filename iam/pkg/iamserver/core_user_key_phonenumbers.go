@@ -226,7 +226,7 @@ func (core *Core) setUserKeyPhoneNumber(
 	userRef iam.UserRefKey,
 	phoneNumber iam.PhoneNumber,
 ) (alreadyVerified bool, err error) {
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userKeyPhoneNumberTableName+` (`+
@@ -290,7 +290,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		return false, errors.Wrap("pnVerifier.ConfirmVerification", err)
 	}
 
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 	phoneNumber, err := core.pnVerifier.
 		GetPhoneNumberByVerificationID(verificationID)
 	// An unexpected condition which could cause bad state

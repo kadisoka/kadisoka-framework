@@ -16,7 +16,7 @@ type RequestID = uuid.UUID
 // CallContext holds information obtained from the request. This information
 // are generally obtained from the request's metadata (e.g., HTTP request
 // header).
-//TODO: Time when the context was created.
+//TODO: proxied context.
 type CallContext interface {
 	context.Context
 
@@ -27,30 +27,34 @@ type CallContext interface {
 	//
 	MethodName() string
 
-	// RequestID returns the idempotency token, if provided in the call request.
-	RequestID() *RequestID
+	// RequestInfo returns some details about the request.
+	RequestInfo() CallRequestInfo
 
-	// RemoteAddress returns the IP address where this call was initiated
-	// from. This method might return empty string if it's unable to resolve
-	// the address (e.g., behind a proxy and the proxy didn't forward the
-	// the origin IP).
-	RemoteAddress() string
+	// OriginInfo returns some details about the caller.
+	OriginInfo() CallOriginInfo
+}
 
-	// RemoteEnvironmentString returns some details of the environment
-	// where the application which made the request runs on. For web app,
-	// this method usually returns the browser's user-agent string.
-	RemoteEnvironmentString() string
+type CallRequestInfo struct {
+	// ID returns the idempotency token if provided in the call request.
+	ID *RequestID
 
-	// RequestReceiveTime returns the time when request was accepted by
+	// ReceiveTime returns the time when request was accepted by
 	// the handler.
-	RequestReceiveTime() time.Time
+	ReceiveTime time.Time
 }
 
-type CallInfo struct {
-	MethodName string
-	RequestID  *RequestID
-}
-
-type CallRemoteInfo struct {
+type CallOriginInfo struct {
+	// Address returns the IP address or hostname where this call was initiated
+	// from. This field might be empty if it's not possible to resolve
+	// the address (e.g., the server is behind a proxy or a load-balancer and
+	// they didn't forward the the origin IP).
 	Address string
+
+	// EnvironmentString returns some details of the environment,
+	// might include application's version information, where the application
+	// which made the request runs on. For web app, this method usually
+	// returns the browser's user-agent string.
+	EnvironmentString string
+
+	Locales []string
 }

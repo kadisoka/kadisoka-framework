@@ -222,7 +222,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 	// was requested. Each of the implementation required to implement
 	// limit the number of failed attempts.
 
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 
 	userTermModel, err := core.getTerminal(terminalRef.ID())
 	if err != nil {
@@ -440,7 +440,8 @@ func (core *Core) RegisterTerminal(
 	// - check verification type against client type
 	// - assert platform type againts client data
 
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
+	originInfo := callCtx.OriginInfo()
 
 	//var verificationID int64
 	var termSecret string
@@ -472,8 +473,8 @@ func (core *Core) RegisterTerminal(
 		ctxTime,
 		authCtx.UserIDPtr(),
 		authCtx.TerminalIDPtr(),
-		callCtx.RemoteAddress(),
-		callCtx.RemoteEnvironmentString(),
+		originInfo.Address,
+		originInfo.EnvironmentString,
 		input.DisplayName,
 		input.AcceptLanguage, //TODO: get from context
 		input.VerificationType,
@@ -505,7 +506,7 @@ func (core *Core) setUserTerminalVerified(
 			`UPDATE `+terminalTableName+` `+
 				`SET (secret, verification_time) = ($1, $2) `+
 				`WHERE id = $3 AND verification_time IS NULL`,
-			termSecret, callCtx.RequestReceiveTime(), terminalID)
+			termSecret, callCtx.RequestInfo().ReceiveTime, terminalID)
 	if err != nil {
 		return "", err
 	}

@@ -178,7 +178,7 @@ func (core *Core) DeleteUserAccount(
 			`UPDATE `+userTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
 				"WHERE id = $2 AND d_ts IS NULL",
-			callCtx.RequestReceiveTime(),
+			callCtx.RequestInfo().ReceiveTime,
 			authCtx.UserID().PrimitiveValue(),
 			authCtx.TerminalID().PrimitiveValue(),
 			input.DeletionNotes)
@@ -196,7 +196,7 @@ func (core *Core) DeleteUserAccount(
 				`UPDATE `+userKeyPhoneNumberTableName+` `+
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
-				callCtx.RequestReceiveTime(),
+				callCtx.RequestInfo().ReceiveTime,
 				authCtx.UserID().PrimitiveValue(),
 				authCtx.TerminalID().PrimitiveValue())
 		}
@@ -206,7 +206,7 @@ func (core *Core) DeleteUserAccount(
 				`UPDATE `+userProfileImageKeyTableName+` `+
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
-				callCtx.RequestReceiveTime(),
+				callCtx.RequestInfo().ReceiveTime,
 				authCtx.UserID().PrimitiveValue(),
 				authCtx.TerminalID().PrimitiveValue())
 		}
@@ -248,7 +248,7 @@ func (core *Core) SetUserProfileImageURL(
 			`UPDATE `+userKeyPhoneNumberTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE user_id = $2 AND d_ts IS NULL",
-			callCtx.RequestReceiveTime(),
+			callCtx.RequestInfo().ReceiveTime,
 			authCtx.UserID().PrimitiveValue(),
 			authCtx.TerminalID().PrimitiveValue())
 		if txErr != nil {
@@ -374,7 +374,7 @@ func (core *Core) CreateUserAccount(
 				`$1, $2, $3, $4`+
 				`)`,
 			newUserID,
-			callCtx.RequestReceiveTime(),
+			callCtx.RequestInfo().ReceiveTime,
 			callCtx.Authorization().UserIDPtr(),
 			callCtx.Authorization().TerminalIDPtr())
 	if err != nil {

@@ -10,7 +10,8 @@ import (
 // automatically adds the name of the package where this function was called,
 // not when logging.
 func NewPkgLogger() Logger {
-	return Logger{PkgLogger: foundationlog.NewPkgLoggerInternal(foundationlog.CallerPkgName())}
+	return Logger{PkgLogger: foundationlog.
+		NewPkgLoggerInternal(foundationlog.CallerPkgName())}
 }
 
 // Logger is a specialized logger for logging with IAM-specific contexes.
@@ -50,7 +51,7 @@ func (logger Logger) WithContext(
 	logCtx = logCtx.
 		Str("method", ctx.MethodName())
 
-	if reqID := ctx.RequestID(); reqID != nil {
+	if reqID := ctx.RequestInfo().ID; reqID != nil {
 		logCtx = logCtx.
 			Str("request_id", reqID.String())
 	}

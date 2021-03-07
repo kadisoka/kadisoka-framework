@@ -41,8 +41,8 @@ type Core struct {
 
 	iam.ServiceClient //TODO: not specifically client
 
-	clientDataProvider iam.ClientDataProvider
-	mediaStore         *mediastore.Store
+	applicationDataProvider iam.ApplicationDataProvider
+	mediaStore              *mediastore.Store
 
 	eaVerifier *eav10n.Verifier
 	pnVerifier *pnv10n.Verifier
@@ -74,7 +74,7 @@ func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
 
 	// NOTE: We should store these data into a database instead of CSV file.
 	clientDataCSVFilename := filepath.Join(secretFilesDir, "clients.csv")
-	clientDataProvider, err := newClientStaticDataProviderFromCSVFileByName(
+	applicationDataProvider, err := newClientStaticDataProviderFromCSVFileByName(
 		clientDataCSVFilename, 1)
 	if err != nil {
 		return nil, errors.Wrap("client data loading", err)
@@ -109,7 +109,7 @@ func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
 		db:                        iamDB,
 		registeredUserIDCache:     registeredUserIDCache,
 		deletedUserAccountIDCache: deletedUserAccountIDCache,
-		clientDataProvider:        clientDataProvider,
+		applicationDataProvider:   applicationDataProvider,
 		mediaStore:                mediaStore,
 		eaVerifier:                eaVerifier,
 		pnVerifier:                pnVerifier,

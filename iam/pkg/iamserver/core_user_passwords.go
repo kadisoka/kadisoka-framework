@@ -51,7 +51,7 @@ func (core *Core) SetUserPassword(
 		return errors.New("forbidden")
 	}
 
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 
 	passwordHash, err := core.hashPassword(clearTextPassword)
 	if err != nil {

@@ -19,7 +19,7 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 		`UPDATE `+terminalFCMRegistrationTokenTableName+` `+
 			"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 			"WHERE terminal_id = $4 AND token = $5 AND d_ts IS NULL",
-		callCtx.RequestReceiveTime(), authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+		callCtx.RequestInfo().ReceiveTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
 		terminalID.PrimitiveValue(), token)
 	return err
 }
@@ -71,7 +71,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 			`UPDATE `+terminalFCMRegistrationTokenTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE terminal_id = $4 AND  d_ts IS NULL",
-			callCtx.RequestReceiveTime(), authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+			callCtx.RequestInfo().ReceiveTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
 			terminalRef.ID().PrimitiveValue())
 		if err != nil {
 			return err

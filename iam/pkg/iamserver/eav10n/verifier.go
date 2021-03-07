@@ -113,7 +113,7 @@ func (verifier *Verifier) StartVerification(
 	}
 	authCtx := callCtx.Authorization()
 
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 
 	var prevAttempts int16
 	var prevVerificationID int64
@@ -196,7 +196,7 @@ func (verifier *Verifier) ConfirmVerification(
 	}
 	authCtx := callCtx.Authorization()
 
-	ctxTime := callCtx.RequestReceiveTime()
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 	var dbData verificationDBModel
 
 	err := verifier.db.QueryRowx(

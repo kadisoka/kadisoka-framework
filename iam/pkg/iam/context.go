@@ -22,9 +22,9 @@ var (
 
 func NewEmptyCallContext(ctx context.Context) CallContext {
 	return &callContext{
-		Context:            ctx,
-		authorization:      newEmptyAuthorization(),
-		requestReceiveTime: time.Now().UTC(),
+		Context:       ctx,
+		authorization: newEmptyAuthorization(),
+		requestInfo:   api.CallRequestInfo{ReceiveTime: time.Now().UTC()},
 	}
 }
 
@@ -38,26 +38,26 @@ type CallContext interface {
 func newCallContext(
 	ctx context.Context,
 	authCtx *Authorization,
-	remoteAddress string,
-	remoteEnvString string,
+	originInfo api.CallOriginInfo,
 	requestID *api.RequestID,
 ) CallContext {
 	if authCtx == nil {
 		panic("authCtx must not be nil")
 	}
-	return &callContext{ctx, authCtx, remoteAddress, remoteEnvString,
-		requestID, time.Now().UTC()}
+	return &callContext{ctx, authCtx, api.CallRequestInfo{
+		ID:          requestID,
+		ReceiveTime: time.Now().UTC(),
+	}, originInfo,
+	}
 }
 
 var _ CallContext = &callContext{}
 
 type callContext struct {
 	context.Context
-	authorization      *Authorization
-	remoteAddress      string
-	remoteEnvString    string
-	requestID          *api.RequestID
-	requestReceiveTime time.Time
+	authorization *Authorization
+	requestInfo   api.CallRequestInfo
+	originInfo    api.CallOriginInfo
 }
 
 func (ctx callContext) Authorization() Authorization {
@@ -75,10 +75,6 @@ func (ctx *callContext) IsUserContext() bool {
 
 func (ctx *callContext) MethodName() string { return "" }
 
-func (ctx *callContext) RequestID() *api.RequestID { return ctx.requestID }
+func (ctx *callContext) RequestInfo() api.CallRequestInfo { return ctx.requestInfo }
 
-func (ctx *callContext) RemoteAddress() string { return ctx.remoteAddress }
-
-func (ctx *callContext) RemoteEnvironmentString() string { return ctx.remoteEnvString }
-
-func (ctx *callContext) RequestReceiveTime() time.Time { return ctx.requestReceiveTime }
+func (ctx *callContext) OriginInfo() api.CallOriginInfo { return ctx.originInfo }

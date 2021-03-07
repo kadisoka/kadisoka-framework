@@ -15,7 +15,7 @@ import (
 )
 
 type ServiceClient interface {
-	ServiceClientServer
+	ServiceClientServer //TODO: a service client might not want to be a server
 
 	GRPCServiceClient
 	RESTServiceClient

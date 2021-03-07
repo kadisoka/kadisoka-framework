@@ -30,7 +30,7 @@ type Application struct {
 	Data ApplicationData
 }
 
-type ClientDataProvider interface {
+type ApplicationDataProvider interface {
 	GetApplication(id ApplicationRefKey) (*Application, error)
 }
 
