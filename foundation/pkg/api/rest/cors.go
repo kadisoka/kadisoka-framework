@@ -15,9 +15,9 @@ type CORSFilterConfig struct {
 	AllowedDomains string  `env:"ALLOWED_DOMAINS"`
 }
 
-func SetUpCORSFilterByEnv(restContainer *restful.Container, envPrefix string) error {
+func SetUpCORSFilterByEnv(restContainer *restful.Container, envVarsPrefix string) error {
 	var cfg CORSFilterConfig
-	err := stev.LoadEnv(envPrefix, &cfg)
+	err := stev.LoadEnv(envVarsPrefix, &cfg)
 	if err != nil {
 		return errors.Wrap("config loading from environment variables", err)
 	}

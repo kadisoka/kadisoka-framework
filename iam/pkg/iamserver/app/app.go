@@ -18,12 +18,12 @@ import (
 
 var log = logging.NewPkgLogger()
 
-func NewByEnv(envPrefix string, defaultConfig *Config) (*App, error) {
+func NewByEnv(envVarsPrefix string, defaultConfig *Config) (*App, error) {
 	cfg := defaultConfig
 	if cfg == nil {
 		cfg = &Config{}
 	}
-	err := stev.LoadEnv(envPrefix, cfg)
+	err := stev.LoadEnv(envVarsPrefix, cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("App config loading")
 	}

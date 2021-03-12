@@ -52,7 +52,7 @@ func initApp() error {
 		log.Fatal().Err(err).Msg("")
 	}
 
-	realmInfo, err := realm.InfoFromEnvOrDefault()
+	realmInfo, err := realm.InfoFromEnvOrDefault("")
 	if err != nil {
 		log.Fatal().Err(err).Msg("RealmInfo loading")
 	}

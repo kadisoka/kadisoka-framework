@@ -11,7 +11,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 )
 
-const EnvPrefixDefault = "APP_"
+const EnvVarsPrefixDefault = "APP_"
 
 type App interface {
 	RealmInfo() realm.Info
@@ -40,7 +40,7 @@ func DefaultInfo() Info {
 
 func InfoFromEnvOrDefault() (Info, error) {
 	info := DefaultInfo()
-	err := stev.LoadEnv(EnvPrefixDefault, &info)
+	err := stev.LoadEnv(EnvVarsPrefixDefault, &info)
 	if err != nil {
 		return DefaultInfo(), errors.Wrap("info loading from environment variables", err)
 	}
@@ -107,7 +107,7 @@ func InitByEnvDefault() (App, error) {
 	if err != nil {
 		return nil, errors.Wrap("app info loading", err)
 	}
-	realmInfo, err := realm.InfoFromEnvOrDefault()
+	realmInfo, err := realm.InfoFromEnvOrDefault("")
 	if err != nil {
 		return nil, errors.Wrap("realm info loading", err)
 	}

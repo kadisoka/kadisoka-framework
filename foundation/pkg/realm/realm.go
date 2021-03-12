@@ -10,7 +10,7 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
-const EnvPrefixDefault = "REALM_"
+const EnvVarsPrefixDefault = "REALM_"
 
 const (
 	NameDefault                            = "Kadisoka"
@@ -33,7 +33,8 @@ func DefaultInfo() Info {
 type Info struct {
 	// Name of the realm
 	Name string
-	// Canonical URL of the realm
+	// Canonical URL of the realm. This URL usually refers to the website
+	// of the realm.
 	URL                             string
 	TermsOfServiceURL               string
 	PrivacyPolicyURL                string
@@ -42,9 +43,12 @@ type Info struct {
 	NotificationEmailsSenderAddress string
 }
 
-func InfoFromEnvOrDefault() (Info, error) {
+func InfoFromEnvOrDefault(envVarsPrefix string) (Info, error) {
 	info := DefaultInfo()
-	err := stev.LoadEnv(EnvPrefixDefault, &info)
+	if envVarsPrefix == "" {
+		envVarsPrefix = EnvVarsPrefixDefault
+	}
+	err := stev.LoadEnv(envVarsPrefix, &info)
 	if err != nil {
 		return DefaultInfo(), errors.Wrap("info loading from environment variables", err)
 	}

@@ -36,12 +36,12 @@ func NewPkgLoggerInternal(name string) PkgLogger {
 //TODO: implement lookup by key which constructed from the package name
 // e.g., for package example.com/mypackage, we will lookup the environment
 // variables prefixed with LOG_EXAMPLE_COM_MYPACKAGE_ .
-const envPrefix = "LOG_"
+const envVarsPrefix = "LOG_"
 
 func newLogger() Logger {
 	//TODO: for the default, we detect the environment we are running on.
 	// e.g., if it's local, it's pretty as the default.
-	if logPretty := os.Getenv(envPrefix + "PRETTY"); logPretty == "true" {
+	if logPretty := os.Getenv(envVarsPrefix + "PRETTY"); logPretty == "true" {
 		return zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 	}
 	return zerolog.New(os.Stderr)
@@ -50,7 +50,7 @@ func newLogger() Logger {
 func newLoggerByEnv() Logger {
 	logger := newLogger()
 
-	if logLevelStr := os.Getenv(envPrefix + "LEVEL"); logLevelStr != "" {
+	if logLevelStr := os.Getenv(envVarsPrefix + "LEVEL"); logLevelStr != "" {
 		logLevel, err := zerolog.ParseLevel(logLevelStr)
 		if err != nil {
 			panic(err)

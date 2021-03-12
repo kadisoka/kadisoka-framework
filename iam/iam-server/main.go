@@ -51,9 +51,9 @@ func main() {
 }
 
 func initApp() (app.App, error) {
-	envPrefix := "IAM_"
+	envVarsPrefix := "IAM_"
 
-	realmInfo, err := realm.InfoFromEnvOrDefault()
+	realmInfo, err := realm.InfoFromEnvOrDefault("")
 	if err != nil {
 		log.Fatal().Err(err).Msg("RealmInfo loading")
 	}
@@ -87,7 +87,7 @@ func initApp() (app.App, error) {
 		},
 	}
 
-	srvApp, err := srvapp.NewByEnv(envPrefix, &cfg)
+	srvApp, err := srvapp.NewByEnv(envVarsPrefix, &cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("App initialization")
 	}

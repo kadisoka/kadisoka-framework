@@ -52,8 +52,8 @@ const (
 	serverOAuth2TokenPath = "/oauth2/token"
 )
 
-func NewServiceClientSimple(instID string, envPrefix string) (ServiceClient, error) {
-	cfg, err := ServiceClientConfigFromEnv(envPrefix, nil)
+func NewServiceClientSimple(instID string, envVarsPrefix string) (ServiceClient, error) {
+	cfg, err := ServiceClientConfigFromEnv(envVarsPrefix, nil)
 	if err != nil {
 		return nil, errors.Wrap("config loading", err)
 	}

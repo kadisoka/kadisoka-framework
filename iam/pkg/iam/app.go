@@ -6,13 +6,13 @@ import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 )
 
-func NewAppSimple(envVarPrefix string) (*App, error) {
+func NewAppSimple(envVarsPrefix string) (*App, error) {
 	appApp, err := app.InitByEnvDefault()
 	if err != nil {
 		return nil, errors.Wrap("app initialization", err)
 	}
 
-	iamClient, err := NewServiceClientSimple(appApp.InstanceID(), envVarPrefix)
+	iamClient, err := NewServiceClientSimple(appApp.InstanceID(), envVarsPrefix)
 	if err != nil {
 		return nil, errors.Wrap("service client initialization", err)
 	}

@@ -5,9 +5,9 @@ import (
 )
 
 // ConfigFromEnv populate the configuration by looking up the environment variables.
-func ConfigFromEnv(envPrefix string) (*Config, error) {
+func ConfigFromEnv(envVarsPrefix string) (*Config, error) {
 	cfg := Config{}
-	err := stev.LoadEnv(envPrefix, &cfg)
+	err := stev.LoadEnv(envVarsPrefix, &cfg)
 	if err != nil {
 		return nil, err
 	}
