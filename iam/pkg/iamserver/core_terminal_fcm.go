@@ -7,6 +7,9 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
+// Interface conformance assertion.
+var _ iam.TerminalFCMRegistrationTokenService = &Core{}
+
 const terminalFCMRegistrationTokenTableName = "terminal_fcm_registration_token_dt"
 
 func (core *Core) DisposeTerminalFCMRegistrationToken(
@@ -24,9 +27,9 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 	return err
 }
 
-func (core *Core) ListTerminalIDFCMRegistrationTokensByUser(
-	ownerUserID iam.UserID,
-) ([]iam.TerminalIDFirebaseInstanceToken, error) {
+func (core *Core) ListTerminalFCMRegistrationTokensByUser(
+	ownerUserRef iam.UserRefKey,
+) (tokens map[iam.TerminalID]string, err error) {
 	//TODO: use cache service
 
 	userTermRows, err := core.db.Query(
@@ -35,19 +38,20 @@ func (core *Core) ListTerminalIDFCMRegistrationTokensByUser(
 			`JOIN `+terminalFCMRegistrationTokenTableName+` tft `+
 			"ON tft.terminal_id=tid.id AND tft.d_ts IS NULL "+
 			"WHERE tid.user_id=$1 AND tid.verification_time IS NOT NULL",
-		ownerUserID)
+		ownerUserRef.ID().PrimitiveValue())
 	if err != nil {
 		return nil, err
 	}
 	defer userTermRows.Close()
 
-	var result []iam.TerminalIDFirebaseInstanceToken
+	result := map[iam.TerminalID]string{}
 	for userTermRows.Next() {
-		var item iam.TerminalIDFirebaseInstanceToken
-		if err = userTermRows.Scan(&item.TerminalID, &item.Token); err != nil {
+		var terminalID iam.TerminalID
+		var token string
+		if err = userTermRows.Scan(&terminalID, &token); err != nil {
 			return nil, err
 		}
-		result = append(result, item)
+		result[terminalID] = token
 	}
 	if err = userTermRows.Err(); err != nil {
 		return nil, err
@@ -64,14 +68,26 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 	if callCtx == nil {
 		return errors.ArgMsg("callCtx", "missing")
 	}
+
+	ctxTermRef := callCtx.Authorization().TerminalRef()
+	ctxAppID := ctxTermRef.Application().ID()
+	if !ctxAppID.IsFirstParty() || !ctxAppID.IsService() {
+		return errors.ArgMsg("callCtx", "unauthorized application type")
+	}
+	if !ctxTermRef.User().EqualsUserRefKey(userRef) {
+		return errors.ArgMsg("callCtx", "terminal user mismatch")
+	}
+
 	authCtx := callCtx.Authorization()
 
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
 			`UPDATE `+terminalFCMRegistrationTokenTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
-				"WHERE terminal_id = $4 AND  d_ts IS NULL",
-			callCtx.RequestInfo().ReceiveTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+				"WHERE terminal_id = $4 AND d_ts IS NULL",
+			callCtx.RequestInfo().ReceiveTime,
+			authCtx.UserID().PrimitiveValue(),
+			authCtx.TerminalID().PrimitiveValue(),
 			terminalRef.ID().PrimitiveValue())
 		if err != nil {
 			return err

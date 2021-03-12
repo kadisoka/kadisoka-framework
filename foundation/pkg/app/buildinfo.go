@@ -1,5 +1,7 @@
 package app
 
+import "sync"
+
 type BuildInfo struct {
 	RevisionID string
 	Timestamp  string
@@ -10,12 +12,16 @@ var (
 	buildTimestamp  string = "unknown"
 )
 
+var buildInfoSetOnce sync.Once
+
 func SetBuildInfo(
 	revisionID string,
 	timestamp string,
 ) {
-	buildRevisionID = revisionID
-	buildTimestamp = timestamp
+	buildInfoSetOnce.Do(func() {
+		buildRevisionID = revisionID
+		buildTimestamp = timestamp
+	})
 }
 
 func GetBuildInfo() BuildInfo {

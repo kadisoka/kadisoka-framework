@@ -15,7 +15,7 @@ services:
       - POSTGRES_PASSWORD=hdig8g4g49htuhe
 
   iam-object-store:
-    image: minio/minio:RELEASE.2021-02-11T08-23-43Z
+    image: minio/minio:latest
     ports:
       - "11101:9000"
     volumes:

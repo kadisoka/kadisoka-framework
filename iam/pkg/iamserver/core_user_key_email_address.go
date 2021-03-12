@@ -11,7 +11,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 )
 
-// Key email address is an email address which can be used to sign in.
+// Interface conformance assertion.
+var _ iam.UserKeyEmailAddressService = &Core{}
 
 const userKeyEmailAddressTableName = `user_key_email_address_dt`
 

@@ -37,9 +37,16 @@ type TerminalInfo struct {
 	AcceptLanguage []language.Tag
 }
 
-type TerminalIDFirebaseInstanceToken struct {
-	TerminalID TerminalID
-	Token      string
+//TODO: this does not belong to C2S service, but only in S2S service
+type TerminalFCMRegistrationTokenService interface {
+	ListTerminalFCMRegistrationTokensByUser(
+		ownerUserRef UserRefKey,
+	) (tokens map[TerminalID]string, err error)
+	DisposeTerminalFCMRegistrationToken(
+		callCtx CallContext,
+		terminalID TerminalID,
+		token string,
+	) error
 }
 
 // JSONV1 models

@@ -8,26 +8,8 @@ type UserService interface {
 	UserAccountService
 	UserProfileService
 
-	GetUserKeyPhoneNumber(
-		callCtx CallContext,
-		userID UserID,
-	) (*PhoneNumber, error)
-
-	GetUserKeyEmailAddress(
-		callCtx CallContext,
-		userID UserID,
-	) (*EmailAddress, error)
-}
-
-//TODO: this does not belong to C2S service, but only in S2S service
-type UserTerminalService interface {
-	ListUserTerminalIDFirebaseInstanceTokens(
-		ownerUserID UserID,
-	) ([]TerminalIDFirebaseInstanceToken, error)
-	DeleteUserTerminalFCMRegistrationToken(
-		authCtx *Authorization,
-		userID UserID, terminalID TerminalID, token string,
-	) error
+	UserKeyPhoneNumberService
+	UserKeyEmailAddressService
 }
 
 var (

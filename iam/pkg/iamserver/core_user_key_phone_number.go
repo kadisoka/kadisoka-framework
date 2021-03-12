@@ -13,7 +13,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
-// Key phone number is a phone number which can be used to sign in.
+// Interface conformance assertion.
+var _ iam.UserKeyPhoneNumberService = &Core{}
 
 const userKeyPhoneNumberTableName = `user_key_phone_number_dt`
 

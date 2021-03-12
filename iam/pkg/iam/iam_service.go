@@ -8,5 +8,5 @@ type IAMService interface {
 	TerminalService
 
 	// This below is reserverd for S2S services.
-	UserTerminalService
+	TerminalFCMRegistrationTokenService
 }

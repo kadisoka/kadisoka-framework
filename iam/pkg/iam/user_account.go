@@ -1,16 +1,15 @@
 package iam
 
 type UserAccountService interface {
-	// IsUserIDRegistered is to check if the user ID is trully registered to
-	// system.
-	IsUserIDRegistered(userID UserID) bool
+	UserIDService
 
 	UserAccountStateService
 
 	// DeleteUserAccount deletes an user account based identfied by userIDToDelete.
+	//TODO: returns the revision ID of the account.
 	DeleteUserAccount(
 		callCtx CallContext,
-		userIDToDelete UserID,
+		userRefToDelete UserRefKey,
 		input UserAccountDeleteInput,
 	) (deleted bool, err error)
 }

@@ -7,11 +7,11 @@ import (
 type UserProfileService interface {
 	GetUserInfoV1(
 		callCtx CallContext,
-		userID UserID,
+		userRef UserRefKey,
 	) (*iampb.UserInfoData, error)
 	GetUserBaseProfile(
 		callCtx CallContext,
-		userID UserID,
+		userRef UserRefKey,
 	) (*UserBaseProfileData, error)
 }
 

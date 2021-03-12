@@ -14,54 +14,10 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
+// Interface conformance assertion.
+var _ iam.UserAccountService = &Core{}
+
 const userTableName = "user_dt"
-const userProfileDisplayNameTableName = "user_display_name_dt"
-const userProfileImageKeyTableName = "user_profile_image_key_dt"
-
-func (core *Core) GetUserBaseProfile(
-	callCtx iam.CallContext,
-	userID iam.UserRefKey,
-) (*iam.UserBaseProfileData, error) {
-	if callCtx == nil {
-		return nil, errors.ArgMsg("callCtx", "missing")
-	}
-	//TODO(exa): ensure that the context user has the privilege
-
-	var user iam.UserBaseProfileData
-	var displayName *string
-	var profileImageURL *string
-
-	err := core.db.
-		QueryRow(
-			`SELECT ua.id, `+
-				`CASE WHEN ua.d_ts IS NULL THEN false ELSE true END AS is_deleted, `+
-				`udn.display_name, upiu.profile_image_key `+
-				`FROM `+userTableName+` AS ua `+
-				`LEFT JOIN `+userProfileDisplayNameTableName+` udn ON udn.user_id = ua.id `+
-				`AND udn.d_ts IS NULL `+
-				`LEFT JOIN `+userProfileImageKeyTableName+` upiu ON upiu.user_id = ua.id `+
-				`AND upiu.d_ts IS NULL `+
-				`WHERE ua.id = $1`,
-			userID).
-		Scan(&user.RefKey, &user.IsDeleted, &displayName, &profileImageURL)
-	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
-			return nil, nil
-		default:
-			return nil, err
-		}
-	}
-
-	if displayName != nil {
-		user.DisplayName = *displayName
-	}
-	if profileImageURL != nil {
-		user.ProfileImageURL = core.BuildUserProfileImageURL(*profileImageURL)
-	}
-
-	return &user, nil
-}
 
 // GetUserAccountState retrieves the state of an user account. It includes
 // the existence of the ID, and wether the account has been deleted.
@@ -116,29 +72,6 @@ func (core *Core) GetUserAccountState(
 	return &iam.UserAccountState{
 		Deleted: accountDeleted,
 	}, nil
-}
-
-// IsUserIDRegistered is used to determine that a user ID has been registered.
-// It's not checking if the account is active or not.
-//
-// This function is generally cheap if the user ID has been registered.
-func (core *Core) IsUserIDRegistered(id iam.UserID) bool {
-	// Look up for an user ID in the cache.
-	if _, idRegistered := core.registeredUserIDCache.Get(id); idRegistered {
-		return true
-	}
-
-	idRegistered, _, err := core.
-		getUserAccountState(id)
-	if err != nil {
-		panic(err)
-	}
-
-	if idRegistered {
-		core.registeredUserIDCache.Add(id, nil)
-	}
-
-	return idRegistered
 }
 
 func (core *Core) getUserAccountState(
@@ -269,48 +202,6 @@ func (core *Core) SetUserProfileImageURL(
 	})
 }
 
-func (core *Core) GetUserInfoV1(
-	callCtx iam.CallContext,
-	userID iam.UserRefKey,
-) (*iampb.UserInfoData, error) {
-	//TODO: access control
-
-	userBaseProfile, err := core.
-		GetUserBaseProfile(callCtx, userID)
-	if err != nil {
-		panic(err)
-	}
-	baseProfile := &iampb.UserBaseProfileData{
-		DisplayName:     userBaseProfile.DisplayName,
-		ProfileImageUrl: userBaseProfile.ProfileImageURL,
-	}
-
-	var deactivation *iampb.UserAccountDeactivationData
-	if userBaseProfile.IsDeleted {
-		deactivation = &iampb.UserAccountDeactivationData{
-			Deactivated: true,
-		}
-	}
-	accountInfo := &iampb.UserAccountInfoData{
-		Verification: &iampb.UserAccountVerificationData{
-			Verified: true, //TODO: actual value
-		},
-		Deactivation: deactivation,
-	}
-
-	contactInfo, err := core.
-		GetUserContactInformation(callCtx, userID)
-	if err != nil {
-		panic(err)
-	}
-
-	return &iampb.UserInfoData{
-		AccountInfo: accountInfo,
-		BaseProfile: baseProfile,
-		ContactInfo: contactInfo,
-	}, nil
-}
-
 func (core *Core) GetUserContactInformation(
 	callCtx iam.CallContext,
 	userID iam.UserRefKey,
@@ -327,11 +218,6 @@ func (core *Core) GetUserContactInformation(
 	return &iampb.UserContactInfoData{
 		PhoneNumber: userPhoneNumber.String(),
 	}, nil
-}
-
-func (core *Core) isUserProfileImageURLAllowed(profileImageURL string) bool {
-	//TODO(exa): limit profile image url to certain hosts or keep only the filename
-	return true
 }
 
 func (core *Core) ensureOrNewUserRef(
