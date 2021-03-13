@@ -175,16 +175,16 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 	}
 
 	if userRef.IsValid() {
-		userAccountState, err := authServer.iamServerCore.
-			GetUserAccountState(userRef)
+		userInstState, err := authServer.iamServerCore.
+			GetUserInstanceState(userRef)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).Str("terminal", termRef.AZERText()).Msg("Terminal user account state")
 			return nil, grpcerrs.Error(err)
 		}
-		if userAccountState == nil || !!userAccountState.IsAccountActive() {
+		if userInstState == nil || !userInstState.IsInstanceActive() {
 			var status string
-			if userAccountState == nil {
+			if userInstState == nil {
 				status = "not exist"
 			} else {
 				status = "deleted"

@@ -246,7 +246,9 @@ func loadPrivateKeyFromPEMFile(
 		if err != nil {
 			return nil, err
 		}
-		break
+		if len(fileBytes) > 0 {
+			break
+		}
 	}
 
 	pemData, _ := pem.Decode(fileBytes)

@@ -25,3 +25,13 @@ type Config struct {
 	GRPCEnabled  bool                `env:"GRPC_ENABLED"`
 	GRPC         *grpc.ServerConfig  `env:"GRPC"`
 }
+
+func (Config) EnvVarsDocs() map[string]string {
+	return map[string]string{
+		"HTTPBasePath": "The default serving path for all HTTP services, e.g., " +
+			"web UI and REST. Individual HTTP services might accept specific " +
+			"serve path in their configurations.",
+		"WebUIEnabled": "The master flag for enabling/disabling serving the " +
+			"web UI service.",
+	}
+}

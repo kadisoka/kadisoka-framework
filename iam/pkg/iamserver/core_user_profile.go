@@ -25,6 +25,7 @@ func (core *Core) GetUserBaseProfile(
 	//TODO(exa): ensure that the context user has the privilege
 
 	var user iam.UserBaseProfileData
+	var deletion iam.UserInstanceDeletionData
 	var displayName *string
 	var profileImageURL *string
 
@@ -40,7 +41,7 @@ func (core *Core) GetUserBaseProfile(
 				`AND upiu.d_ts IS NULL `+
 				`WHERE ua.id = $1`,
 			userID).
-		Scan(&user.RefKey, &user.IsDeleted, &displayName, &profileImageURL)
+		Scan(&user.RefKey, &deletion.Deleted, &displayName, &profileImageURL)
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -48,6 +49,10 @@ func (core *Core) GetUserBaseProfile(
 		default:
 			return nil, err
 		}
+	}
+
+	if deletion.Deleted {
+		user.InstanceState = &iam.UserInstanceStateData{Deletion: &deletion}
 	}
 
 	if displayName != nil {
@@ -77,7 +82,7 @@ func (core *Core) GetUserInfoV1(
 	}
 
 	var deactivation *iampb.UserAccountDeactivationData
-	if userBaseProfile.IsDeleted {
+	if userBaseProfile.IsDeleted() {
 		deactivation = &iampb.UserAccountDeactivationData{
 			Deactivated: true,
 		}

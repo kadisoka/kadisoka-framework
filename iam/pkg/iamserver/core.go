@@ -16,6 +16,7 @@ import (
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
@@ -34,8 +35,9 @@ import (
 const secretFilesDir = "/run/secrets"
 
 type Core struct {
-	realmName                 string
-	db                        *sqlx.DB
+	realmInfo realm.Info
+	db        *sqlx.DB
+
 	registeredUserIDCache     *lru.ARCCache
 	deletedUserAccountIDCache *lru.ARCCache
 
@@ -48,7 +50,7 @@ type Core struct {
 	pnVerifier *pnv10n.Verifier
 }
 
-func (core Core) RealmName() string { return core.realmName }
+func (core Core) RealmName() string { return core.realmInfo.Name }
 
 // NewCoreByConfig creates an instance of Core designed for use
 // in identity provider services.
@@ -89,7 +91,7 @@ func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
 	}
 
 	log.Info().Msg("Initializing email-address verification services...")
-	eaVerifier := eav10n.NewVerifier(appApp.RealmInfo(), iamDB, coreCfg.EAV)
+	eaVerifier := eav10n.NewVerifier(realmInfo, iamDB, coreCfg.EAV)
 
 	log.Info().Msg("Initializing phone-number verification service...")
 	log.Info().Msgf("Registered SMS delivery service integrations: %v", pnv10n.ModuleNames())
@@ -105,7 +107,7 @@ func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
 	}
 
 	inst := &Core{
-		realmName:                 realmName,
+		realmInfo:                 realmInfo,
 		db:                        iamDB,
 		registeredUserIDCache:     registeredUserIDCache,
 		deletedUserAccountIDCache: deletedUserAccountIDCache,

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/jmoiron/sqlx"
 	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/media"
@@ -15,6 +16,53 @@ import (
 type ProfileImageFile interface {
 	io.Reader
 	io.Seeker
+}
+
+func (core *Core) SetUserProfileImageURL(
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
+	profileImageURL string,
+) error {
+	authCtx := callCtx.Authorization()
+	// Change this if we want to allow service client to update a user's profile
+	// (we'll need a better access control for service clients)
+	if !authCtx.IsUserContext() {
+		return iam.ErrUserContextRequired
+	}
+	// Don't allow changing other user's for now
+	if !userRef.EqualsUserRefKey(authCtx.UserRef()) {
+		return iam.ErrContextUserNotAllowedToPerformActionOnResource
+	}
+	if profileImageURL != "" && !core.isUserProfileImageURLAllowed(profileImageURL) {
+		return errors.ArgMsg("profileImageURL", "unsupported")
+	}
+
+	//TODO: on changes, update caches, emit events only if there's any changes
+
+	return doTx(core.db, func(dbTx *sqlx.Tx) error {
+		_, txErr := dbTx.Exec(
+			`UPDATE `+userKeyPhoneNumberTableName+` `+
+				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+				"WHERE user_id = $2 AND d_ts IS NULL",
+			callCtx.RequestInfo().ReceiveTime,
+			authCtx.UserID().PrimitiveValue(),
+			authCtx.TerminalID().PrimitiveValue())
+		if txErr != nil {
+			return errors.Wrap("mark current profile image URL as deleted", txErr)
+		}
+		if profileImageURL != "" {
+			_, txErr = dbTx.Exec(
+				`INSERT INTO `+userProfileImageKeyTableName+` `+
+					"(user_id, profile_image_key, c_uid, c_tid) VALUES "+
+					"($1, $2, $3, $4)",
+				authCtx.UserID().PrimitiveValue(), profileImageURL,
+				authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
+			if txErr != nil {
+				return errors.Wrap("insert new profile image URL", txErr)
+			}
+		}
+		return nil
+	})
 }
 
 func (core *Core) SetUserProfileImageByFile(

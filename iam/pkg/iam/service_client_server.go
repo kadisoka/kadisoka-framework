@@ -34,17 +34,17 @@ type ServiceClientServer interface {
 
 func NewServiceClientServer(
 	jwtKeyChain *JWTKeyChain,
-	userAccountStateService UserAccountStateService,
+	userInstanceStateService UserInstanceStateService,
 ) (ServiceClientServer, error) {
 	return &ServiceClientServerCore{
-		jwtKeyChain:             jwtKeyChain,
-		userAccountStateService: userAccountStateService,
+		jwtKeyChain:              jwtKeyChain,
+		userInstanceStateService: userInstanceStateService,
 	}, nil
 }
 
 type ServiceClientServerCore struct {
-	jwtKeyChain             *JWTKeyChain
-	userAccountStateService UserAccountStateService
+	jwtKeyChain              *JWTKeyChain
+	userInstanceStateService UserInstanceStateService
 }
 
 var _ ServiceClientServer = &ServiceClientServerCore{}
@@ -107,15 +107,15 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 		if err != nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "malformed"))
 		}
-		userAccountState, err := svcClServer.userAccountStateService.
-			GetUserAccountState(userRef)
+		userInstState, err := svcClServer.userInstanceStateService.
+			GetUserInstanceState(userRef)
 		if err != nil {
 			return emptyAuthCtx, errors.Wrap("account state query", err)
 		}
-		if userAccountState == nil {
+		if userInstState == nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "reference invalid"))
 		}
-		if !userAccountState.IsAccountActive() {
+		if !userInstState.IsInstanceActive() {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "reference invalid"))
 		}
 	}

@@ -74,7 +74,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 
 	restWS.Route(restWS.
 		GET("/by_phone_numbers").
-		To(restSrv.getUsersByPhoneNumbers).
+		To(restSrv.getUserListByPhoneNumberList).
 		Metadata(restfulspec.KeyOpenAPITags, hidden).
 		Doc("Retrieve a list of user by their phone numbers").
 		Param(restWS.HeaderParameter("Authorization", "bearer-access-token").
@@ -86,7 +86,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 
 	restWS.Route(restWS.
 		GET("/me/contacts").
-		To(restSrv.getUserContacts).
+		To(restSrv.getUserContactList).
 		Metadata(restfulspec.KeyOpenAPITags, hidden).
 		Doc("Retrieve a list of user contacts").
 		Param(restWS.HeaderParameter("Authorization", "bearer-access-token").
@@ -315,7 +315,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	restSrv.eTagResponder.RespondGetJSON(req, resp, restUserProfile)
 }
 
-func (restSrv *Server) getUsersByPhoneNumbers(req *restful.Request, resp *restful.Response) {
+func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
@@ -401,7 +401,7 @@ func (restSrv *Server) getUsersByPhoneNumbers(req *restful.Request, resp *restfu
 		iam.UserPhoneNumberListJSONV1{Items: responseList})
 }
 
-func (restSrv *Server) getUserContacts(req *restful.Request, resp *restful.Response) {
+func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).

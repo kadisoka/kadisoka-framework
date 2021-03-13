@@ -21,10 +21,17 @@ type userBaseProfile struct {
 }
 
 type UserBaseProfileData struct {
-	RefKey          UserRefKey
+	RefKey        UserRefKey
+	InstanceState *UserInstanceStateData
+
 	DisplayName     string
 	ProfileImageURL string
-	IsDeleted       bool
+}
+
+func (aggregateData UserBaseProfileData) IsDeleted() bool {
+	return aggregateData.InstanceState != nil &&
+		aggregateData.InstanceState.Deletion != nil &&
+		aggregateData.InstanceState.Deletion.Deleted
 }
 
 // JSONV1 models

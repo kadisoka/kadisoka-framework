@@ -65,7 +65,7 @@ func NewServiceClientSimple(instID string, envVarsPrefix string) (ServiceClient,
 		return nil, errors.Wrap("jwt key set loading", err)
 	}
 
-	uaStateServiceClient := &UserAccountStateServiceClientCore{}
+	uaStateServiceClient := &UserInstanceStateServiceClientCore{}
 
 	inst, err := NewServiceClient(cfg, &jwtKeyChain, uaStateServiceClient)
 	if err != nil {
@@ -83,14 +83,14 @@ func NewServiceClientSimple(instID string, envVarsPrefix string) (ServiceClient,
 func NewServiceClient(
 	serviceClientConfig *ServiceClientConfig,
 	jwtKeyChain *JWTKeyChain,
-	userAccountStateService UserAccountStateService,
+	userInstanceStateService UserInstanceStateService,
 ) (ServiceClient, error) {
 	if serviceClientConfig != nil {
 		cfg := *serviceClientConfig
 		serviceClientConfig = &cfg
 	}
 
-	serviceClientServer, err := NewServiceClientServer(jwtKeyChain, userAccountStateService)
+	serviceClientServer, err := NewServiceClientServer(jwtKeyChain, userInstanceStateService)
 	if err != nil {
 		return nil, err
 	}

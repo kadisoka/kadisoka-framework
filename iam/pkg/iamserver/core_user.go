@@ -15,18 +15,18 @@ import (
 )
 
 // Interface conformance assertion.
-var _ iam.UserAccountService = &Core{}
+var _ iam.UserInstanceService = &Core{}
 
 const userTableName = "user_dt"
 
-// GetUserAccountState retrieves the state of an user account. It includes
+// GetUserInstanceState retrieves the state of an user account. It includes
 // the existence of the ID, and wether the account has been deleted.
 //
 // If it's required only to determine the existence of the ID,
-// IsUserIDRegistered is generally more efficient.
-func (core *Core) GetUserAccountState(
+// IsUserRefKeyRegistered is generally more efficient.
+func (core *Core) GetUserInstanceState(
 	userRef iam.UserRefKey,
-) (*iam.UserAccountState, error) {
+) (*iam.UserInstanceStateData, error) {
 	idRegistered := false
 	idRegisteredCacheHit := false
 	accountDeleted := false
@@ -47,14 +47,18 @@ func (core *Core) GetUserAccountState(
 		if !idRegistered {
 			return nil, nil
 		}
-		return &iam.UserAccountState{
-			Deleted: accountDeleted,
+		var deletion *iam.UserInstanceDeletionData
+		if accountDeleted {
+			deletion = &iam.UserInstanceDeletionData{Deleted: true}
+		}
+		return &iam.UserInstanceStateData{
+			Deletion: deletion,
 		}, nil
 	}
 
 	var err error
 	idRegistered, accountDeleted, err = core.
-		getUserAccountState(userRef.ID())
+		getUserInstanceStateByID(userRef.ID())
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +73,17 @@ func (core *Core) GetUserAccountState(
 	if !idRegistered {
 		return nil, nil
 	}
-	return &iam.UserAccountState{
-		Deleted: accountDeleted,
+
+	var deletion *iam.UserInstanceDeletionData
+	if accountDeleted {
+		deletion = &iam.UserInstanceDeletionData{Deleted: true}
+	}
+	return &iam.UserInstanceStateData{
+		Deletion: deletion,
 	}, nil
 }
 
-func (core *Core) getUserAccountState(
+func (core *Core) getUserInstanceStateByID(
 	id iam.UserID,
 ) (idRegistered, accountDeleted bool, err error) {
 	err = core.db.
@@ -93,10 +102,10 @@ func (core *Core) getUserAccountState(
 	return true, accountDeleted, nil
 }
 
-func (core *Core) DeleteUserAccount(
+func (core *Core) DeleteUserInstance(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-	input iam.UserAccountDeleteInput,
+	input iam.UserInstanceDeletionInput,
 ) (deleted bool, err error) {
 	if callCtx == nil {
 		return false, nil
@@ -155,53 +164,6 @@ func (core *Core) DeleteUserAccount(
 	return deleted, nil
 }
 
-func (core *Core) SetUserProfileImageURL(
-	callCtx iam.CallContext,
-	userRef iam.UserRefKey,
-	profileImageURL string,
-) error {
-	authCtx := callCtx.Authorization()
-	// Change this if we want to allow service client to update a user's profile
-	// (we'll need a better access control for service clients)
-	if !authCtx.IsUserContext() {
-		return iam.ErrUserContextRequired
-	}
-	// Don't allow changing other user's for now
-	if !userRef.EqualsUserRefKey(authCtx.UserRef()) {
-		return iam.ErrContextUserNotAllowedToPerformActionOnResource
-	}
-	if profileImageURL != "" && !core.isUserProfileImageURLAllowed(profileImageURL) {
-		return errors.ArgMsg("profileImageURL", "unsupported")
-	}
-
-	//TODO: on changes, update caches, emit events only if there's any changes
-
-	return doTx(core.db, func(dbTx *sqlx.Tx) error {
-		_, txErr := dbTx.Exec(
-			`UPDATE `+userKeyPhoneNumberTableName+` `+
-				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
-				"WHERE user_id = $2 AND d_ts IS NULL",
-			callCtx.RequestInfo().ReceiveTime,
-			authCtx.UserID().PrimitiveValue(),
-			authCtx.TerminalID().PrimitiveValue())
-		if txErr != nil {
-			return errors.Wrap("mark current profile image URL as deleted", txErr)
-		}
-		if profileImageURL != "" {
-			_, txErr = dbTx.Exec(
-				`INSERT INTO `+userProfileImageKeyTableName+` `+
-					"(user_id, profile_image_key, c_uid, c_tid) VALUES "+
-					"($1, $2, $3, $4)",
-				authCtx.UserID().PrimitiveValue(), profileImageURL,
-				authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
-			if txErr != nil {
-				return errors.Wrap("insert new profile image URL", txErr)
-			}
-		}
-		return nil
-	})
-}
-
 func (core *Core) GetUserContactInformation(
 	callCtx iam.CallContext,
 	userID iam.UserRefKey,
@@ -228,7 +190,7 @@ func (core *Core) ensureOrNewUserRef(
 		return iam.UserRefKeyZero(), errors.ArgMsg("callCtx", "missing")
 	}
 	if userRef.IsValid() {
-		if !core.IsUserIDRegistered(userRef.ID()) {
+		if !core.IsUserRefKeyRegistered(userRef) {
 			return iam.UserRefKeyZero(), nil
 		}
 		return userRef, nil

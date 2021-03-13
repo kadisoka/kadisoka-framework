@@ -5,7 +5,7 @@ import (
 )
 
 type UserService interface {
-	UserAccountService
+	UserInstanceService
 	UserProfileService
 
 	UserKeyPhoneNumberService
@@ -30,10 +30,6 @@ type UserPhoneNumberJSONV1 struct {
 
 type UserPhoneNumberListJSONV1 struct {
 	Items []UserPhoneNumberJSONV1 `json:"items"`
-}
-
-type UserEmailAddressPutRequestJSONV1 struct {
-	IsPrimary bool `json:"is_primary" db:"is_primary"`
 }
 
 type UserContactListsJSONV1 struct {

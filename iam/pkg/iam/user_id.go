@@ -440,10 +440,10 @@ type UserRefKeyError interface {
 	UserRefKeyError()
 }
 
-//endregion
-
-type UserIDService interface {
-	// IsUserIDRegistered is to check if the user ID is trully registered to
-	// system.
-	IsUserIDRegistered(userID UserID) bool
+type UserRefKeyService interface {
+	// IsUserRefKeyRegistered is to check if the ref-key is
+	// trully registered to system.
+	IsUserRefKeyRegistered(refKey UserRefKey) bool
 }
+
+//endregion
