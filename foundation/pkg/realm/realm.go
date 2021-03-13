@@ -1,7 +1,14 @@
 // package realm provides realm-related functionalities.
 //
-// A realm is a kind of a domain. In general, it has the same definition
-// as HTTP's definition of realm.
+// A realm is a kind of a domain or a site. In general, it has the same
+// definition as HTTP's definition of realm.
+//
+// A realm is not to be confused with an app github.com/kadisoka/kadisoka-framework/foundation/pkg/app .
+// A realm could be comprised of various services, and each service might be
+// served by many instances of the service. Each of this instance is an app.
+//
+// Although currently not supported, there might be a chance that we will
+// also support for multiple realm in a single app.
 package realm
 
 import (
@@ -88,4 +95,5 @@ type DeveloperInfo struct {
 
 //TODO: person or organization.
 type MaintainerInfo struct {
+	Name string
 }

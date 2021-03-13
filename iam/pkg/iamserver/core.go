@@ -50,12 +50,20 @@ type Core struct {
 	pnVerifier *pnv10n.Verifier
 }
 
+// RealmInfo returns information about the realm this service is serving
+// for.
+func (core Core) RealmInfo() realm.Info { return core.realmInfo }
+
+// RealmName returns the name of the realm of this service.
 func (core Core) RealmName() string { return core.realmInfo.Name }
 
 // NewCoreByConfig creates an instance of Core designed for use
 // in identity provider services.
-func NewCoreByConfig(coreCfg CoreConfig, appApp app.App) (*Core, error) {
-	realmInfo := appApp.RealmInfo()
+func NewCoreByConfig(
+	coreCfg CoreConfig,
+	appApp app.App,
+	realmInfo realm.Info,
+) (*Core, error) {
 	realmName := realmInfo.Name
 
 	iamDB, err := connectPostgres(coreCfg.DBURL)

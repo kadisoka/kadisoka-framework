@@ -7,15 +7,13 @@ import (
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/rez-go/stev"
-
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 )
 
 const EnvVarsPrefixDefault = "APP_"
 
+// App abstracts the application itself. There should be only one instance
+// for a running instance of an app.
 type App interface {
-	RealmInfo() realm.Info
-
 	AppInfo() Info
 	InstanceID() string
 
@@ -48,16 +46,12 @@ func InfoFromEnvOrDefault() (Info, error) {
 }
 
 type AppBase struct {
-	realmInfo realm.Info
-
 	appInfo    Info
 	instanceID string
 
 	servers   []ServiceServer
 	serversMu sync.RWMutex
 }
-
-func (appBase *AppBase) RealmInfo() realm.Info { return appBase.realmInfo }
 
 func (appBase *AppBase) AppInfo() Info { return appBase.appInfo }
 
@@ -107,21 +101,12 @@ func InitByEnvDefault() (App, error) {
 	if err != nil {
 		return nil, errors.Wrap("app info loading", err)
 	}
-	realmInfo, err := realm.InfoFromEnvOrDefault("")
-	if err != nil {
-		return nil, errors.Wrap("realm info loading", err)
-	}
-	return Init(&realmInfo, &appInfo)
+	return Init(&appInfo)
 }
 
-func Init(realmInfo *realm.Info, appInfo *Info) (App, error) {
+func Init(appInfo *Info) (App, error) {
 	var err error
 	defAppOnce.Do(func() {
-		if realmInfo == nil {
-			i := realm.DefaultInfo()
-			realmInfo = &i
-		}
-
 		if appInfo == nil {
 			i := DefaultInfo()
 			appInfo = &i
@@ -151,7 +136,6 @@ func Init(realmInfo *realm.Info, appInfo *Info) (App, error) {
 		}
 
 		defApp = &AppBase{
-			realmInfo:  *realmInfo,
 			appInfo:    *appInfo,
 			instanceID: instanceID,
 		}

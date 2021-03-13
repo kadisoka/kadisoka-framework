@@ -8,6 +8,7 @@ import (
 	"github.com/rez-go/stev"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/webui"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
@@ -129,18 +130,23 @@ func setUpWebUIServer(srvApp *App, cfg Config) (*webui.Server, error) {
 }
 
 func newWithoutServices(appCfg Config) (*App, error) {
-	appCore, err := app.Init(appCfg.RealmInfo, appCfg.AppInfo)
+	appApp, err := app.Init(appCfg.AppInfo)
 	if err != nil {
 		return nil, errors.Wrap("app initialization", err)
 	}
 
-	srvCore, err := iamserver.NewCoreByConfig(appCfg.Core, appCore)
+	var realmInfo realm.Info
+	if appCfg.RealmInfo != nil {
+		realmInfo = *appCfg.RealmInfo
+	}
+
+	srvCore, err := iamserver.NewCoreByConfig(appCfg.Core, appApp, realmInfo)
 	if err != nil {
 		return nil, errors.Wrap("core initialization", err)
 	}
 
 	return &App{
-		App:  appCore,
+		App:  appApp,
 		Core: srvCore,
 	}, nil
 }
@@ -181,6 +187,9 @@ type App struct {
 	app.App
 	Core *iamserver.Core
 }
+
+// RealmInfo returns information about the realm of the app.
+func (srvApp App) RealmInfo() realm.Info { return srvApp.Core.RealmInfo() }
 
 func (srvApp *App) initServers(cfg Config) error {
 	iamServerCore := srvApp.Core
