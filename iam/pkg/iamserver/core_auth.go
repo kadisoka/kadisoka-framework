@@ -12,7 +12,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const sessionTableName = "session_dt"
+const sessionDBTableName = "session_dt"
 
 func (core *Core) GenerateAccessTokenJWT(
 	callCtx iam.CallContext,
@@ -129,7 +129,7 @@ func (core *Core) issueSession(
 		}
 		_, err = core.db.
 			Exec(
-				`INSERT INTO `+sessionTableName+` (`+
+				`INSERT INTO `+sessionDBTableName+` (`+
 					`terminal_id, id, c_ts, c_uid, c_tid`+
 					`) VALUES (`+
 					`$1, $2, $3, $4, $5`+
@@ -143,7 +143,7 @@ func (core *Core) issueSession(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == sessionTableName+"_pkey" {
+			pqErr.Constraint == sessionDBTableName+"_pkey" {
 			if attemptNum >= attemptNumMax {
 				return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert max attempts", err)
 			}

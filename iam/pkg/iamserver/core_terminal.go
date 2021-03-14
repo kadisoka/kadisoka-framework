@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
+	goqu "github.com/doug-martin/goqu/v9"
 	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
@@ -21,7 +22,7 @@ var (
 	errTerminalVerificationConfirmationReplayed = errors.EntMsg("terminal verification confirmation", "replayed")
 )
 
-const terminalTableName = "terminal_dt"
+const terminalDBTableName = "terminal_dt"
 
 func (core *Core) AuthenticateTerminal(
 	terminalRef iam.TerminalRefKey,
@@ -29,12 +30,14 @@ func (core *Core) AuthenticateTerminal(
 ) (authOK bool, ownerUserRef iam.UserRefKey, err error) {
 	var storedSecret string
 	var ownerUserID iam.UserID
+
+	sqlString, _, _ := goqu.From(terminalDBTableName).
+		Select("user_id", "secret").
+		Where(goqu.C("id").Eq(terminalRef.ID().PrimitiveValue())).
+		ToSQL()
+
 	err = core.db.
-		QueryRow(
-			`SELECT user_id, secret `+
-				`FROM `+terminalTableName+` `+
-				`WHERE id=$1`,
-			terminalRef.ID().PrimitiveValue()).
+		QueryRow(sqlString).
 		Scan(&ownerUserID, &storedSecret)
 	if err == sql.ErrNoRows {
 		return false, iam.UserRefKeyZero(), nil
@@ -359,15 +362,19 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 func (core *Core) getTerminal(id iam.TerminalID) (*terminalDBModel, error) {
 	var err error
 	var ut terminalDBModel
-	err = core.db.QueryRowx(
-		`SELECT `+
-			`id, application_id, user_id, secret, `+
-			`c_ts, c_uid, c_tid, c_origin_address, `+
-			`display_name, accept_language, `+
-			`verification_type, verification_id, verification_time `+
-			`FROM `+terminalTableName+` `+
-			`WHERE id = $1`,
-		id).StructScan(&ut)
+
+	sqlString, _, _ := goqu.From(terminalDBTableName).
+		Select(
+			"id", "application_id", "user_id",
+			"c_ts", "c_uid", "c_tid", "c_origin_address",
+			"display_name", "accept_language",
+			"verification_type", "verification_id", "verification_time").
+		Where(goqu.C("id").Eq(id.PrimitiveValue())).
+		ToSQL()
+
+	err = core.db.
+		QueryRowx(sqlString).
+		StructScan(&ut)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -393,11 +400,14 @@ func (core *Core) GetTerminalInfo(
 	var ownerUserID iam.UserID
 	var displayName string
 	var acceptLanguage string
-	err := core.db.QueryRow(
-		`SELECT user_id, display_name, accept_language `+
-			`FROM `+terminalTableName+` `+
-			`WHERE id = $1`,
-		terminalID).
+
+	sqlString, _, _ := goqu.From(terminalDBTableName).
+		Select("user_id", "display_name", "accept_language").
+		Where(goqu.C("id").Eq(terminalID.PrimitiveValue())).
+		ToSQL()
+
+	err := core.db.
+		QueryRow(sqlString).
 		Scan(&ownerUserID, &displayName, &acceptLanguage)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -406,7 +416,7 @@ func (core *Core) GetTerminalInfo(
 		return nil, err
 	}
 
-	if ownerUserID != ctxAuth.UserID() {
+	if !ctxAuth.UserID().EqualsUserID(ownerUserID) {
 		return nil, nil
 	}
 
@@ -414,6 +424,7 @@ func (core *Core) GetTerminalInfo(
 	if err != nil {
 		return nil, err
 	}
+
 	return &iam.TerminalInfo{
 		DisplayName:    displayName,
 		AcceptLanguage: tags,
@@ -464,30 +475,27 @@ func (core *Core) RegisterTerminal(
 
 	//TODO: if id conflict, generate another id and retry
 	termID, err := core.generateTerminalID()
-	_, err = core.db.Exec(
-		`INSERT INTO `+terminalTableName+` (`+
-			`id, application_id, user_id, secret, `+
-			`c_ts, c_uid, c_tid, `+
-			`c_origin_address, c_origin_env, `+
-			`display_name, accept_language, `+
-			`verification_type, verification_id, verification_time `+
-			`) VALUES (`+
-			`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14`+
-			`)`,
-		termID.PrimitiveValue(),
-		input.ApplicationRef.ID().PrimitiveValue(),
-		input.UserRef.ID().PrimitiveValue(),
-		termSecret,
-		ctxTime,
-		ctxAuth.UserIDPtr(),
-		ctxAuth.TerminalIDPtr(),
-		originInfo.Address,
-		originInfo.EnvironmentString,
-		input.DisplayName,
-		input.AcceptLanguage, //TODO: get from context
-		input.VerificationType,
-		input.VerificationID,
-		input.VerificationTime)
+
+	sqlString, _, _ := goqu.Insert(terminalDBTableName).
+		Rows(goqu.Record{
+			"id":                termID.PrimitiveValue(),
+			"application_id":    input.ApplicationRef.ID().PrimitiveValue(),
+			"user_id":           input.UserRef.ID().PrimitiveValue(),
+			"secret":            termSecret,
+			"c_ts":              ctxTime,
+			"c_uid":             ctxAuth.UserIDPtr(),
+			"c_tid":             ctxAuth.TerminalIDPtr(),
+			"c_origin_address":  originInfo.Address,
+			"c_origin_env":      originInfo.EnvironmentString,
+			"display_name":      input.DisplayName,
+			"accept_language":   input.AcceptLanguage,
+			"verification_type": input.VerificationType,
+			"verification_id":   input.VerificationID,
+			"verification_time": input.VerificationTime,
+		}).
+		ToSQL()
+
+	_, err = core.db.Exec(sqlString)
 	if err != nil {
 		return iam.TerminalRefKeyZero(), "", err
 	}
@@ -509,12 +517,20 @@ func (core *Core) setUserTerminalVerified(
 	// providing this secret. the secret is only provided after the
 	// authorization has been verified.
 	termSecret := core.generateTerminalSecret() //TODO(exa): JWT (or something similar)
+
+	sqlString, _, _ := goqu.From(terminalDBTableName).
+		Where(
+			goqu.C("id").Eq(terminalID.PrimitiveValue()),
+			goqu.C("verification_time").IsNull(),
+		).Update().
+		Set(goqu.Record{
+			"secret":            termSecret,
+			"verification_time": callCtx.RequestInfo().ReceiveTime,
+		}).
+		ToSQL()
+
 	xres, err := core.db.
-		Exec(
-			`UPDATE `+terminalTableName+` `+
-				`SET (secret, verification_time) = ($1, $2) `+
-				`WHERE id = $3 AND verification_time IS NULL`,
-			termSecret, callCtx.RequestInfo().ReceiveTime, terminalID)
+		Exec(sqlString)
 	if err != nil {
 		return "", err
 	}
@@ -527,11 +543,13 @@ func (core *Core) setUserTerminalVerified(
 		if disallowReplay {
 			return "", errTerminalVerificationConfirmationReplayed
 		}
+
+		sqlString, _, _ := goqu.From(terminalDBTableName).
+			Select("secret").
+			Where(goqu.C("id").Eq(terminalID.PrimitiveValue())).
+			ToSQL()
 		err = core.db.
-			QueryRow(
-				`SELECT secret FROM `+terminalTableName+` `+
-					`WHERE id = $1`,
-				terminalID).
+			QueryRow(sqlString).
 			Scan(&termSecret)
 		if err != nil {
 			panic(err)
@@ -564,11 +582,15 @@ func (core *Core) getTerminalAcceptLanguages(
 	id iam.TerminalID,
 ) ([]language.Tag, error) {
 	var acceptLanguage string
-	err := core.db.QueryRow(
-		`SELECT accept_language `+
-			`FROM `+terminalTableName+` `+
-			`WHERE id = $1`,
-		id).Scan(&acceptLanguage)
+
+	sqlString, _, _ := goqu.From(terminalDBTableName).
+		Select("accept_language").
+		Where(goqu.C("id").Eq(id.PrimitiveValue())).
+		ToSQL()
+
+	err := core.db.
+		QueryRow(sqlString).
+		Scan(&acceptLanguage)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

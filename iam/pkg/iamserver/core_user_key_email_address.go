@@ -14,7 +14,7 @@ import (
 // Interface conformance assertion.
 var _ iam.UserKeyEmailAddressService = &Core{}
 
-const userKeyEmailAddressTableName = `user_key_email_address_dt`
+const userKeyEmailAddressDBTableName = `user_key_email_address_dt`
 
 func (core *Core) GetUserKeyEmailAddress(
 	callCtx iam.CallContext,
@@ -24,7 +24,7 @@ func (core *Core) GetUserKeyEmailAddress(
 	err := core.db.
 		QueryRow(
 			`SELECT raw_input `+
-				`FROM `+userKeyEmailAddressTableName+` `+
+				`FROM `+userKeyEmailAddressDBTableName+` `+
 				`WHERE user_id=$1 `+
 				`AND d_ts IS NULL AND verification_time IS NOT NULL`,
 			userRef.ID().PrimitiveValue()).
@@ -48,7 +48,7 @@ func (core *Core) getUserIDByKeyEmailAddress(
 ) (ownerUserID iam.UserID, err error) {
 	queryStr :=
 		`SELECT user_id ` +
-			`FROM ` + userKeyEmailAddressTableName + ` ` +
+			`FROM ` + userKeyEmailAddressDBTableName + ` ` +
 			`WHERE local_part = $1 AND domain_part = $2 ` +
 			`AND d_ts IS NULL ` +
 			`AND verification_time IS NOT NULL`
@@ -74,7 +74,7 @@ func (core *Core) getUserIDByKeyEmailAddressAllowUnverified(
 ) (ownerUserRef iam.UserRefKey, verified bool, err error) {
 	queryStr :=
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
-			`FROM ` + userKeyEmailAddressTableName + ` ` +
+			`FROM ` + userKeyEmailAddressDBTableName + ` ` +
 			`WHERE local_part = $1 AND domain_part = $2 ` +
 			`AND d_ts IS NULL ` +
 			`ORDER BY c_ts DESC LIMIT 1`
@@ -155,7 +155,7 @@ func (core *Core) setUserKeyEmailAddress(
 	emailAddress iam.EmailAddress,
 ) (alreadyVerified bool, err error) {
 	xres, err := core.db.Exec(
-		`INSERT INTO `+userKeyEmailAddressTableName+` (`+
+		`INSERT INTO `+userKeyEmailAddressDBTableName+` (`+
 			`user_id, local_part, domain_part, raw_input, `+
 			`c_ts, c_uid, c_tid `+
 			`) VALUES (`+
@@ -184,7 +184,7 @@ func (core *Core) setUserKeyEmailAddress(
 
 	err = core.db.QueryRow(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
-			`FROM `+userKeyEmailAddressTableName+` `+
+			`FROM `+userKeyEmailAddressDBTableName+` `+
 			`WHERE user_id = $1 AND local_part = $2 AND domain_part = $3`,
 		userRef, emailAddress.LocalPart(), emailAddress.DomainPart()).
 		Scan(&alreadyVerified)
@@ -245,7 +245,7 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 	var xres sql.Result
 
 	xres, err = core.db.Exec(
-		`UPDATE `+userKeyEmailAddressTableName+` SET (`+
+		`UPDATE `+userKeyEmailAddressDBTableName+` SET (`+
 			`verification_time, verification_id`+
 			`) = ( `+
 			`$1, $2`+
@@ -261,7 +261,7 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == userKeyEmailAddressTableName+`_local_part_domain_part_uidx` {
+			pqErr.Constraint == userKeyEmailAddressDBTableName+`_local_part_domain_part_uidx` {
 			return false, errors.ArgMsg("emailAddress", "conflict")
 		}
 		return false, err

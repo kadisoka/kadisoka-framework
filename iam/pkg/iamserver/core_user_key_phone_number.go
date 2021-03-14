@@ -16,7 +16,7 @@ import (
 // Interface conformance assertion.
 var _ iam.UserKeyPhoneNumberService = &Core{}
 
-const userKeyPhoneNumberTableName = `user_key_phone_number_dt`
+const userKeyPhoneNumberDBTableName = `user_key_phone_number_dt`
 
 func (core *Core) ListUsersByPhoneNumber(
 	callCtx iam.CallContext,
@@ -33,7 +33,7 @@ func (core *Core) ListUsersByPhoneNumber(
 	userPhoneNumberRows, err := core.db.
 		Queryx(
 			`SELECT user_id, country_code, national_number ` +
-				`FROM ` + userKeyPhoneNumberTableName + ` ` +
+				`FROM ` + userKeyPhoneNumberDBTableName + ` ` +
 				`WHERE (country_code, national_number) ` +
 				`IN (VALUES ` + phoneNumberSliceToSQLSetString(phoneNumbers) + `) ` +
 				`AND d_ts IS NULL AND verification_time IS NOT NULL ` +
@@ -70,11 +70,11 @@ func (core *Core) ListUsersByPhoneNumber(
 		go func() {
 			for _, pn := range phoneNumbers {
 				_, err = core.db.Exec(
-					`INSERT INTO `+userContactPhoneNumberTableName+` (`+
+					`INSERT INTO `+userContactPhoneNumberDBTableName+` (`+
 						"user_id, contact_country_code, contact_national_number, "+
 						"c_uid, c_tid"+
 						") VALUES ($1, $2, $3, $4, $5) "+
-						`ON CONFLICT ON CONSTRAINT `+userContactPhoneNumberTableName+`_pkey DO NOTHING`,
+						`ON CONFLICT ON CONSTRAINT `+userContactPhoneNumberDBTableName+`_pkey DO NOTHING`,
 					ctxAuth.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
 					ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
 				if err != nil {
@@ -100,7 +100,7 @@ func (core *Core) GetUserKeyPhoneNumber(
 	err := core.db.
 		QueryRow(
 			`SELECT country_code, national_number `+
-				`FROM `+userKeyPhoneNumberTableName+` `+
+				`FROM `+userKeyPhoneNumberDBTableName+` `+
 				`WHERE user_id=$1 `+
 				`AND d_ts IS NULL AND verification_time IS NOT NULL`,
 			userRef.ID().PrimitiveValue()).
@@ -121,7 +121,7 @@ func (core *Core) getUserIDByKeyPhoneNumber(
 ) (ownerUserID iam.UserID, err error) {
 	queryStr :=
 		`SELECT user_id ` +
-			`FROM ` + userKeyPhoneNumberTableName + ` ` +
+			`FROM ` + userKeyPhoneNumberDBTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
 			`AND d_ts IS NULL ` +
 			`AND verification_time IS NOT NULL`
@@ -147,7 +147,7 @@ func (core *Core) getUserIDByKeyPhoneNumberAllowUnverified(
 ) (ownerUserRef iam.UserRefKey, verified bool, err error) {
 	queryStr :=
 		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
-			`FROM ` + userKeyPhoneNumberTableName + ` ` +
+			`FROM ` + userKeyPhoneNumberDBTableName + ` ` +
 			`WHERE country_code = $1 AND national_number = $2 ` +
 			`AND d_ts IS NULL ` +
 			`ORDER BY c_ts DESC LIMIT 1`
@@ -233,7 +233,7 @@ func (core *Core) setUserKeyPhoneNumber(
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 
 	xres, err := core.db.Exec(
-		`INSERT INTO `+userKeyPhoneNumberTableName+` (`+
+		`INSERT INTO `+userKeyPhoneNumberDBTableName+` (`+
 			`user_id, country_code, national_number, raw_input, `+
 			`c_ts, c_uid, c_tid `+
 			`) VALUES (`+
@@ -262,7 +262,7 @@ func (core *Core) setUserKeyPhoneNumber(
 
 	err = core.db.QueryRow(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
-			`FROM `+userKeyPhoneNumberTableName+` `+
+			`FROM `+userKeyPhoneNumberDBTableName+` `+
 			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3`,
 		userRef.ID().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&alreadyVerified)
@@ -329,7 +329,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 	var xres sql.Result
 
 	xres, err = core.db.Exec(
-		`UPDATE `+userKeyPhoneNumberTableName+` SET (`+
+		`UPDATE `+userKeyPhoneNumberDBTableName+` SET (`+
 			`verification_time, verification_id`+
 			`) = ( `+
 			`$1, $2`+
@@ -345,7 +345,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == userKeyPhoneNumberTableName+`_country_code_national_number_uidx` {
+			pqErr.Constraint == userKeyPhoneNumberDBTableName+`_country_code_national_number_uidx` {
 			return false, errors.ArgMsg("phoneNumber", "conflict")
 		}
 		return false, err

@@ -23,7 +23,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const verificationTableName = "email_address_verification_dt"
+const verificationDBTableName = "email_address_verification_dt"
 
 func NewVerifier(
 	realmInfo realm.Info,
@@ -121,7 +121,7 @@ func (verifier *Verifier) StartVerification(
 	err = verifier.db.
 		QueryRow(
 			"SELECT id, code_expiry, attempts_remaining "+
-				`FROM `+verificationTableName+` `+
+				`FROM `+verificationDBTableName+` `+
 				"WHERE local_part = $1 AND domain_part = $2 AND confirmation_time IS NULL "+
 				"ORDER BY id DESC "+
 				"LIMIT 1",
@@ -147,7 +147,7 @@ func (verifier *Verifier) StartVerification(
 
 	err = verifier.db.
 		QueryRow(
-			`INSERT INTO `+verificationTableName+` (`+
+			`INSERT INTO `+verificationDBTableName+` (`+
 				`local_part, domain_part, `+
 				"c_ts, c_uid, c_tid, "+
 				"code, code_expiry, attempts_remaining"+
@@ -200,7 +200,7 @@ func (verifier *Verifier) ConfirmVerification(
 	var dbData verificationDBModel
 
 	err := verifier.db.QueryRowx(
-		`UPDATE `+verificationTableName+` `+
+		`UPDATE `+verificationDBTableName+` `+
 			`SET attempts_remaining = attempts_remaining - 1 `+
 			`WHERE id = $1 `+
 			`RETURNING *`,
@@ -225,7 +225,7 @@ func (verifier *Verifier) ConfirmVerification(
 	}
 
 	_, err = verifier.db.Exec(
-		`UPDATE `+verificationTableName+` `+
+		`UPDATE `+verificationDBTableName+` `+
 			"SET confirmation_time = $1, confirmation_user_id = $2, confirmation_terminal_id = $3 "+
 			"WHERE id = $4 AND confirmation_time IS NULL",
 		ctxTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr(), verificationID)
@@ -333,7 +333,7 @@ func (verifier *Verifier) GetEmailAddressByVerificationID(
 	var localPart, domainPart string
 	err := verifier.db.QueryRow(
 		`SELECT local_part, domain_part `+
-			`FROM `+verificationTableName+` `+
+			`FROM `+verificationDBTableName+` `+
 			`WHERE id = $1 `,
 		verificationID).
 		Scan(&localPart, &domainPart)

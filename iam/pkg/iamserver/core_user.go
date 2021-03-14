@@ -18,7 +18,7 @@ import (
 // Interface conformance assertion.
 var _ iam.UserInstanceService = &Core{}
 
-const userTableName = "user_dt"
+const userDBTableName = "user_dt"
 
 // GetUserInstanceInfo retrieves the state of an user account. It includes
 // the existence of the ID, and wether the account has been deleted.
@@ -93,7 +93,7 @@ func (core *Core) getUserInstanceStateByID(
 	err = core.db.
 		QueryRow(
 			`SELECT CASE WHEN d_ts IS NULL THEN false ELSE true END `+
-				`FROM `+userTableName+` WHERE id = $1`,
+				`FROM `+userDBTableName+` WHERE id = $1`,
 			id).
 		Scan(&accountDeleted)
 	if err == sql.ErrNoRows {
@@ -130,7 +130,7 @@ func (core *Core) deleteUserInstanceNoAC(
 	ctxAuth := callCtx.Authorization()
 	err = doTx(core.db, func(dbTx *sqlx.Tx) error {
 		xres, txErr := dbTx.Exec(
-			`UPDATE `+userTableName+` `+
+			`UPDATE `+userDBTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
 				"WHERE id = $2 AND d_ts IS NULL",
 			callCtx.RequestInfo().ReceiveTime,
@@ -148,7 +148,7 @@ func (core *Core) deleteUserInstanceNoAC(
 
 		if txErr == nil {
 			_, txErr = dbTx.Exec(
-				`UPDATE `+userKeyPhoneNumberTableName+` `+
+				`UPDATE `+userKeyPhoneNumberDBTableName+` `+
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestInfo().ReceiveTime,
@@ -158,7 +158,7 @@ func (core *Core) deleteUserInstanceNoAC(
 
 		if txErr == nil {
 			_, txErr = dbTx.Exec(
-				`UPDATE `+userProfileImageKeyTableName+` `+
+				`UPDATE `+userProfileImageKeyDBTableName+` `+
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestInfo().ReceiveTime,
@@ -244,7 +244,7 @@ func (core *Core) NewUserInstance(
 
 		_, err = core.db.
 			Exec(
-				`INSERT INTO `+userTableName+` (`+
+				`INSERT INTO `+userDBTableName+` (`+
 					`id, c_ts, c_uid, c_tid`+
 					`) VALUES (`+
 					`$1, $2, $3, $4`+
@@ -260,7 +260,7 @@ func (core *Core) NewUserInstance(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == userTableName+"_pkey" {
+			pqErr.Constraint == userDBTableName+"_pkey" {
 			if attemptNum >= attemptNumMax {
 				return iam.UserRefKeyZero(), errors.Wrap("insert max attempts", err)
 			}

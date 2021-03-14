@@ -41,7 +41,7 @@ func (core *Core) SetUserProfileImageURL(
 
 	return doTx(core.db, func(dbTx *sqlx.Tx) error {
 		_, txErr := dbTx.Exec(
-			`UPDATE `+userKeyPhoneNumberTableName+` `+
+			`UPDATE `+userKeyPhoneNumberDBTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE user_id = $2 AND d_ts IS NULL",
 			callCtx.RequestInfo().ReceiveTime,
@@ -52,7 +52,7 @@ func (core *Core) SetUserProfileImageURL(
 		}
 		if profileImageURL != "" {
 			_, txErr = dbTx.Exec(
-				`INSERT INTO `+userProfileImageKeyTableName+` `+
+				`INSERT INTO `+userProfileImageKeyDBTableName+` `+
 					"(user_id, profile_image_key, c_uid, c_tid) VALUES "+
 					"($1, $2, $3, $4)",
 				ctxAuth.UserID().PrimitiveValue(), profileImageURL,

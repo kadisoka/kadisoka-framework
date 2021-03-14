@@ -4,7 +4,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const userContactPhoneNumberTableName = "user_contact_phone_number_dt"
+const userContactPhoneNumberDBTableName = "user_contact_phone_number_dt"
 
 func (core *Core) GetUserContactUserIDs(
 	callCtx iam.CallContext,
@@ -14,13 +14,13 @@ func (core *Core) GetUserContactUserIDs(
 		Query(
 			`SELECT DISTINCT `+
 				`ph.user_id `+
-				`FROM `+userContactPhoneNumberTableName+` AS cp `+
-				`JOIN `+userKeyPhoneNumberTableName+` AS ph ON `+
+				`FROM `+userContactPhoneNumberDBTableName+` AS cp `+
+				`JOIN `+userKeyPhoneNumberDBTableName+` AS ph ON `+
 				`  ph.country_code = cp.contact_country_code `+
 				`  AND ph.national_number = cp.contact_national_number `+
 				`  AND ph.d_ts IS NULL `+
 				`  AND ph.verification_time IS NOT NULL `+
-				`JOIN `+userTableName+` AS usr ON `+
+				`JOIN `+userDBTableName+` AS usr ON `+
 				`  usr.id = ph.user_id `+
 				`  AND usr.d_ts IS NULL `+
 				`WHERE `+

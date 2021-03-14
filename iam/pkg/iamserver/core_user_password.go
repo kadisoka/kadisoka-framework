@@ -39,7 +39,7 @@ var argon2PasswordHashingParamsDefault = argon2PasswordHashingParams{
 	KeyLength:   32,
 }
 
-const userPasswordTableName = "user_password_dt"
+const userPasswordDBTableName = "user_password_dt"
 
 func (core *Core) SetUserPassword(
 	callCtx iam.CallContext,
@@ -60,7 +60,7 @@ func (core *Core) SetUserPassword(
 
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, txErr := core.db.Exec(
-			`UPDATE `+userPasswordTableName+` SET `+
+			`UPDATE `+userPasswordDBTableName+` SET `+
 				`d_ts = $1, d_uid = $2, d_tid = $3 `+
 				`WHERE user_id = $4 AND d_ts IS NULL`,
 			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
@@ -69,7 +69,7 @@ func (core *Core) SetUserPassword(
 			return txErr
 		}
 		_, txErr = core.db.Exec(
-			`INSERT INTO `+userPasswordTableName+` `+
+			`INSERT INTO `+userPasswordDBTableName+` `+
 				`(user_id, password, c_ts, c_uid, c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
 			userRef.ID().PrimitiveValue(), passwordHash,
@@ -98,7 +98,7 @@ func (core *Core) getUserPasswordHash(
 	err = core.db.
 		QueryRow(
 			`SELECT password `+
-				`FROM `+userPasswordTableName+` `+
+				`FROM `+userPasswordDBTableName+` `+
 				`WHERE user_id = $1 AND d_ts IS NULL`,
 			userID).
 		Scan(&hashedPassword)

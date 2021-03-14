@@ -12,8 +12,8 @@ import (
 // Interface conformance assertion.
 var _ iam.UserProfileService = &Core{}
 
-const userProfileDisplayNameTableName = "user_display_name_dt"
-const userProfileImageKeyTableName = "user_profile_image_key_dt"
+const userProfileDisplayNameDBTableName = "user_display_name_dt"
+const userProfileImageKeyDBTableName = "user_profile_image_key_dt"
 
 func (core *Core) GetUserBaseProfile(
 	callCtx iam.CallContext,
@@ -46,10 +46,10 @@ func (core *Core) getUserBaseProfileNoAC(
 			`SELECT ua.id, `+
 				`CASE WHEN ua.d_ts IS NULL THEN false ELSE true END AS is_deleted, `+
 				`udn.display_name, upiu.profile_image_key `+
-				`FROM `+userTableName+` AS ua `+
-				`LEFT JOIN `+userProfileDisplayNameTableName+` udn ON udn.user_id = ua.id `+
+				`FROM `+userDBTableName+` AS ua `+
+				`LEFT JOIN `+userProfileDisplayNameDBTableName+` udn ON udn.user_id = ua.id `+
 				`AND udn.d_ts IS NULL `+
-				`LEFT JOIN `+userProfileImageKeyTableName+` upiu ON upiu.user_id = ua.id `+
+				`LEFT JOIN `+userProfileImageKeyDBTableName+` upiu ON upiu.user_id = ua.id `+
 				`AND upiu.d_ts IS NULL `+
 				`WHERE ua.id = $1`,
 			userID).

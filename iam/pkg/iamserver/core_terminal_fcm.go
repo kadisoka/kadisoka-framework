@@ -10,7 +10,7 @@ import (
 // Interface conformance assertion.
 var _ iam.TerminalFCMRegistrationTokenService = &Core{}
 
-const terminalFCMRegistrationTokenTableName = "terminal_fcm_registration_token_dt"
+const terminalFCMRegistrationTokenDBTableName = "terminal_fcm_registration_token_dt"
 
 func (core *Core) DisposeTerminalFCMRegistrationToken(
 	callCtx iam.CallContext,
@@ -19,7 +19,7 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 ) error {
 	ctxAuth := callCtx.Authorization()
 	_, err := core.db.Exec(
-		`UPDATE `+terminalFCMRegistrationTokenTableName+` `+
+		`UPDATE `+terminalFCMRegistrationTokenDBTableName+` `+
 			"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 			"WHERE terminal_id = $4 AND token = $5 AND d_ts IS NULL",
 		callCtx.RequestInfo().ReceiveTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
@@ -34,8 +34,8 @@ func (core *Core) ListTerminalFCMRegistrationTokensByUser(
 
 	userTermRows, err := core.db.Query(
 		`SELECT tid.id, tft.token `+
-			`FROM `+terminalTableName+` tid `+
-			`JOIN `+terminalFCMRegistrationTokenTableName+` tft `+
+			`FROM `+terminalDBTableName+` tid `+
+			`JOIN `+terminalFCMRegistrationTokenDBTableName+` tft `+
 			"ON tft.terminal_id=tid.id AND tft.d_ts IS NULL "+
 			"WHERE tid.user_id=$1 AND tid.verification_time IS NOT NULL",
 		ownerUserRef.ID().PrimitiveValue())
@@ -82,7 +82,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
-			`UPDATE `+terminalFCMRegistrationTokenTableName+` `+
+			`UPDATE `+terminalFCMRegistrationTokenDBTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE terminal_id = $4 AND d_ts IS NULL",
 			callCtx.RequestInfo().ReceiveTime,
@@ -96,7 +96,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 			return nil
 		}
 		_, err = tx.Exec(
-			`INSERT INTO `+terminalFCMRegistrationTokenTableName+` `+
+			`INSERT INTO `+terminalFCMRegistrationTokenDBTableName+` `+
 				"(terminal_id, user_id, c_uid, c_tid, token) "+
 				"VALUES ($1, $2, $3, $4, $5)",
 			terminalRef.ID().PrimitiveValue(), userRef.ID().PrimitiveValue(),

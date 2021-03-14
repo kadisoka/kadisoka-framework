@@ -18,7 +18,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const verificationTableName = "phone_number_verification_dt"
+const verificationDBTableName = "phone_number_verification_dt"
 
 func NewVerifier(
 	appName string,
@@ -131,7 +131,7 @@ func (verifier *Verifier) StartVerification(
 	err = verifier.db.
 		QueryRow(
 			"SELECT id, code_expiry, attempts_remaining "+
-				`FROM `+verificationTableName+` `+
+				`FROM `+verificationDBTableName+` `+
 				"WHERE country_code = $1 AND national_number = $2 AND confirmation_time IS NULL "+
 				"ORDER BY id DESC "+
 				"LIMIT 1",
@@ -157,7 +157,7 @@ func (verifier *Verifier) StartVerification(
 
 	err = verifier.db.
 		QueryRow(
-			`INSERT INTO `+verificationTableName+` (`+
+			`INSERT INTO `+verificationDBTableName+` (`+
 				"country_code, national_number, "+
 				"c_ts, c_uid, c_tid, "+
 				"code, code_expiry, attempts_remaining"+
@@ -200,7 +200,7 @@ func (verifier *Verifier) ConfirmVerification(
 	var dbData verificationDBModel
 
 	err := verifier.db.QueryRowx(
-		`UPDATE `+verificationTableName+` `+
+		`UPDATE `+verificationDBTableName+` `+
 			`SET attempts_remaining = attempts_remaining - 1 `+
 			`WHERE id = $1 `+
 			`RETURNING *`,
@@ -226,7 +226,7 @@ func (verifier *Verifier) ConfirmVerification(
 	}
 
 	_, err = verifier.db.Exec(
-		`UPDATE `+verificationTableName+` `+
+		`UPDATE `+verificationDBTableName+` `+
 			"SET confirmation_time = $1, confirmation_user_id = $2, confirmation_terminal_id = $3 "+
 			"WHERE id = $4 AND confirmation_time IS NULL",
 		ctxTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr(), verificationID)
@@ -240,7 +240,7 @@ func (verifier *Verifier) GetPhoneNumberByVerificationID(
 	var nationalNumber int64
 	err := verifier.db.QueryRow(
 		"SELECT country_code, national_number "+
-			`FROM `+verificationTableName+` `+
+			`FROM `+verificationDBTableName+` `+
 			"WHERE id = $1 LIMIT 1",
 		verificationID).
 		Scan(&countryCode, &nationalNumber)
@@ -256,7 +256,7 @@ func (verifier *Verifier) GetVerificationCodeByPhoneNumber(
 ) (code string, err error) {
 	err = verifier.db.QueryRow(
 		"SELECT code "+
-			`FROM `+verificationTableName+` `+
+			`FROM `+verificationDBTableName+` `+
 			"WHERE country_code = $1 AND national_number = $2 "+
 			"AND confirmation_time IS NULL "+
 			"ORDER BY c_ts DESC LIMIT 1",
