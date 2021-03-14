@@ -21,8 +21,8 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 			http.StatusInternalServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() || !authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() || !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).
 			Warn().Err(err).Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
@@ -41,7 +41,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	}
 
 	matched, err := restSrv.serverCore.
-		MatchUserPassword(authCtx.UserRef(), reqBody.OldPassword)
+		MatchUserPassword(ctxAuth.UserRef(), reqBody.OldPassword)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("Passwords matching")
@@ -68,7 +68,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	}
 
 	err = restSrv.serverCore.
-		SetUserPassword(reqCtx, authCtx.UserRef(), password)
+		SetUserPassword(reqCtx, ctxAuth.UserRef(), password)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User password update")

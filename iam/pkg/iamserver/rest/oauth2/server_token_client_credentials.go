@@ -49,8 +49,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 			oauth2.ErrorServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsValid() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Authorization context must not be valid")
 		oauth2.RespondTo(resp).ErrorCode(
@@ -64,7 +64,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	termRef, termSecret, err := restSrv.serverCore.
 		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
 			ApplicationRef:   reqApp.ID,
-			UserRef:          authCtx.UserRef(),
+			UserRef:          ctxAuth.UserRef(),
 			DisplayName:      termDisplayName,
 			AcceptLanguage:   strings.Join(preferredLanguages, ","),
 			VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
@@ -81,7 +81,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	issueTime := time.Now().UTC()
 
 	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, termRef, authCtx.UserRef(), issueTime)
+		GenerateAccessTokenJWT(reqCtx, termRef, ctxAuth.UserRef(), issueTime)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Msgf("GenerateAccessTokenJWT: %v", err)
@@ -109,7 +109,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         authCtx.UserRef().AZERText(),
+			UserID:         ctxAuth.UserRef().AZERText(),
 			TerminalID:     termRef.AZERText(),
 			TerminalSecret: termSecret,
 		})

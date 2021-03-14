@@ -111,7 +111,7 @@ func (verifier *Verifier) StartVerification(
 	if callCtx == nil {
 		return 0, nil, errors.ArgMsg("callCtx", "missing")
 	}
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 
@@ -156,8 +156,8 @@ func (verifier *Verifier) StartVerification(
 			emailAddress.LocalPart(),
 			emailAddress.DomainPart(),
 			ctxTime,
-			authCtx.UserIDPtr(),
-			authCtx.TerminalIDPtr(),
+			ctxAuth.UserIDPtr(),
+			ctxAuth.TerminalIDPtr(),
 			code,
 			codeExp,
 			verifier.confirmationAttemptsMax,
@@ -194,7 +194,7 @@ func (verifier *Verifier) ConfirmVerification(
 	if callCtx == nil {
 		return errors.ArgMsg("callCtx", "missing")
 	}
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	var dbData verificationDBModel
@@ -228,7 +228,7 @@ func (verifier *Verifier) ConfirmVerification(
 		`UPDATE `+verificationTableName+` `+
 			"SET confirmation_time = $1, confirmation_user_id = $2, confirmation_terminal_id = $3 "+
 			"WHERE id = $4 AND confirmation_time IS NULL",
-		ctxTime, authCtx.UserIDPtr(), authCtx.TerminalIDPtr(), verificationID)
+		ctxTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr(), verificationID)
 	return err //TODO: determine if it's race-condition
 }
 

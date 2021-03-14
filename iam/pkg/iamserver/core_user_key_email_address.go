@@ -100,12 +100,12 @@ func (core *Core) SetUserKeyEmailAddress(
 	emailAddress iam.EmailAddress,
 	verificationMethods []eav10n.VerificationMethod,
 ) (verificationID int64, codeExpiry *time.Time, err error) {
-	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() {
+	ctxAuth := callCtx.Authorization()
+	if !ctxAuth.IsUserContext() {
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !userRef.EqualsUserRefKey(authCtx.UserRef()) {
+	if !ctxAuth.IsUser(userRef) {
 		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 
@@ -115,14 +115,14 @@ func (core *Core) SetUserKeyEmailAddress(
 		return 0, nil, errors.Wrap("getUserIDByKeyEmailAddress", err)
 	}
 	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != authCtx.UserID() {
+		if existingOwnerUserID != ctxAuth.UserID() {
 			return 0, nil, errors.ArgMsg("emailAddress", "conflict")
 		}
 		return 0, nil, nil
 	}
 
 	alreadyVerified, err := core.setUserKeyEmailAddress(
-		callCtx, authCtx.UserRef(), emailAddress)
+		callCtx, ctxAuth.UserRef(), emailAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -131,7 +131,9 @@ func (core *Core) SetUserKeyEmailAddress(
 	}
 
 	//TODO: user-set has higher priority over terminal's
-	userLanguages, err := core.getTerminalAcceptLanguages(authCtx.TerminalID())
+	userLanguages, err := core.getTerminalAcceptLanguages(ctxAuth.TerminalID())
+	if err != nil {
+	}
 
 	verificationID, codeExpiry, err = core.eaVerifier.
 		StartVerification(callCtx, emailAddress,
@@ -201,7 +203,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 	verificationID int64,
 	code string,
 ) (updated bool, err error) {
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 	err = core.eaVerifier.ConfirmVerification(
 		callCtx, verificationID, code)
 	if err != nil {
@@ -224,7 +226,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	updated, err = core.
 		ensureUserEmailAddressVerifiedFlag(
-			authCtx.UserID(), *emailAddress,
+			ctxAuth.UserID(), *emailAddress,
 			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)

@@ -223,8 +223,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 			http.StatusInternalServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() {
 		logCtx(reqCtx).
 			Warn().Err(err).Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
@@ -250,7 +250,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 				http.StatusBadRequest)
 			return
 		}
-		requestedUserRef = authCtx.UserRef()
+		requestedUserRef = ctxAuth.UserRef()
 	} else {
 		requestedUserRef, err = iam.UserRefKeyFromAZERText(requestedUserIDStr)
 		if err != nil {
@@ -282,7 +282,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	restUserProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile)
+	restUserProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile, requestedUserRef)
 
 	userPhoneNumber, err := restSrv.serverCore.
 		GetUserKeyPhoneNumber(reqCtx, requestedUserRef)
@@ -294,7 +294,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	if userPhoneNumber != nil {
-		restUserProfile.PhoneNumber = userPhoneNumber.String()
+		restUserProfile.Data.PhoneNumber = userPhoneNumber.String()
 	}
 
 	//TODO(exa): should get display email address instead of primary
@@ -309,7 +309,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	if userEmailAddress != nil {
-		restUserProfile.EmailAddress = userEmailAddress.RawInput()
+		restUserProfile.Data.EmailAddress = userEmailAddress.RawInput()
 	}
 
 	restSrv.eTagResponder.RespondGetJSON(req, resp, restUserProfile)
@@ -324,8 +324,8 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 			http.StatusInternalServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() {
 		logCtx(reqCtx).
 			Warn().Err(err).Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
@@ -410,8 +410,8 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 			http.StatusInternalServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() || !authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() || !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).
 			Warn().Err(err).Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
@@ -423,7 +423,7 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 	// - Retrieve list of user profile
 	// - Return as items of user contacts
 	contactUserIDs, err := restSrv.serverCore.GetUserContactUserIDs(
-		reqCtx, authCtx.UserRef())
+		reqCtx, ctxAuth.UserRef())
 
 	if err != nil {
 		logCtx(reqCtx).
@@ -441,7 +441,7 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 			if err != nil {
 				panic(err)
 			}
-			userProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile)
+			userProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile, contactUserID)
 
 			userPhoneNumber, err := restSrv.serverCore.
 				GetUserKeyPhoneNumber(reqCtx, contactUserID)
@@ -451,7 +451,7 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 			}
 
 			if userPhoneNumber != nil {
-				userProfile.PhoneNumber = userPhoneNumber.String()
+				userProfile.Data.PhoneNumber = userPhoneNumber.String()
 			}
 
 			userContactLists = append(userContactLists, *userProfile)

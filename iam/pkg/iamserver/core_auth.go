@@ -98,9 +98,10 @@ func (core *Core) issueSession(
 	terminalRef iam.TerminalRefKey,
 	userRef iam.UserRefKey,
 ) (sessionRef iam.SessionRefKey, issueTime time.Time, err error) {
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 
-	const attemptNumMax = 3
+	const attemptNumMax = 5
+
 	timeZero := time.Time{}
 	sessionStartTime := timeZero
 	var sessionID iam.SessionID
@@ -134,7 +135,7 @@ func (core *Core) issueSession(
 					`$1, $2, $3, $4, $5`+
 					`)`,
 				terminalRef.ID().PrimitiveValue(), sessionID.PrimitiveValue(),
-				sessionStartTime, authCtx.UserIDPtr(), authCtx.TerminalIDPtr())
+				sessionStartTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr())
 		if err == nil {
 			break
 		}
@@ -148,6 +149,7 @@ func (core *Core) issueSession(
 			}
 			continue
 		}
+
 		return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert", err)
 	}
 

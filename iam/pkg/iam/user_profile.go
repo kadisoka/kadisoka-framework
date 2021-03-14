@@ -15,13 +15,7 @@ type UserProfileService interface {
 	) (*UserBaseProfileData, error)
 }
 
-type userBaseProfile struct {
-	RefKey UserRefKey
-	UserBaseProfileData
-}
-
 type UserBaseProfileData struct {
-	RefKey       UserRefKey
 	InstanceInfo *UserInstanceInfo
 
 	DisplayName     string
@@ -35,20 +29,41 @@ func (aggregateData UserBaseProfileData) IsDeleted() bool {
 // JSONV1 models
 
 type UserJSONV1 struct {
-	ID              string `json:"id"`
+	ID           UserRefKey              `json:"id"`
+	InstanceInfo *UserInstanceInfoJSONV1 `json:"instance_info"`
+	Data         UserDataJSONV1          `json:"data"`
+}
+
+type UserInstanceInfoJSONV1 struct {
+}
+
+type UserDataJSONV1 struct {
 	DisplayName     string `json:"display_name"`
 	ProfileImageURL string `json:"profile_image_url"`
 	PhoneNumber     string `json:"phone_number,omitempty"`
 	EmailAddress    string `json:"email_address,omitempty"`
 }
 
-func UserJSONV1FromBaseProfile(model *UserBaseProfileData) *UserJSONV1 {
+func UserDataJSONV1FromBaseProfile(model *UserBaseProfileData) *UserDataJSONV1 {
 	if model == nil {
 		return nil
 	}
-	return &UserJSONV1{
-		ID:              model.RefKey.AZERText(),
+	return &UserDataJSONV1{
 		DisplayName:     model.DisplayName,
 		ProfileImageURL: model.ProfileImageURL,
 	}
+}
+
+func UserJSONV1FromBaseProfile(model *UserBaseProfileData, refKey UserRefKey) *UserJSONV1 {
+	if model == nil {
+		return nil
+	}
+	data := UserDataJSONV1FromBaseProfile(model)
+	result := UserJSONV1{
+		ID: refKey,
+	}
+	if data != nil {
+		result.Data = *data
+	}
+	return &result
 }

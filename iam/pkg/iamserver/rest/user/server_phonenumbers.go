@@ -22,8 +22,8 @@ func (restSrv *Server) putUserPhoneNumber(
 			http.StatusInternalServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() && !authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() && !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).Warn().Msgf("Unauthorized: %v", err)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
@@ -60,7 +60,7 @@ func (restSrv *Server) putUserPhoneNumber(
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
 		SetUserKeyPhoneNumber(
-			reqCtx, authCtx.UserRef(), phoneNumber, verificationMethods)
+			reqCtx, ctxAuth.UserRef(), phoneNumber, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).

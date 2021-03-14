@@ -17,12 +17,12 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 	terminalID iam.TerminalID,
 	token string,
 ) error {
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 	_, err := core.db.Exec(
 		`UPDATE `+terminalFCMRegistrationTokenTableName+` `+
 			"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 			"WHERE terminal_id = $4 AND token = $5 AND d_ts IS NULL",
-		callCtx.RequestInfo().ReceiveTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+		callCtx.RequestInfo().ReceiveTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
 		terminalID.PrimitiveValue(), token)
 	return err
 }
@@ -78,7 +78,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 		return errors.ArgMsg("callCtx", "terminal user mismatch")
 	}
 
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
@@ -86,8 +86,8 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE terminal_id = $4 AND d_ts IS NULL",
 			callCtx.RequestInfo().ReceiveTime,
-			authCtx.UserID().PrimitiveValue(),
-			authCtx.TerminalID().PrimitiveValue(),
+			ctxAuth.UserID().PrimitiveValue(),
+			ctxAuth.TerminalID().PrimitiveValue(),
 			terminalRef.ID().PrimitiveValue())
 		if err != nil {
 			return err
@@ -100,7 +100,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 				"(terminal_id, user_id, c_uid, c_tid, token) "+
 				"VALUES ($1, $2, $3, $4, $5)",
 			terminalRef.ID().PrimitiveValue(), userRef.ID().PrimitiveValue(),
-			authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+			ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
 			token)
 		return err
 	})

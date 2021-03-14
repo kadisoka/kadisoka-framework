@@ -42,8 +42,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 			oauth2.ErrorServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsValid() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsValid() {
 		logCtx(reqCtx).
 			Warn().Msgf("Authorization context must not be valid")
 		oauth2.RespondTo(resp).ErrorCode(

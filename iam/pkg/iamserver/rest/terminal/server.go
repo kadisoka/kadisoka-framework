@@ -143,8 +143,8 @@ func (restSrv *Server) postTerminalsRegister(
 		return
 	}
 
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsValid() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Authorization context must not be valid")
 		rest.RespondTo(resp).EmptyError(
@@ -290,7 +290,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 			http.StatusUnauthorized)
 		return
 	}
-	authCtx := reqCtx.Authorization()
+	ctxAuth := reqCtx.Authorization()
 
 	var fcmRegTokenReq terminalFCMRegistrationTokenPutRequest
 	err = req.ReadEntity(&fcmRegTokenReq)
@@ -308,7 +308,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 
 	err = restSrv.serverCore.
 		SetTerminalFCMRegistrationToken(
-			reqCtx, authCtx.TerminalRef(), authCtx.UserRef(),
+			reqCtx, ctxAuth.TerminalRef(), ctxAuth.UserRef(),
 			fcmRegTokenReq.Token)
 	if err != nil {
 		panic(err)
@@ -476,8 +476,8 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 		return
 	}
 
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsUserContext() {
 		//TODO: determine if we should support user context
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is authenticating by implicit grant with valid user context", authClient.ID)

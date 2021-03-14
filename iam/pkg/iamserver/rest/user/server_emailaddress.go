@@ -63,8 +63,8 @@ func (restSrv *Server) handleSetEmailAddress(
 	emailAddress iam.EmailAddress,
 	verificationMethods []eav10n.VerificationMethod,
 ) {
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() && !authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() && !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).Warn().Msgf("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
@@ -79,7 +79,7 @@ func (restSrv *Server) handleSetEmailAddress(
 				http.StatusBadRequest)
 			return
 		}
-		if !targetUserRef.EqualsUserRefKey(authCtx.UserRef()) {
+		if !ctxAuth.IsUser(targetUserRef) {
 			logCtx(reqCtx).Warn().Msgf("Setting other user's email address is not allowed")
 			rest.RespondTo(resp).EmptyError(
 				http.StatusForbidden)
@@ -89,7 +89,7 @@ func (restSrv *Server) handleSetEmailAddress(
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
 		SetUserKeyEmailAddress(
-			reqCtx, authCtx.UserRef(), emailAddress, verificationMethods)
+			reqCtx, ctxAuth.UserRef(), emailAddress, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).

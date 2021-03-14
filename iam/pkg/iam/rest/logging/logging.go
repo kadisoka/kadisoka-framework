@@ -40,11 +40,11 @@ func (logger Logger) WithContext(
 	hasAuth := false
 
 	if iamCtx, _ := ctx.(iam.CallContext); iamCtx != nil {
-		if authCtx := iamCtx.Authorization(); authCtx.IsValid() {
+		if ctxAuth := iamCtx.Authorization(); ctxAuth.IsValid() {
 			logCtx = logCtx.
-				Str("session", authCtx.Session.AZERText()).
-				Str("terminal", authCtx.Session.Terminal().AZERText()).
-				Str("user", authCtx.Session.Terminal().User().AZERText())
+				Str("session", ctxAuth.Session.AZERText()).
+				Str("terminal", ctxAuth.Session.Terminal().AZERText()).
+				Str("user", ctxAuth.Session.Terminal().User().AZERText())
 		}
 	}
 

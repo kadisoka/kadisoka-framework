@@ -8,13 +8,14 @@ type UserInstanceService interface {
 	UserInstanceInfoService
 
 	// DeleteUserInstance deletes an instance of user entity based identfied
-	// by instRefToDelete.
+	// by instRefToDelete. It returns true if this particular call makes
+	// the status of the instance to 'deleted'.
 	//TODO: returns the revision ID of the instance.
 	DeleteUserInstance(
 		callCtx CallContext,
 		instRefToDelete UserRefKey,
 		input UserInstanceDeletionInput,
-	) (deleted bool, err error)
+	) (stateChanged bool, err error)
 }
 
 // UserInstanceInfoService is a service which

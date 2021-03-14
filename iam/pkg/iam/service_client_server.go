@@ -157,15 +157,15 @@ func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
 	}
 	originInfo := api.CallOriginInfo{Address: remoteAddr}
 
-	authCtx, err := svcClServer.authorizationFromGRPCContext(grpcCallCtx)
+	ctxAuth, err := svcClServer.authorizationFromGRPCContext(grpcCallCtx)
 	if err != nil {
-		return newCallContext(grpcCallCtx, authCtx, originInfo, nil), err
+		return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil), err
 	}
 
 	var requestID *api.RequestID
 	md, ok := grpcmd.FromIncomingContext(grpcCallCtx)
 	if !ok {
-		return newCallContext(grpcCallCtx, authCtx, originInfo, nil), nil
+		return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil), nil
 	}
 
 	reqIDStrs := md.Get("request-id")
@@ -176,17 +176,17 @@ func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
 		reqIDStr := reqIDStrs[0]
 		u, err := uuid.Parse(reqIDStr)
 		if err != nil {
-			return newCallContext(grpcCallCtx, authCtx, originInfo, nil),
+			return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil),
 				ReqFieldErr("Request-ID", dataerrs.Malformed(err))
 		}
 		if isValidRequestID(u) {
-			return newCallContext(grpcCallCtx, authCtx, originInfo, nil),
+			return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil),
 				ReqFieldErr("Request-ID", nil)
 		}
 		requestID = &u
 	}
 
-	return newCallContext(grpcCallCtx, authCtx, originInfo, requestID), err
+	return newCallContext(grpcCallCtx, ctxAuth, originInfo, requestID), err
 }
 
 func (svcClServer *ServiceClientServerCore) authorizationFromGRPCContext(
@@ -230,7 +230,7 @@ func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
 	req *http.Request,
 ) (CallContext, error) {
 	ctx := req.Context()
-	authCtx := newEmptyAuthorization()
+	ctxAuth := newEmptyAuthorization()
 
 	remoteAddr := realip.FromRequest(req)
 	if remoteAddr == "" {
@@ -253,11 +253,11 @@ func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
 	if requestIDStr != "" {
 		u, err := uuid.Parse(requestIDStr)
 		if err != nil {
-			return newCallContext(ctx, authCtx, originInfo, nil),
+			return newCallContext(ctx, ctxAuth, originInfo, nil),
 				ReqFieldErr("Request-ID", dataerrs.Malformed(err))
 		}
 		if isValidRequestID(u) {
-			return newCallContext(ctx, authCtx, originInfo, nil),
+			return newCallContext(ctx, ctxAuth, originInfo, nil),
 				ReqFieldErr("Request-ID", nil)
 		}
 		requestID = &u
@@ -267,29 +267,29 @@ func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
 	if authorization != "" {
 		authParts := strings.SplitN(authorization, " ", 2)
 		if len(authParts) != 2 {
-			return newCallContext(ctx, authCtx, originInfo, nil),
+			return newCallContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed
 		}
 		if authParts[0] != "Bearer" {
-			return newCallContext(ctx, authCtx, originInfo, nil),
+			return newCallContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationTypeUnsupported
 		}
 
 		jwtStr := strings.TrimSpace(authParts[1])
 		var err error
-		authCtx, err = svcClServer.AuthorizationFromJWTString(jwtStr)
+		ctxAuth, err = svcClServer.AuthorizationFromJWTString(jwtStr)
 		if err != nil {
-			return newCallContext(ctx, authCtx, originInfo, nil),
+			return newCallContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed
 		}
 
-		//TODO: validate authCtx
+		//TODO: validate ctxAuth
 	}
-	if authCtx == nil {
-		authCtx = newEmptyAuthorization()
+	if ctxAuth == nil {
+		ctxAuth = newEmptyAuthorization()
 	}
 
-	return newCallContext(ctx, authCtx, originInfo, requestID), nil
+	return newCallContext(ctx, ctxAuth, originInfo, requestID), nil
 }
 
 func isValidRequestID(u uuid.UUID) bool {

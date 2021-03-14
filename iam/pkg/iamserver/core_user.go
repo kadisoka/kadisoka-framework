@@ -8,6 +8,7 @@ import (
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 	"golang.org/x/crypto/blake2b"
 
@@ -109,23 +110,32 @@ func (core *Core) DeleteUserInstance(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
-) (deleted bool, err error) {
+) (stateChanged bool, err error) {
 	if callCtx == nil {
 		return false, nil
 	}
-	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() || !userRef.EqualsUserRefKey(authCtx.UserRef()) {
-		return false, nil
+	ctxAuth := callCtx.Authorization()
+	if !ctxAuth.IsUser(userRef) {
+		return false, nil //TODO: should be an error
 	}
 
+	return core.deleteUserInstanceNoAC(callCtx, userRef, input)
+}
+
+func (core *Core) deleteUserInstanceNoAC(
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
+	input iam.UserInstanceDeletionInput,
+) (stateChanged bool, err error) {
+	ctxAuth := callCtx.Authorization()
 	err = doTx(core.db, func(dbTx *sqlx.Tx) error {
 		xres, txErr := dbTx.Exec(
 			`UPDATE `+userTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
 				"WHERE id = $2 AND d_ts IS NULL",
 			callCtx.RequestInfo().ReceiveTime,
-			authCtx.UserID().PrimitiveValue(),
-			authCtx.TerminalID().PrimitiveValue(),
+			ctxAuth.UserID().PrimitiveValue(),
+			ctxAuth.TerminalID().PrimitiveValue(),
 			input.DeletionNotes)
 		if txErr != nil {
 			return txErr
@@ -134,7 +144,7 @@ func (core *Core) DeleteUserInstance(
 		if txErr != nil {
 			return txErr
 		}
-		deleted = n == 1
+		stateChanged = n == 1
 
 		if txErr == nil {
 			_, txErr = dbTx.Exec(
@@ -142,8 +152,8 @@ func (core *Core) DeleteUserInstance(
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestInfo().ReceiveTime,
-				authCtx.UserID().PrimitiveValue(),
-				authCtx.TerminalID().PrimitiveValue())
+				ctxAuth.UserID().PrimitiveValue(),
+				ctxAuth.TerminalID().PrimitiveValue())
 		}
 
 		if txErr == nil {
@@ -152,8 +162,8 @@ func (core *Core) DeleteUserInstance(
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestInfo().ReceiveTime,
-				authCtx.UserID().PrimitiveValue(),
-				authCtx.TerminalID().PrimitiveValue())
+				ctxAuth.UserID().PrimitiveValue(),
+				ctxAuth.TerminalID().PrimitiveValue())
 		}
 
 		return txErr
@@ -164,16 +174,23 @@ func (core *Core) DeleteUserInstance(
 
 	//TODO: update caches, emit events if there's any changes
 
-	return deleted, nil
+	return stateChanged, nil
 }
 
 func (core *Core) GetUserContactInformation(
 	callCtx iam.CallContext,
-	userID iam.UserRefKey,
+	userRef iam.UserRefKey,
 ) (*iampb.UserContactInfoData, error) {
 	//TODO: access control
+	return core.getUserContactInformationNoAC(callCtx, userRef)
+}
+
+func (core *Core) getUserContactInformationNoAC(
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
+) (*iampb.UserContactInfoData, error) {
 	userPhoneNumber, err := core.
-		GetUserKeyPhoneNumber(callCtx, userID)
+		GetUserKeyPhoneNumber(callCtx, userRef)
 	if err != nil {
 		return nil, errors.Wrap("get user key phone number", err)
 	}
@@ -185,22 +202,22 @@ func (core *Core) GetUserContactInformation(
 	}, nil
 }
 
-func (core *Core) ensureOrNewUserRef(
+func (core *Core) contextUserOrNewInstance(
 	callCtx iam.CallContext,
-	userRef iam.UserRefKey,
 ) (iam.UserRefKey, error) {
 	if callCtx == nil {
 		return iam.UserRefKeyZero(), errors.ArgMsg("callCtx", "missing")
 	}
-	if userRef.IsValid() {
+	ctxAuth := callCtx.Authorization()
+	if ctxAuth.IsUserContext() {
+		userRef := ctxAuth.UserRef()
 		if !core.IsUserRefKeyRegistered(userRef) {
-			return iam.UserRefKeyZero(), nil
+			return iam.UserRefKeyZero(), errors.ArgMsg("callCtx.Authorization", "invalid")
 		}
 		return userRef, nil
 	}
 
-	var err error
-	userRef, err = core.CreateUserAccount(callCtx)
+	userRef, err := core.NewUserInstance(callCtx)
 	if err != nil {
 		return iam.UserRefKeyZero(), err
 	}
@@ -208,49 +225,56 @@ func (core *Core) ensureOrNewUserRef(
 	return userRef, nil
 }
 
-func (core *Core) CreateUserAccount(
+func (core *Core) NewUserInstance(
 	callCtx iam.CallContext,
 ) (iam.UserRefKey, error) {
-	newUserID, err := core.generateUserID()
-	if err != nil {
-		panic(err)
-	}
+	ctxAuth := callCtx.Authorization()
 
-	//TODO: if id conflict, generate another id and retry
-	_, err = core.db.
-		Exec(
-			`INSERT INTO `+userTableName+` (`+
-				`id, c_ts, c_uid, c_tid`+
-				`) VALUES (`+
-				`$1, $2, $3, $4`+
-				`)`,
-			newUserID,
-			callCtx.RequestInfo().ReceiveTime,
-			callCtx.Authorization().UserIDPtr(),
-			callCtx.Authorization().TerminalIDPtr())
-	if err != nil {
-		return iam.UserRefKeyZero(), err
+	const attemptNumMax = 5
+
+	var err error
+	var newUserID iam.UserID
+	cTime := callCtx.RequestInfo().ReceiveTime
+
+	for attemptNum := 0; ; attemptNum++ {
+		newUserID, err = core.generateUserID()
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = core.db.
+			Exec(
+				`INSERT INTO `+userTableName+` (`+
+					`id, c_ts, c_uid, c_tid`+
+					`) VALUES (`+
+					`$1, $2, $3, $4`+
+					`)`,
+				newUserID,
+				cTime,
+				ctxAuth.UserIDPtr(),
+				ctxAuth.TerminalIDPtr())
+		if err == nil {
+			break
+		}
+
+		pqErr, _ := err.(*pq.Error)
+		if pqErr != nil &&
+			pqErr.Code == "23505" &&
+			pqErr.Constraint == userTableName+"_pkey" {
+			if attemptNum >= attemptNumMax {
+				return iam.UserRefKeyZero(), errors.Wrap("insert max attempts", err)
+			}
+			continue
+		}
+
+		return iam.UserRefKeyZero(), errors.Wrap("insert", err)
 	}
 
 	return iam.NewUserRefKey(newUserID), nil
 }
 
+//TODO: bitfield
 func (core *Core) generateUserID() (iam.UserID, error) {
-	var userID iam.UserID
-	var err error
-	for i := 0; i < 5; i++ {
-		userID, err = core.generateUserIDImpl()
-		if err == nil && userID.IsValid() {
-			return userID, nil
-		}
-	}
-	if err == nil {
-		err = errors.Msg("user ID generation failed")
-	}
-	return iam.UserIDZero, err
-}
-
-func (core *Core) generateUserIDImpl() (iam.UserID, error) {
 	tNow := time.Now().UTC()
 	tbin, err := tNow.MarshalBinary()
 	if err != nil {

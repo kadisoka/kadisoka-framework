@@ -96,8 +96,8 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 			oauth2.ErrorServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsValid() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Authorization context must not be valid")
 		oauth2.RespondTo(resp).ErrorCode(

@@ -75,11 +75,11 @@ func (restSvc *RESTService) getAuth(req *restful.Request, resp *restful.Response
 		resp.WriteHeaderAndJson(http.StatusInternalServerError, &rest.ErrorResponse{}, restful.MIME_JSON)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsUserContext() {
 		logCtx(reqCtx).Warn().Msg("Already authorized")
 		resp.WriteHeaderAndJson(http.StatusOK,
-			&authGetResponse{AccessToken: authCtx.RawToken()},
+			&authGetResponse{AccessToken: ctxAuth.RawToken()},
 			restful.MIME_JSON)
 		return
 	}
@@ -108,8 +108,8 @@ func (restSvc *RESTService) getHello(req *restful.Request, resp *restful.Respons
 		resp.WriteHeaderAndJson(http.StatusInternalServerError, &rest.ErrorResponse{}, restful.MIME_JSON)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if !authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).
 			Warn().Err(err).Msg("Unauthorized")
 		resp.WriteHeaderAndJson(http.StatusUnauthorized, &rest.ErrorResponse{},
@@ -118,6 +118,6 @@ func (restSvc *RESTService) getHello(req *restful.Request, resp *restful.Respons
 	}
 
 	resp.WriteHeaderAndJson(http.StatusOK,
-		&helloGetResponse{Greetings: "Hello, user " + authCtx.UserRef().AZERText()},
+		&helloGetResponse{Greetings: "Hello, user " + ctxAuth.UserRef().AZERText()},
 		restful.MIME_JSON)
 }

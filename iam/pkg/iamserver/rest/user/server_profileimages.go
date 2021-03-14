@@ -23,8 +23,8 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 			http.StatusInternalServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() && !authCtx.IsUserContext() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() && !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).Warn().Msgf("Unauthorized: %v", err)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
@@ -50,7 +50,7 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 	defer uploadedFile.Close()
 
 	imageURL, err := restSrv.serverCore.
-		SetUserProfileImageByFile(reqCtx, authCtx.UserRef(), uploadedFile)
+		SetUserProfileImageByFile(reqCtx, ctxAuth.UserRef(), uploadedFile)
 	if err != nil {
 		if errors.IsCallError(err) {
 			//TODO: translate the error

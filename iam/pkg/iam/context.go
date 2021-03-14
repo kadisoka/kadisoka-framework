@@ -37,14 +37,14 @@ type CallContext interface {
 
 func newCallContext(
 	ctx context.Context,
-	authCtx *Authorization,
+	ctxAuth *Authorization,
 	originInfo api.CallOriginInfo,
 	requestID *api.RequestID,
 ) CallContext {
-	if authCtx == nil {
-		panic("authCtx must not be nil")
+	if ctxAuth == nil {
+		panic("ctxAuth must not be nil")
 	}
-	return &callContext{ctx, authCtx, api.CallRequestInfo{
+	return &callContext{ctx, ctxAuth, api.CallRequestInfo{
 		ID:          requestID,
 		ReceiveTime: time.Now().UTC(),
 	}, originInfo,
@@ -62,8 +62,8 @@ type callContext struct {
 
 func (ctx callContext) Authorization() Authorization {
 	if ctx.authorization == nil {
-		authCtx := newEmptyAuthorization()
-		return *authCtx
+		ctxAuth := newEmptyAuthorization()
+		return *ctxAuth
 	}
 	return *ctx.authorization
 }

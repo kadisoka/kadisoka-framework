@@ -196,7 +196,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 
 	state, _ := req.BodyParameter("state")
-	authCtx := reqCtx.Authorization()
+	ctxAuth := reqCtx.Authorization()
 	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx, "")
 	termDisplayName := ""
 	var termRef iam.TerminalRefKey
@@ -207,7 +207,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 			RegisterTerminal(reqCtx,
 				iamserver.TerminalRegistrationInput{
 					ApplicationRef:   appRef,
-					UserRef:          authCtx.UserRef(),
+					UserRef:          ctxAuth.UserRef(),
 					DisplayName:      termDisplayName,
 					AcceptLanguage:   strings.Join(preferredLanguages, ","),
 					VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
@@ -227,7 +227,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 			RegisterTerminal(reqCtx,
 				iamserver.TerminalRegistrationInput{
 					ApplicationRef:   appRef,
-					UserRef:          authCtx.UserRef(),
+					UserRef:          ctxAuth.UserRef(),
 					DisplayName:      termDisplayName,
 					AcceptLanguage:   strings.Join(preferredLanguages, ","),
 					VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
@@ -240,7 +240,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		issueTime := time.Now().UTC()
 
 		tokenString, err := restSrv.serverCore.
-			GenerateAccessTokenJWT(reqCtx, termRef, authCtx.UserRef(), issueTime)
+			GenerateAccessTokenJWT(reqCtx, termRef, ctxAuth.UserRef(), issueTime)
 		if err != nil {
 			panic(err)
 		}

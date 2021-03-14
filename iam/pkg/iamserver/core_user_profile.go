@@ -17,14 +17,26 @@ const userProfileImageKeyTableName = "user_profile_image_key_dt"
 
 func (core *Core) GetUserBaseProfile(
 	callCtx iam.CallContext,
-	userID iam.UserRefKey,
+	userRef iam.UserRefKey,
 ) (*iam.UserBaseProfileData, error) {
 	if callCtx == nil {
 		return nil, errors.ArgMsg("callCtx", "missing")
 	}
 	//TODO(exa): ensure that the context user has the privilege
 
+	return core.getUserBaseProfileNoAC(callCtx, userRef)
+}
+
+// getUserBaseProfileNoAC is the implementation of GetUserBaseProfile
+// but without access-control. This method must be only used behind the
+// access control; for the end-point for public-facing APIs,
+// use GetUserBaseProfile.
+func (core *Core) getUserBaseProfileNoAC(
+	callCtx iam.CallContext,
+	userID iam.UserRefKey,
+) (*iam.UserBaseProfileData, error) {
 	var user iam.UserBaseProfileData
+	var id iam.UserID
 	var deletion iam.UserInstanceDeletionInfo
 	var displayName *string
 	var profileImageURL *string
@@ -41,7 +53,7 @@ func (core *Core) GetUserBaseProfile(
 				`AND upiu.d_ts IS NULL `+
 				`WHERE ua.id = $1`,
 			userID).
-		Scan(&user.RefKey, &deletion.Deleted, &displayName, &profileImageURL)
+		Scan(&id, &deletion.Deleted, &displayName, &profileImageURL)
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -54,13 +66,13 @@ func (core *Core) GetUserBaseProfile(
 	if deletion.Deleted {
 		//TODO: populate revision number
 		user.InstanceInfo = &iam.UserInstanceInfo{Deletion: &deletion}
-	}
-
-	if displayName != nil {
-		user.DisplayName = *displayName
-	}
-	if profileImageURL != nil {
-		user.ProfileImageURL = core.BuildUserProfileImageURL(*profileImageURL)
+	} else {
+		if displayName != nil {
+			user.DisplayName = *displayName
+		}
+		if profileImageURL != nil {
+			user.ProfileImageURL = core.BuildUserProfileImageURL(*profileImageURL)
+		}
 	}
 
 	return &user, nil
@@ -68,12 +80,19 @@ func (core *Core) GetUserBaseProfile(
 
 func (core *Core) GetUserInfoV1(
 	callCtx iam.CallContext,
-	userID iam.UserRefKey,
+	userRef iam.UserRefKey,
 ) (*iampb.UserInfoData, error) {
 	//TODO: access control
 
+	return core.getUserInfoV1NoAC(callCtx, userRef)
+}
+
+func (core *Core) getUserInfoV1NoAC(
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
+) (*iampb.UserInfoData, error) {
 	userBaseProfile, err := core.
-		GetUserBaseProfile(callCtx, userID)
+		getUserBaseProfileNoAC(callCtx, userRef)
 	if err != nil {
 		panic(err)
 	}
@@ -96,7 +115,7 @@ func (core *Core) GetUserInfoV1(
 	}
 
 	contactInfo, err := core.
-		GetUserContactInformation(callCtx, userID)
+		getUserContactInformationNoAC(callCtx, userRef)
 	if err != nil {
 		panic(err)
 	}

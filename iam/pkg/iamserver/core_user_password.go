@@ -46,8 +46,8 @@ func (core *Core) SetUserPassword(
 	userRef iam.UserRefKey,
 	clearTextPassword string,
 ) error {
-	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() || !userRef.EqualsUserRefKey(authCtx.UserRef()) {
+	ctxAuth := callCtx.Authorization()
+	if !ctxAuth.IsUser(userRef) {
 		return errors.New("forbidden")
 	}
 
@@ -63,7 +63,7 @@ func (core *Core) SetUserPassword(
 			`UPDATE `+userPasswordTableName+` SET `+
 				`d_ts = $1, d_uid = $2, d_tid = $3 `+
 				`WHERE user_id = $4 AND d_ts IS NULL`,
-			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue(),
+			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
 			userRef.ID().PrimitiveValue())
 		if txErr != nil {
 			return txErr
@@ -73,7 +73,7 @@ func (core *Core) SetUserPassword(
 				`(user_id, password, c_ts, c_uid, c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
 			userRef.ID().PrimitiveValue(), passwordHash,
-			ctxTime, authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
+			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
 		return nil
 	})
 }

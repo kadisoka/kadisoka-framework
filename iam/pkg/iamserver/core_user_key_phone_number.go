@@ -25,7 +25,7 @@ func (core *Core) ListUsersByPhoneNumber(
 	if len(phoneNumbers) == 0 {
 		return []iam.UserKeyPhoneNumber{}, nil
 	}
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 
 	var err error
 
@@ -66,7 +66,7 @@ func (core *Core) ListUsersByPhoneNumber(
 	// Already deferred above but we are closing it now because we want to do more queries
 	userPhoneNumberRows.Close()
 
-	if authCtx.IsUserContext() {
+	if ctxAuth.IsUserContext() {
 		go func() {
 			for _, pn := range phoneNumbers {
 				_, err = core.db.Exec(
@@ -75,8 +75,8 @@ func (core *Core) ListUsersByPhoneNumber(
 						"c_uid, c_tid"+
 						") VALUES ($1, $2, $3, $4, $5) "+
 						`ON CONFLICT ON CONSTRAINT `+userContactPhoneNumberTableName+`_pkey DO NOTHING`,
-					authCtx.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
-					authCtx.UserID().PrimitiveValue(), authCtx.TerminalID().PrimitiveValue())
+					ctxAuth.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
+					ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
 				if err != nil {
 					logCtx(callCtx).Err(err).Str("phone_number", pn.String()).
 						Msg("User contact phone number store")
@@ -173,12 +173,12 @@ func (core *Core) SetUserKeyPhoneNumber(
 	phoneNumber iam.PhoneNumber,
 	verificationMethods []pnv10n.VerificationMethod,
 ) (verificationID int64, codeExpiry *time.Time, err error) {
-	authCtx := callCtx.Authorization()
-	if !authCtx.IsUserContext() {
+	ctxAuth := callCtx.Authorization()
+	if !ctxAuth.IsUserContext() {
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !userRef.EqualsUserRefKey(authCtx.UserRef()) {
+	if !ctxAuth.IsUser(userRef) {
 		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
 	}
 
@@ -190,14 +190,14 @@ func (core *Core) SetUserKeyPhoneNumber(
 		return 0, nil, errors.Wrap("getUserIDByKeyPhoneNumber", err)
 	}
 	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != authCtx.UserID() {
+		if existingOwnerUserID != ctxAuth.UserID() {
 			return 0, nil, errors.ArgMsg("phoneNumber", "conflict")
 		}
 		return 0, nil, nil
 	}
 
 	alreadyVerified, err := core.setUserKeyPhoneNumber(
-		callCtx, authCtx.UserRef(), phoneNumber)
+		callCtx, ctxAuth.UserRef(), phoneNumber)
 	if err != nil {
 		return 0, nil, errors.Wrap("setUserKeyPhoneNumber", err)
 	}
@@ -206,7 +206,10 @@ func (core *Core) SetUserKeyPhoneNumber(
 	}
 
 	//TODO: user-set has higher priority over terminal's
-	userLanguages, err := core.getTerminalAcceptLanguages(authCtx.TerminalID())
+	userLanguages, err := core.getTerminalAcceptLanguages(ctxAuth.TerminalID())
+	if err != nil {
+
+	}
 
 	verificationID, codeExpiry, err = core.pnVerifier.
 		StartVerification(callCtx, phoneNumber,
@@ -278,7 +281,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 	verificationID int64,
 	code string,
 ) (updated bool, err error) {
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 	err = core.pnVerifier.ConfirmVerification(
 		callCtx, verificationID, code)
 	if err != nil {
@@ -301,7 +304,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 
 	updated, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
-			authCtx.UserID(), *phoneNumber,
+			ctxAuth.UserID(), *phoneNumber,
 			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)

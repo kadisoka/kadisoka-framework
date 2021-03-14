@@ -22,8 +22,8 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 			http.StatusInternalServerError)
 		return
 	}
-	authCtx := reqCtx.Authorization()
-	if authCtx.IsNotValid() {
+	ctxAuth := reqCtx.Authorization()
+	if ctxAuth.IsNotValid() {
 		logCtx(reqCtx).
 			Warn().Err(err).Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
@@ -31,7 +31,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 		return
 	}
 
-	requestedUserRef := authCtx.UserRef()
+	requestedUserRef := ctxAuth.UserRef()
 
 	userBaseProfile, err := restSrv.serverCore.
 		GetUserBaseProfile(reqCtx, requestedUserRef)
