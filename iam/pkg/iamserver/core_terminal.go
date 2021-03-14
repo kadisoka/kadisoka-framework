@@ -2,6 +2,7 @@ package iamserver
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
 	"encoding/binary"
@@ -42,7 +43,8 @@ func (core *Core) AuthenticateTerminal(
 		return false, iam.UserRefKeyZero(), err
 	}
 
-	return storedSecret == terminalSecret, iam.NewUserRefKey(ownerUserID), nil
+	return subtle.ConstantTimeCompare([]byte(storedSecret), []byte(terminalSecret)) == 1,
+		iam.NewUserRefKey(ownerUserID), nil
 }
 
 func (core *Core) StartTerminalRegistrationByPhoneNumber(

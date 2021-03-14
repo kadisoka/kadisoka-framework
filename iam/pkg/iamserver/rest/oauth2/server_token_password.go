@@ -112,8 +112,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	}
 
 	if userRef.IsValid() {
-		userInstState, err := restSrv.serverCore.
-			GetUserInstanceState(userRef)
+		userInstInfo, err := restSrv.serverCore.
+			GetUserInstanceInfo(userRef)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Msgf("Terminal %v user account state: %v", termRef, err)
@@ -121,9 +121,9 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 				oauth2.ErrorServerError)
 			return
 		}
-		if userInstState == nil || !userInstState.IsInstanceActive() {
+		if userInstInfo == nil || !userInstInfo.IsActive() {
 			var status string
-			if userInstState == nil {
+			if userInstInfo == nil {
 				status = "not exist"
 			} else {
 				status = "deleted"

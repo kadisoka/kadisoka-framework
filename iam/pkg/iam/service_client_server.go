@@ -34,17 +34,17 @@ type ServiceClientServer interface {
 
 func NewServiceClientServer(
 	jwtKeyChain *JWTKeyChain,
-	userInstanceStateService UserInstanceStateService,
+	userInstanceInfoService UserInstanceInfoService,
 ) (ServiceClientServer, error) {
 	return &ServiceClientServerCore{
 		jwtKeyChain:              jwtKeyChain,
-		userInstanceStateService: userInstanceStateService,
+		userInstanceStateService: userInstanceInfoService,
 	}, nil
 }
 
 type ServiceClientServerCore struct {
 	jwtKeyChain              *JWTKeyChain
-	userInstanceStateService UserInstanceStateService
+	userInstanceStateService UserInstanceInfoService
 }
 
 var _ ServiceClientServer = &ServiceClientServerCore{}
@@ -107,15 +107,15 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 		if err != nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "malformed"))
 		}
-		userInstState, err := svcClServer.userInstanceStateService.
-			GetUserInstanceState(userRef)
+		instInfo, err := svcClServer.userInstanceStateService.
+			GetUserInstanceInfo(userRef)
 		if err != nil {
 			return emptyAuthCtx, errors.Wrap("account state query", err)
 		}
-		if userInstState == nil {
+		if instInfo == nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "reference invalid"))
 		}
-		if !userInstState.IsInstanceActive() {
+		if !instInfo.IsActive() {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "reference invalid"))
 		}
 	}

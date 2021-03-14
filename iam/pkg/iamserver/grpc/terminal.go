@@ -6,7 +6,6 @@ import (
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	pbtypes "github.com/gogo/protobuf/types"
-	grpcerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc/errors"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 	"golang.org/x/text/language"
 	"google.golang.org/grpc"
@@ -14,6 +13,7 @@ import (
 	grpcmd "google.golang.org/grpc/metadata"
 	grpcstatus "google.golang.org/grpc/status"
 
+	grpcerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
@@ -67,7 +67,8 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 	phoneNumber, err := iam.PhoneNumberFromString(reqProto.PhoneNumber)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Str("phone_number", reqProto.PhoneNumber).Msg("Phone number format")
+			Warn().Err(err).Str("phone_number", reqProto.PhoneNumber).
+			Msg("Phone number format")
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
@@ -80,8 +81,9 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		switch err.(type) {
 		case errors.CallError:
 			logCtx(reqCtx).
-				Warn().Err(err).Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed",
-				phoneNumber)
+				Warn().Err(err).
+				Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed",
+					phoneNumber)
 			return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 		}
 		logCtx(reqCtx).
@@ -175,16 +177,16 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 	}
 
 	if userRef.IsValid() {
-		userInstState, err := authServer.iamServerCore.
-			GetUserInstanceState(userRef)
+		userInstInfo, err := authServer.iamServerCore.
+			GetUserInstanceInfo(userRef)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).Str("terminal", termRef.AZERText()).Msg("Terminal user account state")
 			return nil, grpcerrs.Error(err)
 		}
-		if userInstState == nil || !userInstState.IsInstanceActive() {
+		if userInstInfo == nil || !userInstInfo.IsActive() {
 			var status string
-			if userInstState == nil {
+			if userInstInfo == nil {
 				status = "not exist"
 			} else {
 				status = "deleted"
@@ -219,18 +221,4 @@ func (authServer *TerminalAuthorizationServiceServer) parseRequestAcceptLanguage
 		return nil
 	}
 	return termLangTags
-}
-
-func (authServer *TerminalAuthorizationServiceServer) parseRequestAcceptLanguage(
-	overrideAcceptLanguage string,
-) (termLangStrings []string) {
-	termLangTags := authServer.parseRequestAcceptLanguageTags(overrideAcceptLanguage)
-	for _, langTag := range termLangTags {
-		termLangStrings = append(termLangStrings, langTag.String())
-	}
-	return termLangStrings
-}
-
-func (authServer *TerminalAuthorizationServiceServer) verifyUserTerminalSecret(stored, provided string) bool {
-	return stored == provided
 }

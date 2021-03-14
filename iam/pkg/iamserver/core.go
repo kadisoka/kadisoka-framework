@@ -38,8 +38,8 @@ type Core struct {
 	realmInfo realm.Info
 	db        *sqlx.DB
 
-	registeredUserIDCache     *lru.ARCCache
-	deletedUserAccountIDCache *lru.ARCCache
+	registeredUserInstanceIDCache *lru.ARCCache
+	deletedUserInstanceIDCache    *lru.ARCCache
 
 	iam.ServiceClient //TODO: not specifically client
 
@@ -115,14 +115,14 @@ func NewCoreByConfig(
 	}
 
 	inst := &Core{
-		realmInfo:                 realmInfo,
-		db:                        iamDB,
-		registeredUserIDCache:     registeredUserIDCache,
-		deletedUserAccountIDCache: deletedUserAccountIDCache,
-		applicationDataProvider:   applicationDataProvider,
-		mediaStore:                mediaStore,
-		eaVerifier:                eaVerifier,
-		pnVerifier:                pnVerifier,
+		realmInfo:                     realmInfo,
+		db:                            iamDB,
+		registeredUserInstanceIDCache: registeredUserIDCache,
+		deletedUserInstanceIDCache:    deletedUserAccountIDCache,
+		applicationDataProvider:       applicationDataProvider,
+		mediaStore:                    mediaStore,
+		eaVerifier:                    eaVerifier,
+		pnVerifier:                    pnVerifier,
 	}
 
 	clientBase, err := iam.NewServiceClient(nil, jwtKeyChain, inst)

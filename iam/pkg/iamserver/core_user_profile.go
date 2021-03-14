@@ -25,7 +25,7 @@ func (core *Core) GetUserBaseProfile(
 	//TODO(exa): ensure that the context user has the privilege
 
 	var user iam.UserBaseProfileData
-	var deletion iam.UserInstanceDeletionData
+	var deletion iam.UserInstanceDeletionInfo
 	var displayName *string
 	var profileImageURL *string
 
@@ -52,7 +52,8 @@ func (core *Core) GetUserBaseProfile(
 	}
 
 	if deletion.Deleted {
-		user.InstanceState = &iam.UserInstanceStateData{Deletion: &deletion}
+		//TODO: populate revision number
+		user.InstanceInfo = &iam.UserInstanceInfo{Deletion: &deletion}
 	}
 
 	if displayName != nil {

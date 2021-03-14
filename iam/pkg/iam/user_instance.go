@@ -1,9 +1,11 @@
 package iam
 
+// UserInstanceService is a service which provides
+// methods for manipulating entity instances.
 type UserInstanceService interface {
 	UserRefKeyService
 
-	UserInstanceStateService
+	UserInstanceInfoService
 
 	// DeleteUserInstance deletes an instance of user entity based identfied
 	// by instRefToDelete.
@@ -15,35 +17,47 @@ type UserInstanceService interface {
 	) (deleted bool, err error)
 }
 
-type UserInstanceStateService interface {
-	// GetUserInstanceState checks if the provided user ID is valid and whether
-	// the instance is deleted.
+// UserInstanceInfoService is a service which
+// provides an access to instances metadata.
+type UserInstanceInfoService interface {
+	// GetUserInstanceInfo checks if the provided
+	// ref-key is valid and whether the instance is deleted.
 	//
-	// This method returns nil if the userRef is not referencing to any valid
-	// user instance.
-	GetUserInstanceState(
+	// This method returns nil if the refKey is not referencing to any valid
+	// instance.
+	GetUserInstanceInfo(
 		/*callCtx CallContext,*/ //TODO: call context
-		userRef UserRefKey,
-	) (*UserInstanceStateData, error)
+		refKey UserRefKey,
+	) (*UserInstanceInfo, error)
 }
 
-type UserInstanceStateData struct {
-	Deletion *UserInstanceDeletionData
+// UserInstanceService holds information about
+// an instance of User.
+type UserInstanceInfo struct {
+	RevisionNumber int32
+
+	// Deletion holds information about the deletion of the instance. If
+	// the instance has not been deleted, this field value will be nil.
+	Deletion *UserInstanceDeletionInfo
 }
 
-func (instState UserInstanceStateData) IsInstanceActive() bool {
-	return instState.Deletion == nil && !instState.Deletion.Deleted
+// IsActive returns true if the instance is considered as active.
+func (instInfo UserInstanceInfo) IsActive() bool {
+	// Note: we will check other flags in the future, but that's said,
+	// deleted instance is considered inactive.
+	return !instInfo.IsDeleted()
 }
 
-//TODO: make this struct instances connect to IAM server and manage
-// synchronization of user account states.
-type UserInstanceStateServiceClientCore struct {
+// IsDeleted returns true if the instance was deleted.
+func (instInfo UserInstanceInfo) IsDeleted() bool {
+	return instInfo.Deletion != nil && instInfo.Deletion.Deleted
 }
 
-func (uaStateSvcClient *UserInstanceStateServiceClientCore) GetUserInstanceState(
-	_ UserRefKey,
-) (*UserInstanceStateData, error) {
-	return &UserInstanceStateData{Deletion: nil}, nil
+// UserInstanceDeletionInfo holds information about
+// the deletion of an instance if the instance has been deleted.
+type UserInstanceDeletionInfo struct {
+	Deleted       bool
+	DeletionNotes string
 }
 
 //TODO: reason and notes
@@ -51,7 +65,13 @@ type UserInstanceDeletionInput struct {
 	DeletionNotes string
 }
 
-type UserInstanceDeletionData struct {
-	Deleted       bool
-	DeletionNotes string
+//TODO: make this struct instances connect to IAM server and manage
+// synchronization of user account states.
+type UserInstanceStateServiceClientCore struct {
+}
+
+func (uaStateSvcClient *UserInstanceStateServiceClientCore) GetUserInstanceInfo(
+	_ UserRefKey,
+) (*UserInstanceInfo, error) {
+	return &UserInstanceInfo{RevisionNumber: -1, Deletion: nil}, nil
 }

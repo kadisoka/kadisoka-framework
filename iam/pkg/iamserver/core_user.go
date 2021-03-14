@@ -19,66 +19,69 @@ var _ iam.UserInstanceService = &Core{}
 
 const userTableName = "user_dt"
 
-// GetUserInstanceState retrieves the state of an user account. It includes
+// GetUserInstanceInfo retrieves the state of an user account. It includes
 // the existence of the ID, and wether the account has been deleted.
 //
 // If it's required only to determine the existence of the ID,
 // IsUserRefKeyRegistered is generally more efficient.
-func (core *Core) GetUserInstanceState(
+func (core *Core) GetUserInstanceInfo(
 	userRef iam.UserRefKey,
-) (*iam.UserInstanceStateData, error) {
+) (*iam.UserInstanceInfo, error) {
 	idRegistered := false
 	idRegisteredCacheHit := false
-	accountDeleted := false
-	accountDeletedCacheHit := false
+	instDeleted := false
+	instDeletionCacheHit := false
+
 	// Look up for an user ID in the cache.
-	if _, idRegistered = core.registeredUserIDCache.Get(userRef); idRegistered {
+	if _, idRegistered = core.registeredUserInstanceIDCache.Get(userRef); idRegistered {
 		// User ID is positively registered.
 		idRegisteredCacheHit = true
 	}
 
 	// Look up in the cache
-	if _, accountDeleted := core.deletedUserAccountIDCache.Get(userRef); accountDeleted {
+	if _, instDeleted = core.deletedUserInstanceIDCache.Get(userRef); instDeleted {
 		// Account is positively deleted
-		accountDeletedCacheHit = true
+		instDeletionCacheHit = true
 	}
 
-	if idRegisteredCacheHit && accountDeletedCacheHit {
+	if idRegisteredCacheHit && instDeletionCacheHit {
 		if !idRegistered {
 			return nil, nil
 		}
-		var deletion *iam.UserInstanceDeletionData
-		if accountDeleted {
-			deletion = &iam.UserInstanceDeletionData{Deleted: true}
+		var deletion *iam.UserInstanceDeletionInfo
+		if instDeleted {
+			deletion = &iam.UserInstanceDeletionInfo{Deleted: true}
 		}
-		return &iam.UserInstanceStateData{
+		//TODO: populate revision number
+		return &iam.UserInstanceInfo{
 			Deletion: deletion,
 		}, nil
 	}
 
 	var err error
-	idRegistered, accountDeleted, err = core.
+	idRegistered, instDeleted, err = core.
 		getUserInstanceStateByID(userRef.ID())
 	if err != nil {
 		return nil, err
 	}
 
 	if !idRegisteredCacheHit && idRegistered {
-		core.registeredUserIDCache.Add(userRef, nil)
+		core.registeredUserInstanceIDCache.Add(userRef, nil)
 	}
-	if !accountDeletedCacheHit && accountDeleted {
-		core.deletedUserAccountIDCache.Add(userRef, nil)
+	if !instDeletionCacheHit && instDeleted {
+		core.deletedUserInstanceIDCache.Add(userRef, nil)
 	}
 
 	if !idRegistered {
 		return nil, nil
 	}
 
-	var deletion *iam.UserInstanceDeletionData
-	if accountDeleted {
-		deletion = &iam.UserInstanceDeletionData{Deleted: true}
+	var deletion *iam.UserInstanceDeletionInfo
+	if instDeleted {
+		deletion = &iam.UserInstanceDeletionInfo{Deleted: true}
 	}
-	return &iam.UserInstanceStateData{
+	//TODO: populate revision number
+	return &iam.UserInstanceInfo{
 		Deletion: deletion,
 	}, nil
 }

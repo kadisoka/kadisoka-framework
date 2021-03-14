@@ -83,14 +83,14 @@ func NewServiceClientSimple(instID string, envVarsPrefix string) (ServiceClient,
 func NewServiceClient(
 	serviceClientConfig *ServiceClientConfig,
 	jwtKeyChain *JWTKeyChain,
-	userInstanceStateService UserInstanceStateService,
+	userInstanceInfoService UserInstanceInfoService,
 ) (ServiceClient, error) {
 	if serviceClientConfig != nil {
 		cfg := *serviceClientConfig
 		serviceClientConfig = &cfg
 	}
 
-	serviceClientServer, err := NewServiceClientServer(jwtKeyChain, userInstanceStateService)
+	serviceClientServer, err := NewServiceClientServer(jwtKeyChain, userInstanceInfoService)
 	if err != nil {
 		return nil, err
 	}
