@@ -85,29 +85,3 @@ func (TerminalRegisterPostResponseJSONV1) SwaggerDoc() map[string]string {
 			"be expired.",
 	}
 }
-
-type TerminalSecretPostRequestJSONV1 struct {
-	TerminalID string `json:"terminal_id"`
-	Code       string `json:"code"`
-}
-
-func (TerminalSecretPostRequestJSONV1) SwaggerDoc() map[string]string {
-	return map[string]string{
-		"terminal_id": "The ID of the terminal to get the secret for.",
-		"code": "The code obtained from the terminal registration endpoint " +
-			"delivered through the configured external communication channel.",
-	}
-}
-
-type TerminalSecretPostResponseJSONV1 struct {
-	Secret string `json:"secret"`
-}
-
-func (TerminalSecretPostResponseJSONV1) SwaggerDoc() map[string]string {
-	return map[string]string{
-		"secret": "The secret of the terminal. Provide this secret " +
-			"as `password` when requesting an access token. If possible, " +
-			"store this secret in a secure storage provided by the OS or " +
-			"the platform.",
-	}
-}

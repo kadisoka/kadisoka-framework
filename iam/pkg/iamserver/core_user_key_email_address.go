@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
+	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/lib/pq"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
@@ -20,14 +21,27 @@ func (core *Core) GetUserKeyEmailAddress(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 ) (*iam.EmailAddress, error) {
+	//TODO: access control
+	return core.getUserKeyEmailAddressNoAC(callCtx, userRef)
+}
+
+func (core *Core) getUserKeyEmailAddressNoAC(
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
+) (*iam.EmailAddress, error) {
 	var rawInput string
+
+	sqlString, _, _ := goqu.
+		From(userKeyEmailAddressDBTableName).
+		Select("raw_input").
+		Where(
+			goqu.C("user_id").Eq(userRef.ID().PrimitiveValue()),
+			goqu.C("d_ts").IsNull(),
+			goqu.C("verification_time").IsNotNull()).
+		ToSQL()
+
 	err := core.db.
-		QueryRow(
-			`SELECT raw_input `+
-				`FROM `+userKeyEmailAddressDBTableName+` `+
-				`WHERE user_id=$1 `+
-				`AND d_ts IS NULL AND verification_time IS NOT NULL`,
-			userRef.ID().PrimitiveValue()).
+		QueryRow(sqlString).
 		Scan(&rawInput)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -35,6 +49,7 @@ func (core *Core) GetUserKeyEmailAddress(
 		}
 		return nil, err
 	}
+
 	emailAddress, err := iam.EmailAddressFromString(rawInput)
 	if err != nil {
 		panic(err)
@@ -99,7 +114,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	userRef iam.UserRefKey,
 	emailAddress iam.EmailAddress,
 	verificationMethods []eav10n.VerificationMethod,
-) (verificationID int64, codeExpiry *time.Time, err error) {
+) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
 	ctxAuth := callCtx.Authorization()
 	if !ctxAuth.IsUserContext() {
 		return 0, nil, iam.ErrUserContextRequired
@@ -135,7 +150,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	if err != nil {
 	}
 
-	verificationID, codeExpiry, err = core.eaVerifier.
+	verificationID, verificationCodeExpiry, err = core.eaVerifier.
 		StartVerification(callCtx, emailAddress,
 			0, userLanguages, verificationMethods)
 	if err != nil {
@@ -202,7 +217,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 	callCtx iam.CallContext,
 	verificationID int64,
 	code string,
-) (updated bool, err error) {
+) (stateChanged bool, err error) {
 	ctxAuth := callCtx.Authorization()
 	err = core.eaVerifier.ConfirmVerification(
 		callCtx, verificationID, code)
@@ -224,7 +239,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 	}
 
 	ctxTime := callCtx.RequestInfo().ReceiveTime
-	updated, err = core.
+	stateChanged, err = core.
 		ensureUserEmailAddressVerifiedFlag(
 			ctxAuth.UserID(), *emailAddress,
 			&ctxTime, verificationID)
@@ -232,7 +247,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 		panic(err)
 	}
 
-	return updated, nil
+	return stateChanged, nil
 }
 
 func (core *Core) ensureUserEmailAddressVerifiedFlag(
@@ -240,8 +255,7 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 	emailAddress iam.EmailAddress,
 	verificationTime *time.Time,
 	verificationID int64,
-) (bool, error) {
-	var err error
+) (stateChanged bool, err error) {
 	var xres sql.Result
 
 	xres, err = core.db.Exec(

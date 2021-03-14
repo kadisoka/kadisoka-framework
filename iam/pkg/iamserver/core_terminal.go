@@ -31,9 +31,11 @@ func (core *Core) AuthenticateTerminal(
 	var storedSecret string
 	var ownerUserID iam.UserID
 
-	sqlString, _, _ := goqu.From(terminalDBTableName).
+	sqlString, _, _ := goqu.
+		From(terminalDBTableName).
 		Select("user_id", "secret").
-		Where(goqu.C("id").Eq(terminalRef.ID().PrimitiveValue())).
+		Where(
+			goqu.C("id").Eq(terminalRef.ID().PrimitiveValue())).
 		ToSQL()
 
 	err = core.db.
@@ -363,13 +365,15 @@ func (core *Core) getTerminal(id iam.TerminalID) (*terminalDBModel, error) {
 	var err error
 	var ut terminalDBModel
 
-	sqlString, _, _ := goqu.From(terminalDBTableName).
+	sqlString, _, _ := goqu.
+		From(terminalDBTableName).
 		Select(
 			"id", "application_id", "user_id",
 			"c_ts", "c_uid", "c_tid", "c_origin_address",
 			"display_name", "accept_language",
 			"verification_type", "verification_id", "verification_time").
-		Where(goqu.C("id").Eq(id.PrimitiveValue())).
+		Where(
+			goqu.C("id").Eq(id.PrimitiveValue())).
 		ToSQL()
 
 	err = core.db.
@@ -401,9 +405,11 @@ func (core *Core) GetTerminalInfo(
 	var displayName string
 	var acceptLanguage string
 
-	sqlString, _, _ := goqu.From(terminalDBTableName).
+	sqlString, _, _ := goqu.
+		From(terminalDBTableName).
 		Select("user_id", "display_name", "accept_language").
-		Where(goqu.C("id").Eq(terminalID.PrimitiveValue())).
+		Where(
+			goqu.C("id").Eq(terminalID.PrimitiveValue())).
 		ToSQL()
 
 	err := core.db.
@@ -476,23 +482,25 @@ func (core *Core) RegisterTerminal(
 	//TODO: if id conflict, generate another id and retry
 	termID, err := core.generateTerminalID()
 
-	sqlString, _, _ := goqu.Insert(terminalDBTableName).
-		Rows(goqu.Record{
-			"id":                termID.PrimitiveValue(),
-			"application_id":    input.ApplicationRef.ID().PrimitiveValue(),
-			"user_id":           input.UserRef.ID().PrimitiveValue(),
-			"secret":            termSecret,
-			"c_ts":              ctxTime,
-			"c_uid":             ctxAuth.UserIDPtr(),
-			"c_tid":             ctxAuth.TerminalIDPtr(),
-			"c_origin_address":  originInfo.Address,
-			"c_origin_env":      originInfo.EnvironmentString,
-			"display_name":      input.DisplayName,
-			"accept_language":   input.AcceptLanguage,
-			"verification_type": input.VerificationType,
-			"verification_id":   input.VerificationID,
-			"verification_time": input.VerificationTime,
-		}).
+	sqlString, _, _ := goqu.
+		Insert(terminalDBTableName).
+		Rows(
+			goqu.Record{
+				"id":                termID.PrimitiveValue(),
+				"application_id":    input.ApplicationRef.ID().PrimitiveValue(),
+				"user_id":           input.UserRef.ID().PrimitiveValue(),
+				"secret":            termSecret,
+				"c_ts":              ctxTime,
+				"c_uid":             ctxAuth.UserIDPtr(),
+				"c_tid":             ctxAuth.TerminalIDPtr(),
+				"c_origin_address":  originInfo.Address,
+				"c_origin_env":      originInfo.EnvironmentString,
+				"display_name":      input.DisplayName,
+				"accept_language":   input.AcceptLanguage,
+				"verification_type": input.VerificationType,
+				"verification_id":   input.VerificationID,
+				"verification_time": input.VerificationTime,
+			}).
 		ToSQL()
 
 	_, err = core.db.Exec(sqlString)
@@ -518,15 +526,17 @@ func (core *Core) setUserTerminalVerified(
 	// authorization has been verified.
 	termSecret := core.generateTerminalSecret() //TODO(exa): JWT (or something similar)
 
-	sqlString, _, _ := goqu.From(terminalDBTableName).
+	sqlString, _, _ := goqu.
+		From(terminalDBTableName).
 		Where(
 			goqu.C("id").Eq(terminalID.PrimitiveValue()),
-			goqu.C("verification_time").IsNull(),
-		).Update().
-		Set(goqu.Record{
-			"secret":            termSecret,
-			"verification_time": callCtx.RequestInfo().ReceiveTime,
-		}).
+			goqu.C("verification_time").IsNull()).
+		Update().
+		Set(
+			goqu.Record{
+				"secret":            termSecret,
+				"verification_time": callCtx.RequestInfo().ReceiveTime,
+			}).
 		ToSQL()
 
 	xres, err := core.db.
@@ -544,9 +554,11 @@ func (core *Core) setUserTerminalVerified(
 			return "", errTerminalVerificationConfirmationReplayed
 		}
 
-		sqlString, _, _ := goqu.From(terminalDBTableName).
+		sqlString, _, _ := goqu.
+			From(terminalDBTableName).
 			Select("secret").
-			Where(goqu.C("id").Eq(terminalID.PrimitiveValue())).
+			Where(
+				goqu.C("id").Eq(terminalID.PrimitiveValue())).
 			ToSQL()
 		err = core.db.
 			QueryRow(sqlString).
@@ -583,9 +595,11 @@ func (core *Core) getTerminalAcceptLanguages(
 ) ([]language.Tag, error) {
 	var acceptLanguage string
 
-	sqlString, _, _ := goqu.From(terminalDBTableName).
+	sqlString, _, _ := goqu.
+		From(terminalDBTableName).
 		Select("accept_language").
-		Where(goqu.C("id").Eq(id.PrimitiveValue())).
+		Where(
+			goqu.C("id").Eq(id.PrimitiveValue())).
 		ToSQL()
 
 	err := core.db.

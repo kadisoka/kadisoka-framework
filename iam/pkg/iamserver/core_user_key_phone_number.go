@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
+	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/lib/pq"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
@@ -53,8 +54,7 @@ func (core *Core) ListUsersByPhoneNumber(
 		if err != nil {
 			panic(err)
 		}
-		var userPhoneNumber iam.UserKeyPhoneNumber
-		userPhoneNumber = iam.UserKeyPhoneNumber{
+		userPhoneNumber := iam.UserKeyPhoneNumber{
 			UserRef:     iam.NewUserRefKey(uid),
 			PhoneNumber: iam.NewPhoneNumber(countryCode, nationalNumber),
 		}
@@ -88,22 +88,32 @@ func (core *Core) ListUsersByPhoneNumber(
 	return userPhoneNumberList, nil
 }
 
-//TODO: allow non-verified (let the caller decide with the status)
-// there should be getters for different purpose (e.g.,
-// for login, for display, for notification, for recovery, etc)
 func (core *Core) GetUserKeyPhoneNumber(
+	callCtx iam.CallContext,
+	userRef iam.UserRefKey,
+) (*iam.PhoneNumber, error) {
+	//TODO: access control
+	return core.getUserKeyPhoneNumberNoAC(callCtx, userRef)
+}
+
+func (core *Core) getUserKeyPhoneNumberNoAC(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 ) (*iam.PhoneNumber, error) {
 	var countryCode int32
 	var nationalNumber int64
+
+	sqlString, _, _ := goqu.
+		From(userKeyPhoneNumberDBTableName).
+		Select("country_code", "national_number").
+		Where(
+			goqu.C("user_id").Eq(userRef.ID().PrimitiveValue()),
+			goqu.C("d_ts").IsNull(),
+			goqu.C("verification_time").IsNotNull()).
+		ToSQL()
+
 	err := core.db.
-		QueryRow(
-			`SELECT country_code, national_number `+
-				`FROM `+userKeyPhoneNumberDBTableName+` `+
-				`WHERE user_id=$1 `+
-				`AND d_ts IS NULL AND verification_time IS NOT NULL`,
-			userRef.ID().PrimitiveValue()).
+		QueryRow(sqlString).
 		Scan(&countryCode, &nationalNumber)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -111,6 +121,7 @@ func (core *Core) GetUserKeyPhoneNumber(
 		}
 		return nil, err
 	}
+
 	phoneNumber := iam.NewPhoneNumber(countryCode, nationalNumber)
 	return &phoneNumber, nil
 }
@@ -172,7 +183,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	userRef iam.UserRefKey,
 	phoneNumber iam.PhoneNumber,
 	verificationMethods []pnv10n.VerificationMethod,
-) (verificationID int64, codeExpiry *time.Time, err error) {
+) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
 	ctxAuth := callCtx.Authorization()
 	if !ctxAuth.IsUserContext() {
 		return 0, nil, iam.ErrUserContextRequired
@@ -211,7 +222,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 
 	}
 
-	verificationID, codeExpiry, err = core.pnVerifier.
+	verificationID, verificationCodeExpiry, err = core.pnVerifier.
 		StartVerification(callCtx, phoneNumber,
 			0, userLanguages, nil)
 	if err != nil {
@@ -280,7 +291,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 	callCtx iam.CallContext,
 	verificationID int64,
 	code string,
-) (updated bool, err error) {
+) (stateChanged bool, err error) {
 	ctxAuth := callCtx.Authorization()
 	err = core.pnVerifier.ConfirmVerification(
 		callCtx, verificationID, code)
@@ -302,7 +313,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		panic(err)
 	}
 
-	updated, err = core.
+	stateChanged, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
 			ctxAuth.UserID(), *phoneNumber,
 			&ctxTime, verificationID)
@@ -310,7 +321,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		panic(err)
 	}
 
-	return updated, nil
+	return stateChanged, nil
 }
 
 // ensureUserPhoneNumberVerifiedFlag is used to ensure that the a user
@@ -324,8 +335,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 	phoneNumber iam.PhoneNumber,
 	verificationTime *time.Time,
 	verificationID int64,
-) (bool, error) {
-	var err error
+) (stateChanged bool, err error) {
 	var xres sql.Result
 
 	xres, err = core.db.Exec(

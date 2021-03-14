@@ -77,23 +77,6 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Returns(http.StatusOK, "Terminal registered", iam.TerminalRegisterPostResponseJSONV1{}))
 
 	restWS.Route(restWS.
-		POST("/secret").
-		Deprecate().
-		Metadata(restfulspec.KeyOpenAPITags, hidden).
-		To(restSrv.postTerminalsSecret).
-		Doc("Terminal secret endpoint").
-		Notes("The terminal secret endpoint is used to obtain the terminal's "+
-			"secret by presenting verification code from the terminal "+
-			"registration endpoint delivered through the configured "+
-			"external communication channel.\n\n"+
-			"One verification code can only be used once.\n\n"+
-			"A **terminal secret** is required to authenticate the terminal "+
-			"to obtain an access token.").
-		Reads(iam.TerminalSecretPostRequestJSONV1{}).
-		Returns(http.StatusOK, "OK", iam.TerminalSecretPostResponseJSONV1{}).
-		Returns(http.StatusGone, "Code is expired", nil))
-
-	restWS.Route(restWS.
 		PUT("/fcm_registration_token").
 		Metadata(restfulspec.KeyOpenAPITags, hidden).
 		To(restSrv.putTerminalFCMRegistrationToken).
@@ -206,70 +189,6 @@ func (restSrv *Server) postTerminalsRegister(
 			http.StatusBadRequest)
 		return
 	}
-}
-
-func (restSrv *Server) postTerminalsSecret(
-	req *restful.Request, resp *restful.Response,
-) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
-	if err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).Msg("Unable to load authorization")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusBadRequest)
-		return
-	}
-
-	var linkConfirmReq iam.TerminalSecretPostRequestJSONV1
-	err = req.ReadEntity(&linkConfirmReq)
-	if err != nil {
-		panic(err)
-	}
-
-	terminalRef, err := iam.TerminalRefKeyFromAZERText(linkConfirmReq.TerminalID)
-	if err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).Msgf("Unable to parse terminal ID %q", linkConfirmReq.TerminalID)
-		rest.RespondTo(resp).EmptyError(
-			http.StatusBadRequest)
-		return
-	}
-
-	termSecret, _, err := restSrv.serverCore.
-		ConfirmTerminalRegistrationVerification(reqCtx, terminalRef, linkConfirmReq.Code)
-	if err != nil {
-		switch err {
-		case iam.ErrTerminalVerificationCodeMismatch:
-			logCtx(reqCtx).
-				Warn().Msgf(
-				"Terminal %v verification code mismatch", linkConfirmReq.TerminalID)
-			rest.RespondTo(resp).EmptyError(
-				http.StatusBadRequest)
-			return
-		case iam.ErrTerminalVerificationCodeExpired:
-			logCtx(reqCtx).
-				Warn().Msgf(
-				"Terminal %v verification code expired", linkConfirmReq.TerminalID)
-			rest.RespondTo(resp).EmptyError(
-				http.StatusGone)
-			return
-		case iam.ErrTerminalVerificationResourceConflict:
-			logCtx(reqCtx).
-				Warn().Msgf(
-				"Terminal %v verification resource conflict", linkConfirmReq.TerminalID)
-			rest.RespondTo(resp).EmptyError(
-				http.StatusConflict)
-			return
-		}
-		panic(err)
-	}
-
-	rest.RespondTo(resp).Success(
-		&iam.TerminalSecretPostResponseJSONV1{
-			Secret: termSecret,
-		})
-
-	return
 }
 
 func (restSrv *Server) putTerminalFCMRegistrationToken(
