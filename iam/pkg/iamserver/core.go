@@ -22,9 +22,9 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 
 	// SMS delivery service providers
-	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/nexmo"
 	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/telesign"
 	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/twilio"
+	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/vonage"
 
 	// Media object storage modules
 	_ "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store/local"

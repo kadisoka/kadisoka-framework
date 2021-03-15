@@ -1,4 +1,4 @@
-package nexmo
+package vonage
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
-const ServiceName = "nexmo"
+const ServiceName = "vonage"
 
 func init() {
 	pnv10n.RegisterModule(

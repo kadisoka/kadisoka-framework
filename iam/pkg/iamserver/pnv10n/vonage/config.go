@@ -1,4 +1,4 @@
-package nexmo
+package vonage
 
 type Config struct {
 	APIKey    string `env:"API_KEY,required"`
