@@ -154,42 +154,22 @@ func (restSrv *Server) postTerminalsRegister(
 		return
 	}
 
-	if terminalRegisterReq.VerificationResourceType == "" {
-		if iam.IsValidEmailAddress(terminalRegisterReq.VerificationResourceName) {
-			restSrv.handleTerminalRegisterByEmailAddress(
-				resp, reqCtx, reqApp, terminalRegisterReq)
-			return
-		}
-		if _, err := iam.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName); err == nil {
-			restSrv.handleTerminalRegisterByPhoneNumber(
-				resp, reqCtx, reqApp, terminalRegisterReq)
-			return
-		}
-
-		logCtx(reqCtx).
-			Warn().Msg("Resource verification type is missing")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusBadRequest)
-		return
-	}
-
-	switch terminalRegisterReq.VerificationResourceType {
-	case iam.TerminalVerificationResourceTypeEmailAddress:
+	if iam.IsValidEmailAddress(terminalRegisterReq.VerificationResourceName) {
 		restSrv.handleTerminalRegisterByEmailAddress(
 			resp, reqCtx, reqApp, terminalRegisterReq)
 		return
-	case iam.TerminalVerificationResourceTypePhoneNumber:
+	}
+	if _, err := iam.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName); err == nil {
 		restSrv.handleTerminalRegisterByPhoneNumber(
 			resp, reqCtx, reqApp, terminalRegisterReq)
 		return
-
-	default:
-		logCtx(reqCtx).
-			Warn().Msgf("Unsupported verification resource type: %v", terminalRegisterReq.VerificationResourceType)
-		rest.RespondTo(resp).EmptyError(
-			http.StatusBadRequest)
-		return
 	}
+
+	logCtx(reqCtx).
+		Warn().Msg("Resource verification type is missing")
+	rest.RespondTo(resp).EmptyError(
+		http.StatusBadRequest)
+	return
 }
 
 func (restSrv *Server) putTerminalFCMRegistrationToken(
@@ -260,9 +240,8 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Msgf(
-			"Unable to parse verification resource name %s of type %s",
-			terminalRegisterReq.VerificationResourceName,
-			terminalRegisterReq.VerificationResourceType)
+			"Unable to parse verification resource name %s as phone number",
+			terminalRegisterReq.VerificationResourceName)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -335,9 +314,8 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Msgf(
-			"Unable to parse verification resource name %s of type %s",
-			terminalRegisterReq.VerificationResourceName,
-			terminalRegisterReq.VerificationResourceType)
+			"Unable to parse verification resource name %s as email address",
+			terminalRegisterReq.VerificationResourceName)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -416,7 +394,7 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 			UserRef:          iam.UserRefKeyZero(),
 			DisplayName:      termDisplayName,
 			AcceptLanguage:   strings.Join(termLangStrings, ","),
-			VerificationType: terminalRegisterReq.VerificationResourceType,
+			VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
 			VerificationID:   0,
 		})
 	if err != nil {
@@ -428,7 +406,6 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 			TerminalID:     termRef.AZERText(),
 			TerminalSecret: termSecret,
 		})
-	return
 }
 
 // Parse accept languages from request

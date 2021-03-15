@@ -52,20 +52,18 @@ type TerminalFCMRegistrationTokenService interface {
 // JSONV1 models
 
 type TerminalRegisterPostRequestJSONV1 struct {
-	DisplayName              string   `json:"display_name"`
-	VerificationResourceType string   `json:"verification_resource_type,omitempty"`
 	VerificationResourceName string   `json:"verification_resource_name"`
 	VerificationMethods      []string `json:"verification_methods"`
+	DisplayName              string   `json:"display_name"`
 }
 
 func (TerminalRegisterPostRequestJSONV1) SwaggerDoc() map[string]string {
 	return map[string]string{
-		"display_name": "For the user to make it easy to identify. " +
-			"The recommended value is the user's device name.",
-		"verification_resource_type": "Leave this empty.",
 		"verification_resource_name": "A phone number complete with country code or an email address.",
 		"verification_methods": "The preferred verification methods. " +
 			"The values are resource-type-specific. For phone-number, it defaults to SMS.",
+		"display_name": "For the user to make it easy to identify. " +
+			"The recommended value is the user's device name.",
 	}
 }
 
