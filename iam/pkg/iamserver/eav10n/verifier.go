@@ -122,11 +122,11 @@ func (verifier *Verifier) StartVerification(
 		QueryRow(
 			"SELECT id, code_expiry, attempts_remaining "+
 				`FROM `+verificationDBTableName+` `+
-				"WHERE local_part = $1 AND domain_part = $2 AND confirmation_time IS NULL "+
+				"WHERE domain_part = $1 AND local_part = $2 AND confirmation_time IS NULL "+
 				"ORDER BY id DESC "+
 				"LIMIT 1",
-			emailAddress.LocalPart(),
-			emailAddress.DomainPart()).
+			emailAddress.DomainPart(),
+			emailAddress.LocalPart()).
 		Scan(&prevVerificationID, &prevCodeExpiry, &prevAttempts)
 	if err == nil {
 		// Return previous verification code
@@ -148,13 +148,13 @@ func (verifier *Verifier) StartVerification(
 	err = verifier.db.
 		QueryRow(
 			`INSERT INTO `+verificationDBTableName+` (`+
-				`local_part, domain_part, `+
+				`domain_part, local_part, `+
 				"c_ts, c_uid, c_tid, "+
 				"code, code_expiry, attempts_remaining"+
 				") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "+
 				"RETURNING id",
-			emailAddress.LocalPart(),
 			emailAddress.DomainPart(),
+			emailAddress.LocalPart(),
 			ctxTime,
 			ctxAuth.UserIDPtr(),
 			ctxAuth.TerminalIDPtr(),
@@ -261,7 +261,7 @@ func (verifier *Verifier) sendVerificationEmail(
 	buf := new(bytes.Buffer)
 	err = subjectTemplate.
 		Execute(buf, map[string]interface{}{
-			"AppName": verifier.realmInfo.Name,
+			"RealmName": verifier.realmInfo.Name,
 		})
 	if err != nil {
 		return err
@@ -270,9 +270,9 @@ func (verifier *Verifier) sendVerificationEmail(
 
 	buf = new(bytes.Buffer)
 	if err = bodyTemplate.Execute(buf, map[string]interface{}{
-		"AppInfo": verifier.realmInfo,
-		"Title":   subject, //TODO: title == subject?
-		"Code":    code,
+		"RealmInfo": verifier.realmInfo,
+		"Title":     subject, //TODO: title == subject?
+		"Code":      code,
 	}); err != nil {
 		panic(err)
 	}
@@ -332,11 +332,11 @@ func (verifier *Verifier) GetEmailAddressByVerificationID(
 ) (*iam.EmailAddress, error) {
 	var localPart, domainPart string
 	err := verifier.db.QueryRow(
-		`SELECT local_part, domain_part `+
+		`SELECT domain_part, local_part `+
 			`FROM `+verificationDBTableName+` `+
 			`WHERE id = $1 `,
 		verificationID).
-		Scan(&localPart, &domainPart)
+		Scan(&domainPart, &localPart)
 	if err != nil {
 		return nil, err
 	}

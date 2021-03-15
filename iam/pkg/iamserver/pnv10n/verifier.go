@@ -303,8 +303,8 @@ func (verifier *Verifier) sendTextMessage(
 	var bodyBuilder strings.Builder
 	err := messageTemplate.
 		Execute(&bodyBuilder, map[string]interface{}{
-			"AppName": verifier.appName,
-			"Code":    code,
+			"RealmName": verifier.appName,
+			"Code":      code,
 		})
 	if err != nil {
 		return err
@@ -352,8 +352,8 @@ var localizedMessageTemplates map[string]*template.Template
 
 //TODO: load these from somewhere (e.g., Firebase remote config)
 var localizedMessageTemplateSources = map[string][]string{
-	"{{ .AppName }} - verification code: {{ .Code }}":    {"en", "en-US", "en-GB"},
-	"{{ .AppName }} - kode verifikasi Anda: {{ .Code }}": {"id", "id-ID"},
+	"{{ .RealmName }} - verification code: {{ .Code }}":    {"en", "en-US", "en-GB"},
+	"{{ .RealmName }} - kode verifikasi Anda: {{ .Code }}": {"id", "id-ID"},
 }
 
 func loadTemplates() {

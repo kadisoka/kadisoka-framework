@@ -86,8 +86,8 @@ func setUpWebUIServer(srvApp *App, cfg Config) (*webui.Server, error) {
 	webUICfg := cfg.WebUI.Server
 
 	templateData := map[string]interface{}{
-		"AppInfo": srvApp.RealmInfo(),
-		"AppName": srvApp.RealmInfo().Name,
+		"AppInfo":   srvApp.RealmInfo(),
+		"RealmName": srvApp.RealmInfo().Name,
 	}
 	restAPIURLReplacer := &webui.StringReplacer{
 		Old: "http://localhost:11121/rest/v1",

@@ -61,16 +61,18 @@ func (core *Core) getUserKeyEmailAddressNoAC(
 func (core *Core) getUserIDByKeyEmailAddress(
 	emailAddress iam.EmailAddress,
 ) (ownerUserID iam.UserID, err error) {
-	queryStr :=
-		`SELECT user_id ` +
-			`FROM ` + userKeyEmailAddressDBTableName + ` ` +
-			`WHERE local_part = $1 AND domain_part = $2 ` +
-			`AND d_ts IS NULL ` +
-			`AND verification_time IS NOT NULL`
+	sqlString, _, _ := goqu.
+		From(userKeyEmailAddressDBTableName).
+		Select("user_id").
+		Where(
+			goqu.C("domain_part").Eq(emailAddress.DomainPart()),
+			goqu.C("local_part").Eq(emailAddress.LocalPart()),
+			goqu.C("d_ts").IsNull(),
+			goqu.C("verification_time").IsNotNull(),
+		).
+		ToSQL()
 	err = core.db.
-		QueryRow(queryStr,
-			emailAddress.LocalPart(),
-			emailAddress.DomainPart()).
+		QueryRow(sqlString).
 		Scan(&ownerUserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -84,21 +86,31 @@ func (core *Core) getUserIDByKeyEmailAddress(
 
 // The ID of the user which provided email address is their primary,
 // verified or not.
-func (core *Core) getUserIDByKeyEmailAddressAllowUnverified(
+func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 	emailAddress iam.EmailAddress,
-) (ownerUserRef iam.UserRefKey, verified bool, err error) {
-	queryStr :=
-		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
-			`FROM ` + userKeyEmailAddressDBTableName + ` ` +
-			`WHERE local_part = $1 AND domain_part = $2 ` +
-			`AND d_ts IS NULL ` +
-			`ORDER BY c_ts DESC LIMIT 1`
+) (ownerUserRef iam.UserRefKey, alreadyVerified bool, err error) {
+	sqlString, _, _ := goqu.
+		From(userKeyEmailAddressDBTableName).
+		Select(
+			"user_id",
+			goqu.Case().
+				When(goqu.C("verification_time").IsNull(), false).
+				Else(true).
+				As("verified"),
+		).
+		Where(
+			goqu.C("domain_part").Eq(emailAddress.DomainPart()),
+			goqu.C("local_part").Eq(emailAddress.LocalPart()),
+			goqu.C("d_ts").IsNull(),
+		).
+		Order(goqu.C("c_ts").Desc()).
+		Limit(1).
+		ToSQL()
+
 	var ownerUserID iam.UserID
 	err = core.db.
-		QueryRow(queryStr,
-			emailAddress.LocalPart(),
-			emailAddress.DomainPart()).
-		Scan(&ownerUserRef, &verified)
+		QueryRow(sqlString).
+		Scan(&ownerUserID, &alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return iam.UserRefKeyZero(), false, nil
@@ -106,7 +118,7 @@ func (core *Core) getUserIDByKeyEmailAddressAllowUnverified(
 		return iam.UserRefKeyZero(), false, err
 	}
 
-	return iam.NewUserRefKey(ownerUserID), verified, nil
+	return iam.NewUserRefKey(ownerUserID), alreadyVerified, nil
 }
 
 func (core *Core) SetUserKeyEmailAddress(
@@ -169,22 +181,25 @@ func (core *Core) setUserKeyEmailAddress(
 	userRef iam.UserRefKey,
 	emailAddress iam.EmailAddress,
 ) (alreadyVerified bool, err error) {
+	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxAuth := callCtx.Authorization()
+
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userKeyEmailAddressDBTableName+` (`+
-			`user_id, local_part, domain_part, raw_input, `+
+			`user_id, domain_part, local_part, raw_input, `+
 			`c_ts, c_uid, c_tid `+
 			`) VALUES (`+
 			`$1, $2, $3, $4, $5, $6, $7`+
 			`) `+
-			`ON CONFLICT (user_id, local_part, domain_part) WHERE d_ts IS NULL `+
+			`ON CONFLICT (user_id, domain_part, local_part) WHERE d_ts IS NULL `+
 			`DO NOTHING`,
 		userRef.ID().PrimitiveValue(),
-		emailAddress.LocalPart(),
 		emailAddress.DomainPart(),
+		emailAddress.LocalPart(),
 		emailAddress.RawInput(),
-		callCtx.RequestInfo().ReceiveTime,
-		callCtx.Authorization().UserID().PrimitiveValue(),
-		callCtx.Authorization().TerminalID().PrimitiveValue())
+		ctxTime,
+		ctxAuth.UserID().PrimitiveValue(),
+		ctxAuth.TerminalID().PrimitiveValue())
 	if err != nil {
 		return false, err
 	}
@@ -200,8 +215,8 @@ func (core *Core) setUserKeyEmailAddress(
 	err = core.db.QueryRow(
 		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userKeyEmailAddressDBTableName+` `+
-			`WHERE user_id = $1 AND local_part = $2 AND domain_part = $3`,
-		userRef, emailAddress.LocalPart(), emailAddress.DomainPart()).
+			`WHERE user_id = $1 AND domain_part = $2 AND local_part = $3`,
+		userRef.ID().PrimitiveValue(), emailAddress.DomainPart(), emailAddress.LocalPart()).
 		Scan(&alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -264,13 +279,13 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 			`) = ( `+
 			`$1, $2`+
 			`) WHERE user_id = $3 `+
-			`AND local_part = $4 AND domain_part = $5 `+
+			`AND domain_part = $4 AND local_part = $5 `+
 			`AND d_ts IS NULL AND verification_time IS NULL`,
 		verificationTime,
 		verificationID,
 		userID,
-		emailAddress.LocalPart(),
-		emailAddress.DomainPart())
+		emailAddress.DomainPart(),
+		emailAddress.LocalPart())
 	if err != nil {
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&

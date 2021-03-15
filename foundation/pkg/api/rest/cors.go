@@ -15,16 +15,13 @@ type CORSFilterConfig struct {
 	AllowedDomains string  `env:"ALLOWED_DOMAINS"`
 }
 
-func SetUpCORSFilterByEnv(restContainer *restful.Container, envVarsPrefix string) error {
-	var cfg CORSFilterConfig
-	err := stev.LoadEnv(envVarsPrefix, &cfg)
-	if err != nil {
-		return errors.Wrap("config loading from environment variables", err)
-	}
-
+func SetUpCORSFilter(
+	restContainer *restful.Container,
+	filterConfig CORSFilterConfig,
+) error {
 	var allowedHeaders []string
-	if cfg.AllowedHeaders != nil {
-		if strVal := *cfg.AllowedHeaders; strVal != "" {
+	if filterConfig.AllowedHeaders != nil {
+		if strVal := *filterConfig.AllowedHeaders; strVal != "" {
 			parts := strings.Split(strVal, ",")
 			for _, str := range parts {
 				allowedHeaders = append(allowedHeaders, strings.TrimSpace(str))
@@ -36,7 +33,7 @@ func SetUpCORSFilterByEnv(restContainer *restful.Container, envVarsPrefix string
 	}
 
 	var allowedMethods []string
-	if strVal := cfg.AllowedMethods; strVal != "" {
+	if strVal := filterConfig.AllowedMethods; strVal != "" {
 		parts := strings.Split(strVal, ",")
 		for _, str := range parts {
 			allowedMethods = append(allowedMethods, strings.TrimSpace(str))
@@ -44,7 +41,7 @@ func SetUpCORSFilterByEnv(restContainer *restful.Container, envVarsPrefix string
 	}
 
 	var allowedDomains []string
-	if strVal := cfg.AllowedDomains; strVal != "" {
+	if strVal := filterConfig.AllowedDomains; strVal != "" {
 		parts := strings.Split(strVal, ",")
 		for _, str := range parts {
 			allowedDomains = append(allowedDomains, strings.TrimSpace(str))
@@ -59,4 +56,21 @@ func SetUpCORSFilterByEnv(restContainer *restful.Container, envVarsPrefix string
 		Container:      restContainer}.Filter)
 
 	return nil
+
+}
+
+func SetUpCORSFilterByEnv(
+	restContainer *restful.Container,
+	envVarsPrefix string,
+	defaultFilterConfig *CORSFilterConfig,
+) error {
+	if defaultFilterConfig == nil {
+		defaultFilterConfig = &CORSFilterConfig{}
+	}
+	err := stev.LoadEnv(envVarsPrefix, defaultFilterConfig)
+	if err != nil {
+		return errors.Wrap("config loading from environment variables", err)
+	}
+
+	return SetUpCORSFilter(restContainer, *defaultFilterConfig)
 }

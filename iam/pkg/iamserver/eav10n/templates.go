@@ -21,8 +21,8 @@ var (
 
 	//TODO: load these from somewhere (static storage)
 	localizedAccountActivationSubjectTemplateSources = map[string][]string{
-		"{{ .AppName }} - Account Activation": {"en", "en-US", "en-GB"},
-		"{{ .AppName }} - Aktifasi Akun":      {"id", "id-ID"},
+		"{{ .RealmName }} - Account Activation": {"en", "en-US", "en-GB"},
+		"{{ .RealmName }} - Aktifasi Akun":      {"id", "id-ID"},
 	}
 )
 

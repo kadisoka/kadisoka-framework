@@ -44,7 +44,7 @@ CREATE UNIQUE INDEX user_key_phone_number_dt_pidx
 CREATE UNIQUE INDEX user_key_phone_number_dt_user_id_uidx
     ON user_key_phone_number_dt (user_id)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
--- One instance for an non-deleted-verified phone number
+-- One instance for a non-deleted-verified phone number
 CREATE UNIQUE INDEX user_key_phone_number_dt_country_code_national_number_uidx
     ON user_key_phone_number_dt (country_code, national_number)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
@@ -173,8 +173,8 @@ CREATE UNIQUE INDEX user_profile_image_key_dt_pidx
 -- user email
 CREATE TABLE user_key_email_address_dt (
     user_id      bigint NOT NULL,
-    local_part   text NOT NULL,
     domain_part  text NOT NULL,
+    local_part   text NOT NULL,
     raw_input    text NOT NULL,
 
     c_ts   timestamp with time zone NOT NULL DEFAULT now(),
@@ -190,21 +190,21 @@ CREATE TABLE user_key_email_address_dt (
 );
 -- Each user can only have one reference to the same email address
 CREATE UNIQUE INDEX user_key_email_address_dt_pidx
-    ON user_key_email_address_dt (user_id, local_part, domain_part)
+    ON user_key_email_address_dt (user_id, domain_part, local_part)
     WHERE d_ts IS NULL;
 -- Each user has only one non-deleted-verified email address
 CREATE UNIQUE INDEX user_key_email_address_dt_user_id_uidx
     ON user_key_email_address_dt (user_id)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
--- One instance for an non-deleted-verified email address
-CREATE UNIQUE INDEX user_key_email_address_dt_local_part_domain_part_uidx
-    ON user_key_email_address_dt (local_part, domain_part)
+-- One instance for a non-deleted-verified email address
+CREATE UNIQUE INDEX user_key_email_address_dt_domain_part_local_part_uidx
+    ON user_key_email_address_dt (domain_part, local_part)
     WHERE d_ts IS NULL AND verification_time IS NOT NULL;
 
 CREATE TABLE email_address_verification_dt (
     id                  bigserial PRIMARY KEY,
-    local_part          text NOT NULL,
     domain_part         text NOT NULL,
+    local_part          text NOT NULL,
     code                text NOT NULL,
     code_expiry         timestamp with time zone,
     attempts_remaining  smallint NOT NULL DEFAULT 3,

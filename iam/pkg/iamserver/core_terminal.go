@@ -77,7 +77,7 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 
 	// Get the existing owner, whether already verified or not.
 	ownerUserRef, _, err := core.
-		getUserIDByKeyPhoneNumberAllowUnverified(phoneNumber)
+		getUserRefByKeyPhoneNumberAllowUnverified(phoneNumber)
 	if err != nil {
 		panic(err)
 	}
@@ -108,7 +108,8 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 	if err != nil {
 		switch err.(type) {
 		case pnv10n.InvalidPhoneNumberError:
-			return iam.TerminalRefKeyZero(), 0, nil, errors.Arg("phoneNumber", err)
+			return iam.TerminalRefKeyZero(), 0, nil,
+				errors.Arg("phoneNumber", err)
 		}
 		return iam.TerminalRefKeyZero(), 0, nil,
 			errors.Wrap("pnVerifier.StartVerification", err)
@@ -118,8 +119,6 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 	for _, tag := range userPreferredLanguages {
 		termLangStrings = append(termLangStrings, tag.String())
 	}
-
-	displayName = strings.TrimSpace(displayName)
 
 	terminalRef, _, err = core.RegisterTerminal(callCtx,
 		TerminalRegistrationInput{
@@ -162,12 +161,20 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 
 	// Get the existing owner, whether already verified or not.
 	ownerUserRef, _, err := core.
-		getUserIDByKeyEmailAddressAllowUnverified(emailAddress)
+		getUserRefByKeyEmailAddressAllowUnverified(emailAddress)
 	if err != nil {
 		panic(err)
 	}
 
 	if ownerUserRef.IsValid() {
+		// Check if it's fully claimed (already verified)
+		ownerUserID, err := core.getUserIDByKeyEmailAddress(emailAddress)
+		if err != nil {
+			panic(err)
+		}
+		if ownerUserID.IsValid() {
+			ownerUserRef = iam.NewUserRefKey(ownerUserID)
+		}
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
 		if ctxAuth.IsUserContext() && !ctxAuth.IsUser(ownerUserRef) {
@@ -204,8 +211,6 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 	for _, tag := range userPreferredLanguages {
 		termLangStrings = append(termLangStrings, tag.String())
 	}
-
-	displayName = strings.TrimSpace(displayName)
 
 	terminalRef, _, err = core.RegisterTerminal(callCtx,
 		TerminalRegistrationInput{
@@ -495,7 +500,7 @@ func (core *Core) RegisterTerminal(
 				"c_tid":             ctxAuth.TerminalIDPtr(),
 				"c_origin_address":  originInfo.Address,
 				"c_origin_env":      originInfo.EnvironmentString,
-				"display_name":      input.DisplayName,
+				"display_name":      strings.TrimSpace(input.DisplayName),
 				"accept_language":   input.AcceptLanguage,
 				"verification_type": input.VerificationType,
 				"verification_id":   input.VerificationID,

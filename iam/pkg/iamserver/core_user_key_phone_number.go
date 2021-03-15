@@ -130,16 +130,18 @@ func (core *Core) getUserKeyPhoneNumberNoAC(
 func (core *Core) getUserIDByKeyPhoneNumber(
 	phoneNumber iam.PhoneNumber,
 ) (ownerUserID iam.UserID, err error) {
-	queryStr :=
-		`SELECT user_id ` +
-			`FROM ` + userKeyPhoneNumberDBTableName + ` ` +
-			`WHERE country_code = $1 AND national_number = $2 ` +
-			`AND d_ts IS NULL ` +
-			`AND verification_time IS NOT NULL`
+	sqlString, _, _ := goqu.
+		From(userKeyPhoneNumberDBTableName).
+		Select("user_id").
+		Where(
+			goqu.C("country_code").Eq(phoneNumber.CountryCode()),
+			goqu.C("national_number").Eq(phoneNumber.NationalNumber()),
+			goqu.C("d_ts").IsNull(),
+			goqu.C("verification_time").IsNotNull(),
+		).
+		ToSQL()
 	err = core.db.
-		QueryRow(queryStr,
-			phoneNumber.CountryCode(),
-			phoneNumber.NationalNumber()).
+		QueryRow(sqlString).
 		Scan(&ownerUserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -153,21 +155,31 @@ func (core *Core) getUserIDByKeyPhoneNumber(
 
 // The ID of the user which provided phone number is their primary,
 // verified or not.
-func (core *Core) getUserIDByKeyPhoneNumberAllowUnverified(
+func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 	phoneNumber iam.PhoneNumber,
-) (ownerUserRef iam.UserRefKey, verified bool, err error) {
-	queryStr :=
-		`SELECT user_id, CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified ` +
-			`FROM ` + userKeyPhoneNumberDBTableName + ` ` +
-			`WHERE country_code = $1 AND national_number = $2 ` +
-			`AND d_ts IS NULL ` +
-			`ORDER BY c_ts DESC LIMIT 1`
+) (ownerUserRef iam.UserRefKey, alreadyVerified bool, err error) {
+	sqlString, _, _ := goqu.
+		From(userKeyPhoneNumberDBTableName).
+		Select(
+			"user_id",
+			goqu.Case().
+				When(goqu.C("verification_time").IsNull(), false).
+				Else(true).
+				As("verified"),
+		).
+		Where(
+			goqu.C("country_code").Eq(phoneNumber.CountryCode()),
+			goqu.C("national_number").Eq(phoneNumber.NationalNumber()),
+			goqu.C("d_ts").IsNull(),
+		).
+		Order(goqu.C("c_ts").Desc()).
+		Limit(1).
+		ToSQL()
+
 	var ownerUserID iam.UserID
 	err = core.db.
-		QueryRow(queryStr,
-			phoneNumber.CountryCode(),
-			phoneNumber.NationalNumber()).
-		Scan(&ownerUserID, &verified)
+		QueryRow(sqlString).
+		Scan(&ownerUserID, &alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return iam.UserRefKeyZero(), false, nil
@@ -175,7 +187,7 @@ func (core *Core) getUserIDByKeyPhoneNumberAllowUnverified(
 		return iam.UserRefKeyZero(), false, err
 	}
 
-	return iam.NewUserRefKey(ownerUserID), verified, nil
+	return iam.NewUserRefKey(ownerUserID), alreadyVerified, nil
 }
 
 func (core *Core) SetUserKeyPhoneNumber(
@@ -219,7 +231,6 @@ func (core *Core) SetUserKeyPhoneNumber(
 	//TODO: user-set has higher priority over terminal's
 	userLanguages, err := core.getTerminalAcceptLanguages(ctxAuth.TerminalID())
 	if err != nil {
-
 	}
 
 	verificationID, verificationCodeExpiry, err = core.pnVerifier.
@@ -242,6 +253,7 @@ func (core *Core) setUserKeyPhoneNumber(
 	phoneNumber iam.PhoneNumber,
 ) (alreadyVerified bool, err error) {
 	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxAuth := callCtx.Authorization()
 
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userKeyPhoneNumberDBTableName+` (`+
@@ -257,8 +269,8 @@ func (core *Core) setUserKeyPhoneNumber(
 		phoneNumber.NationalNumber(),
 		phoneNumber.RawInput(),
 		ctxTime,
-		callCtx.Authorization().UserID().PrimitiveValue(),
-		callCtx.Authorization().TerminalID().PrimitiveValue())
+		ctxAuth.UserID().PrimitiveValue(),
+		ctxAuth.TerminalID().PrimitiveValue())
 	if err != nil {
 		return false, err
 	}
@@ -305,7 +317,6 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		return false, errors.Wrap("pnVerifier.ConfirmVerification", err)
 	}
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
 	phoneNumber, err := core.pnVerifier.
 		GetPhoneNumberByVerificationID(verificationID)
 	// An unexpected condition which could cause bad state
@@ -313,6 +324,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		panic(err)
 	}
 
+	ctxTime := callCtx.RequestInfo().ReceiveTime
 	stateChanged, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
 			ctxAuth.UserID(), *phoneNumber,

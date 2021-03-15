@@ -25,6 +25,7 @@ const (
 	ContactEmailAddressDefault             = "nop@example.com"
 	NotificationEmailsSenderAddressDefault = "no-reply@example.com"
 	DeveloperNameDefault                   = "Team Kadisoka"
+	MaintainerNameDefault                  = DeveloperNameDefault
 )
 
 func DefaultInfo() Info {
@@ -33,6 +34,7 @@ func DefaultInfo() Info {
 		URL:                             URLDefault,
 		ContactInfo:                     ContactInfo{EmailAddress: ContactEmailAddressDefault},
 		DeveloperInfo:                   DeveloperInfo{Name: DeveloperNameDefault},
+		MaintainerInfo:                  MaintainerInfo{Name: MaintainerNameDefault},
 		NotificationEmailsSenderAddress: NotificationEmailsSenderAddressDefault,
 	}
 }
@@ -52,6 +54,7 @@ type Info struct {
 
 	ContactInfo                     ContactInfo
 	DeveloperInfo                   DeveloperInfo
+	MaintainerInfo                  MaintainerInfo
 	NotificationEmailsSenderAddress string
 }
 

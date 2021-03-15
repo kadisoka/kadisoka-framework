@@ -53,8 +53,8 @@ func main() {
 	restV1Container := restful.NewContainer()
 	restV1Container.ServeMux = restV1Mux
 	restV1Container.EnableContentEncoding(true)
-	// We need CORS for our webclients
-	rest.SetUpCORSFilterByEnv(restV1Container, "CORS_")
+	// We need CORS for our web clients
+	rest.SetUpCORSFilterByEnv(restV1Container, "CORS_", nil)
 
 	restV1Svc := NewRESTService(iamClient, restV1BasePath)
 	restV1Container.Add(restV1Svc.RestfulWebService())

@@ -8,11 +8,12 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"golang.org/x/text/language"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/sec"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
@@ -71,7 +72,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 			"might not be associated to a user.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", "basic-oauth2-client-creds").
+				"Authorization", sec.AuthorizationBasicOAuth2ClientCredentials.String()).
 			Required(true)).
 		Reads(iam.TerminalRegisterPostRequestJSONV1{}).
 		Returns(http.StatusOK, "Terminal registered", iam.TerminalRegisterPostResponseJSONV1{}))
@@ -83,7 +84,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Doc("Set terminal's FCM token").
 		Notes("Associate the terminal with an FCM registration token. One token should "+
 			"be associated to only one terminal.").
-		Param(restWS.HeaderParameter("Authorization", "bearer-access-token").
+		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Reads(terminalFCMRegistrationTokenPutRequest{}).
 		Returns(http.StatusNoContent, "Terminal's FCM token successfully set", nil))

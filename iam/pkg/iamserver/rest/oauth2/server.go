@@ -5,11 +5,12 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
+
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
-
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/sec"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
@@ -69,13 +70,21 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		To(restSrv.getAuthorize).
 		Doc("OAuth 2.0 conforming authorization endpoint").
-		Param(restWS.QueryParameter("client_id", "The ID of the client which makes the request").
+		Param(restWS.
+			QueryParameter(
+				"client_id", "The ID of the client which makes the request").
 			Required(true)).
-		Param(restWS.QueryParameter("response_type", "Value MUST be set to `code`").
+		Param(restWS.
+			QueryParameter(
+				"response_type", "Value MUST be set to `code`").
 			Required(true)).
-		Param(restWS.QueryParameter("redirect_uri", "Client's registered redirection URI")).
-		Param(restWS.QueryParameter("state", "An opaque value used by the client to "+
-			"maintain state between the request and callback.")).
+		Param(restWS.
+			QueryParameter(
+				"redirect_uri", "Any of client's registered redirection URIs")).
+		Param(restWS.
+			QueryParameter(
+				"state", "An opaque value used by the client to "+
+					"maintain state between the request and callback.")).
 		Returns(http.StatusFound, "Success", nil))
 
 	restWS.Route(restWS.
@@ -83,13 +92,21 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		To(restSrv.postAuthorize).
 		Doc("Authorization endpoint (for use with web front-end)").
-		Param(restWS.FormParameter("client_id", "The ID of the client which makes the request").
+		Param(restWS.
+			FormParameter(
+				"client_id", "The ID of the client which makes the request").
 			Required(true)).
-		Param(restWS.FormParameter("response_type", "Value MUST be set to `code`").
+		Param(restWS.
+			FormParameter(
+				"response_type", "Value MUST be set to `code`").
 			Required(true)).
-		Param(restWS.FormParameter("redirect_uri", "Client's registered redirection URI")).
-		Param(restWS.FormParameter("state", "An opaque value used by the client to "+
-			"maintain state between the request and callback.")).
+		Param(restWS.
+			FormParameter(
+				"redirect_uri", "Any of client's registered redirection URIs")).
+		Param(restWS.
+			FormParameter(
+				"state", "An opaque value used by the client to "+
+					"maintain state between the request and callback.")).
 		Returns(http.StatusOK, "Success", iam.OAuth2AuthorizePostResponse{}))
 
 	restWS.Route(restWS.
@@ -113,11 +130,12 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 			"(since an access token is issued directly). RFC 6749 § 3.2.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", "basic-oauth2-client-creds").
+				"Authorization", sec.AuthorizationBasicOAuth2ClientCredentials.String()).
 			Required(true)).
 		Param(restWS.
 			FormParameter(
-				"grant_type", "Supported grant types: `password`, `authorization_code`, `client_credentials`").
+				"grant_type", "Supported grant types: `password`, "+
+					"`authorization_code`, `client_credentials`").
 			Required(true)).
 		Param(restWS.
 			FormParameter(

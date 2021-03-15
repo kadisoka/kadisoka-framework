@@ -15,6 +15,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/sec"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest/oauth2"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/rest/terminal"
@@ -123,7 +124,7 @@ func NewServer(
 			resp.WriteErrorString(err.Code, err.Message)
 		})
 	// We need CORS for our webclients
-	rest.SetUpCORSFilterByEnv(container, "CORS_")
+	rest.SetUpCORSFilterByEnv(container, "CORS_", nil)
 
 	var v1ServePath string
 	if config.V1 != nil {
@@ -135,8 +136,8 @@ func NewServer(
 	initRESTV1Services(v1ServePath, container, iamServerCore, webUIURLs.SignIn)
 
 	secDefs := spec.SecurityDefinitions{
-		"basic-oauth2-client-creds": spec.BasicAuth(),
-		"bearer-access-token":       spec.APIKeyAuth("Authorization", "header"),
+		sec.AuthorizationBasicOAuth2ClientCredentials.String(): spec.BasicAuth(),
+		sec.AuthorizationBearerAccessToken.String():            spec.APIKeyAuth("Authorization", "header"),
 	}
 	// Setup API specification handler
 	container.Add(restfulspec.NewOpenAPIService(restfulspec.Config{
