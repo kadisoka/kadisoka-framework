@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./iam/var/db/data:/var/lib/postgresql/data
+      - ./var/kadisoka-iam/db/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=iam
       - POSTGRES_USER=iam
@@ -19,7 +19,7 @@ services:
     ports:
       - "11101:9000"
     volumes:
-      - ./iam/var/object-store:/data
+      - ./var/kadisoka-iam/object-store:/data
     environment:
       - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
       - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
@@ -28,7 +28,7 @@ services:
   iam-server:
     build:
       context: ../..
-      dockerfile: ./apps/iam-standalone-server/iam/Dockerfile
+      dockerfile: ./apps/iam-standalone-server/Dockerfile
     restart: on-failure
     depends_on:
       - iam-db
@@ -40,10 +40,10 @@ services:
       - "11131:50051"
     volumes:
       # To simulate secrets in Swarm mode
-      - ./iam/etc/secrets:/run/secrets
-      - ./iam/var/local-object-store:/object-store-data
+      - ./etc/kadisoka-iam/secrets:/run/secrets
+      - ./var/kadisoka-iam/local-object-store:/object-store-data
     env_file:
-      - ./iam/etc/secrets/config.env
+      - ./etc/kadisoka-iam/secrets/config.env
     environment:
       - REALM_NAME=Kadisoka Standalone IAM Server
       - IAM_GRPC_ENABLED=true
