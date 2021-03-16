@@ -53,13 +53,12 @@ func NewWithCombinedHTTPServers(cfg Config, mux *http.ServeMux) (*App, error) {
 		return nil, errors.Wrap("app initialization", err)
 	}
 
-	iamServerCore := srvApp.Core
+	iamServerCore := srvApp.core
 
 	if cfg.RESTEnabled {
 		log.Info().Msg("Initializing REST server...")
 		restServer, err := rest.NewServer(
 			*cfg.REST,
-			srvApp.RealmInfo(),
 			iamServerCore,
 			&cfg.WebUI.URLs)
 		if err != nil {
@@ -130,10 +129,7 @@ func setUpWebUIServer(srvApp *App, cfg Config) (*webui.Server, error) {
 }
 
 func newWithoutServices(appCfg Config) (*App, error) {
-	appApp, err := app.Init(appCfg.AppInfo)
-	if err != nil {
-		return nil, errors.Wrap("app initialization", err)
-	}
+	appApp := app.Instance()
 
 	var realmInfo realm.Info
 	if appCfg.RealmInfo != nil {
@@ -147,7 +143,7 @@ func newWithoutServices(appCfg Config) (*App, error) {
 
 	return &App{
 		App:  appApp,
-		Core: srvCore,
+		core: srvCore,
 	}, nil
 }
 
@@ -185,20 +181,19 @@ func resolveConfig(cfg *Config) {
 
 type App struct {
 	app.App
-	Core *iamserver.Core
+	core *iamserver.Core
 }
 
 // RealmInfo returns information about the realm of the app.
-func (srvApp App) RealmInfo() realm.Info { return srvApp.Core.RealmInfo() }
+func (srvApp App) RealmInfo() realm.Info { return srvApp.core.RealmInfo() }
 
 func (srvApp *App) initServers(cfg Config) error {
-	iamServerCore := srvApp.Core
+	iamServerCore := srvApp.core
 
 	if cfg.RESTEnabled {
 		log.Info().Msg("Initializing REST API server...")
 		restServer, err := rest.NewServer(
 			*cfg.REST,
-			srvApp.RealmInfo(),
 			iamServerCore,
 			&cfg.WebUI.URLs)
 		if err != nil {

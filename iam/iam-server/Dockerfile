@@ -25,7 +25,7 @@ WORKDIR /root/
 # Include resources required by IAM server
 COPY ./iam-server/resources ./resources
 
-COPY --from=builder /workspace/iam/bin/iam-server ./service
+COPY --from=builder /workspace/iam/bin/iam-server ./server
 
 # Web UI
 EXPOSE 8080
@@ -34,4 +34,4 @@ EXPOSE 9080
 # gRPC
 EXPOSE 50051
 
-ENTRYPOINT ["./service"]
+ENTRYPOINT ["./server"]

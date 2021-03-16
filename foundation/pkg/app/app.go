@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/rez-go/stev"
 )
 
 const EnvVarsPrefixDefault = "APP_"
@@ -24,25 +23,8 @@ type App interface {
 
 type Info struct {
 	Name string
-}
 
-const (
-	NameDefault = "Kadisoka-based App"
-)
-
-func DefaultInfo() Info {
-	return Info{
-		Name: NameDefault,
-	}
-}
-
-func InfoFromEnvOrDefault() (Info, error) {
-	info := DefaultInfo()
-	err := stev.LoadEnv(EnvVarsPrefixDefault, &info)
-	if err != nil {
-		return DefaultInfo(), errors.Wrap("info loading from environment variables", err)
-	}
-	return info, nil
+	BuildInfo BuildInfo
 }
 
 type AppBase struct {
@@ -96,20 +78,23 @@ var (
 	defAppOnce sync.Once
 )
 
-func InitByEnvDefault() (App, error) {
-	appInfo, err := InfoFromEnvOrDefault()
-	if err != nil {
-		return nil, errors.Wrap("app info loading", err)
+func Instance() App {
+	if defApp == nil {
+		panic("App has not been initialized. Call app.Init to initialize App.")
 	}
-	return Init(&appInfo)
+	return defApp
 }
 
-func Init(appInfo *Info) (App, error) {
+func Init(appInfo Info) (App, error) {
 	var err error
 	defAppOnce.Do(func() {
-		if appInfo == nil {
-			i := DefaultInfo()
-			appInfo = &i
+		if appInfo.BuildInfo.RevisionID == "" {
+			err = errors.ArgMsg("appInfo.BuildInfo.RevisionID", "empty")
+			return
+		}
+		if appInfo.BuildInfo.Timestamp == "" {
+			err = errors.ArgMsg("appInfo.BuildInfo.RevisionID", "empty")
+			return
 		}
 
 		var unameStr string
@@ -136,7 +121,7 @@ func Init(appInfo *Info) (App, error) {
 		}
 
 		defApp = &AppBase{
-			appInfo:    *appInfo,
+			appInfo:    appInfo,
 			instanceID: instanceID,
 		}
 	})

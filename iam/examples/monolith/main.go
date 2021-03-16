@@ -20,15 +20,22 @@ import (
 var log = logging.NewPkgLogger()
 
 var (
+	appName        = "Kadisoka Monolith Example Server"
 	revisionID     = "unknown"
 	buildTimestamp = "unknown"
 )
 
 func main() {
 	fmt.Fprintf(os.Stderr,
-		"Kadisoka monolith example server revision %v built at %v\n",
-		revisionID, buildTimestamp)
-	app.SetBuildInfo(revisionID, buildTimestamp)
+		"%s revision %s built at %s\n",
+		appName, revisionID, buildTimestamp)
+	app.Init(app.Info{
+		Name: appName,
+		BuildInfo: app.BuildInfo{
+			RevisionID: revisionID,
+			Timestamp:  buildTimestamp,
+		},
+	})
 
 	err := initApp()
 	if err != nil {
@@ -52,13 +59,14 @@ func initApp() error {
 		log.Fatal().Err(err).Msg("")
 	}
 
-	realmInfo, err := realm.InfoFromEnvOrDefault("")
+	realmInfo := realm.Info{
+		Name:        "Kadisoka Monolith Example",
+		ContactInfo: realm.ContactInfo{EmailAddress: "info@example.com"},
+	}
+	realmInfo, err = realm.InfoFromEnv("REALM_", &realmInfo)
 	if err != nil {
 		log.Fatal().Err(err).Msg("RealmInfo loading")
 	}
-
-	appInfo := app.DefaultInfo()
-	appInfo.Name = "monolith"
 
 	cfg := Config{
 		WebUI: webui.ServerConfig{
@@ -67,7 +75,6 @@ func initApp() error {
 		},
 		IAM: iamapp.Config{
 			RealmInfo: &realmInfo,
-			AppInfo:   &appInfo,
 			Core:      iamserver.CoreConfigSkeleton(),
 			// Serve HTTP services under /accounts
 			HTTPBasePath: "/accounts",

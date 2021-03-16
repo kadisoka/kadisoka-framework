@@ -25,9 +25,9 @@ WORKDIR /root/
 # Include resources required by IAM server
 COPY ./iam-server/resources ./resources
 
-COPY --from=builder /workspace/iam/bin/microservices ./service
+COPY --from=builder /workspace/iam/bin/microservices ./server
 
 # HTTP
 EXPOSE 8080
 
-ENTRYPOINT ["./service"]
+ENTRYPOINT ["./server"]

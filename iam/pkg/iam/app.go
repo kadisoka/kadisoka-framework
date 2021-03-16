@@ -7,10 +7,7 @@ import (
 )
 
 func NewAppSimple(envVarsPrefix string) (*App, error) {
-	appApp, err := app.InitByEnvDefault()
-	if err != nil {
-		return nil, errors.Wrap("app initialization", err)
-	}
+	appApp := app.Instance()
 
 	iamClient, err := NewServiceClientSimple(appApp.InstanceID(), envVarsPrefix)
 	if err != nil {

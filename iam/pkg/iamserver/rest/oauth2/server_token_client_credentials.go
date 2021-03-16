@@ -3,7 +3,6 @@
 package oauth2
 
 import (
-	"strings"
 	"time"
 
 	"github.com/emicklei/go-restful"
@@ -66,7 +65,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 			ApplicationRef:   reqApp.ID,
 			UserRef:          ctxAuth.UserRef(),
 			DisplayName:      termDisplayName,
-			AcceptLanguage:   strings.Join(preferredLanguages, ","),
+			AcceptLanguage:   preferredLanguages,
 			VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
 			VerificationID:   0,
 		})

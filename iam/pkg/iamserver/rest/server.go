@@ -13,7 +13,6 @@ import (
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/sec"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
@@ -96,7 +95,6 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func NewServer(
 	config ServerConfig,
-	realmInfo realm.Info,
 	iamServerCore *iamserver.Core,
 	webUIURLs *iam.WebUIURLs, //TODO: add this to server core or add to ServerConfig
 ) (*Server, error) {
@@ -213,7 +211,7 @@ func processSwaggerSpec(
 	swaggerSpec *spec.Swagger,
 	secDefs spec.SecurityDefinitions,
 ) {
-	buildInfo := app.GetBuildInfo()
+	buildInfo := app.Instance().AppInfo().BuildInfo
 	rev := buildInfo.RevisionID
 	if rev != "unknown" && len(rev) > 7 {
 		rev = rev[:7]

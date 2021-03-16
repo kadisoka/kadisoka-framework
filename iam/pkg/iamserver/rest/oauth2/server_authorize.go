@@ -209,7 +209,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 					ApplicationRef:   appRef,
 					UserRef:          ctxAuth.UserRef(),
 					DisplayName:      termDisplayName,
-					AcceptLanguage:   strings.Join(preferredLanguages, ","),
+					AcceptLanguage:   preferredLanguages,
 					VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
 					VerificationID:   0,
 				})
@@ -229,7 +229,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 					ApplicationRef:   appRef,
 					UserRef:          ctxAuth.UserRef(),
 					DisplayName:      termDisplayName,
-					AcceptLanguage:   strings.Join(preferredLanguages, ","),
+					AcceptLanguage:   preferredLanguages,
 					VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
 					VerificationID:   0,
 				})
@@ -264,7 +264,7 @@ func (restSrv *Server) parseRequestAcceptLanguage(
 	req *restful.Request,
 	reqCtx *iam.RESTRequestContext,
 	defaultPreferredLanguages string,
-) (termLangStrings []string) {
+) (langTagSet []language.Tag) {
 	termLangTags, _, err := language.ParseAcceptLanguage(defaultPreferredLanguages)
 	if defaultPreferredLanguages != "" && err != nil {
 		logCtx(reqCtx).
@@ -284,8 +284,8 @@ func (restSrv *Server) parseRequestAcceptLanguage(
 	}
 
 	for _, langTag := range termLangTags {
-		termLangStrings = append(termLangStrings, langTag.String())
+		langTagSet = append(langTagSet, langTag)
 	}
 
-	return termLangStrings
+	return langTagSet
 }

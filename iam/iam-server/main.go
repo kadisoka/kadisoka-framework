@@ -21,15 +21,22 @@ import (
 var log = logging.NewPkgLogger()
 
 var (
+	appName        = "Kadisoka IAM Server"
 	revisionID     = "unknown"
 	buildTimestamp = "unknown"
 )
 
 func main() {
 	fmt.Fprintf(os.Stderr,
-		"IAM Server revision %v built at %v\n",
-		revisionID, buildTimestamp)
-	app.SetBuildInfo(revisionID, buildTimestamp)
+		"%s revision %s built at %s\n",
+		appName, revisionID, buildTimestamp)
+	app.Init(app.Info{
+		Name: appName,
+		BuildInfo: app.BuildInfo{
+			RevisionID: revisionID,
+			Timestamp:  buildTimestamp,
+		},
+	})
 
 	srvApp, err := initApp()
 	if err != nil {
@@ -58,14 +65,8 @@ func initApp() (app.App, error) {
 		log.Fatal().Err(err).Msg("RealmInfo loading")
 	}
 
-	appInfo, err := app.InfoFromEnvOrDefault()
-	if err != nil {
-		log.Fatal().Err(err).Msg("AppInfo loading")
-	}
-
 	cfg := srvapp.Config{
 		RealmInfo: &realmInfo,
-		AppInfo:   &appInfo,
 		Core:      iamserver.CoreConfigSkeleton(),
 		// Web UI
 		WebUIEnabled: true,

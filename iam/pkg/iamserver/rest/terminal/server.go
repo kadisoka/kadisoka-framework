@@ -491,7 +491,7 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 			ApplicationRef:   authApp.ID,
 			UserRef:          iam.UserRefKeyZero(),
 			DisplayName:      termDisplayName,
-			AcceptLanguage:   strings.Join(termLangStrings, ","),
+			AcceptLanguage:   termLangStrings,
 			VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
 			VerificationID:   0,
 		})
@@ -539,12 +539,12 @@ func (restSrv *Server) parseRequestAcceptLanguageTags(
 func (restSrv *Server) parseRequestAcceptLanguage(
 	reqCtx *iam.RESTRequestContext,
 	overrideAcceptLanguage string,
-) (termLangStrings []string) {
+) (langTagSet []language.Tag) {
 	termLangTags := restSrv.parseRequestAcceptLanguageTags(reqCtx, overrideAcceptLanguage)
 	for _, langTag := range termLangTags {
-		termLangStrings = append(termLangStrings, langTag.String())
+		langTagSet = append(langTagSet, langTag)
 	}
-	return termLangStrings
+	return langTagSet
 }
 
 type terminalFCMRegistrationTokenPutRequest struct {

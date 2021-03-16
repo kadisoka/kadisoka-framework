@@ -244,11 +244,15 @@ func loadPrivateKeyFromPEMFile(
 	for _, fileName = range fileNamesToTry {
 		fileBytes, err = ioutil.ReadFile(fileName)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		if len(fileBytes) > 0 {
 			break
 		}
+	}
+
+	if len(fileBytes) == 0 {
+		return nil, errors.Msg("unable to load any of the specified filenames")
 	}
 
 	pemData, _ := pem.Decode(fileBytes)

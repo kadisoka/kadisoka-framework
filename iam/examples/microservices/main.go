@@ -26,15 +26,22 @@ var (
 )
 
 var (
+	appName        = "Kadisoka IAM Test Client Application"
 	revisionID     = "unknown"
 	buildTimestamp = "unknown"
 )
 
 func main() {
 	fmt.Fprintf(os.Stderr,
-		"Kadisoka IAM Test Client Service revision %s built at %s\n",
-		revisionID, buildTimestamp)
-	app.SetBuildInfo(revisionID, buildTimestamp)
+		"%s revision %s built at %s\n",
+		appName, revisionID, buildTimestamp)
+	app.Init(app.Info{
+		Name: appName,
+		BuildInfo: app.BuildInfo{
+			RevisionID: revisionID,
+			Timestamp:  buildTimestamp,
+		},
+	})
 
 	log.Info().Msg("Initializing app...")
 	svcApp, err := iam.NewAppSimple("IAM_")
