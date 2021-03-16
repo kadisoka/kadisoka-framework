@@ -8,6 +8,12 @@ import 'package:http/http.dart' as http;
 import 'rest/oauth2.dart';
 import 'rest/terminal.dart';
 
+enum IamSessionState {
+  Unknown,
+  SignedOut,
+  SignedIn,
+}
+
 //TODO: make this a ChangeNotifier, stream source or something to make it reactive.
 abstract class IamServiceClient {
   Future<String> registerTerminal(String userIdentifier);
@@ -26,6 +32,8 @@ abstract class IamServiceClient {
   String get terminalId;
 
   String get accessToken;
+
+  ValueNotifier<IamSessionState> get sessionStateNotifier;
 }
 
 class IamServiceClientImpl implements IamServiceClient {
@@ -53,7 +61,9 @@ class IamServiceClientImpl implements IamServiceClient {
   }
 
   @override
-  bool get isSignedIn => _accessToken?.isNotEmpty == true;
+  bool get isSignedIn =>
+      _accessToken?.isNotEmpty == true &&
+      _sessionStateNotifier.value == IamSessionState.SignedIn;
 
   @override
   String get identifier => _identifier;
@@ -114,6 +124,8 @@ class IamServiceClientImpl implements IamServiceClient {
     final respData = OAuth2TokenResponse.fromJson(jsonDecode(resp.body));
     _accessToken = respData.accessToken;
 
+    _sessionStateNotifier.value = IamSessionState.SignedIn;
+
     return _accessToken;
   }
 
@@ -134,6 +146,8 @@ class IamServiceClientImpl implements IamServiceClient {
     _accessToken = '';
     _terminalId = '';
 
+    _sessionStateNotifier.value = IamSessionState.SignedOut;
+
     return true;
   }
 
@@ -141,4 +155,10 @@ class IamServiceClientImpl implements IamServiceClient {
       'Basic ' + base64Encode(utf8.encode('$_clientId:$_clientSecret'));
 
   String get _httpBearerAuthorization => 'Bearer ' + _accessToken;
+
+  final ValueNotifier<IamSessionState> _sessionStateNotifier =
+      ValueNotifier(IamSessionState.Unknown);
+
+  @override
+  ValueNotifier<IamSessionState> get sessionStateNotifier => _sessionStateNotifier;
 }
