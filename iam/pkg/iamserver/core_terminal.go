@@ -35,7 +35,10 @@ func (core *Core) AuthenticateTerminal(
 		From(terminalDBTableName).
 		Select("user_id", "secret").
 		Where(
-			goqu.C("id").Eq(terminalRef.ID().PrimitiveValue())).
+			goqu.C("id").Eq(terminalRef.ID().PrimitiveValue()),
+			goqu.C("d_ts").IsNull(),
+			goqu.C("verification_ts").IsNotNull(),
+		).
 		ToSQL()
 
 	err = core.db.
@@ -48,7 +51,10 @@ func (core *Core) AuthenticateTerminal(
 		return false, iam.UserRefKeyZero(), err
 	}
 
-	return subtle.ConstantTimeCompare([]byte(storedSecret), []byte(terminalSecret)) == 1,
+	return subtle.ConstantTimeCompare(
+			[]byte(storedSecret),
+			[]byte(terminalSecret),
+		) == 1,
 		iam.NewUserRefKey(ownerUserID), nil
 }
 
@@ -242,23 +248,23 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 
-	userTermModel, err := core.getTerminal(terminalRef.ID())
+	termData, err := core.getTerminalRaw(terminalRef.ID())
 	if err != nil {
 		panic(err)
 	}
-	if userTermModel == nil {
+	if termData == nil {
 		return "", iam.UserRefKeyZero(), errors.ArgMsg("terminalID", "reference invalid")
 	}
 	disallowReplay := false
 
-	if userTermModel.UserID.IsValid() {
-		terminalUserID := userTermModel.UserID
-		switch userTermModel.VerificationType {
+	if termData.UserID.IsValid() {
+		terminalUserID := termData.UserID
+		switch termData.VerificationType {
 		case iam.TerminalVerificationResourceTypeEmailAddress:
 			err = core.eaVerifier.
 				ConfirmVerification(
 					callCtx,
-					userTermModel.VerificationID,
+					termData.VerificationID,
 					verificationCode)
 			if err != nil {
 				switch err {
@@ -272,7 +278,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 
 			emailAddress, err := core.eaVerifier.
 				GetEmailAddressByVerificationID(
-					userTermModel.VerificationID)
+					termData.VerificationID)
 			if err != nil {
 				panic(err)
 			}
@@ -282,7 +288,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 					terminalUserID,
 					*emailAddress,
 					&ctxTime,
-					userTermModel.VerificationID)
+					termData.VerificationID)
 			if err != nil {
 				panic(err)
 			}
@@ -304,7 +310,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 			err = core.pnVerifier.
 				ConfirmVerification(
 					callCtx,
-					userTermModel.VerificationID,
+					termData.VerificationID,
 					verificationCode)
 			if err != nil {
 				switch err {
@@ -318,7 +324,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 
 			phoneNumber, err := core.pnVerifier.
 				GetPhoneNumberByVerificationID(
-					userTermModel.VerificationID)
+					termData.VerificationID)
 			if err != nil {
 				panic(err)
 			}
@@ -328,7 +334,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 					terminalUserID,
 					*phoneNumber,
 					&ctxTime,
-					userTermModel.VerificationID)
+					termData.VerificationID)
 			if err != nil {
 				panic(err)
 			}
@@ -355,7 +361,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 	}
 
 	termSecret, err := core.
-		setUserTerminalVerified(callCtx, userTermModel.ID, disallowReplay)
+		setTerminalVerified(callCtx, termData.ID, disallowReplay)
 	if err != nil {
 		if err == errTerminalVerificationConfirmationReplayed {
 			return "", iam.UserRefKeyZero(), iam.ErrAuthorizationCodeAlreadyClaimed
@@ -363,12 +369,12 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 		panic(err)
 	}
 
-	return termSecret, iam.NewUserRefKey(userTermModel.UserID), nil
+	return termSecret, iam.NewUserRefKey(termData.UserID), nil
 }
 
-func (core *Core) getTerminal(id iam.TerminalID) (*terminalDBModel, error) {
+func (core *Core) getTerminalRaw(id iam.TerminalID) (*terminalDBRawModel, error) {
 	var err error
-	var ut terminalDBModel
+	var ut terminalDBRawModel
 
 	sqlString, _, _ := goqu.
 		From(terminalDBTableName).
@@ -376,7 +382,7 @@ func (core *Core) getTerminal(id iam.TerminalID) (*terminalDBModel, error) {
 			"id", "application_id", "user_id",
 			"c_ts", "c_uid", "c_tid", "c_origin_address",
 			"display_name", "accept_language",
-			"verification_type", "verification_id", "verification_time").
+			"verification_type", "verification_id", "verification_ts").
 		Where(
 			goqu.C("id").Eq(id.PrimitiveValue())).
 		ToSQL()
@@ -414,7 +420,9 @@ func (core *Core) GetTerminalInfo(
 		From(terminalDBTableName).
 		Select("user_id", "display_name", "accept_language").
 		Where(
-			goqu.C("id").Eq(terminalID.PrimitiveValue())).
+			goqu.C("id").Eq(terminalID.PrimitiveValue()),
+			goqu.C("d_ts").IsNull(),
+		).
 		ToSQL()
 
 	err := core.db.
@@ -504,7 +512,7 @@ func (core *Core) RegisterTerminal(
 				"accept_language":   input.AcceptLanguage,
 				"verification_type": input.VerificationType,
 				"verification_id":   input.VerificationID,
-				"verification_time": input.VerificationTime,
+				"verification_ts":   input.VerificationTime,
 			}).
 		ToSQL()
 
@@ -520,7 +528,53 @@ func (core *Core) RegisterTerminal(
 	return terminalRef, "", nil
 }
 
-func (core *Core) setUserTerminalVerified(
+func (core *Core) DeleteTerminal(
+	callCtx iam.CallContext,
+	termRefToDelete iam.TerminalRefKey,
+) (stateChanged bool, err error) {
+	authCtx := callCtx.Authorization()
+
+	if !authCtx.IsTerminal(termRefToDelete) {
+		return false, iam.ErrOperationNotAllowed
+	}
+
+	ctxTime := callCtx.RequestInfo().ReceiveTime
+
+	sqlString, _, _ := goqu.
+		From(terminalDBTableName).
+		Where(
+			goqu.C("id").Eq(termRefToDelete.ID().PrimitiveValue()),
+			goqu.C("d_ts").IsNull(),
+		).
+		Update().
+		Set(
+			goqu.Record{
+				"d_ts":  ctxTime,
+				"d_tid": authCtx.TerminalID().PrimitiveValue(),
+				"d_uid": authCtx.UserID().PrimitiveValue(),
+			},
+		).
+		ToSQL()
+
+	xres, err := core.db.
+		Exec(sqlString)
+	if err != nil {
+		return false, err
+	}
+	n, err := xres.RowsAffected()
+	if err != nil {
+		panic(err)
+	}
+
+	if n == 1 {
+		//TODO: push the event
+	}
+
+	return n == 1, nil
+}
+
+//TODO: error if the terminal is deleted?
+func (core *Core) setTerminalVerified(
 	callCtx iam.CallContext,
 	terminalID iam.TerminalID,
 	disallowReplay bool,
@@ -535,12 +589,12 @@ func (core *Core) setUserTerminalVerified(
 		From(terminalDBTableName).
 		Where(
 			goqu.C("id").Eq(terminalID.PrimitiveValue()),
-			goqu.C("verification_time").IsNull()).
+			goqu.C("verification_ts").IsNull()).
 		Update().
 		Set(
 			goqu.Record{
-				"secret":            termSecret,
-				"verification_time": callCtx.RequestInfo().ReceiveTime,
+				"secret":          termSecret,
+				"verification_ts": callCtx.RequestInfo().ReceiveTime,
 			}).
 		ToSQL()
 
@@ -595,7 +649,7 @@ func (core *Core) generateTerminalSecret() string {
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 
-func (core *Core) getTerminalAcceptLanguages(
+func (core *Core) getTerminalAcceptLanguagesAllowDeleted(
 	id iam.TerminalID,
 ) ([]language.Tag, error) {
 	var acceptLanguage string
@@ -604,7 +658,8 @@ func (core *Core) getTerminalAcceptLanguages(
 		From(terminalDBTableName).
 		Select("accept_language").
 		Where(
-			goqu.C("id").Eq(id.PrimitiveValue())).
+			goqu.C("id").Eq(id.PrimitiveValue()),
+		).
 		ToSQL()
 
 	err := core.db.

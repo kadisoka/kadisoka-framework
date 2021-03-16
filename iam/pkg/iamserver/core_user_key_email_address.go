@@ -37,7 +37,7 @@ func (core *Core) getUserKeyEmailAddressNoAC(
 		Where(
 			goqu.C("user_id").Eq(userRef.ID().PrimitiveValue()),
 			goqu.C("d_ts").IsNull(),
-			goqu.C("verification_time").IsNotNull()).
+			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
 
 	err := core.db.
@@ -68,7 +68,7 @@ func (core *Core) getUserIDByKeyEmailAddress(
 			goqu.C("domain_part").Eq(emailAddress.DomainPart()),
 			goqu.C("local_part").Eq(emailAddress.LocalPart()),
 			goqu.C("d_ts").IsNull(),
-			goqu.C("verification_time").IsNotNull(),
+			goqu.C("verification_ts").IsNotNull(),
 		).
 		ToSQL()
 	err = core.db.
@@ -94,7 +94,7 @@ func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 		Select(
 			"user_id",
 			goqu.Case().
-				When(goqu.C("verification_time").IsNull(), false).
+				When(goqu.C("verification_ts").IsNull(), false).
 				Else(true).
 				As("verified"),
 		).
@@ -133,7 +133,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	}
 	// Don't allow changing other user's for now
 	if !ctxAuth.IsUser(userRef) {
-		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
+		return 0, nil, iam.ErrOperationNotAllowed
 	}
 
 	existingOwnerUserID, err := core.
@@ -158,7 +158,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	}
 
 	//TODO: user-set has higher priority over terminal's
-	userLanguages, err := core.getTerminalAcceptLanguages(ctxAuth.TerminalID())
+	userLanguages, err := core.getTerminalAcceptLanguagesAllowDeleted(ctxAuth.TerminalID())
 	if err != nil {
 	}
 
@@ -213,7 +213,7 @@ func (core *Core) setUserKeyEmailAddress(
 	}
 
 	err = core.db.QueryRow(
-		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
+		`SELECT CASE WHEN verification_ts IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userKeyEmailAddressDBTableName+` `+
 			`WHERE user_id = $1 AND domain_part = $2 AND local_part = $3`,
 		userRef.ID().PrimitiveValue(), emailAddress.DomainPart(), emailAddress.LocalPart()).
@@ -275,12 +275,12 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 
 	xres, err = core.db.Exec(
 		`UPDATE `+userKeyEmailAddressDBTableName+` SET (`+
-			`verification_time, verification_id`+
+			`verification_ts, verification_id`+
 			`) = ( `+
 			`$1, $2`+
 			`) WHERE user_id = $3 `+
 			`AND domain_part = $4 AND local_part = $5 `+
-			`AND d_ts IS NULL AND verification_time IS NULL`,
+			`AND d_ts IS NULL AND verification_ts IS NULL`,
 		verificationTime,
 		verificationID,
 		userID,

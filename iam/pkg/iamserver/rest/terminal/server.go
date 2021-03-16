@@ -63,28 +63,49 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		To(restSrv.postTerminalsRegister).
 		Doc("Terminal registration endpoint").
-		Notes("The terminal registration endpoint is used to register "+
-			"a terminal. This endpoint will send a verification code "+
-			"through the configured external communication channel. "+
-			"This code needs to be provided to the terminal secret "+
-			"endpoint to obtain the secret of the terminal.\n\n"+
-			"A **terminal** is a bound instance of client. It might or "+
-			"might not be associated to a user.").
+		Notes(
+			"The terminal registration endpoint is used to register "+
+				"a terminal. This endpoint will send a verification code "+
+				"through the configured external communication channel. "+
+				"This code needs to be provided to the terminal secret "+
+				"endpoint to obtain the secret of the terminal.\n\n"+
+				"A **terminal** is a bound instance of client. It might or "+
+				"might not be associated to a user.").
 		Param(restWS.
 			HeaderParameter(
 				"Authorization", sec.AuthorizationBasicOAuth2ClientCredentials.String()).
 			Required(true)).
-		Reads(iam.TerminalRegisterPostRequestJSONV1{}).
-		Returns(http.StatusOK, "Terminal registered", iam.TerminalRegisterPostResponseJSONV1{}))
+		Reads(iam.TerminalRegistrationRequestJSONV1{}).
+		Returns(http.StatusOK, "Terminal registered", iam.TerminalRegistrationResponseJSONV1{}))
+
+	restWS.Route(restWS.
+		DELETE("/{terminal-id}").
+		Metadata(restfulspec.KeyOpenAPITags, tags).
+		To(restSrv.deleteTerminal).
+		Doc("Terminal deletion (access-revocation) endpoint").
+		Notes("This endpoint is used to revoke all access of a terminal.").
+		Param(restWS.
+			HeaderParameter(
+				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+			Required(true)).
+		Param(restWS.
+			PathParameter(
+				"terminal-id", "The ID of the terminal to delete").
+			Required(true)).
+		Reads(iam.TerminalDeletionRequestJSONV1{}).
+		Returns(http.StatusOK, "Terminal deleted", iam.TerminalDeletionResponseJSONV1{}))
 
 	restWS.Route(restWS.
 		PUT("/fcm_registration_token").
 		Metadata(restfulspec.KeyOpenAPITags, hidden).
 		To(restSrv.putTerminalFCMRegistrationToken).
 		Doc("Set terminal's FCM token").
-		Notes("Associate the terminal with an FCM registration token. One token should "+
-			"be associated to only one terminal.").
-		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
+		Notes(
+			"Associate the terminal with an FCM registration token. One "+
+				"token should be associated to only one terminal.").
+		Param(restWS.
+			HeaderParameter(
+				"Authorization", sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Reads(terminalFCMRegistrationTokenPutRequest{}).
 		Returns(http.StatusNoContent, "Terminal's FCM token successfully set", nil))
@@ -136,7 +157,7 @@ func (restSrv *Server) postTerminalsRegister(
 		return
 	}
 
-	var terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1
+	var terminalRegisterReq iam.TerminalRegistrationRequestJSONV1
 	err = req.ReadEntity(&terminalRegisterReq)
 	if err != nil {
 		logCtx(reqCtx).
@@ -169,7 +190,65 @@ func (restSrv *Server) postTerminalsRegister(
 		Warn().Msg("Resource verification type is missing")
 	rest.RespondTo(resp).EmptyError(
 		http.StatusBadRequest)
-	return
+}
+
+func (restSrv *Server) deleteTerminal(
+	req *restful.Request, resp *restful.Response,
+) {
+	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	if err != nil {
+		logCtx(reqCtx).
+			Err(err).Msg("Unable to read authorization")
+		rest.RespondTo(resp).EmptyError(
+			http.StatusInternalServerError)
+		return
+	}
+
+	ctxAuth := reqCtx.Authorization()
+
+	termIDStr := req.PathParameter("terminal-id")
+	if termIDStr == "" {
+		logCtx(reqCtx).
+			Warn().Msg("Empty terminal ID")
+		rest.RespondTo(resp).EmptyError(
+			http.StatusBadRequest)
+		return
+	}
+
+	var termRef iam.TerminalRefKey
+	if termIDStr == "self" {
+		termRef = ctxAuth.TerminalRef()
+	} else {
+		termRef, err = iam.TerminalRefKeyFromAZERText(termIDStr)
+		if err != nil {
+			logCtx(reqCtx).
+				Warn().Err(err).Msgf("Unabled to parse %q as a terminal ref-key", termIDStr)
+			rest.RespondTo(resp).EmptyError(
+				http.StatusBadRequest)
+			return
+		}
+	}
+
+	_, err = restSrv.serverCore.DeleteTerminal(reqCtx, termRef)
+	if err != nil {
+		if errors.IsCallError(err) {
+			logCtx(reqCtx).
+				Warn().Err(err).Msgf(
+				"DeleteTerminal with %v failed", termRef)
+			rest.RespondTo(resp).EmptyError(
+				http.StatusBadRequest)
+			return
+		}
+		logCtx(reqCtx).
+			Err(err).Msgf(
+			"DeleteTerminal with %v failed", termRef)
+		rest.RespondTo(resp).EmptyError(
+			http.StatusInternalServerError)
+		return
+	}
+
+	rest.RespondTo(resp).
+		Success(&iam.TerminalDeletionResponseJSONV1{})
 }
 
 func (restSrv *Server) putTerminalFCMRegistrationToken(
@@ -190,6 +269,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 			http.StatusUnauthorized)
 		return
 	}
+
 	ctxAuth := reqCtx.Authorization()
 
 	var fcmRegTokenReq terminalFCMRegistrationTokenPutRequest
@@ -221,14 +301,14 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	resp *restful.Response,
 	reqCtx *iam.RESTRequestContext,
-	authClient *iam.Application,
-	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
+	authApp *iam.Application,
+	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
 	// Only for non-confidential user-agents
-	if appRef := authClient.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
+	if appRef := authApp.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf(
-			"Client %v is not allowed to use this verification resource type", authClient.ID)
+			"Client %v is not allowed to use this verification resource type", authApp.ID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -257,7 +337,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 
 	termRef, _, codeExpiry, err := restSrv.serverCore.
 		StartTerminalRegistrationByPhoneNumber(
-			reqCtx, authClient.ID, phoneNumber,
+			reqCtx, authApp.ID, phoneNumber,
 			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
 			termLangTags, verificationMethods)
 	if err != nil {
@@ -278,7 +358,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	}
 
 	rest.RespondTo(resp).Success(
-		&iam.TerminalRegisterPostResponseJSONV1{
+		&iam.TerminalRegistrationResponseJSONV1{
 			TerminalID: termRef.AZERText(),
 			CodeExpiry: codeExpiry,
 		})
@@ -289,13 +369,13 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	resp *restful.Response,
 	reqCtx *iam.RESTRequestContext,
-	authClient *iam.Application,
-	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
+	authApp *iam.Application,
+	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
-	if appRef := authClient.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
+	if appRef := authApp.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf(
-			"Client %v is not allowed to use this verification resource type", authClient.ID)
+			"Client %v is not allowed to use this verification resource type", authApp.ID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -331,7 +411,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 
 	termRef, _, codeExpiry, err := restSrv.serverCore.
 		StartTerminalRegistrationByEmailAddress(
-			reqCtx, authClient.ID, emailAddress,
+			reqCtx, authApp.ID, emailAddress,
 			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
 			termLangTags, verificationMethods)
 	if err != nil {
@@ -352,7 +432,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	}
 
 	rest.RespondTo(resp).Success(
-		&iam.TerminalRegisterPostResponseJSONV1{
+		&iam.TerminalRegistrationResponseJSONV1{
 			TerminalID: termRef.AZERText(),
 			CodeExpiry: codeExpiry,
 		})
@@ -362,13 +442,13 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 func (restSrv *Server) handleTerminalRegisterByImplicit(
 	resp *restful.Response,
 	reqCtx *iam.RESTRequestContext,
-	authClient *iam.Application,
-	terminalRegisterReq iam.TerminalRegisterPostRequestJSONV1,
+	authApp *iam.Application,
+	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
 	// Only if the client is able to secure its credentials.
-	if !authClient.ID.ID().IsService() && !authClient.ID.ID().IsUserAgentAuthorizationConfidential() {
+	if !authApp.ID.ID().IsService() && !authApp.ID.ID().IsUserAgentAuthorizationConfidential() {
 		logCtx(reqCtx).
-			Warn().Msgf("Client %v is not allowed to use this verification resource type", authClient.ID)
+			Warn().Msgf("Client %v is not allowed to use this verification resource type", authApp.ID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -378,7 +458,7 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 	if ctxAuth.IsUserContext() {
 		//TODO: determine if we should support user context
 		logCtx(reqCtx).
-			Warn().Msgf("Client %v is authenticating by implicit grant with valid user context", authClient.ID)
+			Warn().Msgf("Client %v is authenticating by implicit grant with valid user context", authApp.ID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -390,7 +470,7 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 
 	termRef, termSecret, err := restSrv.serverCore.
 		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-			ApplicationRef:   authClient.ID,
+			ApplicationRef:   authApp.ID,
 			UserRef:          iam.UserRefKeyZero(),
 			DisplayName:      termDisplayName,
 			AcceptLanguage:   strings.Join(termLangStrings, ","),
@@ -402,7 +482,7 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 	}
 
 	rest.RespondTo(resp).Success(
-		&iam.TerminalRegisterPostResponseJSONV1{
+		&iam.TerminalRegistrationResponseJSONV1{
 			TerminalID:     termRef.AZERText(),
 			TerminalSecret: termSecret,
 		})

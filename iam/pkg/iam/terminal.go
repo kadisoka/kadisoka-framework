@@ -49,15 +49,15 @@ type TerminalFCMRegistrationTokenService interface {
 	) error
 }
 
-// JSONV1 models
+//region JSONV1 models
 
-type TerminalRegisterPostRequestJSONV1 struct {
+type TerminalRegistrationRequestJSONV1 struct {
 	VerificationResourceName string   `json:"verification_resource_name"`
 	VerificationMethods      []string `json:"verification_methods"`
 	DisplayName              string   `json:"display_name"`
 }
 
-func (TerminalRegisterPostRequestJSONV1) SwaggerDoc() map[string]string {
+func (TerminalRegistrationRequestJSONV1) SwaggerDoc() map[string]string {
 	return map[string]string{
 		"verification_resource_name": "A phone number complete with country code or an email address.",
 		"verification_methods": "The preferred verification methods. " +
@@ -68,13 +68,17 @@ func (TerminalRegisterPostRequestJSONV1) SwaggerDoc() map[string]string {
 }
 
 // provide user id? indicator for a new user?
-type TerminalRegisterPostResponseJSONV1 struct {
+//TODO: indicator for a new user. the indicator can then be used to alert
+// the user if they are about creating a new account. There are chances that
+// the user might want to sign-in with an existing account or might actually
+// want to change their identifier.
+type TerminalRegistrationResponseJSONV1 struct {
 	TerminalID     string     `json:"terminal_id"`
 	TerminalSecret string     `json:"terminal_secret,omitempty"`
 	CodeExpiry     *time.Time `json:"code_expiry,omitempty"`
 }
 
-func (TerminalRegisterPostResponseJSONV1) SwaggerDoc() map[string]string {
+func (TerminalRegistrationResponseJSONV1) SwaggerDoc() map[string]string {
 	return map[string]string{
 		"terminal_id": "The ID for the terminal.",
 		"terminal_secret": "Contains terminal's secret for certain " +
@@ -83,3 +87,11 @@ func (TerminalRegisterPostResponseJSONV1) SwaggerDoc() map[string]string {
 			"be expired.",
 	}
 }
+
+type TerminalDeletionRequestJSONV1 struct {
+}
+
+type TerminalDeletionResponseJSONV1 struct {
+}
+
+//endregion

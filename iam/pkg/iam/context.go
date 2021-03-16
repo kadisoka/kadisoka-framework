@@ -16,8 +16,8 @@ var (
 	ErrUserContextRequired          = accesserrs.Msg("user context required")
 	ErrServiceClientContextRequired = accesserrs.Msg("service client context required")
 
-	ErrContextUserNotAllowedToPerformActionOnResource = accesserrs.Msg("context user is not allowed perform action on the target resource")
-	ErrContextUserNotAllowedToAccessToOthersResource  = accesserrs.Msg("context user is not allowed to access to other's resource")
+	ErrOperationNotAllowed = accesserrs.Msg("actor is not allowed perform action on the target resource")
+	ErrAccessNotAllowed    = accesserrs.Msg("actor is not allowed to access target resource")
 )
 
 func NewEmptyCallContext(ctx context.Context) CallContext {

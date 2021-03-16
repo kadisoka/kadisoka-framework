@@ -35,7 +35,7 @@ type verificationDBModel struct {
 	CreationTime           time.Time       `db:"c_ts"`
 	CreationUserID         *iam.UserID     `db:"c_uid"`
 	CreationTerminalID     *iam.TerminalID `db:"c_tid"`
-	ConfirmationTime       *time.Time      `db:"confirmation_time"`
-	ConfirmationUserID     *iam.UserID     `db:"confirmation_user_id"`
-	ConfirmationTerminalID *iam.TerminalID `db:"confirmation_terminal_id"`
+	ConfirmationTime       *time.Time      `db:"confirmation_ts"`
+	ConfirmationUserID     *iam.UserID     `db:"confirmation_uid"`
+	ConfirmationTerminalID *iam.TerminalID `db:"confirmation_tid"`
 }

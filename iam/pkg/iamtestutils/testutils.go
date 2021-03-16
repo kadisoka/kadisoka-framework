@@ -51,7 +51,7 @@ package iamtestutils
 // 	var code string
 // 	err = DB.QueryRow(
 // 		`SELECT code FROM phone_number_verifications WHERE `+
-// 			`country_code=$1 AND national_number=$2 AND confirmation_time IS NULL`,
+// 			`country_code=$1 AND national_number=$2 AND confirmation_ts IS NULL`,
 // 		countryCode, nationalNumber).Scan(&code)
 // 	if err != nil {
 // 		panic(err)

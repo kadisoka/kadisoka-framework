@@ -32,28 +32,28 @@ func (core *Core) ListTerminalFCMRegistrationTokensByUser(
 ) (tokens map[iam.TerminalID]string, err error) {
 	//TODO: use cache service
 
-	userTermRows, err := core.db.Query(
+	termRows, err := core.db.Query(
 		`SELECT tid.id, tft.token `+
 			`FROM `+terminalDBTableName+` tid `+
 			`JOIN `+terminalFCMRegistrationTokenDBTableName+` tft `+
 			"ON tft.terminal_id=tid.id AND tft.d_ts IS NULL "+
-			"WHERE tid.user_id=$1 AND tid.verification_time IS NOT NULL",
+			"WHERE tid.user_id=$1 AND tid.d_ts IS NULL AND tid.verification_ts IS NOT NULL",
 		ownerUserRef.ID().PrimitiveValue())
 	if err != nil {
 		return nil, err
 	}
-	defer userTermRows.Close()
+	defer termRows.Close()
 
 	result := map[iam.TerminalID]string{}
-	for userTermRows.Next() {
+	for termRows.Next() {
 		var terminalID iam.TerminalID
 		var token string
-		if err = userTermRows.Scan(&terminalID, &token); err != nil {
+		if err = termRows.Scan(&terminalID, &token); err != nil {
 			return nil, err
 		}
 		result[terminalID] = token
 	}
-	if err = userTermRows.Err(); err != nil {
+	if err = termRows.Err(); err != nil {
 		return nil, err
 	}
 

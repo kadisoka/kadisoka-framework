@@ -19,7 +19,7 @@ func (core *Core) GetUserContactUserIDs(
 				`  ph.country_code = cp.contact_country_code `+
 				`  AND ph.national_number = cp.contact_national_number `+
 				`  AND ph.d_ts IS NULL `+
-				`  AND ph.verification_time IS NOT NULL `+
+				`  AND ph.verification_ts IS NOT NULL `+
 				`JOIN `+userDBTableName+` AS usr ON `+
 				`  usr.id = ph.user_id `+
 				`  AND usr.d_ts IS NULL `+

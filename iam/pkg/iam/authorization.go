@@ -51,6 +51,12 @@ func (ctxAuth Authorization) IsNotValid() bool {
 	return !ctxAuth.IsValid()
 }
 
+// IsTerminal returns true if the authorized terminal is the same as termRef.
+func (ctxAuth Authorization) IsTerminal(termRef TerminalRefKey) bool {
+	ctxTerm := ctxAuth.Session.terminal
+	return ctxTerm.IsValid() && ctxTerm.EqualsTerminalRefKey(termRef)
+}
+
 func (ctxAuth Authorization) Actor() Actor {
 	return Actor{
 		UserRef:     ctxAuth.Session.terminal.user,

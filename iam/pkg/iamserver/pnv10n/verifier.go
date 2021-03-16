@@ -132,7 +132,7 @@ func (verifier *Verifier) StartVerification(
 		QueryRow(
 			"SELECT id, code_expiry, attempts_remaining "+
 				`FROM `+verificationDBTableName+` `+
-				"WHERE country_code = $1 AND national_number = $2 AND confirmation_time IS NULL "+
+				"WHERE country_code = $1 AND national_number = $2 AND confirmation_ts IS NULL "+
 				"ORDER BY id DESC "+
 				"LIMIT 1",
 			phoneNumber.CountryCode(),
@@ -227,8 +227,8 @@ func (verifier *Verifier) ConfirmVerification(
 
 	_, err = verifier.db.Exec(
 		`UPDATE `+verificationDBTableName+` `+
-			"SET confirmation_time = $1, confirmation_user_id = $2, confirmation_terminal_id = $3 "+
-			"WHERE id = $4 AND confirmation_time IS NULL",
+			"SET confirmation_ts = $1, confirmation_uid = $2, confirmation_tid = $3 "+
+			"WHERE id = $4 AND confirmation_ts IS NULL",
 		ctxTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr(), verificationID)
 	return err //TODO: determine if it's race-condition
 }
@@ -258,7 +258,7 @@ func (verifier *Verifier) GetVerificationCodeByPhoneNumber(
 		"SELECT code "+
 			`FROM `+verificationDBTableName+` `+
 			"WHERE country_code = $1 AND national_number = $2 "+
-			"AND confirmation_time IS NULL "+
+			"AND confirmation_ts IS NULL "+
 			"ORDER BY c_ts DESC LIMIT 1",
 		phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&code)

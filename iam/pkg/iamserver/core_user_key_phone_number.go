@@ -37,7 +37,7 @@ func (core *Core) ListUsersByPhoneNumber(
 				`FROM ` + userKeyPhoneNumberDBTableName + ` ` +
 				`WHERE (country_code, national_number) ` +
 				`IN (VALUES ` + phoneNumberSliceToSQLSetString(phoneNumbers) + `) ` +
-				`AND d_ts IS NULL AND verification_time IS NOT NULL ` +
+				`AND d_ts IS NULL AND verification_ts IS NOT NULL ` +
 				`LIMIT ` + strconv.Itoa(len(phoneNumbers)))
 	if err != nil {
 		panic(err)
@@ -109,7 +109,7 @@ func (core *Core) getUserKeyPhoneNumberNoAC(
 		Where(
 			goqu.C("user_id").Eq(userRef.ID().PrimitiveValue()),
 			goqu.C("d_ts").IsNull(),
-			goqu.C("verification_time").IsNotNull()).
+			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
 
 	err := core.db.
@@ -137,7 +137,7 @@ func (core *Core) getUserIDByKeyPhoneNumber(
 			goqu.C("country_code").Eq(phoneNumber.CountryCode()),
 			goqu.C("national_number").Eq(phoneNumber.NationalNumber()),
 			goqu.C("d_ts").IsNull(),
-			goqu.C("verification_time").IsNotNull(),
+			goqu.C("verification_ts").IsNotNull(),
 		).
 		ToSQL()
 	err = core.db.
@@ -163,7 +163,7 @@ func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 		Select(
 			"user_id",
 			goqu.Case().
-				When(goqu.C("verification_time").IsNull(), false).
+				When(goqu.C("verification_ts").IsNull(), false).
 				Else(true).
 				As("verified"),
 		).
@@ -202,7 +202,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	}
 	// Don't allow changing other user's for now
 	if !ctxAuth.IsUser(userRef) {
-		return 0, nil, iam.ErrContextUserNotAllowedToPerformActionOnResource
+		return 0, nil, iam.ErrOperationNotAllowed
 	}
 
 	//TODO: prone to race condition. solution: simply call
@@ -229,7 +229,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	}
 
 	//TODO: user-set has higher priority over terminal's
-	userLanguages, err := core.getTerminalAcceptLanguages(ctxAuth.TerminalID())
+	userLanguages, err := core.getTerminalAcceptLanguagesAllowDeleted(ctxAuth.TerminalID())
 	if err != nil {
 	}
 
@@ -284,7 +284,7 @@ func (core *Core) setUserKeyPhoneNumber(
 	}
 
 	err = core.db.QueryRow(
-		`SELECT CASE WHEN verification_time IS NULL THEN false ELSE true END AS verified `+
+		`SELECT CASE WHEN verification_ts IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userKeyPhoneNumberDBTableName+` `+
 			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3`,
 		userRef.ID().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
@@ -352,12 +352,12 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 
 	xres, err = core.db.Exec(
 		`UPDATE `+userKeyPhoneNumberDBTableName+` SET (`+
-			`verification_time, verification_id`+
+			`verification_ts, verification_id`+
 			`) = ( `+
 			`$1, $2`+
 			`) WHERE user_id = $3 `+
 			`AND country_code = $4 AND national_number = $5 `+
-			`AND d_ts IS NULL AND verification_time IS NULL`,
+			`AND d_ts IS NULL AND verification_ts IS NULL`,
 		verificationTime,
 		verificationID,
 		userID,

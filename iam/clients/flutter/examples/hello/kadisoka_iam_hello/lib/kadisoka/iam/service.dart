@@ -118,13 +118,27 @@ class IamServiceClientImpl implements IamServiceClient {
   }
 
   @override
-  Future<bool> signOut() {
-    //TODO: call server
+  Future<bool> signOut() async {
+    final resp = await _httpClient.delete(
+      Uri.http(serverBaseUrl, 'rest/v1/terminals/self'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': _httpBearerAuthorization,
+      },
+      body: '{}',
+    );
+    if (resp.statusCode != 200) {
+      throw Exception('Fetch got ${resp.statusCode}');
+    }
+
     _accessToken = '';
     _terminalId = '';
-    return Future.value(true);
+
+    return true;
   }
 
   String get _httpClientAuthorization =>
       'Basic ' + base64Encode(utf8.encode('$_clientId:$_clientSecret'));
+
+  String get _httpBearerAuthorization => 'Bearer ' + _accessToken;
 }

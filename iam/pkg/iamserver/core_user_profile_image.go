@@ -31,7 +31,7 @@ func (core *Core) SetUserProfileImageURL(
 	}
 	// Don't allow changing other user's for now
 	if !ctxAuth.IsUser(userRef) {
-		return iam.ErrContextUserNotAllowedToPerformActionOnResource
+		return iam.ErrOperationNotAllowed
 	}
 	if profileImageURL != "" && !core.isUserProfileImageURLAllowed(profileImageURL) {
 		return errors.ArgMsg("profileImageURL", "unsupported")
