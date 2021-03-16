@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"strings"
-	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	goqu "github.com/doug-martin/goqu/v9"
@@ -58,27 +57,22 @@ func (core *Core) AuthenticateTerminal(
 		iam.NewUserRefKey(ownerUserID), nil
 }
 
-func (core *Core) StartTerminalRegistrationByPhoneNumber(
-	callCtx iam.CallContext,
-	appRef iam.ApplicationRefKey,
-	phoneNumber iam.PhoneNumber,
-	displayName string,
-	userAgentString string,
-	userPreferredLanguages []language.Tag,
-	verificationMethods []pnv10n.VerificationMethod,
-) (
-	terminalRef iam.TerminalRefKey,
-	verificationID int64,
-	verificationCodeExpiryTime *time.Time,
-	err error,
-) {
+func (core *Core) StartTerminalAuthorizationByPhoneNumber(
+	input TerminalAuthorizationByPhoneNumberStartInput,
+) TerminalAuthorizationStartOutput {
+	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
 	if ctxAuth.IsValid() && !ctxAuth.IsUserContext() {
-		return iam.TerminalRefKeyZero(), 0, nil, iam.ErrAuthorizationInvalid
+		return TerminalAuthorizationStartOutput{
+			Context: iam.OpOutputContext{
+				Err: iam.ErrAuthorizationInvalid}}
 	}
 
+	phoneNumber := input.Data.PhoneNumber
 	if !phoneNumber.IsValid() && !core.isTestPhoneNumber(phoneNumber) {
-		return iam.TerminalRefKeyZero(), 0, nil, errors.Arg("phoneNumber", nil)
+		return TerminalAuthorizationStartOutput{
+			Context: iam.OpOutputContext{
+				Err: errors.Arg("phoneNumber", nil)}}
 	}
 
 	// Get the existing owner, whether already verified or not.
@@ -92,10 +86,12 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
 		if ctxAuth.IsUserContext() && !ctxAuth.IsUser(ownerUserRef) {
-			return iam.TerminalRefKeyZero(), 0, nil, errors.ArgMsg("phoneNumber", "conflict")
+			return TerminalAuthorizationStartOutput{
+				Context: iam.OpOutputContext{
+					Err: errors.ArgMsg("phoneNumber", "conflict")}}
 		}
 	} else {
-		newUserRef, err := core.contextUserOrNewInstance(callCtx)
+		newUserRef, _, err := core.contextUserOrNewInstance(callCtx)
 		if err != nil {
 			panic(err)
 		}
@@ -108,17 +104,21 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 		ownerUserRef = newUserRef
 	}
 
-	verificationID, verificationCodeExpiryTime, err = core.pnVerifier.
+	userPreferredLanguages := input.Data.UserPreferredLanguages
+
+	verificationID, verificationCodeExpiryTime, err := core.pnVerifier.
 		StartVerification(callCtx, phoneNumber,
-			0, userPreferredLanguages, verificationMethods)
+			0, userPreferredLanguages, input.Data.VerificationMethods)
 	if err != nil {
 		switch err.(type) {
 		case pnv10n.InvalidPhoneNumberError:
-			return iam.TerminalRefKeyZero(), 0, nil,
-				errors.Arg("phoneNumber", err)
+			return TerminalAuthorizationStartOutput{
+				Context: iam.OpOutputContext{
+					Err: errors.Arg("phoneNumber", err)}}
 		}
-		return iam.TerminalRefKeyZero(), 0, nil,
-			errors.Wrap("pnVerifier.StartVerification", err)
+		return TerminalAuthorizationStartOutput{
+			Context: iam.OpOutputContext{
+				Err: errors.Wrap("pnVerifier.StartVerification", err)}}
 	}
 
 	termLangStrings := make([]string, 0, len(userPreferredLanguages))
@@ -126,11 +126,11 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 		termLangStrings = append(termLangStrings, tag.String())
 	}
 
-	terminalRef, _, err = core.RegisterTerminal(callCtx,
+	terminalRef, _, err := core.RegisterTerminal(callCtx,
 		TerminalRegistrationInput{
-			ApplicationRef:   appRef,
+			ApplicationRef:   input.ApplicationRef,
 			UserRef:          ownerUserRef,
-			DisplayName:      displayName,
+			DisplayName:      input.Data.DisplayName,
 			AcceptLanguage:   strings.Join(termLangStrings, ","),
 			VerificationType: iam.TerminalVerificationResourceTypePhoneNumber,
 			VerificationID:   verificationID,
@@ -139,30 +139,34 @@ func (core *Core) StartTerminalRegistrationByPhoneNumber(
 		panic(err)
 	}
 
-	return
+	return TerminalAuthorizationStartOutput{
+		Context: iam.OpOutputContext{
+			Mutated: true,
+		},
+		Data: TerminalAuthorizationStartOutputData{
+			TerminalRef:                terminalRef,
+			VerificationID:             verificationID,
+			VerificationCodeExpiryTime: verificationCodeExpiryTime,
+		},
+	}
 }
 
-func (core *Core) StartTerminalRegistrationByEmailAddress(
-	callCtx iam.CallContext,
-	appRef iam.ApplicationRefKey,
-	emailAddress iam.EmailAddress,
-	displayName string,
-	userAgentString string,
-	userPreferredLanguages []language.Tag,
-	verificationMethods []eav10n.VerificationMethod,
-) (
-	terminalRef iam.TerminalRefKey,
-	verificationID int64,
-	verificationCodeExpiryTime *time.Time,
-	err error,
-) {
+func (core *Core) StartTerminalAuthorizationByEmailAddress(
+	input TerminalAuthorizationByEmailAddressStartInput,
+) TerminalAuthorizationStartOutput {
+	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
 	if ctxAuth.IsValid() && !ctxAuth.IsUserContext() {
-		return iam.TerminalRefKeyZero(), 0, nil, iam.ErrAuthorizationInvalid
+		return TerminalAuthorizationStartOutput{
+			Context: iam.OpOutputContext{
+				Err: iam.ErrAuthorizationInvalid}}
 	}
 
+	emailAddress := input.Data.EmailAddress
 	if !emailAddress.IsValid() && !core.isTestEmailAddress(emailAddress) {
-		return iam.TerminalRefKeyZero(), 0, nil, errors.Arg("emailAddress", nil)
+		return TerminalAuthorizationStartOutput{
+			Context: iam.OpOutputContext{
+				Err: errors.Arg("emailAddress", nil)}}
 	}
 
 	// Get the existing owner, whether already verified or not.
@@ -184,10 +188,12 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
 		if ctxAuth.IsUserContext() && !ctxAuth.IsUser(ownerUserRef) {
-			return iam.TerminalRefKeyZero(), 0, nil, errors.ArgMsg("emailAddress", "conflict")
+			return TerminalAuthorizationStartOutput{
+				Context: iam.OpOutputContext{
+					Err: errors.ArgMsg("emailAddress", "conflict")}}
 		}
 	} else {
-		newUserRef, err := core.contextUserOrNewInstance(callCtx)
+		newUserRef, _, err := core.contextUserOrNewInstance(callCtx)
 		if err != nil {
 			panic(err)
 		}
@@ -200,17 +206,21 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 		ownerUserRef = newUserRef
 	}
 
-	verificationID, verificationCodeExpiryTime, err = core.eaVerifier.
+	userPreferredLanguages := input.Data.UserPreferredLanguages
+
+	verificationID, verificationCodeExpiryTime, err := core.eaVerifier.
 		StartVerification(callCtx, emailAddress,
-			0, userPreferredLanguages, verificationMethods)
+			0, userPreferredLanguages, input.Data.VerificationMethods)
 	if err != nil {
 		switch err.(type) {
 		case eav10n.InvalidEmailAddressError:
-			return iam.TerminalRefKeyZero(), 0, nil,
-				errors.Arg("emailAddress", err)
+			return TerminalAuthorizationStartOutput{
+				Context: iam.OpOutputContext{
+					Err: errors.Arg("emailAddress", err)}}
 		}
-		return iam.TerminalRefKeyZero(), 0, nil,
-			errors.Wrap("eaVerifier.StartVerification", err)
+		return TerminalAuthorizationStartOutput{
+			Context: iam.OpOutputContext{
+				Err: errors.Wrap("eaVerifier.StartVerification", err)}}
 	}
 
 	termLangStrings := make([]string, 0, len(userPreferredLanguages))
@@ -218,11 +228,11 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 		termLangStrings = append(termLangStrings, tag.String())
 	}
 
-	terminalRef, _, err = core.RegisterTerminal(callCtx,
+	terminalRef, _, err := core.RegisterTerminal(callCtx,
 		TerminalRegistrationInput{
-			ApplicationRef:   appRef,
+			ApplicationRef:   input.ApplicationRef,
 			UserRef:          ownerUserRef,
-			DisplayName:      displayName,
+			DisplayName:      input.Data.DisplayName,
 			AcceptLanguage:   strings.Join(termLangStrings, ","),
 			VerificationType: iam.TerminalVerificationResourceTypeEmailAddress,
 			VerificationID:   verificationID,
@@ -231,17 +241,26 @@ func (core *Core) StartTerminalRegistrationByEmailAddress(
 		panic(err)
 	}
 
-	return
+	return TerminalAuthorizationStartOutput{
+		Context: iam.OpOutputContext{
+			Mutated: true,
+		},
+		Data: TerminalAuthorizationStartOutputData{
+			TerminalRef:                terminalRef,
+			VerificationID:             verificationID,
+			VerificationCodeExpiryTime: verificationCodeExpiryTime,
+		},
+	}
 }
 
-// ConfirmTerminalRegistrationVerification confirms authorization of a
+// ConfirmTerminalAuthorization confirms authorization of a
 // terminal by providing the verificationCode which was delivered through
 // selected channel when the authorization was created.
-func (core *Core) ConfirmTerminalRegistrationVerification(
+func (core *Core) ConfirmTerminalAuthorization(
 	callCtx iam.CallContext,
 	terminalRef iam.TerminalRefKey,
 	verificationCode string,
-) (secret string, userRef iam.UserRefKey, err error) {
+) (terminalSecret string, userRef iam.UserRefKey, err error) {
 	// The code is verified based on the identifier used when the verification
 	// was requested. Each of the implementation required to implement
 	// limit the number of failed attempts.
@@ -258,7 +277,8 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 	disallowReplay := false
 
 	if termData.UserID.IsValid() {
-		terminalUserID := termData.UserID
+		termUserID := termData.UserID
+
 		switch termData.VerificationType {
 		case iam.TerminalVerificationResourceTypeEmailAddress:
 			err = core.eaVerifier.
@@ -285,7 +305,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 
 			updated, err := core.
 				ensureUserEmailAddressVerifiedFlag(
-					terminalUserID,
+					termUserID,
 					*emailAddress,
 					&ctxTime,
 					termData.VerificationID)
@@ -299,7 +319,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 				if err != nil {
 					panic(err)
 				}
-				if existingOwnerUserID.IsValid() && existingOwnerUserID != terminalUserID {
+				if existingOwnerUserID.IsValid() && existingOwnerUserID != termUserID {
 					// The email address has been claimed by another user after
 					// the current user requested the link.
 					return "", iam.UserRefKeyZero(), iam.ErrTerminalVerificationResourceConflict
@@ -331,7 +351,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 
 			updated, err := core.
 				ensureUserPhoneNumberVerifiedFlag(
-					terminalUserID,
+					termUserID,
 					*phoneNumber,
 					&ctxTime,
 					termData.VerificationID)
@@ -345,7 +365,7 @@ func (core *Core) ConfirmTerminalRegistrationVerification(
 				if err != nil {
 					panic(err)
 				}
-				if existingOwnerUserID.IsValid() && existingOwnerUserID != terminalUserID {
+				if existingOwnerUserID.IsValid() && existingOwnerUserID != termUserID {
 					// The phone number has been claimed by another user after
 					// the current user requested the link.
 					return "", iam.UserRefKeyZero(), iam.ErrTerminalVerificationResourceConflict

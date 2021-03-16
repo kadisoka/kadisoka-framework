@@ -72,12 +72,22 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
-	termRef, _, codeExpiry, err := authServer.iamServerCore.
-		StartTerminalRegistrationByPhoneNumber(
-			reqCtx, appRef, phoneNumber,
-			reqProto.TerminalInfo.DisplayName, userAgentString,
-			termLangTags, nil)
-	if err != nil {
+	authStartOutput := authServer.iamServerCore.
+		StartTerminalAuthorizationByPhoneNumber(
+			iamserver.TerminalAuthorizationByPhoneNumberStartInput{
+				Context:        reqCtx,
+				ApplicationRef: appRef,
+				Data: iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
+					PhoneNumber:         phoneNumber,
+					VerificationMethods: nil,
+					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
+						DisplayName:            reqProto.TerminalInfo.DisplayName,
+						UserAgentString:        userAgentString,
+						UserPreferredLanguages: termLangTags,
+					},
+				},
+			})
+	if err = authStartOutput.Context.Err; err != nil {
 		switch err.(type) {
 		case errors.CallError:
 			logCtx(reqCtx).
@@ -93,14 +103,14 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 	}
 
 	var codeExpiryProto *pbtypes.Timestamp
-	if codeExpiry != nil {
+	if codeExpiry := authStartOutput.Data.VerificationCodeExpiryTime; codeExpiry != nil {
 		codeExpiryProto, err = pbtypes.TimestampProto(*codeExpiry)
 		if err != nil {
 			panic(err)
 		}
 	}
 	resp := iampb.InitiateUserTerminalAuthorizationByPhoneNumberResponse{
-		TerminalId:                 termRef.AZERText(),
+		TerminalId:                 authStartOutput.Data.TerminalRef.AZERText(),
 		VerificationCodeExpiryTime: codeExpiryProto,
 	}
 	return &resp, nil
@@ -128,7 +138,7 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 	}
 
 	termSecret, _, err := authServer.iamServerCore.
-		ConfirmTerminalRegistrationVerification(
+		ConfirmTerminalAuthorization(
 			reqCtx, termRef, reqProto.VerificationCode)
 	if err != nil {
 		logCtx(reqCtx).

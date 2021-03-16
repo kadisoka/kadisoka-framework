@@ -153,7 +153,7 @@ func (core *Core) getUserIDByKeyPhoneNumber(
 	return
 }
 
-// The ID of the user which provided phone number is their primary,
+// The ID of the user which provided phone number is their identifier,
 // verified or not.
 func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 	phoneNumber iam.PhoneNumber,

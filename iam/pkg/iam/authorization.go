@@ -25,6 +25,7 @@ var (
 // Authorization is generally used to provide authorization information
 // for call or request. An Authorization is usually obtained from authorization
 // token (access token) provided along the request/call.
+//TODO: include the application ref if it's using client authentication.
 type Authorization struct {
 	// If this context is an assumed context, this field
 	// holds info about the assuming context.

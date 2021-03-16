@@ -84,7 +84,7 @@ func (core *Core) getUserIDByKeyEmailAddress(
 	return
 }
 
-// The ID of the user which provided email address is their primary,
+// The ID of the user which provided email address is their identifier,
 // verified or not.
 func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 	emailAddress iam.EmailAddress,

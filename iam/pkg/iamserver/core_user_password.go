@@ -48,7 +48,7 @@ func (core *Core) SetUserPassword(
 ) error {
 	ctxAuth := callCtx.Authorization()
 	if !ctxAuth.IsUser(userRef) {
-		return errors.New("forbidden")
+		return iam.ErrOperationNotAllowed
 	}
 
 	ctxTime := callCtx.RequestInfo().ReceiveTime
@@ -74,7 +74,7 @@ func (core *Core) SetUserPassword(
 				`VALUES ($1, $2, $3, $4, $5) `,
 			userRef.ID().PrimitiveValue(), passwordHash,
 			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
-		return nil
+		return txErr
 	})
 }
 

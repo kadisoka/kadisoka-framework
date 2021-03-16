@@ -78,3 +78,8 @@ func (ctx *callContext) MethodName() string { return "" }
 func (ctx *callContext) RequestInfo() api.CallRequestInfo { return ctx.requestInfo }
 
 func (ctx *callContext) OriginInfo() api.CallOriginInfo { return ctx.originInfo }
+
+type OpOutputContext struct {
+	Err     error
+	Mutated bool
+}

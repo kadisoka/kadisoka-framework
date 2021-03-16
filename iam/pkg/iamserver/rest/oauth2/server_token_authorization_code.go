@@ -124,7 +124,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	}
 
 	terminalSecret, userRef, err := restSrv.serverCore.
-		ConfirmTerminalRegistrationVerification(reqCtx, termRef, authCode)
+		ConfirmTerminalAuthorization(reqCtx, termRef, authCode)
 	if err != nil {
 		switch err {
 		case iam.ErrTerminalVerificationCodeExpired:

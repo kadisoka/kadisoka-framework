@@ -3,7 +3,11 @@ package iamserver
 import (
 	"time"
 
+	"golang.org/x/text/language"
+
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
 //TODO: some data should be taken from the context instead of
@@ -18,6 +22,51 @@ type TerminalRegistrationInput struct {
 	VerificationType string
 	VerificationID   int64
 	VerificationTime *time.Time
+}
+
+//TODO: use generics when it's available
+type TerminalAuthorizationByEmailAddressStartInput struct {
+	Context        iam.CallContext
+	ApplicationRef iam.ApplicationRefKey //TODO: should be from Context.Authorization
+	Data           TerminalAuthorizationByEmailAddressStartInputData
+}
+
+type TerminalAuthorizationByEmailAddressStartInputData struct {
+	EmailAddress        iam.EmailAddress
+	VerificationMethods []eav10n.VerificationMethod
+
+	TerminalAuthorizationStartInputBaseData
+}
+
+//TODO: use generics when it's available
+type TerminalAuthorizationByPhoneNumberStartInput struct {
+	Context        iam.CallContext
+	ApplicationRef iam.ApplicationRefKey //TODO: should be from Context.Authorization
+	Data           TerminalAuthorizationByPhoneNumberStartInputData
+}
+
+type TerminalAuthorizationByPhoneNumberStartInputData struct {
+	PhoneNumber         iam.PhoneNumber
+	VerificationMethods []pnv10n.VerificationMethod
+
+	TerminalAuthorizationStartInputBaseData
+}
+
+type TerminalAuthorizationStartInputBaseData struct {
+	DisplayName            string
+	UserAgentString        string
+	UserPreferredLanguages []language.Tag
+}
+
+type TerminalAuthorizationStartOutput struct {
+	Context iam.OpOutputContext
+	Data    TerminalAuthorizationStartOutputData
+}
+
+type TerminalAuthorizationStartOutputData struct {
+	TerminalRef                iam.TerminalRefKey
+	VerificationID             int64
+	VerificationCodeExpiryTime *time.Time
 }
 
 // terminalDBRawModel represents a row from terminal table.

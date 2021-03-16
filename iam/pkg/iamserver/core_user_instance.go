@@ -179,28 +179,28 @@ func (core *Core) deleteUserInstanceNoAC(
 
 func (core *Core) contextUserOrNewInstance(
 	callCtx iam.CallContext,
-) (iam.UserRefKey, error) {
+) (userRef iam.UserRefKey, newInstance bool, err error) {
 	if callCtx == nil {
-		return iam.UserRefKeyZero(), errors.ArgMsg("callCtx", "missing")
+		return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx", "missing")
 	}
 	ctxAuth := callCtx.Authorization()
 	if ctxAuth.IsUserContext() {
-		userRef := ctxAuth.UserRef()
+		userRef = ctxAuth.UserRef()
 		if !core.IsUserRefKeyRegistered(userRef) {
-			return iam.UserRefKeyZero(), errors.ArgMsg("callCtx.Authorization", "invalid")
+			return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx.Authorization", "invalid")
 		}
-		return userRef, nil
+		return userRef, false, nil
 	}
 
-	userRef, err := core.NewUserInstance(callCtx)
+	userRef, err = core.newUserInstance(callCtx)
 	if err != nil {
-		return iam.UserRefKeyZero(), err
+		return iam.UserRefKeyZero(), false, err
 	}
 
-	return userRef, nil
+	return userRef, true, nil
 }
 
-func (core *Core) NewUserInstance(
+func (core *Core) newUserInstance(
 	callCtx iam.CallContext,
 ) (iam.UserRefKey, error) {
 	ctxAuth := callCtx.Authorization()

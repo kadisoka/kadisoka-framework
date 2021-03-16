@@ -59,9 +59,11 @@ type TerminalRegistrationRequestJSONV1 struct {
 
 func (TerminalRegistrationRequestJSONV1) SwaggerDoc() map[string]string {
 	return map[string]string{
-		"verification_resource_name": "A phone number complete with country code or an email address.",
+		"verification_resource_name": "A phone number complete with " +
+			"country code or an email address.",
 		"verification_methods": "The preferred verification methods. " +
-			"The values are resource-type-specific. For phone-number, it defaults to SMS.",
+			"The values are resource-type-specific. For phone-number, " +
+			"it defaults to SMS.",
 		"display_name": "For the user to make it easy to identify. " +
 			"The recommended value is the user's device name.",
 	}
@@ -71,7 +73,8 @@ func (TerminalRegistrationRequestJSONV1) SwaggerDoc() map[string]string {
 //TODO: indicator for a new user. the indicator can then be used to alert
 // the user if they are about creating a new account. There are chances that
 // the user might want to sign-in with an existing account or might actually
-// want to change their identifier.
+// want to change their identifier. on the other hand, it could be used to
+// probe registered identifiers.
 type TerminalRegistrationResponseJSONV1 struct {
 	TerminalID     string     `json:"terminal_id"`
 	TerminalSecret string     `json:"terminal_secret,omitempty"`

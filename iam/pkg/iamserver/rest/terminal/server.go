@@ -335,12 +335,22 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 		}
 	}
 
-	termRef, _, codeExpiry, err := restSrv.serverCore.
-		StartTerminalRegistrationByPhoneNumber(
-			reqCtx, authApp.ID, phoneNumber,
-			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
-			termLangTags, verificationMethods)
-	if err != nil {
+	authStartOutput := restSrv.serverCore.
+		StartTerminalAuthorizationByPhoneNumber(
+			iamserver.TerminalAuthorizationByPhoneNumberStartInput{
+				Context:        reqCtx,
+				ApplicationRef: authApp.ID,
+				Data: iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
+					PhoneNumber:         phoneNumber,
+					VerificationMethods: verificationMethods,
+					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
+						DisplayName:            terminalRegisterReq.DisplayName,
+						UserAgentString:        reqCtx.HTTPRequest().UserAgent(),
+						UserPreferredLanguages: termLangTags,
+					},
+				},
+			})
+	if err = authStartOutput.Context.Err; err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).Msgf(
@@ -359,10 +369,9 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: termRef.AZERText(),
-			CodeExpiry: codeExpiry,
+			TerminalID: authStartOutput.Data.TerminalRef.AZERText(),
+			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
 		})
-	return
 }
 
 // terminal registration using email address
@@ -409,12 +418,22 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 		}
 	}
 
-	termRef, _, codeExpiry, err := restSrv.serverCore.
-		StartTerminalRegistrationByEmailAddress(
-			reqCtx, authApp.ID, emailAddress,
-			terminalRegisterReq.DisplayName, reqCtx.HTTPRequest().UserAgent(),
-			termLangTags, verificationMethods)
-	if err != nil {
+	authStartOutput := restSrv.serverCore.
+		StartTerminalAuthorizationByEmailAddress(
+			iamserver.TerminalAuthorizationByEmailAddressStartInput{
+				Context:        reqCtx,
+				ApplicationRef: authApp.ID,
+				Data: iamserver.TerminalAuthorizationByEmailAddressStartInputData{
+					EmailAddress:        emailAddress,
+					VerificationMethods: verificationMethods,
+					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
+						DisplayName:            terminalRegisterReq.DisplayName,
+						UserAgentString:        reqCtx.HTTPRequest().UserAgent(),
+						UserPreferredLanguages: termLangTags,
+					},
+				},
+			})
+	if err = authStartOutput.Context.Err; err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).Msgf("StartTerminalAuthorizationByEmailAddress with %v failed",
@@ -433,10 +452,9 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: termRef.AZERText(),
-			CodeExpiry: codeExpiry,
+			TerminalID: authStartOutput.Data.TerminalRef.AZERText(),
+			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
 		})
-	return
 }
 
 func (restSrv *Server) handleTerminalRegisterByImplicit(
