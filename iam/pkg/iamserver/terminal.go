@@ -17,7 +17,7 @@ type TerminalRegistrationInput struct {
 	UserRef        iam.UserRefKey
 
 	DisplayName    string
-	AcceptLanguage string //TODO: remove this
+	AcceptLanguage []language.Tag //TODO: remove this (?)
 
 	VerificationType string
 	VerificationID   int64

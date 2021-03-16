@@ -114,8 +114,10 @@ class _SignInIdentifierPageState extends State<SignInIdentifierPage> {
                         return;
                       }
 
+                      final ctxLang = Localizations.localeOf(context).languageCode;
+
                       widget.iamService
-                          .registerTerminal(identifier)
+                          .registerTerminal(identifier, <String>[ctxLang])
                           .then((String terminalId) {
                         if (terminalId?.isNotEmpty == true) {
                           Navigator.of(context).pushReplacement(

@@ -121,17 +121,12 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 				Err: errors.Wrap("pnVerifier.StartVerification", err)}}
 	}
 
-	termLangStrings := make([]string, 0, len(userPreferredLanguages))
-	for _, tag := range userPreferredLanguages {
-		termLangStrings = append(termLangStrings, tag.String())
-	}
-
 	terminalRef, _, err := core.RegisterTerminal(callCtx,
 		TerminalRegistrationInput{
 			ApplicationRef:   input.ApplicationRef,
 			UserRef:          ownerUserRef,
 			DisplayName:      input.Data.DisplayName,
-			AcceptLanguage:   strings.Join(termLangStrings, ","),
+			AcceptLanguage:   userPreferredLanguages,
 			VerificationType: iam.TerminalVerificationResourceTypePhoneNumber,
 			VerificationID:   verificationID,
 		})
@@ -223,17 +218,12 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 				Err: errors.Wrap("eaVerifier.StartVerification", err)}}
 	}
 
-	termLangStrings := make([]string, 0, len(userPreferredLanguages))
-	for _, tag := range userPreferredLanguages {
-		termLangStrings = append(termLangStrings, tag.String())
-	}
-
 	terminalRef, _, err := core.RegisterTerminal(callCtx,
 		TerminalRegistrationInput{
 			ApplicationRef:   input.ApplicationRef,
 			UserRef:          ownerUserRef,
 			DisplayName:      input.Data.DisplayName,
-			AcceptLanguage:   strings.Join(termLangStrings, ","),
+			AcceptLanguage:   userPreferredLanguages,
 			VerificationType: iam.TerminalVerificationResourceTypeEmailAddress,
 			VerificationID:   verificationID,
 		})
@@ -512,6 +502,11 @@ func (core *Core) RegisterTerminal(
 		input.VerificationTime = nil
 	}
 
+	termLangStrings := make([]string, 0, len(input.AcceptLanguage))
+	for _, tag := range input.AcceptLanguage {
+		termLangStrings = append(termLangStrings, tag.String())
+	}
+
 	//TODO: if id conflict, generate another id and retry
 	termID, err := core.generateTerminalID()
 
@@ -529,7 +524,7 @@ func (core *Core) RegisterTerminal(
 				"c_origin_address":  originInfo.Address,
 				"c_origin_env":      originInfo.EnvironmentString,
 				"display_name":      strings.TrimSpace(input.DisplayName),
-				"accept_language":   input.AcceptLanguage,
+				"accept_language":   strings.Join(termLangStrings, ","),
 				"verification_type": input.VerificationType,
 				"verification_id":   input.VerificationID,
 				"verification_ts":   input.VerificationTime,

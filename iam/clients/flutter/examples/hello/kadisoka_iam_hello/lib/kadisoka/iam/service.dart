@@ -16,7 +16,8 @@ enum IamSessionState {
 
 //TODO: make this a ChangeNotifier, stream source or something to make it reactive.
 abstract class IamServiceClient {
-  Future<String> registerTerminal(String userIdentifier);
+  Future<String> registerTerminal(
+      String userIdentifier, Iterable<String> userPreferredLanguages);
 
   Future<String> confirmAuthorizationVerification(String code);
 
@@ -75,7 +76,10 @@ class IamServiceClientImpl implements IamServiceClient {
   String get accessToken => _accessToken;
 
   @override
-  Future<String> registerTerminal(String userIdentifier) async {
+  Future<String> registerTerminal(
+    String userIdentifier,
+    Iterable<String> userPreferredLanguages,
+  ) async {
     if (userIdentifier?.isNotEmpty != true) {
       return null;
     }
@@ -87,6 +91,7 @@ class IamServiceClientImpl implements IamServiceClient {
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': _httpClientAuthorization,
+        'Accept-Language': userPreferredLanguages.join(', '),
       },
       body: jsonEncode(TerminalRegisterPostRequestJsonV1(
         verificationResourceName: userIdentifier,
@@ -160,5 +165,6 @@ class IamServiceClientImpl implements IamServiceClient {
       ValueNotifier(IamSessionState.Unknown);
 
   @override
-  ValueNotifier<IamSessionState> get sessionStateNotifier => _sessionStateNotifier;
+  ValueNotifier<IamSessionState> get sessionStateNotifier =>
+      _sessionStateNotifier;
 }
