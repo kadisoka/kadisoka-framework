@@ -15,7 +15,7 @@ ARG buildTimestamp=unknown
 # ...and build it.
 RUN CGO_ENABLED=0 go build -o ./iam/bin/iam-server \
     -ldflags="-s -w -X main.revisionID=${revisionID} -X main.buildTimestamp=${buildTimestamp}" \
-    ./iam-server
+    ./iam/iam-server
 
 # Build the runtime image
 FROM alpine:3.13
@@ -23,7 +23,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Include resources required by IAM server
-COPY ./iam-server/resources ./resources
+COPY ./iam/iam-server/resources ./resources
 
 COPY --from=builder /workspace/iam/bin/iam-server ./server
 

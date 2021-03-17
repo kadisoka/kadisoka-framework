@@ -1,12 +1,15 @@
 # NOTE: to be run from the top directory
+# e.g., 
+
 version: "3"
+
 services:
   iam-db:
     image: postgres:10.7-alpine
     ports:
       - "5432:5432"
     volumes:
-      - ./var/db/data:/var/lib/postgresql/data
+      - ./var/iam-db/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=iam
       - POSTGRES_USER=iam
@@ -17,7 +20,7 @@ services:
     ports:
       - "11101:9000"
     volumes:
-      - ./var/object-store:/data
+      - ./var/iam-object-store:/data
     environment:
       - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
       - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
@@ -25,8 +28,8 @@ services:
 
   iam-server:
     build:
-      context: $PWD
-      dockerfile: $PWD/iam-server/Dockerfile
+      context: ../../..
+      dockerfile: ./iam/iam-server/Dockerfile
     restart: on-failure
     depends_on:
       - iam-db
@@ -37,9 +40,9 @@ services:
       - "11131:50051"
     volumes:
       # To simulate secrets in Swarm mode
-      - $PWD/iam-server/etc/secrets:/run/secrets
+      - ./etc/iam-server/secrets:/run/secrets:ro
     env_file:
-      - $PWD/iam-server/etc/secrets/config.env
+      - ./etc/iam-server/secrets/config.env
     environment:
       - IAM_GRPC_ENABLED=true
       - IAM_REST_CANONICAL_BASE_URL=http://localhost:11121/rest/v1/
@@ -48,15 +51,15 @@ services:
 
   microservice-app:
     build:
-      context: $PWD
-      dockerfile: $PWD/examples/microservices/Dockerfile
+      context: ../../..
+      dockerfile: ./iam/examples/microservices/Dockerfile
     restart: on-failure
     depends_on:
       - iam-server
     ports:
       - 11201:8080
     environment:
-      - IAM_CLIENT_ID=CCU0T1gp34z
-      - IAM_CLIENT_SECRET=dgKO1k53NnHAoWHEZecc5w
+      - IAM_CLIENT_ID=KAp02d0b5q4v
+      - IAM_CLIENT_SECRET=v1eM1nmPyHXXXi0HHFAIzQ
       - LOG_PRETTY=true
       - IAM_SERVER_BASE_URL=http://iam-server:9080/rest/v1

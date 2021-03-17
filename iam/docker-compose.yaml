@@ -39,7 +39,7 @@ services:
       - "11131:50051"
     volumes:
       # To simulate secrets in Swarm mode
-      - ./iam-server/etc/secrets:/run/secrets
+      - ./iam-server/etc/secrets:/run/secrets:ro
     env_file:
       - ./iam-server/etc/secrets/config.env
     environment:

@@ -45,16 +45,16 @@ func NewConsumerServerSimple(
 		return nil, errors.Wrap("config loading", err)
 	}
 
-	jwksURL := cfg.ServerBaseURL + serverOAuth2JWKSPath
+	jwksURL := cfg.ServerBaseURL + serverOAuth2JWKSRelPath
 	var jwtKeyChain JWTKeyChain
 	_, err = jwtKeyChain.LoadVerifierKeysFromJWKSetByURL(jwksURL)
 	if err != nil {
 		return nil, errors.Wrap("jwt key set loading", err)
 	}
 
-	uaStateServiceClient := &UserInstanceInfoServiceClientCore{}
+	userInstanceInfoService := &UserInstanceInfoServiceClientCore{}
 
-	inst, err := NewConsumerServer(cfg, &jwtKeyChain, uaStateServiceClient)
+	inst, err := NewConsumerServer(cfg, &jwtKeyChain, userInstanceInfoService)
 	if err != nil {
 		return nil, err
 	}

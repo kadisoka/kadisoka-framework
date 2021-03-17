@@ -49,7 +49,6 @@ func main() {
 		log.Fatal().Err(err).Msg("")
 	}
 	log.Info().Msgf("App instance %v terminal %v", svcApp.InstanceID(), svcApp.TerminalRef().AZERText())
-	var iamClient iam.ConsumerServer = svcApp
 
 	httpListenPort := "8080"
 
@@ -63,7 +62,7 @@ func main() {
 	// We need CORS for our web clients
 	rest.SetUpCORSFilterByEnv(restV1Container, "CORS_", nil)
 
-	restV1Svc := NewRESTService(iamClient, restV1BasePath)
+	restV1Svc := NewRESTService(svcApp, restV1BasePath)
 	restV1Container.Add(restV1Svc.RestfulWebService())
 
 	// Setup API specification handler

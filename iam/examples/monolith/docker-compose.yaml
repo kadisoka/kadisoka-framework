@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./var/monolith/iam/db/data:/var/lib/postgresql/data
+      - ./var/iam-db/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=iam
       - POSTGRES_USER=iam
@@ -19,7 +19,7 @@ services:
     ports:
       - "11101:9000"
     volumes:
-      - ./var/monolith/iam/object-store:/data
+      - ./var/am-object-store:/data
     environment:
       - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
       - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
@@ -37,7 +37,7 @@ services:
       - 8080:8080
     volumes:
       # To simulate secrets in Swarm mode
-      - ./etc/monolith/iam/secrets:/run/secrets
+      - ./etc/monolith/iam/secrets:/run/secrets:ro
     env_file:
       - ./etc/monolith/iam/secrets/config.env
     environment:

@@ -75,26 +75,29 @@ type ServiceClientAuth interface {
 }
 
 const (
-	serverOAuth2JWKSPath  = "/oauth2/jwks"
-	serverOAuth2TokenPath = "/oauth2/token"
+	serverOAuth2JWKSRelPath  = "/oauth2/jwks"
+	serverOAuth2TokenRelPath = "/oauth2/token"
 )
 
-func NewServiceClientSimple(instID string, envVarsPrefix string) (ServiceClient, error) {
+func NewServiceClientSimple(
+	instID string,
+	envVarsPrefix string,
+) (ServiceClient, error) {
 	cfg, err := ServiceClientConfigFromEnv(envVarsPrefix, nil)
 	if err != nil {
 		return nil, errors.Wrap("config loading", err)
 	}
 
-	jwksURL := cfg.ServerBaseURL + serverOAuth2JWKSPath
+	jwksURL := cfg.ServerBaseURL + serverOAuth2JWKSRelPath
 	var jwtKeyChain JWTKeyChain
 	_, err = jwtKeyChain.LoadVerifierKeysFromJWKSetByURL(jwksURL)
 	if err != nil {
 		return nil, errors.Wrap("jwt key set loading", err)
 	}
 
-	uaStateServiceClient := &UserInstanceInfoServiceClientCore{}
+	userInstanceInfoService := &UserInstanceInfoServiceClientCore{}
 
-	inst, err := NewServiceClient(cfg, &jwtKeyChain, uaStateServiceClient)
+	inst, err := NewServiceClient(cfg, &jwtKeyChain, userInstanceInfoService)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +183,7 @@ func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 	if !strings.HasPrefix(baseURL, "http") {
 		return TerminalRefKeyZero(), "", errors.New("iam server base URL is not configured")
 	}
-	tokenEndpointURL := baseURL + serverOAuth2TokenPath
+	tokenEndpointURL := baseURL + serverOAuth2TokenRelPath
 
 	payloadStr, err := oauth2.QueryString(oauth2.AccessTokenRequest{
 		GrantType: oauth2.GrantTypeClientCredentials,
@@ -257,7 +260,7 @@ func (svcClient *serviceClientCore) AccessTokenByAuthorizationCodeGrant(
 	if !strings.HasPrefix(baseURL, "http") {
 		return "", errors.New("iam server base URL is not configured")
 	}
-	tokenEndpointURL := baseURL + serverOAuth2TokenPath
+	tokenEndpointURL := baseURL + serverOAuth2TokenRelPath
 
 	//TODO: redirect_uri is required
 	payloadStr, err := oauth2.QueryString(oauth2.AccessTokenRequest{

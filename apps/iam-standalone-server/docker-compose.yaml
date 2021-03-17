@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./var/kadisoka-iam/db/data:/var/lib/postgresql/data
+      - ./var/iam-db/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=iam
       - POSTGRES_USER=iam
@@ -19,7 +19,7 @@ services:
     ports:
       - "11101:9000"
     volumes:
-      - ./var/kadisoka-iam/object-store:/data
+      - ./var/iam-object-store:/data
     environment:
       - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
       - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
@@ -40,8 +40,8 @@ services:
       - "11131:50051"
     volumes:
       # To simulate secrets in Swarm mode
-      - ./etc/kadisoka-iam/secrets:/run/secrets
-      - ./var/kadisoka-iam/local-object-store:/object-store-data
+      - ./etc/kadisoka-iam/secrets:/run/secrets:ro
+      - ./var/iam-server/local-object-store:/object-store-data
     env_file:
       - ./etc/kadisoka-iam/secrets/config.env
     environment:

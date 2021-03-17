@@ -11,18 +11,18 @@ import (
 )
 
 func NewRESTService(
-	iamClient iam.ConsumerServer,
+	iamConsumerServer iam.ConsumerServer,
 	basePath string,
 ) *RESTService {
 	return &RESTService{
-		iamClient: iamClient,
-		basePath:  basePath,
+		iamCS:    iamConsumerServer,
+		basePath: basePath,
 	}
 }
 
 type RESTService struct {
-	iamClient iam.ConsumerServer
-	basePath  string
+	iamCS    iam.ConsumerServer
+	basePath string
 }
 
 func (restSvc *RESTService) RestfulWebService() *restful.WebService {
@@ -69,7 +69,7 @@ type authGetResponse struct {
 }
 
 func (restSvc *RESTService) getAuth(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSvc.iamClient.RESTRequestContext(req.Request)
+	reqCtx, err := restSvc.iamCS.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).Warn().Err(err).
 			Msg("Request context")
@@ -87,7 +87,7 @@ func (restSvc *RESTService) getAuth(req *restful.Request, resp *restful.Response
 
 	authCode := req.QueryParameter("code")
 
-	accessToken, err := restSvc.iamClient.
+	accessToken, err := restSvc.iamCS.
 		AccessTokenByAuthorizationCodeGrant(authCode)
 	if err != nil {
 		panic(err)
@@ -103,7 +103,7 @@ type helloGetResponse struct {
 }
 
 func (restSvc *RESTService) getHello(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSvc.iamClient.RESTRequestContext(req.Request)
+	reqCtx, err := restSvc.iamCS.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).Warn().Err(err).
 			Msg("Request context")

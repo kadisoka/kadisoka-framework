@@ -1,6 +1,9 @@
 
-.DS_Store
+**/.DS_Store
+**/.git
+**/.github
 
-/iam-server/.cache
-/iam-server/var
-/iam-server/etc/secrets
+**/var
+**/.cache
+
+/iam/clients
