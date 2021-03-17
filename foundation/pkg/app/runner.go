@@ -31,7 +31,8 @@ func RunServers(servers []ServiceServer, shutdownSignal <-chan os.Signal) {
 			log.Info().Msgf("Starting server %s...", srvName)
 			err := innerSrv.Serve()
 			if err != nil {
-				log.Fatal().Err(err).Msgf("%s serve", srvName)
+				log.Fatal().Err(err).
+					Msgf("%s serve", srvName)
 			} else {
 				log.Info().Msgf("%s stopped", srvName)
 			}
@@ -72,7 +73,8 @@ func RunServers(servers []ServiceServer, shutdownSignal <-chan os.Signal) {
 			log.Info().Msgf("Shutting down server %s...", srvName)
 			err := innerSrv.Shutdown(shutdownCtx)
 			if err != nil {
-				log.Err(err).Msgf("Server %s shutdown with error", srvName)
+				log.Error().Err(err).
+					Msgf("Server %s shutdown with error", srvName)
 			}
 		}(srv)
 	}

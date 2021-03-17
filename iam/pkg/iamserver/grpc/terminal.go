@@ -97,8 +97,9 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 			return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 		}
 		logCtx(reqCtx).
-			Err(err).Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed",
-			phoneNumber)
+			Error().Err(err).
+			Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed",
+				phoneNumber)
 		return nil, grpcerrs.Error(err)
 	}
 
@@ -133,7 +134,8 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 	termRef, err := iam.TerminalRefKeyFromAZERText(reqProto.TerminalId)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msgf("Unable to parse terminal ID %q", reqProto.TerminalId)
+			Warn().Err(err).
+			Msgf("Unable to parse terminal ID %q", reqProto.TerminalId)
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
@@ -142,7 +144,8 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 			reqCtx, termRef, reqProto.VerificationCode)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msgf("Terminal authorization confirm failed: %v")
+			Warn().Err(err).
+			Msgf("Terminal authorization confirm failed: %v")
 		return nil, grpcerrs.Error(err)
 	}
 
@@ -177,7 +180,8 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		AuthenticateTerminal(termRef, reqProto.TerminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Str("terminal", termRef.AZERText()).Msg("Terminal authentication")
+			Warn().Err(err).Str("terminal", termRef.AZERText()).
+			Msg("Terminal authentication")
 		return nil, grpcerrs.Error(err)
 	}
 	if !authOK {
@@ -188,10 +192,11 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 
 	if userRef.IsValid() {
 		userInstInfo, err := authServer.iamServerCore.
-			GetUserInstanceInfo(userRef)
+			GetUserInstanceInfo(reqCtx, userRef)
 		if err != nil {
 			logCtx(reqCtx).
-				Warn().Err(err).Str("terminal", termRef.AZERText()).Msg("Terminal user account state")
+				Warn().Err(err).Str("terminal", termRef.AZERText()).
+				Msg("Terminal user account state")
 			return nil, grpcerrs.Error(err)
 		}
 		if userInstInfo == nil || !userInstInfo.IsActive() {

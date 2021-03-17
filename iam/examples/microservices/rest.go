@@ -11,7 +11,7 @@ import (
 )
 
 func NewRESTService(
-	iamClient iam.ServiceClient,
+	iamClient iam.ServiceConsumerServer,
 	basePath string,
 ) *RESTService {
 	return &RESTService{
@@ -21,7 +21,7 @@ func NewRESTService(
 }
 
 type RESTService struct {
-	iamClient iam.ServiceClient
+	iamClient iam.ServiceConsumerServer
 	basePath  string
 }
 
@@ -71,7 +71,8 @@ type authGetResponse struct {
 func (restSvc *RESTService) getAuth(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSvc.iamClient.RESTRequestContext(req.Request)
 	if err != nil {
-		logCtx(reqCtx).Err(err).Msg("Request context")
+		logCtx(reqCtx).Warn().Err(err).
+			Msg("Request context")
 		resp.WriteHeaderAndJson(http.StatusInternalServerError, &rest.ErrorResponse{}, restful.MIME_JSON)
 		return
 	}
@@ -104,14 +105,15 @@ type helloGetResponse struct {
 func (restSvc *RESTService) getHello(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSvc.iamClient.RESTRequestContext(req.Request)
 	if err != nil {
-		logCtx(reqCtx).Err(err).Msg("Request context")
+		logCtx(reqCtx).Warn().Err(err).
+			Msg("Request context")
 		resp.WriteHeaderAndJson(http.StatusInternalServerError, &rest.ErrorResponse{}, restful.MIME_JSON)
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
 	if !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Unauthorized")
+			Warn().Msg("Unauthorized")
 		resp.WriteHeaderAndJson(http.StatusUnauthorized, &rest.ErrorResponse{},
 			restful.MIME_JSON)
 		return

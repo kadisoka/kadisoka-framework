@@ -8,8 +8,8 @@ import (
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
@@ -91,7 +91,8 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil && err != iam.ErrReqFieldAuthorizationTypeUnsupported {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Request context")
+			Warn().Err(err).
+			Msg("Request context")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -129,7 +130,8 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		switch err {
 		case iam.ErrTerminalVerificationCodeExpired:
 			logCtx(reqCtx).
-				Warn().Err(err).Msg("ConfirmTerminalAuthorization")
+				Warn().Err(err).
+				Msg("ConfirmTerminalAuthorization")
 			// Status code 410 (gone) might be more approriate but the standard
 			// says that we should use 400 for expired grant.
 			oauth2.RespondTo(resp).Error(oauth2.ErrorResponse{
@@ -139,20 +141,23 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		case iam.ErrAuthorizationCodeAlreadyClaimed,
 			iam.ErrTerminalVerificationCodeMismatch:
 			logCtx(reqCtx).
-				Warn().Err(err).Msg("ConfirmTerminalAuthorization")
+				Warn().Err(err).
+				Msg("ConfirmTerminalAuthorization")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorInvalidGrant)
 			return
 		}
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
-				Warn().Err(err).Msg("ConfirmTerminalAuthorization")
+				Warn().Err(err).
+				Msg("ConfirmTerminalAuthorization")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorInvalidRequest)
 			return
 		}
 		logCtx(reqCtx).
-			Err(err).Msgf("ConfirmTerminalAuthorization")
+			Warn().Err(err).
+			Msgf("ConfirmTerminalAuthorization")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -170,7 +175,8 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		GenerateRefreshTokenJWT(reqCtx, termRef, terminalSecret, issueTime)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Msgf("GenerateRefreshTokenJWT: %v", err)
+			Error().Err(err).
+			Msg("GenerateRefreshTokenJWT")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return

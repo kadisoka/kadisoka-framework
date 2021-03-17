@@ -18,14 +18,17 @@ const multipartFormMaxMemory = 20 * 1024 * 1024
 func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
-		logCtx(reqCtx).Error().Msgf("Request context: %v", err)
+		logCtx(reqCtx).
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsNotValid() && !ctxAuth.IsUserContext() {
-		logCtx(reqCtx).Warn().Msgf("Unauthorized: %v", err)
+		logCtx(reqCtx).
+			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -33,7 +36,8 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 
 	if err := req.Request.ParseMultipartForm(multipartFormMaxMemory); err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Form data parsing")
+			Warn().Err(err).
+			Msg("Form data parsing")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -42,7 +46,8 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 	uploadedFile, _, err := req.Request.FormFile("body")
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Request file retrieval")
+			Warn().Err(err).
+			Msg("Request file retrieval")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -55,13 +60,15 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 		if errors.IsCallError(err) {
 			//TODO: translate the error
 			logCtx(reqCtx).
-				Warn().Err(err).Msg("User profile image update")
+				Warn().Err(err).
+				Msg("User profile image update")
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
-			Err(err).Msgf("Unable to update user profile image")
+			Error().Err(err).
+			Msg("Unable to update user profile image")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return

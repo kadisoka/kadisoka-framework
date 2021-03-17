@@ -28,9 +28,10 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 	val, err := oauth2.AuthorizationRequestFromURLValues(inQuery)
 	if err != nil {
 		logReq(r).
-			Error().Msgf("unable to decode query: %v", err)
+			Error().Err(err).
+			Msg("Unable to decode query")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("404 Not Found"))
+		w.Write([]byte(http.StatusText(http.StatusNotFound)))
 		return
 	}
 
@@ -46,7 +47,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		logReq(r).
 			Warn().Msg("redirect_uri invalid")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("404 Not Found"))
+		w.Write([]byte(http.StatusText(http.StatusNotFound)))
 		return
 	}
 
@@ -56,7 +57,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 			logReq(r).
 				Warn().Msg("client_id invalid and no redirect_uri")
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("404 Not Found"))
+			w.Write([]byte(http.StatusText(http.StatusNotFound)))
 			return
 		}
 		logReq(r).
@@ -72,7 +73,8 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 	appRef, err := iam.ApplicationRefKeyFromAZERText(val.ClientID)
 	if err != nil {
 		logReq(r).
-			Warn().Err(err).Msg("client_id malformed")
+			Warn().Err(err).
+			Msg("client_id malformed")
 		cbURL := val.RedirectURI + "?" + oauth2.MustQueryString(oauth2.ErrorResponse{
 			Error: oauth2.ErrorInvalidRequest,
 			State: val.State,
@@ -82,7 +84,8 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 	}
 	if appRef.IsNotValid() {
 		logReq(r).
-			Warn().Err(err).Msg("client_id is invalid")
+			Warn().Err(err).
+			Msg("client_id is invalid")
 		cbURL := val.RedirectURI + "?" + oauth2.MustQueryString(oauth2.ErrorResponse{
 			Error: oauth2.ErrorInvalidRequest,
 			State: val.State,
@@ -93,7 +96,8 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 	client, err := restSrv.serverCore.ApplicationByRefKey(appRef)
 	if err != nil || client == nil {
 		logReq(r).
-			Warn().Err(err).Msg("client_id does not refer a valid client")
+			Warn().Err(err).
+			Msg("client_id does not refer a valid client")
 		cbURL := val.RedirectURI + "?" + oauth2.MustQueryString(oauth2.ErrorResponse{
 			Error: oauth2.ErrorInvalidRequest,
 			State: val.State,
@@ -125,7 +129,8 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Request context")
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -142,7 +147,8 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	appRef, err := iam.ApplicationRefKeyFromAZERText(appRefArgVal)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msgf("Invalid field form.client_id %v", appRefArgVal)
+			Warn().Err(err).
+			Msgf("Invalid field form.client_id %v", appRefArgVal)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -268,14 +274,16 @@ func (restSrv *Server) parseRequestAcceptLanguage(
 	termLangTags, _, err := language.ParseAcceptLanguage(defaultPreferredLanguages)
 	if defaultPreferredLanguages != "" && err != nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Unable to parse preferred languages from body %q: %v", defaultPreferredLanguages, err)
+			Warn().Err(err).
+			Msgf("Unable to parse preferred languages from body %q", defaultPreferredLanguages)
 	}
 	if len(termLangTags) == 0 || err != nil {
 		var headerLangTags []language.Tag
 		headerLangTags, _, err = language.ParseAcceptLanguage(req.Request.Header.Get("Accept-Language"))
 		if err != nil {
 			logCtx(reqCtx).
-				Warn().Msgf("Unable to parse preferred languages from HTTP header: %v", err)
+				Warn().Err(err).
+				Msg("Unable to parse preferred languages from HTTP header")
 		} else {
 			if len(headerLangTags) > 0 {
 				termLangTags = headerLangTags

@@ -6,6 +6,14 @@ import (
 
 type UserService interface {
 	UserInstanceService
+}
+
+type UserServiceClient interface {
+	UserService
+}
+
+type UserServiceInternal interface {
+	UserInstanceServiceInternal
 	UserProfileService
 
 	UserKeyPhoneNumberService

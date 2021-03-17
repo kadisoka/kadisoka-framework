@@ -16,7 +16,8 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("Request context")
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -24,7 +25,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsNotValid() || !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Unauthorized")
+			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -71,7 +72,8 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 		SetUserPassword(reqCtx, ctxAuth.UserRef(), password)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("User password update")
+			Error().Err(err).
+			Msg("User password update")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return

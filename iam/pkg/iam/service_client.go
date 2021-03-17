@@ -14,9 +14,14 @@ import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 )
 
+// ServiceClient is an abstraction to be used by applications to access
+// IAM resources.
+//
+// This interface is not designed for service applications as it doesn't
+// have the required abstractions to handle access from other applications.
+// For interface which could be used by service applications, see
+// ServiceConsumerServer .
 type ServiceClient interface {
-	ServiceClientServer //TODO: a service client might not want to be a server
-
 	GRPCServiceClient
 	RESTServiceClient
 
@@ -29,6 +34,8 @@ type ServiceClient interface {
 	// TerminalRef returns the terminal ID of the client instance after
 	// successful authentication with IAM server.
 	TerminalRef() TerminalRefKey
+
+	UserServiceClient
 }
 
 type ServiceClientAuth interface {
@@ -65,7 +72,7 @@ func NewServiceClientSimple(instID string, envVarsPrefix string) (ServiceClient,
 		return nil, errors.Wrap("jwt key set loading", err)
 	}
 
-	uaStateServiceClient := &UserInstanceStateServiceClientCore{}
+	uaStateServiceClient := &UserInstanceInfoServiceClientCore{}
 
 	inst, err := NewServiceClient(cfg, &jwtKeyChain, uaStateServiceClient)
 	if err != nil {
@@ -90,14 +97,9 @@ func NewServiceClient(
 		serviceClientConfig = &cfg
 	}
 
-	serviceClientServer, err := NewServiceClientServer(jwtKeyChain, userInstanceInfoService)
-	if err != nil {
-		return nil, err
-	}
-
 	return &ServiceClientCore{
 		serviceClientConfig: serviceClientConfig,
-		ServiceClientServer: serviceClientServer,
+		userInstanceInfoSvc: userInstanceInfoService,
 	}, nil
 }
 
@@ -105,7 +107,9 @@ type ServiceClientCore struct {
 	serviceClientConfig *ServiceClientConfig
 	terminalRef         TerminalRefKey
 	clientAccessToken   string
-	ServiceClientServer
+
+	//HACK: implement in this struct rather than forwarding it
+	userInstanceInfoSvc UserInstanceInfoService
 }
 
 var _ ServiceClient = &ServiceClientCore{}
@@ -314,4 +318,12 @@ func (svcClient *ServiceClientCore) AuthorizedOutgoingHTTPRequestHeader(
 		}
 	}
 	return outHeader
+}
+
+func (svcClient *ServiceClientCore) GetUserInstanceInfo(
+	callCtx CallContext,
+	userRef UserRefKey,
+) (*UserInstanceInfo, error) {
+	return svcClient.userInstanceInfoSvc.
+		GetUserInstanceInfo(callCtx, userRef)
 }

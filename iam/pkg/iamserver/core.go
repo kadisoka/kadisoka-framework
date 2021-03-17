@@ -41,7 +41,7 @@ type Core struct {
 	registeredUserInstanceIDCache *lru.ARCCache
 	deletedUserInstanceIDCache    *lru.ARCCache
 
-	iam.ServiceClient //TODO: not specifically client
+	iam.ServiceConsumerServer
 
 	applicationDataProvider iam.ApplicationDataProvider
 	mediaStore              *mediastore.Store
@@ -102,7 +102,8 @@ func NewCoreByConfig(
 	eaVerifier := eav10n.NewVerifier(realmInfo, iamDB, coreCfg.EAV)
 
 	log.Info().Msg("Initializing phone-number verification service...")
-	log.Info().Msgf("Registered SMS delivery service integrations: %v", pnv10n.ModuleNames())
+	log.Info().Msgf("Registered SMS delivery service integrations: %v",
+		pnv10n.ModuleNames())
 	pnVerifier := pnv10n.NewVerifier(realmName, iamDB, coreCfg.PNV)
 
 	registeredUserIDCache, err := lru.NewARC(65535)
@@ -125,12 +126,12 @@ func NewCoreByConfig(
 		pnVerifier:                    pnVerifier,
 	}
 
-	clientBase, err := iam.NewServiceClient(nil, jwtKeyChain, inst)
+	svcForServer, err := iam.NewServiceConsumerServer(nil, jwtKeyChain, inst)
 	if err != nil {
 		panic(err)
 	}
 
-	inst.ServiceClient = clientBase
+	inst.ServiceConsumerServer = svcForServer
 
 	return inst, nil
 }

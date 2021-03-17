@@ -20,7 +20,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	if reqApp == nil {
 		if err != nil {
 			logReq(req.Request).
-				Warn().Err(err).Msg("Client authentication")
+				Warn().Err(err).
+				Msg("Client authentication")
 		} else {
 			logReq(req.Request).
 				Warn().Msg("No authorized client")
@@ -43,7 +44,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil && err != iam.ErrReqFieldAuthorizationTypeUnsupported {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Unable to read authorization")
+			Warn().Err(err).
+			Msg("Unable to read authorization")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -71,7 +73,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		})
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Msgf("RegisterTerminal: %v", err)
+			Error().Err(err).
+			Msg("RegisterTerminal")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -83,7 +86,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		GenerateAccessTokenJWT(reqCtx, termRef, ctxAuth.UserRef(), issueTime)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Msgf("GenerateAccessTokenJWT: %v", err)
+			Error().Err(err).
+			Msg("GenerateAccessTokenJWT")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -94,7 +98,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		GenerateRefreshTokenJWT(reqCtx, termRef, termSecret, issueTime)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Msgf("GenerateRefreshTokenJWT: %v", err)
+			Error().Err(err).
+			Msg("GenerateRefreshTokenJWT")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return

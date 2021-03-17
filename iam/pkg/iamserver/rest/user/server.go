@@ -219,7 +219,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("Request context")
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -227,7 +228,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsNotValid() {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Unauthorized")
+			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -277,7 +278,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		GetUserBaseProfile(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("User base profile fetch")
+			Error().Err(err).
+			Msg("User base profile fetch")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -289,7 +291,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		GetUserKeyPhoneNumber(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("User phone number fetch")
+			Error().Err(err).
+			Msg("User phone number fetch")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -304,7 +307,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		GetUserKeyEmailAddress(reqCtx, requestedUserRef)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("User email address fetch")
+			Error().Err(err).
+			Msg("User email address fetch")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -320,7 +324,8 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("Request context")
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -328,7 +333,7 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsNotValid() {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Unauthorized")
+			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -346,8 +351,8 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 	}
 	if len(phoneNumberStrList) > phoneNumberListLengthMax {
 		logCtx(reqCtx).
-			Warn().Msgf(
-			"Phone number list is too large at %d (max. %d)", len(phoneNumberStrList), phoneNumberListLengthMax)
+			Warn().Msgf("Phone number list is too large at %d (max. %d)",
+			len(phoneNumberStrList), phoneNumberListLengthMax)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -406,7 +411,8 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
-			Err(err).Msg("Request context")
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -414,7 +420,7 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsNotValid() || !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Unauthorized")
+			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -425,14 +431,15 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 	// - Return as items of user contacts
 	contactUserIDs, err := restSrv.serverCore.GetUserContactUserIDs(
 		reqCtx, ctxAuth.UserRef())
-
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("User contacts user ID fetch")
+			Warn().Err(err).
+			Msg("User contacts user ID fetch")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
 	}
+
 	var userContactLists []iam.UserJSONV1
 
 	if len(contactUserIDs) > 0 {

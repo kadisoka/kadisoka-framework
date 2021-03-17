@@ -1,8 +1,12 @@
 package iam
 
-// UserInstanceService is a service which provides
-// methods for manipulating entity instances.
 type UserInstanceService interface {
+	UserInstanceInfoService
+}
+
+// UserInstanceServiceInternal is a service which provides
+// methods for manipulating entity instances.
+type UserInstanceServiceInternal interface {
 	UserRefKeyService
 
 	UserInstanceInfoService
@@ -27,7 +31,7 @@ type UserInstanceInfoService interface {
 	// This method returns nil if the refKey is not referencing to any valid
 	// instance.
 	GetUserInstanceInfo(
-		/*callCtx CallContext,*/ //TODO: call context
+		callCtx CallContext,
 		refKey UserRefKey,
 	) (*UserInstanceInfo, error)
 }
@@ -68,10 +72,11 @@ type UserInstanceDeletionInput struct {
 
 //TODO: make this struct instances connect to IAM server and manage
 // synchronization of user account states.
-type UserInstanceStateServiceClientCore struct {
+type UserInstanceInfoServiceClientCore struct {
 }
 
-func (uaStateSvcClient *UserInstanceStateServiceClientCore) GetUserInstanceInfo(
+func (uaStateSvcClient *UserInstanceInfoServiceClientCore) GetUserInstanceInfo(
+	_ CallContext,
 	_ UserRefKey,
 ) (*UserInstanceInfo, error) {
 	return &UserInstanceInfo{RevisionNumber: -1, Deletion: nil}, nil

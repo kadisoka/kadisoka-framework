@@ -18,7 +18,8 @@ func (restSrv *Server) putUserEmailAddress(
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Unable to load request authorization: %v", err)
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -28,7 +29,8 @@ func (restSrv *Server) putUserEmailAddress(
 	err = req.ReadEntity(&reqEntity)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Unable to read request body: %v", err)
+			Warn().Err(err).
+			Msg("Unable to read request body")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -38,7 +40,8 @@ func (restSrv *Server) putUserEmailAddress(
 	parsedEmailAddress, err := iam.EmailAddressFromString(emailAddress)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Email address %v, is not valid", emailAddress)
+			Warn().Err(err).
+			Msgf("Email address %v, is not valid", emailAddress)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -65,7 +68,8 @@ func (restSrv *Server) handleSetEmailAddress(
 ) {
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsNotValid() && !ctxAuth.IsUserContext() {
-		logCtx(reqCtx).Warn().Msgf("Unauthorized")
+		logCtx(reqCtx).
+			Warn().Msgf("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -74,13 +78,17 @@ func (restSrv *Server) handleSetEmailAddress(
 	if targetUserIDStr := req.PathParameter("user-id"); targetUserIDStr != "" && targetUserIDStr != "me" {
 		targetUserRef, err := iam.UserRefKeyFromAZERText(targetUserIDStr)
 		if err != nil {
-			logCtx(reqCtx).Warn().Msgf("Invalid user ID: %v", err)
+			logCtx(reqCtx).
+				Warn().Err(err).
+				Msg("Invalid user ID")
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		if !ctxAuth.IsUser(targetUserRef) {
-			logCtx(reqCtx).Warn().Msgf("Setting other user's email address is not allowed")
+			logCtx(reqCtx).
+				Warn().Err(err).
+				Msg("Setting other user's email address is not allowed")
 			rest.RespondTo(resp).EmptyError(
 				http.StatusForbidden)
 			return
@@ -93,15 +101,15 @@ func (restSrv *Server) handleSetEmailAddress(
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
-				Warn().Msgf("SetUserKeyEmailAddress to %v: %v",
-				emailAddress, err)
+				Warn().Err(err).
+				Msgf("SetUserKeyEmailAddress to %v", emailAddress)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
-			Error().Msgf("SetUserKeyEmailAddress to %v: %v",
-			emailAddress, err)
+			Error().Err(err).
+			Msgf("SetUserKeyEmailAddress to %v", emailAddress)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -128,7 +136,8 @@ func (restSrv *Server) postUserEmailAddressVerificationConfirmation(
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if !reqCtx.IsUserContext() {
 		logCtx(reqCtx).
-			Warn().Msgf("Unauthorized: %v", err)
+			Warn().Err(err).
+			Msg("Request context")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -138,7 +147,8 @@ func (restSrv *Server) postUserEmailAddressVerificationConfirmation(
 	err = req.ReadEntity(&reqEntity)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Unable to load request content: %v", err)
+			Warn().Err(err).
+			Msg("Unable to load request content")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -150,15 +160,17 @@ func (restSrv *Server) postUserEmailAddressVerificationConfirmation(
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
-				Warn().Msgf("ConfirmUserEmailAddressVerification %v failed: %v",
-				reqEntity.VerificationID, err)
+				Warn().Err(err).
+				Msgf("ConfirmUserEmailAddressVerification %v failed",
+					reqEntity.VerificationID)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
-			Error().Msgf("ConfirmUserEmailAddressVerification %v failed: %v",
-			reqEntity.VerificationID, err)
+			Error().Err(err).
+			Msgf("ConfirmUserEmailAddressVerification %v failed",
+				reqEntity.VerificationID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return

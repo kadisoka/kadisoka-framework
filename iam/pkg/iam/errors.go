@@ -4,21 +4,6 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
-type Error struct {
-	Msg string
-	Err error
-}
-
-func (e *Error) Error() string {
-	if e.Err != nil {
-		if e.Msg != "" {
-			return e.Msg + ": " + e.Err.Error()
-		}
-		return "iam: " + e.Err.Error()
-	}
-	return e.Msg
-}
-
 func ReqFieldErr(fieldName string, err error) error {
 	return &reqFieldError{errors.Ent(fieldName, err)}
 }

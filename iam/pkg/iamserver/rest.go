@@ -16,6 +16,8 @@ type RESTServiceServerBase struct {
 	*Core
 }
 
+var _ iam.RESTServiceClientServer = &RESTServiceServerBase{}
+
 func RESTServiceServerWith(iamServerCore *Core) *RESTServiceServerBase {
 	if iamServerCore == nil {
 		panic("provided iamServerCore is nil")

@@ -3,7 +3,7 @@ package iam
 type IAMService interface {
 	ServiceClient
 
-	UserService
+	UserServiceInternal
 
 	TerminalService
 

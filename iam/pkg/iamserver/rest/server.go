@@ -202,7 +202,8 @@ func initRESTV1Services(
 			SignInURL: signInURL,
 		})
 	if err != nil {
-		log.Fatal().Err(err).Msg("OAuth 2.0 service initialization")
+		log.Fatal().Err(err).
+			Msg("OAuth 2.0 service initialization")
 	}
 	container.Add(oauth2Srv.RestfulWebService())
 }

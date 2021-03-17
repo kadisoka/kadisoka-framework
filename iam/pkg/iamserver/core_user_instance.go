@@ -16,7 +16,7 @@ import (
 )
 
 // Interface conformance assertion.
-var _ iam.UserInstanceService = &Core{}
+var _ iam.UserInstanceServiceInternal = &Core{}
 
 const userDBTableName = "user_dt"
 
@@ -26,6 +26,7 @@ const userDBTableName = "user_dt"
 // If it's required only to determine the existence of the ID,
 // IsUserRefKeyRegistered is generally more efficient.
 func (core *Core) GetUserInstanceInfo(
+	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	idRegistered := false
@@ -90,11 +91,20 @@ func (core *Core) GetUserInstanceInfo(
 func (core *Core) getUserInstanceStateByID(
 	id iam.UserID,
 ) (idRegistered, accountDeleted bool, err error) {
+	sqlString, _, _ := goqu.From(userDBTableName).
+		Select(
+			goqu.Case().
+				When(goqu.C("d_ts").IsNull(), false).
+				Else(true).
+				As("deleted"),
+		).
+		Where(
+			goqu.C("id").Eq(id.PrimitiveValue()),
+		).
+		ToSQL()
+
 	err = core.db.
-		QueryRow(
-			`SELECT CASE WHEN d_ts IS NULL THEN false ELSE true END `+
-				`FROM `+userDBTableName+` WHERE id = $1`,
-			id).
+		QueryRow(sqlString).
 		Scan(&accountDeleted)
 	if err == sql.ErrNoRows {
 		return false, false, nil

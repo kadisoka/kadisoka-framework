@@ -19,7 +19,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		RequestApplication(req.Request)
 	if err != nil {
 		logReq(req.Request).
-			Warn().Err(err).Msg("Client authentication")
+			Warn().Err(err).
+			Msg("Client authentication")
 		// RFC 6749 § 5.2
 		oauth2.RespondTo(resp).ErrInvalidClientBasicAuthorization(
 			restSrv.serverCore.RealmName(), "")
@@ -37,7 +38,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil && err != iam.ErrReqFieldAuthorizationTypeUnsupported {
 		logCtx(reqCtx).
-			Warn().Msgf("Unable to read authorization: %v", err)
+			Warn().Err(err).
+			Msg("Request context")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -88,7 +90,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	termRef, err := iam.TerminalRefKeyFromAZERText(terminalIDStr)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Unable to parse username %q as TerminalID: %v", terminalIDStr, err)
+			Warn().Err(err).
+			Msgf("Unable to parse username %q as TerminalID", terminalIDStr)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
@@ -98,7 +101,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		AuthenticateTerminal(termRef, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Msgf("Terminal %v authentication failed: %v", termRef, err)
+			Error().Err(err).
+			Msgf("Terminal %v authentication failed", termRef)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -113,10 +117,11 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 
 	if userRef.IsValid() {
 		userInstInfo, err := restSrv.serverCore.
-			GetUserInstanceInfo(userRef)
+			GetUserInstanceInfo(reqCtx, userRef)
 		if err != nil {
 			logCtx(reqCtx).
-				Warn().Msgf("Terminal %v user account state: %v", termRef, err)
+				Warn().Err(err).
+				Msgf("Terminal %v user account state", termRef)
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorServerError)
 			return

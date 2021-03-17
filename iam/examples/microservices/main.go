@@ -44,12 +44,12 @@ func main() {
 	})
 
 	log.Info().Msg("Initializing app...")
-	svcApp, err := iam.NewAppSimple("IAM_")
+	svcApp, err := iam.NewConsumerServerAppSimple("IAM_")
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
 	}
 	log.Info().Msgf("App instance %v terminal %v", svcApp.InstanceID(), svcApp.TerminalRef().AZERText())
-	var iamClient iam.ServiceClient = svcApp
+	var iamClient iam.ServiceConsumerServer = svcApp
 
 	httpListenPort := "8080"
 
@@ -109,7 +109,8 @@ func main() {
 		log.Info().Msg("Service is ready")
 		err = httpServer.ListenAndServe()
 		if err != nil && (err != http.ErrServerClosed || !shuttingDown) {
-			log.Err(err).Msg("API server error")
+			log.Error().Err(err).
+				Msg("API server error")
 		}
 	}()
 

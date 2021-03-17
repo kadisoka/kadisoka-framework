@@ -78,7 +78,8 @@ func (core *Core) ListUsersByPhoneNumber(
 					ctxAuth.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
 					ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
 				if err != nil {
-					logCtx(callCtx).Err(err).Str("phone_number", pn.String()).
+					logCtx(callCtx).
+						Error().Err(err).Str("phone_number", pn.String()).
 						Msg("User contact phone number store")
 				}
 			}
