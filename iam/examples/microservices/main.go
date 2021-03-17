@@ -44,7 +44,7 @@ func main() {
 	})
 
 	log.Info().Msg("Initializing app...")
-	svcApp, err := iam.NewResourceServerAppSimple("IAM_")
+	svcApp, err := iam.NewConsumerServerAppSimple("IAM_")
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
 	}

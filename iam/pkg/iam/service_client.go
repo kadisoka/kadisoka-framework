@@ -12,7 +12,27 @@ import (
 	grpcmd "google.golang.org/grpc/metadata"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 )
+
+func NewClientAppSimple(envVarsPrefix string) (*ServiceClientApp, error) {
+	appApp := app.Instance()
+
+	svc, err := NewServiceClientSimple(appApp.InstanceID(), envVarsPrefix)
+	if err != nil {
+		return nil, errors.Wrap("service client initialization", err)
+	}
+
+	return &ServiceClientApp{
+		App:           appApp,
+		ServiceClient: svc,
+	}, nil
+}
+
+type ServiceClientApp struct {
+	app.App
+	ServiceClient
+}
 
 // ServiceClient is an abstraction to be used by applications to access
 // IAM resources.
@@ -22,11 +42,6 @@ import (
 // For interface which could be used by service applications, see
 // ConsumerServer .
 type ServiceClient interface {
-	GRPCServiceClient
-	RESTServiceClient
-
-	ServiceClientAuth
-
 	// ServerBaseURL returns the base URL of the IAM server this client
 	// will connect to.
 	ServerBaseURL() string
@@ -34,6 +49,11 @@ type ServiceClient interface {
 	// TerminalRef returns the terminal ID of the client instance after
 	// successful authentication with IAM server.
 	TerminalRef() TerminalRefKey
+
+	GRPCServiceClient
+	RESTServiceClient
+
+	ServiceClientAuth
 
 	UserServiceClient
 }
@@ -97,13 +117,13 @@ func NewServiceClient(
 		serviceClientConfig = &cfg
 	}
 
-	return &ServiceClientCore{
+	return &serviceClientCore{
 		serviceClientConfig: serviceClientConfig,
 		userInstanceInfoSvc: userInstanceInfoService,
 	}, nil
 }
 
-type ServiceClientCore struct {
+type serviceClientCore struct {
 	serviceClientConfig *ServiceClientConfig
 	terminalRef         TerminalRefKey
 	clientAccessToken   string
@@ -112,18 +132,18 @@ type ServiceClientCore struct {
 	userInstanceInfoSvc UserInstanceInfoService
 }
 
-var _ ServiceClient = &ServiceClientCore{}
+var _ ServiceClient = &serviceClientCore{}
 
-func (svcClient *ServiceClientCore) ServerBaseURL() string {
+func (svcClient *serviceClientCore) ServerBaseURL() string {
 	if svcClient.serviceClientConfig != nil {
 		return svcClient.serviceClientConfig.ServerBaseURL
 	}
 	return ""
 }
 
-func (svcClient *ServiceClientCore) TerminalRef() TerminalRefKey { return svcClient.terminalRef }
+func (svcClient *serviceClientCore) TerminalRef() TerminalRefKey { return svcClient.terminalRef }
 
-func (svcClient *ServiceClientCore) AuthenticateServiceClient(
+func (svcClient *serviceClientCore) AuthenticateServiceClient(
 	serviceInstanceID string,
 ) (terminalRef TerminalRefKey, err error) {
 	if svcClient.serviceClientConfig == nil {
@@ -150,7 +170,7 @@ func (svcClient *ServiceClientCore) AuthenticateServiceClient(
 	return svcClient.terminalRef, nil
 }
 
-func (svcClient *ServiceClientCore) obtainAccessTokenByClientCredentials(
+func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 	serviceInstanceID string,
 ) (terminalRef TerminalRefKey, accessToken string, err error) {
 	if svcClient.serviceClientConfig == nil || svcClient.serviceClientConfig.Credentials.ClientID == "" {
@@ -181,9 +201,10 @@ func (svcClient *ServiceClientCore) obtainAccessTokenByClientCredentials(
 		svcClient.serviceClientConfig.Credentials.ClientID,
 		svcClient.serviceClientConfig.Credentials.ClientSecret)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	runtimeVersion := runtime.Version()
-	runtimeVersion = "go/" + strings.TrimPrefix(runtimeVersion, "go")
-	req.Header.Set("User-Agent", "Kadisoka-IAM-Client/1.0 "+runtimeVersion+" ("+serviceInstanceID+")")
+	goRuntimeVersion := runtime.Version()
+	goRuntimeVersion = "go/" + strings.TrimPrefix(goRuntimeVersion, "go")
+	// include app.Info?
+	req.Header.Set("User-Agent", "Kadisoka-IAM-Client/1.0 ("+serviceInstanceID+") "+goRuntimeVersion)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -216,7 +237,7 @@ func (svcClient *ServiceClientCore) obtainAccessTokenByClientCredentials(
 	return terminalRef, tokenResp.AccessToken, nil
 }
 
-func (svcClient *ServiceClientCore) getClientAccessToken() string {
+func (svcClient *serviceClientCore) getClientAccessToken() string {
 	//TOOD:
 	// - check the expiration. if the token is about to expire, 1 minute
 	//   before expiration which info was obtained in obtainAccessTokenByPasswordWithTerminalCreds,
@@ -226,7 +247,7 @@ func (svcClient *ServiceClientCore) getClientAccessToken() string {
 }
 
 // AccessTokenByAuthorizationCodeGrant conforms ServiceClientAuth.
-func (svcClient *ServiceClientCore) AccessTokenByAuthorizationCodeGrant(
+func (svcClient *serviceClientCore) AccessTokenByAuthorizationCodeGrant(
 	authorizationCode string,
 ) (accessToken string, err error) {
 	if svcClient.serviceClientConfig == nil {
@@ -290,7 +311,7 @@ func (svcClient *ServiceClientCore) AccessTokenByAuthorizationCodeGrant(
 // authorization information set. If baseContext is valid, this method
 // will use it as the parent context, otherwise, this method will create
 // a Background context.
-func (svcClient *ServiceClientCore) AuthorizedOutgoingGRPCContext(
+func (svcClient *serviceClientCore) AuthorizedOutgoingGRPCContext(
 	baseContext context.Context,
 ) context.Context {
 	accessToken := svcClient.getClientAccessToken()
@@ -304,7 +325,7 @@ func (svcClient *ServiceClientCore) AuthorizedOutgoingGRPCContext(
 // AuthorizedOutgoingHTTPRequestHeader returns a new instance of http.Header
 // with authorization information set. If baseHeader is proivded, this method
 // will merge it into the returned value.
-func (svcClient *ServiceClientCore) AuthorizedOutgoingHTTPRequestHeader(
+func (svcClient *serviceClientCore) AuthorizedOutgoingHTTPRequestHeader(
 	baseHeader http.Header,
 ) http.Header {
 	accessToken := svcClient.getClientAccessToken()
@@ -320,7 +341,7 @@ func (svcClient *ServiceClientCore) AuthorizedOutgoingHTTPRequestHeader(
 	return outHeader
 }
 
-func (svcClient *ServiceClientCore) GetUserInstanceInfo(
+func (svcClient *serviceClientCore) GetUserInstanceInfo(
 	callCtx CallContext,
 	userRef UserRefKey,
 ) (*UserInstanceInfo, error) {

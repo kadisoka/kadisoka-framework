@@ -8,12 +8,33 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
 	"github.com/google/uuid"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 	"github.com/square/go-jose/v3/jwt"
 	"github.com/tomasen/realip"
 	grpcmd "google.golang.org/grpc/metadata"
 	grpcpeer "google.golang.org/grpc/peer"
+
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 )
+
+func NewConsumerServerAppSimple(envVarsPrefix string) (*ConsumerServerApp, error) {
+	appApp := app.Instance()
+
+	svc, err := NewConsumerServerSimple(appApp.InstanceID(), envVarsPrefix)
+	if err != nil {
+		return nil, errors.Wrap("service client initialization", err)
+	}
+
+	return &ConsumerServerApp{
+		App:            appApp,
+		ConsumerServer: svc,
+	}, nil
+}
+
+type ConsumerServerApp struct {
+	app.App
+	ConsumerServer
+}
 
 func NewConsumerServerSimple(
 	instID string,
@@ -61,8 +82,8 @@ func NewConsumerServer(
 		return nil, err
 	}
 
-	return &ConsumerServerCore{
-		&ServiceClientCore{
+	return &consumerServerCore{
+		&serviceClientCore{
 			serviceClientConfig: serviceClientConfig,
 			userInstanceInfoSvc: userInstanceInfoService,
 		},
@@ -71,7 +92,7 @@ func NewConsumerServer(
 }
 
 // ConsumerServer is an abstractions for a server which acts as
-// an IAM client/consumer, and also allow applications, authorized by IAM
+// a client/consumer of IAM, and also allow applications authorized by IAM
 // to access its resources.
 type ConsumerServer interface {
 	ConsumerServerBase
@@ -112,8 +133,8 @@ type ConsumerRESTServer interface {
 	RESTRequestContext(*http.Request) (*RESTRequestContext, error)
 }
 
-type ConsumerServerCore struct {
-	*ServiceClientCore
+type consumerServerCore struct {
+	*serviceClientCore
 	ConsumerServerBase
 }
 
@@ -121,29 +142,29 @@ func NewConsumerServerCore(
 	jwtKeyChain *JWTKeyChain,
 	userInstanceInfoService UserInstanceInfoService,
 ) (ConsumerServerBase, error) {
-	return &ConsumerServerBaseCore{
+	return &consumerServerBaseCore{
 		jwtKeyChain:             jwtKeyChain,
 		userInstanceInfoService: userInstanceInfoService,
 	}, nil
 }
 
-type ConsumerServerBaseCore struct {
+type consumerServerBaseCore struct {
 	jwtKeyChain             *JWTKeyChain
 	userInstanceInfoService UserInstanceInfoService
 }
 
-var _ ConsumerServerBase = &ConsumerServerBaseCore{}
+var _ ConsumerServerBase = &consumerServerBaseCore{}
 
-func (consumerSrv *ConsumerServerBaseCore) JWTKeyChain() *JWTKeyChain {
+func (consumerSrv *consumerServerBaseCore) JWTKeyChain() *JWTKeyChain {
 	return consumerSrv.jwtKeyChain
 }
 
 // Shortcut
-func (consumerSrv *ConsumerServerBaseCore) GetSignedVerifierKey(keyID string) interface{} {
+func (consumerSrv *consumerServerBaseCore) GetSignedVerifierKey(keyID string) interface{} {
 	return consumerSrv.jwtKeyChain.GetSignedVerifierKey(keyID)
 }
 
-func (consumerSrv *ConsumerServerBaseCore) AuthorizationFromJWTString(
+func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	jwtStr string,
 ) (*Authorization, error) {
 	emptyAuthCtx := newEmptyAuthorization()
@@ -223,7 +244,7 @@ func (consumerSrv *ConsumerServerBaseCore) AuthorizationFromJWTString(
 	}, nil
 }
 
-func (consumerSrv *ConsumerServerBaseCore) GRPCCallContext(
+func (consumerSrv *consumerServerBaseCore) GRPCCallContext(
 	grpcCallCtx context.Context,
 ) (*GRPCCallContext, error) {
 	callCtx, err := consumerSrv.callContextFromGRPCContext(grpcCallCtx)
@@ -233,7 +254,7 @@ func (consumerSrv *ConsumerServerBaseCore) GRPCCallContext(
 	return &GRPCCallContext{callCtx}, err
 }
 
-func (consumerSrv *ConsumerServerBaseCore) callContextFromGRPCContext(
+func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 	grpcCallCtx context.Context,
 ) (CallContext, error) {
 	var remoteAddr string
@@ -274,7 +295,7 @@ func (consumerSrv *ConsumerServerBaseCore) callContextFromGRPCContext(
 	return newCallContext(grpcCallCtx, ctxAuth, originInfo, requestID), err
 }
 
-func (consumerSrv *ConsumerServerBaseCore) authorizationFromGRPCContext(
+func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
 	grpcContext context.Context,
 ) (*Authorization, error) {
 	emptyAuthCtx := newEmptyAuthorization()
@@ -301,7 +322,7 @@ func (consumerSrv *ConsumerServerBaseCore) authorizationFromGRPCContext(
 }
 
 // RESTRequestContext creates a call context which represents an HTTP request.
-func (consumerSrv *ConsumerServerBaseCore) RESTRequestContext(
+func (consumerSrv *consumerServerBaseCore) RESTRequestContext(
 	req *http.Request,
 ) (*RESTRequestContext, error) {
 	callCtx, err := consumerSrv.callContextFromHTTPRequest(req)
@@ -311,7 +332,7 @@ func (consumerSrv *ConsumerServerBaseCore) RESTRequestContext(
 	return &RESTRequestContext{callCtx, req}, err
 }
 
-func (consumerSrv *ConsumerServerBaseCore) callContextFromHTTPRequest(
+func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	req *http.Request,
 ) (CallContext, error) {
 	ctx := req.Context()
