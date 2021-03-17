@@ -44,12 +44,12 @@ func main() {
 	})
 
 	log.Info().Msg("Initializing app...")
-	svcApp, err := iam.NewConsumerServerAppSimple("IAM_")
+	svcApp, err := iam.NewResourceServerAppSimple("IAM_")
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
 	}
 	log.Info().Msgf("App instance %v terminal %v", svcApp.InstanceID(), svcApp.TerminalRef().AZERText())
-	var iamClient iam.ServiceConsumerServer = svcApp
+	var iamClient iam.ConsumerServer = svcApp
 
 	httpListenPort := "8080"
 

@@ -11,7 +11,7 @@ import (
 )
 
 func NewRESTService(
-	iamClient iam.ServiceConsumerServer,
+	iamClient iam.ConsumerServer,
 	basePath string,
 ) *RESTService {
 	return &RESTService{
@@ -21,7 +21,7 @@ func NewRESTService(
 }
 
 type RESTService struct {
-	iamClient iam.ServiceConsumerServer
+	iamClient iam.ConsumerServer
 	basePath  string
 }
 

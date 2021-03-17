@@ -20,7 +20,7 @@ import (
 // This interface is not designed for service applications as it doesn't
 // have the required abstractions to handle access from other applications.
 // For interface which could be used by service applications, see
-// ServiceConsumerServer .
+// ConsumerServer .
 type ServiceClient interface {
 	GRPCServiceClient
 	RESTServiceClient

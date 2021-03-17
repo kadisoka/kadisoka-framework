@@ -8,17 +8,79 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
 	"github.com/google/uuid"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 	"github.com/square/go-jose/v3/jwt"
 	"github.com/tomasen/realip"
 	grpcmd "google.golang.org/grpc/metadata"
 	grpcpeer "google.golang.org/grpc/peer"
-
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 )
 
-// ServiceClientServer is an interface which contains utilities for
+func NewConsumerServerSimple(
+	instID string,
+	envVarsPrefix string,
+) (ConsumerServer, error) {
+	cfg, err := ServiceClientConfigFromEnv(envVarsPrefix, nil)
+	if err != nil {
+		return nil, errors.Wrap("config loading", err)
+	}
+
+	jwksURL := cfg.ServerBaseURL + serverOAuth2JWKSPath
+	var jwtKeyChain JWTKeyChain
+	_, err = jwtKeyChain.LoadVerifierKeysFromJWKSetByURL(jwksURL)
+	if err != nil {
+		return nil, errors.Wrap("jwt key set loading", err)
+	}
+
+	uaStateServiceClient := &UserInstanceInfoServiceClientCore{}
+
+	inst, err := NewConsumerServer(cfg, &jwtKeyChain, uaStateServiceClient)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = inst.AuthenticateServiceClient(instID)
+	if err != nil {
+		return nil, err
+	}
+
+	return inst, nil
+}
+
+func NewConsumerServer(
+	serviceClientConfig *ServiceClientConfig,
+	jwtKeyChain *JWTKeyChain,
+	userInstanceInfoService UserInstanceInfoService,
+) (ConsumerServer, error) {
+	if serviceClientConfig != nil {
+		cfg := *serviceClientConfig
+		serviceClientConfig = &cfg
+	}
+
+	srvCore, err := NewConsumerServerCore(jwtKeyChain, userInstanceInfoService)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ConsumerServerCore{
+		&ServiceClientCore{
+			serviceClientConfig: serviceClientConfig,
+			userInstanceInfoSvc: userInstanceInfoService,
+		},
+		srvCore,
+	}, nil
+}
+
+// ConsumerServer is an abstractions for a server which acts as
+// an IAM client/consumer, and also allow applications, authorized by IAM
+// to access its resources.
+type ConsumerServer interface {
+	ConsumerServerBase
+	ServiceClient
+}
+
+// ConsumerServerBase is an interface which contains utilities for
 // IAM service clients to handle requests from other IAM service clients.
-type ServiceClientServer interface {
+type ConsumerServerBase interface {
 	// AuthorizationFromJWTString loads authorization context from a JWT
 	// string.
 	AuthorizationFromJWTString(
@@ -28,37 +90,60 @@ type ServiceClientServer interface {
 	// JWTKeyChain returns instance of key chain used to sign JWT tokens.
 	JWTKeyChain() *JWTKeyChain
 
-	GRPCServiceClientServer
-	RESTServiceClientServer
+	ConsumerGRPCServer
+	ConsumerRESTServer
 }
 
-func NewServiceClientServer(
+// ConsumerGRPCServer is an interface which contains utilities for
+// IAM service clients to handle requests from other clients.
+type ConsumerGRPCServer interface {
+	// GRPCCallContext loads authorization context from
+	// gRPC call context.
+	GRPCCallContext(
+		grpcContext context.Context,
+	) (*GRPCCallContext, error)
+}
+
+// ConsumerRESTServer is an interface which contains utilities for
+// IAM service clients to handle requests from other clients.
+type ConsumerRESTServer interface {
+	// RESTRequestContext returns a RESTRequestContext instance for the request.
+	// This function will always return an instance even if there's an error.
+	RESTRequestContext(*http.Request) (*RESTRequestContext, error)
+}
+
+type ConsumerServerCore struct {
+	*ServiceClientCore
+	ConsumerServerBase
+}
+
+func NewConsumerServerCore(
 	jwtKeyChain *JWTKeyChain,
 	userInstanceInfoService UserInstanceInfoService,
-) (ServiceClientServer, error) {
-	return &ServiceClientServerCore{
+) (ConsumerServerBase, error) {
+	return &ConsumerServerBaseCore{
 		jwtKeyChain:             jwtKeyChain,
 		userInstanceInfoService: userInstanceInfoService,
 	}, nil
 }
 
-type ServiceClientServerCore struct {
+type ConsumerServerBaseCore struct {
 	jwtKeyChain             *JWTKeyChain
 	userInstanceInfoService UserInstanceInfoService
 }
 
-var _ ServiceClientServer = &ServiceClientServerCore{}
+var _ ConsumerServerBase = &ConsumerServerBaseCore{}
 
-func (svcClServer *ServiceClientServerCore) JWTKeyChain() *JWTKeyChain {
-	return svcClServer.jwtKeyChain
+func (consumerSrv *ConsumerServerBaseCore) JWTKeyChain() *JWTKeyChain {
+	return consumerSrv.jwtKeyChain
 }
 
 // Shortcut
-func (svcClServer *ServiceClientServerCore) GetSignedVerifierKey(keyID string) interface{} {
-	return svcClServer.jwtKeyChain.GetSignedVerifierKey(keyID)
+func (consumerSrv *ConsumerServerBaseCore) GetSignedVerifierKey(keyID string) interface{} {
+	return consumerSrv.jwtKeyChain.GetSignedVerifierKey(keyID)
 }
 
-func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
+func (consumerSrv *ConsumerServerBaseCore) AuthorizationFromJWTString(
 	jwtStr string,
 ) (*Authorization, error) {
 	emptyAuthCtx := newEmptyAuthorization()
@@ -79,7 +164,7 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("kid", "empty"))
 	}
 
-	verifierKey := svcClServer.JWTKeyChain().GetSignedVerifierKey(keyID)
+	verifierKey := consumerSrv.JWTKeyChain().GetSignedVerifierKey(keyID)
 	if verifierKey == nil {
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("kid", "reference invalid"))
 	}
@@ -107,7 +192,7 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 		if err != nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "malformed"))
 		}
-		instInfo, err := svcClServer.userInstanceInfoService.
+		instInfo, err := consumerSrv.userInstanceInfoService.
 			GetUserInstanceInfo(nil, userRef)
 		if err != nil {
 			return emptyAuthCtx, errors.Wrap("account state query", err)
@@ -138,17 +223,17 @@ func (svcClServer *ServiceClientServerCore) AuthorizationFromJWTString(
 	}, nil
 }
 
-func (svcClServer *ServiceClientServerCore) GRPCCallContext(
+func (consumerSrv *ConsumerServerBaseCore) GRPCCallContext(
 	grpcCallCtx context.Context,
 ) (*GRPCCallContext, error) {
-	callCtx, err := svcClServer.callContextFromGRPCContext(grpcCallCtx)
+	callCtx, err := consumerSrv.callContextFromGRPCContext(grpcCallCtx)
 	if callCtx == nil {
 		callCtx = NewEmptyCallContext(grpcCallCtx)
 	}
 	return &GRPCCallContext{callCtx}, err
 }
 
-func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
+func (consumerSrv *ConsumerServerBaseCore) callContextFromGRPCContext(
 	grpcCallCtx context.Context,
 ) (CallContext, error) {
 	var remoteAddr string
@@ -157,7 +242,7 @@ func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
 	}
 	originInfo := api.CallOriginInfo{Address: remoteAddr}
 
-	ctxAuth, err := svcClServer.authorizationFromGRPCContext(grpcCallCtx)
+	ctxAuth, err := consumerSrv.authorizationFromGRPCContext(grpcCallCtx)
 	if err != nil {
 		return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil), err
 	}
@@ -189,7 +274,7 @@ func (svcClServer *ServiceClientServerCore) callContextFromGRPCContext(
 	return newCallContext(grpcCallCtx, ctxAuth, originInfo, requestID), err
 }
 
-func (svcClServer *ServiceClientServerCore) authorizationFromGRPCContext(
+func (consumerSrv *ConsumerServerBaseCore) authorizationFromGRPCContext(
 	grpcContext context.Context,
 ) (*Authorization, error) {
 	emptyAuthCtx := newEmptyAuthorization()
@@ -212,21 +297,21 @@ func (svcClServer *ServiceClientServerCore) authorizationFromGRPCContext(
 		}
 		token = parts[1]
 	}
-	return svcClServer.AuthorizationFromJWTString(token)
+	return consumerSrv.AuthorizationFromJWTString(token)
 }
 
 // RESTRequestContext creates a call context which represents an HTTP request.
-func (svcClServer *ServiceClientServerCore) RESTRequestContext(
+func (consumerSrv *ConsumerServerBaseCore) RESTRequestContext(
 	req *http.Request,
 ) (*RESTRequestContext, error) {
-	callCtx, err := svcClServer.callContextFromHTTPRequest(req)
+	callCtx, err := consumerSrv.callContextFromHTTPRequest(req)
 	if callCtx == nil {
 		callCtx = NewEmptyCallContext(req.Context())
 	}
 	return &RESTRequestContext{callCtx, req}, err
 }
 
-func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
+func (consumerSrv *ConsumerServerBaseCore) callContextFromHTTPRequest(
 	req *http.Request,
 ) (CallContext, error) {
 	ctx := req.Context()
@@ -277,7 +362,7 @@ func (svcClServer *ServiceClientServerCore) callContextFromHTTPRequest(
 
 		jwtStr := strings.TrimSpace(authParts[1])
 		var err error
-		ctxAuth, err = svcClServer.AuthorizationFromJWTString(jwtStr)
+		ctxAuth, err = consumerSrv.AuthorizationFromJWTString(jwtStr)
 		if err != nil {
 			return newCallContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed

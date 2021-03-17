@@ -16,7 +16,7 @@ type RESTServiceServerBase struct {
 	*Core
 }
 
-var _ iam.RESTServiceClientServer = &RESTServiceServerBase{}
+var _ iam.ConsumerRESTServer = &RESTServiceServerBase{}
 
 func RESTServiceServerWith(iamServerCore *Core) *RESTServiceServerBase {
 	if iamServerCore == nil {

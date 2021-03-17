@@ -41,7 +41,7 @@ type Core struct {
 	registeredUserInstanceIDCache *lru.ARCCache
 	deletedUserInstanceIDCache    *lru.ARCCache
 
-	iam.ServiceConsumerServer
+	iam.ConsumerServer
 
 	applicationDataProvider iam.ApplicationDataProvider
 	mediaStore              *mediastore.Store
@@ -126,12 +126,12 @@ func NewCoreByConfig(
 		pnVerifier:                    pnVerifier,
 	}
 
-	svcForServer, err := iam.NewServiceConsumerServer(nil, jwtKeyChain, inst)
+	svcForServer, err := iam.NewConsumerServer(nil, jwtKeyChain, inst)
 	if err != nil {
 		panic(err)
 	}
 
-	inst.ServiceConsumerServer = svcForServer
+	inst.ConsumerServer = svcForServer
 
 	return inst, nil
 }

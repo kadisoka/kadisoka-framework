@@ -17,16 +17,6 @@ type GRPCServiceClient interface {
 	) context.Context
 }
 
-// GRPCServiceClientServer is an interface which contains utilities for
-// IAM service clients to handle requests from other clients.
-type GRPCServiceClientServer interface {
-	// GRPCCallContext loads authorization context from
-	// gRPC call context.
-	GRPCCallContext(
-		grpcContext context.Context,
-	) (*GRPCCallContext, error)
-}
-
 type GRPCCallContext struct {
 	CallContext
 }

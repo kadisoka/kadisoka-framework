@@ -11,7 +11,7 @@ import (
 )
 
 type Core struct {
-	iamSvc iam.ServiceConsumerServer
+	iamSvc iam.ConsumerServer
 }
 
 func (srvCore *Core) RESTRequestContext(

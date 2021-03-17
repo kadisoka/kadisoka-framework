@@ -20,17 +20,17 @@ func NewAppSimple(envVarsPrefix string) (*App, error) {
 	}, nil
 }
 
-func NewConsumerServerAppSimple(envVarsPrefix string) (*ConsumerServerApp, error) {
+func NewResourceServerAppSimple(envVarsPrefix string) (*ResourceServerApp, error) {
 	appApp := app.Instance()
 
-	svc, err := NewServiceConsumerServerSimple(appApp.InstanceID(), envVarsPrefix)
+	svc, err := NewConsumerServerSimple(appApp.InstanceID(), envVarsPrefix)
 	if err != nil {
 		return nil, errors.Wrap("service client initialization", err)
 	}
 
-	return &ConsumerServerApp{
-		App:                   appApp,
-		ServiceConsumerServer: svc,
+	return &ResourceServerApp{
+		App:            appApp,
+		ConsumerServer: svc,
 	}, nil
 }
 
@@ -39,7 +39,7 @@ type App struct {
 	ServiceClient
 }
 
-type ConsumerServerApp struct {
+type ResourceServerApp struct {
 	app.App
-	ServiceConsumerServer
+	ConsumerServer
 }

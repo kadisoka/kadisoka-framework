@@ -16,14 +16,6 @@ type RESTServiceClient interface {
 	) http.Header
 }
 
-// RESTServiceClientServer is an interface which contains utilities for
-// IAM service clients to handle requests from other clients.
-type RESTServiceClientServer interface {
-	// RESTRequestContext returns a RESTRequestContext instance for the request.
-	// This function will always return an instance even if there's an error.
-	RESTRequestContext(*http.Request) (*RESTRequestContext, error)
-}
-
 type RESTRequestContext struct {
 	CallContext
 	Request *http.Request
