@@ -156,16 +156,16 @@ class _MyHomePageState extends State<MyHomePage> {
     showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
-          return SimpleDialog(
-            title: const Text('Select assignment'),
-            children: <Widget>[
-              SimpleDialogOption(
+          return AlertDialog(
+            title: const Text('Sign out?'),
+            actions: <Widget>[
+              TextButton(
                 onPressed: () {
                   Navigator.pop(context, false);
                 },
                 child: const Text('Cancel'),
               ),
-              SimpleDialogOption(
+              TextButton(
                 onPressed: () {
                   Navigator.pop(context, true);
                 },
@@ -174,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ],
           );
         }).then((value) {
-      if (value) {
+      if (value == true) {
         _iamService.signOut().then((value) {
           if (mounted) {
             setState(() {});
