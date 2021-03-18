@@ -19,7 +19,11 @@ import (
 
 var log = logging.NewPkgLogger()
 
-func NewByEnv(envVarsPrefix string, defaultConfig *Config) (*App, error) {
+func NewByEnv(
+	appBase app.App,
+	envVarsPrefix string,
+	defaultConfig *Config,
+) (*App, error) {
 	cfg := defaultConfig
 	if cfg == nil {
 		cfg = &Config{}
@@ -32,12 +36,12 @@ func NewByEnv(envVarsPrefix string, defaultConfig *Config) (*App, error) {
 	resolveConfig(cfg)
 
 	log.Info().Msg("Initializing server app...")
-	srvApp, err := newWithoutServices(*cfg)
+	srvApp, err := newWithoutServices(appBase, *cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("App initialization")
 	}
 
-	err = srvApp.initServers(*cfg)
+	err = srvApp.initServers(appBase, *cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -45,10 +49,14 @@ func NewByEnv(envVarsPrefix string, defaultConfig *Config) (*App, error) {
 	return srvApp, nil
 }
 
-func NewWithCombinedHTTPServers(cfg Config, mux *http.ServeMux) (*App, error) {
+func NewWithCombinedHTTPServers(
+	appBase app.App,
+	cfg Config,
+	mux *http.ServeMux,
+) (*App, error) {
 	resolveConfig(&cfg)
 
-	srvApp, err := newWithoutServices(cfg)
+	srvApp, err := newWithoutServices(appBase, cfg)
 	if err != nil {
 		return nil, errors.Wrap("app initialization", err)
 	}
@@ -58,6 +66,7 @@ func NewWithCombinedHTTPServers(cfg Config, mux *http.ServeMux) (*App, error) {
 	if cfg.RESTEnabled {
 		log.Info().Msg("Initializing REST server...")
 		restServer, err := rest.NewServer(
+			appBase,
 			*cfg.REST,
 			iamServerCore,
 			&cfg.WebUI.URLs)
@@ -128,21 +137,19 @@ func setUpWebUIServer(srvApp *App, cfg Config) (*webui.Server, error) {
 	return webUIServer, nil
 }
 
-func newWithoutServices(appCfg Config) (*App, error) {
-	appApp := app.Instance()
-
+func newWithoutServices(appBase app.App, appCfg Config) (*App, error) {
 	var realmInfo realm.Info
 	if appCfg.RealmInfo != nil {
 		realmInfo = *appCfg.RealmInfo
 	}
 
-	srvCore, err := iamserver.NewCoreByConfig(appCfg.Core, appApp, realmInfo)
+	srvCore, err := iamserver.NewCoreByConfig(appCfg.Core, appBase, realmInfo)
 	if err != nil {
 		return nil, errors.Wrap("core initialization", err)
 	}
 
 	return &App{
-		App:  appApp,
+		App:  appBase,
 		core: srvCore,
 	}, nil
 }
@@ -187,12 +194,13 @@ type App struct {
 // RealmInfo returns information about the realm of the app.
 func (srvApp App) RealmInfo() realm.Info { return srvApp.core.RealmInfo() }
 
-func (srvApp *App) initServers(cfg Config) error {
+func (srvApp *App) initServers(appBase app.App, cfg Config) error {
 	iamServerCore := srvApp.core
 
 	if cfg.RESTEnabled {
 		log.Info().Msg("Initializing REST API server...")
 		restServer, err := rest.NewServer(
+			appBase,
 			*cfg.REST,
 			iamServerCore,
 			&cfg.WebUI.URLs)

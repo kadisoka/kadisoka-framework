@@ -35,16 +35,19 @@ func main() {
 	fmt.Fprintf(os.Stderr,
 		"%s revision %s built at %s\n",
 		appName, revisionID, buildTimestamp)
-	app.Init(app.Info{
+	appBase, err := app.Init(app.Info{
 		Name: appName,
 		BuildInfo: app.BuildInfo{
 			RevisionID: revisionID,
 			Timestamp:  buildTimestamp,
 		},
 	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("App initialization")
+	}
 
 	log.Info().Msg("Initializing app...")
-	svcApp, err := iam.NewConsumerServerAppSimple("IAM_")
+	svcApp, err := iam.NewConsumerServerAppSimple(appBase, "IAM_")
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
 	}

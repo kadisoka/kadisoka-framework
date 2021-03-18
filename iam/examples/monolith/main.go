@@ -29,15 +29,18 @@ func main() {
 	fmt.Fprintf(os.Stderr,
 		"%s revision %s built at %s\n",
 		appName, revisionID, buildTimestamp)
-	app.Init(app.Info{
+	appBase, err := app.Init(app.Info{
 		Name: appName,
 		BuildInfo: app.BuildInfo{
 			RevisionID: revisionID,
 			Timestamp:  buildTimestamp,
 		},
 	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("App initialization")
+	}
 
-	err := initApp()
+	err = initApp(appBase)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Servers initialization")
 	}
@@ -53,7 +56,7 @@ type Config struct {
 	WebUI webui.ServerConfig `env:"WEBUI"`
 }
 
-func initApp() error {
+func initApp(appBase app.App) error {
 	curDir, err := os.Getwd()
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
@@ -94,7 +97,7 @@ func initApp() error {
 
 	// Init IAM core but don't let it init the services. We'll init
 	// the services in our application.
-	_, err = iamapp.NewWithCombinedHTTPServers(cfg.IAM, mux)
+	_, err = iamapp.NewWithCombinedHTTPServers(appBase, cfg.IAM, mux)
 	if err != nil {
 		log.Fatal().Err(err).Msg("IAM initialization")
 	}

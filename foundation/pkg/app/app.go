@@ -8,8 +8,6 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
-const EnvVarsPrefixDefault = "APP_"
-
 // App abstracts the application itself. There should be only one instance
 // for a running instance of an app.
 type App interface {
@@ -85,9 +83,12 @@ func Instance() App {
 	return defApp
 }
 
+// Instantiate global instance of App with the default implementation.
 func Init(appInfo Info) (App, error) {
-	var err error
+	err := errors.Msg("already initialized")
 	defAppOnce.Do(func() {
+		err = nil
+
 		if appInfo.BuildInfo.RevisionID == "" {
 			err = errors.ArgMsg("appInfo.BuildInfo.RevisionID", "empty")
 			return
@@ -131,4 +132,14 @@ func Init(appInfo Info) (App, error) {
 	}
 
 	return defApp, nil
+}
+
+// InitCustom
+func InitCustom(customApp App) error {
+	err := errors.Msg("already initialized")
+	defAppOnce.Do(func() {
+		err = nil
+		defApp = customApp
+	})
+	return err
 }

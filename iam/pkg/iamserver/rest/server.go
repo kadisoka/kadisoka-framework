@@ -94,6 +94,7 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServer(
+	appApp app.App,
 	config ServerConfig,
 	iamServerCore *iamserver.Core,
 	webUIURLs *iam.WebUIURLs, //TODO: add this to server core or add to ServerConfig
@@ -142,7 +143,7 @@ func NewServer(
 		WebServices: container.RegisteredWebServices(),
 		APIPath:     apiSpecPath,
 		PostBuildSwaggerObjectHandler: func(swaggerSpec *spec.Swagger) {
-			processSwaggerSpec(swaggerSpec, secDefs)
+			processSwaggerSpec(appApp.AppInfo().BuildInfo, swaggerSpec, secDefs)
 		},
 	}))
 
@@ -209,10 +210,10 @@ func initRESTV1Services(
 }
 
 func processSwaggerSpec(
+	buildInfo app.BuildInfo,
 	swaggerSpec *spec.Swagger,
 	secDefs spec.SecurityDefinitions,
 ) {
-	buildInfo := app.Instance().AppInfo().BuildInfo
 	rev := buildInfo.RevisionID
 	if rev != "unknown" && len(rev) > 7 {
 		rev = rev[:7]

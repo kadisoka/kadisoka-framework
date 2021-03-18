@@ -30,15 +30,18 @@ func main() {
 	fmt.Fprintf(os.Stderr,
 		"%s revision %s built at %s\n",
 		appName, revisionID, buildTimestamp)
-	app.Init(app.Info{
+	appBase, err := app.Init(app.Info{
 		Name: appName,
 		BuildInfo: app.BuildInfo{
 			RevisionID: revisionID,
 			Timestamp:  buildTimestamp,
 		},
 	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("App initialization")
+	}
 
-	srvApp, err := initApp()
+	srvApp, err := initApp(appBase)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Servers initialization")
 	}
@@ -57,7 +60,7 @@ func main() {
 	srvApp.Run()
 }
 
-func initApp() (app.App, error) {
+func initApp(appBase app.App) (app.App, error) {
 	envVarsPrefix := "IAM_"
 
 	realmInfo, err := realm.InfoFromEnvOrDefault("")
@@ -88,7 +91,7 @@ func initApp() (app.App, error) {
 		},
 	}
 
-	srvApp, err := srvapp.NewByEnv(envVarsPrefix, &cfg)
+	srvApp, err := srvapp.NewByEnv(appBase, envVarsPrefix, &cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("App initialization")
 	}
