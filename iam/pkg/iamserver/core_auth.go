@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/doug-martin/goqu/v9"
 	"github.com/lib/pq"
 	"github.com/square/go-jose/v3/jwt"
 
@@ -36,7 +37,7 @@ func (core *Core) GenerateAccessTokenJWT(
 		return "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
 	}
 
-	sessionRef, issueTime, err := core.
+	sessionRef, issueTime, expiry, err := core.
 		issueSession(callCtx, terminalRef, userRef)
 	if err != nil {
 		return "", err
@@ -47,7 +48,7 @@ func (core *Core) GenerateAccessTokenJWT(
 			ID:       sessionRef.AZERText(),
 			IssuedAt: jwt.NewNumericDate(issueTime),
 			Issuer:   core.RealmName(),
-			Expiry:   jwt.NewNumericDate(issueTime.Add(iam.AccessTokenTTLDefault)),
+			Expiry:   jwt.NewNumericDate(expiry),
 			Subject:  userRef.AZERText(),
 		},
 		AuthorizedParty: terminalRef.Application().AZERText(),
@@ -97,13 +98,19 @@ func (core *Core) issueSession(
 	callCtx iam.CallContext,
 	terminalRef iam.TerminalRefKey,
 	userRef iam.UserRefKey,
-) (sessionRef iam.SessionRefKey, issueTime time.Time, err error) {
+) (
+	sessionRef iam.SessionRefKey,
+	issueTime time.Time,
+	expiry time.Time,
+	err error,
+) {
 	ctxAuth := callCtx.Authorization()
 
 	const attemptNumMax = 5
 
 	timeZero := time.Time{}
 	sessionStartTime := timeZero
+	sessionExpiry := timeZero
 	var sessionID iam.SessionID
 
 	//TODO: make this more random. using timestamp might cause some security
@@ -123,19 +130,26 @@ func (core *Core) issueSession(
 
 	for attemptNum := 0; ; attemptNum++ {
 		sessionStartTime = time.Now().UTC()
+		sessionExpiry = sessionStartTime.Add(iam.AccessTokenTTLDefault)
 		sessionID, err = genSessionID(sessionStartTime.Unix())
 		if err != nil {
-			return iam.SessionRefKeyZero(), timeZero, err
+			return iam.SessionRefKeyZero(), timeZero, timeZero, err
 		}
+		sqlString, _, _ := goqu.
+			Insert(sessionDBTableName).
+			Rows(
+				goqu.Record{
+					"terminal_id": terminalRef.ID().PrimitiveValue(),
+					"id":          sessionID.PrimitiveValue(),
+					"expiry":      sessionExpiry,
+					"c_ts":        sessionStartTime,
+					"c_tid":       ctxAuth.TerminalIDPtr(),
+					"c_uid":       ctxAuth.UserIDPtr(),
+				},
+			).
+			ToSQL()
 		_, err = core.db.
-			Exec(
-				`INSERT INTO `+sessionDBTableName+` (`+
-					`terminal_id, id, c_ts, c_uid, c_tid`+
-					`) VALUES (`+
-					`$1, $2, $3, $4, $5`+
-					`)`,
-				terminalRef.ID().PrimitiveValue(), sessionID.PrimitiveValue(),
-				sessionStartTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr())
+			Exec(sqlString)
 		if err == nil {
 			break
 		}
@@ -145,13 +159,14 @@ func (core *Core) issueSession(
 			pqErr.Code == "23505" &&
 			pqErr.Constraint == sessionDBTableName+"_pkey" {
 			if attemptNum >= attemptNumMax {
-				return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert max attempts", err)
+				return iam.SessionRefKeyZero(), timeZero, timeZero,
+					errors.Wrap("insert max attempts", err)
 			}
 			continue
 		}
 
-		return iam.SessionRefKeyZero(), timeZero, errors.Wrap("insert", err)
+		return iam.SessionRefKeyZero(), timeZero, timeZero, errors.Wrap("insert", err)
 	}
 
-	return iam.NewSessionRefKey(terminalRef, sessionID), sessionStartTime, nil
+	return iam.NewSessionRefKey(terminalRef, sessionID), sessionStartTime, sessionExpiry, nil
 }

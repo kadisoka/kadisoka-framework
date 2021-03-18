@@ -147,8 +147,8 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	appRef, err := iam.ApplicationRefKeyFromAZERText(appRefArgVal)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).
-			Msgf("Invalid field form.client_id %v", appRefArgVal)
+			Warn().Err(err).Str("form.client_id", appRefArgVal).
+			Msg("Invalid field value")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -166,18 +166,25 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 
 	client, err := restSrv.serverCore.ApplicationByRefKey(appRef)
 	if err != nil {
-		panic(err)
+		logCtx(reqCtx).
+			Error().Err(err).Str("client_id", appRef.AZERText()).
+			Msg("ApplicationByRefKey")
+		rest.RespondTo(resp).EmptyError(
+			http.StatusInternalServerError)
+		return
 	}
 	if client == nil {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client ID: %v", appRef)
+			Warn().Str("client_id", appRef.AZERText()).
+			Msg("No applications with the specified client_id")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
 	}
 	if !appRef.ID().IsUserAgentAuthorizationConfidential() {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client type for ID %v", appRef)
+			Warn().Str("client_id", appRef.AZERText()).
+			Msg("Requires ua-confidential client type")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return

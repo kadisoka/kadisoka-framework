@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"runtime"
 	"strings"
@@ -292,7 +293,11 @@ func (svcClient *serviceClientCore) AccessTokenByAuthorizationCodeGrant(
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		panic("Unexpected response status: " + resp.Status)
+		var errResp oauth2.ErrorResponse
+		err = json.NewDecoder(resp.Body).
+			Decode(&errResp)
+		return "", errors.Msg(fmt.Sprintf("unable to exchange authorization code with access token: %v - %v",
+			errResp.Error, errResp.ErrorDescription))
 	}
 
 	var tokenResp oauth2.TokenResponse

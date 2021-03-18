@@ -22,7 +22,7 @@ CREATE TABLE user_dt (
 CREATE TABLE terminal_dt (
     id              bigint PRIMARY KEY,
     application_id  integer NOT NULL,
-    user_id         bigint, --TODO: not null. use zero if it's for a non-user
+    user_id         bigint NOT NULL, -- use zero if it's for a non-user
 
     c_ts              timestamp with time zone NOT NULL DEFAULT now(),
     c_tid             bigint,
@@ -59,6 +59,8 @@ CREATE TABLE session_dt (
     d_ts   timestamp with time zone,
     d_tid  bigint,
     d_uid  bigint,
+
+    expiry  timestamp with time zone,
 
     PRIMARY KEY (terminal_id, id),
     CHECK (terminal_id > 0 AND id > 0)
