@@ -29,8 +29,8 @@ func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
 		return nil, iam.ErrOperationContextMissing
 	}
 
-	authCtx := callCtx.Authorization()
-	if !authCtx.IsUser(userRef) {
+	ctxAuth := callCtx.Authorization()
+	if !ctxAuth.IsUser(userRef) {
 		return nil, iam.ErrOperationNotAllowed
 	}
 	//TODO(exa): ensure that the context user has the privilege

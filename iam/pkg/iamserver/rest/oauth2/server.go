@@ -5,6 +5,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
+	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
@@ -69,7 +70,11 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		GET("/authorize").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		To(restSrv.getAuthorize).
-		Doc("OAuth 2.0 conforming authorization endpoint").
+		Doc("OAuth 2.0 authorization endpoint").
+		Notes(
+			"This endpoint is the standard-conforming endpoint.\n\nThis "+
+				"endpoint is used by client/consumer applications to request "+
+				"authorization for any of the users.").
 		Param(restWS.
 			QueryParameter(
 				"client_id", "The ID of the client which makes the request").
@@ -91,7 +96,17 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		POST("/authorize").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		To(restSrv.postAuthorize).
-		Doc("Authorization endpoint (for use with web front-end)").
+		Doc("Authorization endpoint").
+		Notes(
+			"This endpoint is not defined in the standard.\n\nThis endpoint "+
+				"is used by the web front-end when a resource owner granted "+
+				"the authorization. All the parameters are mirroring the "+
+				"standard endpoint except that this endpoint requires "+
+				"bearer access token as the value of Authorization header.").
+		Param(restWS.
+			HeaderParameter(
+				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+			Required(true)).
 		Param(restWS.
 			FormParameter(
 				"client_id", "The ID of the client which makes the request").
@@ -123,11 +138,12 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		To(restSrv.postToken).
 		Doc("OAuth token endpoint").
-		Notes("The token endpoint is used by the client to obtain an "+
-			"access token by presenting its authorization grant or "+
-			"refresh token. The token endpoint is used with every "+
-			"authorization grant except for the implicit grant type "+
-			"(since an access token is issued directly). RFC 6749 § 3.2.").
+		Notes(
+			"The token endpoint is used by the client to obtain an "+
+				"access token by presenting its authorization grant or "+
+				"refresh token. The token endpoint is used with every "+
+				"authorization grant except for the implicit grant type "+
+				"(since an access token is issued directly). RFC 6749 § 3.2.").
 		Param(restWS.
 			HeaderParameter(
 				"Authorization", sec.AuthorizationBasicOAuth2ClientCredentials.String()).
@@ -151,4 +167,20 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Returns(http.StatusUnauthorized, "Client authorization check failure", oauth2.ErrorResponse{}))
 
 	return restWS
+}
+
+// Parse preferred languages from request
+func (restSrv *Server) parseRequestAcceptLanguage(
+	req *restful.Request,
+	reqCtx *iam.RESTRequestContext,
+) (langTagSet []language.Tag) {
+	langTagSet, _, err := language.ParseAcceptLanguage(
+		req.Request.Header.Get("Accept-Language"))
+	if err != nil {
+		logCtx(reqCtx).
+			Warn().Err(err).
+			Msg("Unable to parse preferred languages from HTTP header")
+	}
+
+	return langTagSet
 }

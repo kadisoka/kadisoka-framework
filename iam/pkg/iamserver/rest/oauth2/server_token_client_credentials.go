@@ -59,7 +59,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		return
 	}
 
-	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx, "")
+	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx)
 	termDisplayName := ""
 
 	termRef, termSecret, err := restSrv.serverCore.

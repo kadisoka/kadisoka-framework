@@ -44,7 +44,8 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		// Only for non-confidential user-agents
 		if appRef := reqApp.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
 			logReq(req.Request).
-				Warn().Msgf("Client %v is not allowed to use grant type 'authorization_code'", reqApp.ID)
+				Warn().Str("client_id", reqApp.ID.AZERText()).
+				Msg("Client is not allowed to use grant type 'authorization_code' with OTP")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
 			return
@@ -53,15 +54,18 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		parts := strings.Split(authCode, ":")
 		if len(parts) != 3 {
 			logReq(req.Request).
-				Warn().Msgf("Authorization code contains invalid number of parts (%v)", len(parts))
+				Warn().Str("code", authCode).
+				Msg("Code contains invalid number of parts")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorInvalidGrant)
 			return
 		}
-		termRef, err = iam.TerminalRefKeyFromAZERText(parts[1])
+		termRefStr := parts[1]
+		termRef, err = iam.TerminalRefKeyFromAZERText(termRefStr)
 		if err != nil || termRef.IsNotValid() {
 			logReq(req.Request).
-				Warn().Err(err).Msg("Auth code malformed")
+				Warn().Err(err).Str("code", authCode).
+				Msg("Code malformed")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorInvalidGrant)
 			return
@@ -71,7 +75,8 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		// Only for confidential user-agents
 		if appRef := reqApp.ID; !appRef.ID().IsUserAgentAuthorizationConfidential() {
 			logReq(req.Request).
-				Warn().Msgf("Client %v is not allowed to use grant type 'authorization_code'", reqApp.ID)
+				Warn().Str("client_id", reqApp.ID.AZERText()).
+				Msg("Client is not allowed to use grant type 'authorization_code'")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
 			return
@@ -80,7 +85,8 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		termRef, err = iam.TerminalRefKeyFromAZERText(authCode)
 		if err != nil || termRef.IsNotValid() {
 			logReq(req.Request).
-				Warn().Err(err).Msg("Auth code malformed")
+				Warn().Err(err).Str("code", authCode).
+				Msg("Code malformed")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorInvalidGrant)
 			return
@@ -97,6 +103,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 			oauth2.ErrorServerError)
 		return
 	}
+
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsValid() {
 		logCtx(reqCtx).

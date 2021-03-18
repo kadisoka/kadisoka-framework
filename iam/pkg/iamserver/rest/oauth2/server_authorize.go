@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
@@ -122,9 +121,9 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 
 	targetURL := restSrv.signInURL + "?" + inQuery.Encode()
 	http.Redirect(w, r, targetURL, http.StatusFound)
-	return
 }
 
+//TODO: some stuff should be moved into core
 func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSrv.RESTRequestContext(req.Request)
 	if err != nil {
@@ -135,9 +134,11 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 			http.StatusUnauthorized)
 		return
 	}
-	if reqCtx.Authorization().IsValid() {
+
+	ctxAuth := reqCtx.Authorization()
+	if !ctxAuth.IsUserContext() {
 		logCtx(reqCtx).
-			Warn().Msg("Request context must not contain any valid authorization")
+			Warn().Msg("User context required")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusUnauthorized)
 		return
@@ -148,7 +149,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Str("form.client_id", appRefArgVal).
-			Msg("Invalid field value")
+			Msg("Malformed")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -158,7 +159,8 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	responseType := oauth2.ResponseTypeFromString(responseTypeArgVal)
 	if responseType != oauth2.ResponseTypeCode {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid field form.response_type %v: unexpected value", responseType)
+			Warn().Str("form.response_type", responseType.String()).
+			Msg("Unsupported")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -176,7 +178,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	if client == nil {
 		logCtx(reqCtx).
 			Warn().Str("client_id", appRef.AZERText()).
-			Msg("No applications with the specified client_id")
+			Msg("Not found")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -209,8 +211,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 
 	state, _ := req.BodyParameter("state")
-	ctxAuth := reqCtx.Authorization()
-	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx, "")
+	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx)
 	termDisplayName := ""
 	var termRef iam.TerminalRefKey
 
@@ -270,37 +271,4 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		&iam.OAuth2AuthorizePostResponse{
 			RedirectURI: redirectURI.String(),
 		})
-}
-
-// Parse preferred languages from request
-func (restSrv *Server) parseRequestAcceptLanguage(
-	req *restful.Request,
-	reqCtx *iam.RESTRequestContext,
-	defaultPreferredLanguages string,
-) (langTagSet []language.Tag) {
-	termLangTags, _, err := language.ParseAcceptLanguage(defaultPreferredLanguages)
-	if defaultPreferredLanguages != "" && err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).
-			Msgf("Unable to parse preferred languages from body %q", defaultPreferredLanguages)
-	}
-	if len(termLangTags) == 0 || err != nil {
-		var headerLangTags []language.Tag
-		headerLangTags, _, err = language.ParseAcceptLanguage(req.Request.Header.Get("Accept-Language"))
-		if err != nil {
-			logCtx(reqCtx).
-				Warn().Err(err).
-				Msg("Unable to parse preferred languages from HTTP header")
-		} else {
-			if len(headerLangTags) > 0 {
-				termLangTags = headerLangTags
-			}
-		}
-	}
-
-	for _, langTag := range termLangTags {
-		langTagSet = append(langTagSet, langTag)
-	}
-
-	return langTagSet
 }

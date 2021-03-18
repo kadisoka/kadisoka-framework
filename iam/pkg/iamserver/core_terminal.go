@@ -547,9 +547,9 @@ func (core *Core) DeleteTerminal(
 	callCtx iam.CallContext,
 	termRefToDelete iam.TerminalRefKey,
 ) (stateChanged bool, err error) {
-	authCtx := callCtx.Authorization()
+	ctxAuth := callCtx.Authorization()
 
-	if !authCtx.IsTerminal(termRefToDelete) {
+	if !ctxAuth.IsTerminal(termRefToDelete) {
 		return false, iam.ErrOperationNotAllowed
 	}
 
@@ -565,8 +565,8 @@ func (core *Core) DeleteTerminal(
 		Set(
 			goqu.Record{
 				"d_ts":  ctxTime,
-				"d_tid": authCtx.TerminalID().PrimitiveValue(),
-				"d_uid": authCtx.UserID().PrimitiveValue(),
+				"d_tid": ctxAuth.TerminalID().PrimitiveValue(),
+				"d_uid": ctxAuth.UserID().PrimitiveValue(),
 			},
 		).
 		ToSQL()
