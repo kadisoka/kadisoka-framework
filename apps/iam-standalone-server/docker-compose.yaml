@@ -28,7 +28,7 @@ services:
   iam-server:
     build:
       context: ../..
-      dockerfile: ./apps/iam-standalone-server/Dockerfile
+      dockerfile: ./iam/iam-server/Dockerfile
     restart: on-failure
     depends_on:
       - iam-db
@@ -40,10 +40,10 @@ services:
       - "11131:50051"
     volumes:
       # To simulate secrets in Swarm mode
-      - ./etc/kadisoka-iam/secrets:/run/secrets:ro
+      - ./etc/iam-server/secrets:/run/secrets:ro
       - ./var/iam-server/local-object-store:/object-store-data
     env_file:
-      - ./etc/kadisoka-iam/secrets/config.env
+      - ./etc/iam-server/secrets/config.env
     environment:
       - REALM_NAME=Kadisoka Standalone IAM Server
       - IAM_GRPC_ENABLED=true

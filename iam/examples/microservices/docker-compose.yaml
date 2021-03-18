@@ -59,7 +59,7 @@ services:
     ports:
       - 11201:8080
     environment:
-      - IAM_CLIENT_ID=KAp02d0b5q4v
+      - IAM_CLIENT_ID=KAp02dr7r3y3
       - IAM_CLIENT_SECRET=v1eM1nmPyHXXXi0HHFAIzQ
       - LOG_PRETTY=true
       - IAM_SERVER_BASE_URL=http://iam-server:9080/rest/v1
