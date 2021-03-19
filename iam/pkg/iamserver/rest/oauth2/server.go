@@ -5,7 +5,6 @@ import (
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
@@ -167,20 +166,4 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Returns(http.StatusUnauthorized, "Client authorization check failure", oauth2.ErrorResponse{}))
 
 	return restWS
-}
-
-// Parse preferred languages from request
-func (restSrv *Server) parseRequestAcceptLanguage(
-	req *restful.Request,
-	reqCtx *iam.RESTRequestContext,
-) (langTagSet []language.Tag) {
-	langTagSet, _, err := language.ParseAcceptLanguage(
-		req.Request.Header.Get("Accept-Language"))
-	if err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).
-			Msg("Unable to parse preferred languages from HTTP header")
-	}
-
-	return langTagSet
 }

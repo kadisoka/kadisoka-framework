@@ -3,8 +3,6 @@ package iamserver
 import (
 	"time"
 
-	"golang.org/x/text/language"
-
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
@@ -13,15 +11,29 @@ import (
 //TODO: some data should be taken from the context instead of
 // provided in here.
 type TerminalRegistrationInput struct {
-	ApplicationRef iam.ApplicationRefKey
-	UserRef        iam.UserRefKey
+	Context        iam.CallContext
+	ApplicationRef iam.ApplicationRefKey //TODO: get from context
+	Data           TerminalRegistrationInputData
+}
 
-	DisplayName    string
-	AcceptLanguage []language.Tag //TODO: remove this (?)
+type TerminalRegistrationInputData struct {
+	UserRef iam.UserRefKey
+
+	DisplayName string
 
 	VerificationType string
 	VerificationID   int64
 	VerificationTime *time.Time
+}
+
+type TerminalRegistrationOutput struct {
+	Context iam.OpOutputContext
+	Data    TerminalRegistrationOutputData
+}
+
+type TerminalRegistrationOutputData struct {
+	TerminalRef    iam.TerminalRefKey
+	TerminalSecret string
 }
 
 //TODO: use generics when it's available
@@ -53,9 +65,7 @@ type TerminalAuthorizationByPhoneNumberStartInputData struct {
 }
 
 type TerminalAuthorizationStartInputBaseData struct {
-	DisplayName            string
-	UserAgentString        string
-	UserPreferredLanguages []language.Tag
+	DisplayName string
 }
 
 type TerminalAuthorizationStartOutput struct {

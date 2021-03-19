@@ -59,27 +59,29 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		return
 	}
 
-	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx)
 	termDisplayName := ""
 
-	termRef, termSecret, err := restSrv.serverCore.
-		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-			ApplicationRef:   reqApp.ID,
-			UserRef:          ctxAuth.UserRef(),
-			DisplayName:      termDisplayName,
-			AcceptLanguage:   preferredLanguages,
-			VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
-			VerificationID:   0,
-		})
-	if err != nil {
+	regOutput := restSrv.serverCore.
+		RegisterTerminal(iamserver.TerminalRegistrationInput{
+			Context:        reqCtx,
+			ApplicationRef: reqApp.ID,
+			Data: iamserver.TerminalRegistrationInputData{
+				UserRef:          ctxAuth.UserRef(),
+				DisplayName:      termDisplayName,
+				VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
+				VerificationID:   0,
+			}})
+	if regOutput.Context.Err != nil {
 		logCtx(reqCtx).
-			Error().Err(err).
+			Error().Err(regOutput.Context.Err).
 			Msg("RegisterTerminal")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
 	}
 
+	termRef := regOutput.Data.TerminalRef
+	termSecret := regOutput.Data.TerminalSecret
 	issueTime := time.Now().UTC()
 
 	accessToken, err := restSrv.serverCore.

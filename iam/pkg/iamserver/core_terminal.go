@@ -104,7 +104,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := input.Data.UserPreferredLanguages
+	userPreferredLanguages := input.Context.OriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.pnVerifier.
 		StartVerification(callCtx, phoneNumber,
@@ -121,17 +121,17 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 				Err: errors.Wrap("pnVerifier.StartVerification", err)}}
 	}
 
-	terminalRef, _, err := core.RegisterTerminal(callCtx,
-		TerminalRegistrationInput{
-			ApplicationRef:   input.ApplicationRef,
+	regOutput := core.RegisterTerminal(TerminalRegistrationInput{
+		Context:        callCtx,
+		ApplicationRef: input.ApplicationRef,
+		Data: TerminalRegistrationInputData{
 			UserRef:          ownerUserRef,
 			DisplayName:      input.Data.DisplayName,
-			AcceptLanguage:   userPreferredLanguages,
 			VerificationType: iam.TerminalVerificationResourceTypePhoneNumber,
 			VerificationID:   verificationID,
-		})
-	if err != nil {
-		panic(err)
+		}})
+	if regOutput.Context.Err != nil {
+		panic(regOutput.Context.Err)
 	}
 
 	return TerminalAuthorizationStartOutput{
@@ -139,7 +139,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 			Mutated: true,
 		},
 		Data: TerminalAuthorizationStartOutputData{
-			TerminalRef:                terminalRef,
+			TerminalRef:                regOutput.Data.TerminalRef,
 			VerificationID:             verificationID,
 			VerificationCodeExpiryTime: verificationCodeExpiryTime,
 		},
@@ -201,7 +201,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := input.Data.UserPreferredLanguages
+	userPreferredLanguages := callCtx.OriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.eaVerifier.
 		StartVerification(callCtx, emailAddress,
@@ -218,17 +218,17 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 				Err: errors.Wrap("eaVerifier.StartVerification", err)}}
 	}
 
-	terminalRef, _, err := core.RegisterTerminal(callCtx,
-		TerminalRegistrationInput{
-			ApplicationRef:   input.ApplicationRef,
+	regOutput := core.RegisterTerminal(TerminalRegistrationInput{
+		Context:        callCtx,
+		ApplicationRef: input.ApplicationRef,
+		Data: TerminalRegistrationInputData{
 			UserRef:          ownerUserRef,
 			DisplayName:      input.Data.DisplayName,
-			AcceptLanguage:   userPreferredLanguages,
 			VerificationType: iam.TerminalVerificationResourceTypeEmailAddress,
 			VerificationID:   verificationID,
-		})
-	if err != nil {
-		panic(err)
+		}})
+	if regOutput.Context.Err != nil {
+		panic(regOutput.Context.Err)
 	}
 
 	return TerminalAuthorizationStartOutput{
@@ -236,7 +236,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 			Mutated: true,
 		},
 		Data: TerminalAuthorizationStartOutputData{
-			TerminalRef:                terminalRef,
+			TerminalRef:                regOutput.Data.TerminalRef,
 			VerificationID:             verificationID,
 			VerificationCodeExpiryTime: verificationCodeExpiryTime,
 		},
@@ -463,52 +463,68 @@ func (core *Core) GetTerminalInfo(
 // RegisterTerminal registers a terminal. This function returns terminal's
 // secret if the verification type is set to 'implicit'.
 func (core *Core) RegisterTerminal(
-	callCtx iam.CallContext,
 	input TerminalRegistrationInput,
-) (terminalRef iam.TerminalRefKey, secret string, err error) {
-	ctxAuth := callCtx.Authorization()
-
+) TerminalRegistrationOutput {
 	if input.ApplicationRef.IsNotValid() {
-		return iam.TerminalRefKeyZero(), "", errors.Arg("input.ClientID", nil)
+		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+			Err: errors.Arg("input", nil, errors.Ent("ApplicationRef", nil))}}
 	}
+
 	// Allow zero or a valid user ref.
-	if !input.UserRef.IsZero() && input.UserRef.IsNotValid() {
-		return iam.TerminalRefKeyZero(), "", errors.Arg("input.UserID", nil)
+	if !input.Data.UserRef.IsZero() && input.Data.UserRef.IsNotValid() {
+		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+			Err: errors.Arg("input", nil, errors.Ent("Data.UserRef", nil))}}
 	}
 
 	clientInfo, err := core.ApplicationByRefKey(input.ApplicationRef)
 	if err != nil {
-		return iam.TerminalRefKeyZero(), "", errors.ArgWrap("input.ClientID", "lookup", err)
+		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+			Err: errors.Wrap("ApplicationByRefKey", err)}}
 	}
 	if clientInfo == nil {
-		return iam.TerminalRefKeyZero(), "", errors.ArgMsg("input.ClientID", "reference invalid")
+		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+			Err: errors.Arg("input", nil, errors.EntMsg("ApplicationRef", "reference invalid"))}}
 	}
 
 	//TODO:
 	// - check verification type against client type
+	// - check user ref validity against verification type and client type
 	// - assert platform type againts client data
+
+	return core.registerTerminalNoAC(input)
+}
+
+func (core *Core) registerTerminalNoAC(
+	input TerminalRegistrationInput,
+) TerminalRegistrationOutput {
+	callCtx := input.Context
+	ctxAuth := callCtx.Authorization()
 
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	originInfo := callCtx.OriginInfo()
 
 	//var verificationID int64
 	var termSecret string
-	generateSecret := input.VerificationType == iam.TerminalVerificationResourceTypeOAuthClientCredentials
+	generateSecret := input.Data.VerificationType == iam.TerminalVerificationResourceTypeOAuthClientCredentials
 	if generateSecret {
 		termSecret = core.generateTerminalSecret()
-		input.VerificationTime = &ctxTime
+		input.Data.VerificationTime = &ctxTime
 	} else {
 		termSecret = ""
-		input.VerificationTime = nil
+		input.Data.VerificationTime = nil
 	}
 
-	termLangStrings := make([]string, 0, len(input.AcceptLanguage))
-	for _, tag := range input.AcceptLanguage {
-		termLangStrings = append(termLangStrings, tag.String())
+	acceptLangStrings := make([]string, 0, len(originInfo.AcceptLanguage))
+	for _, tag := range originInfo.AcceptLanguage {
+		acceptLangStrings = append(acceptLangStrings, tag.String())
 	}
 
 	//TODO: if id conflict, generate another id and retry
 	termID, err := core.generateTerminalID()
+	if err != nil {
+		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+			Err: errors.Wrap("ID generation", err)}}
+	}
 
 	sqlString, _, _ := goqu.
 		Insert(terminalDBTableName).
@@ -516,31 +532,37 @@ func (core *Core) RegisterTerminal(
 			goqu.Record{
 				"id":                termID.PrimitiveValue(),
 				"application_id":    input.ApplicationRef.ID().PrimitiveValue(),
-				"user_id":           input.UserRef.ID().PrimitiveValue(),
+				"user_id":           input.Data.UserRef.ID().PrimitiveValue(),
 				"secret":            termSecret,
 				"c_ts":              ctxTime,
 				"c_uid":             ctxAuth.UserIDPtr(),
 				"c_tid":             ctxAuth.TerminalIDPtr(),
 				"c_origin_address":  originInfo.Address,
 				"c_origin_env":      originInfo.EnvironmentString,
-				"display_name":      strings.TrimSpace(input.DisplayName),
-				"accept_language":   strings.Join(termLangStrings, ","),
-				"verification_type": input.VerificationType,
-				"verification_id":   input.VerificationID,
-				"verification_ts":   input.VerificationTime,
+				"display_name":      strings.TrimSpace(input.Data.DisplayName),
+				"accept_language":   strings.Join(acceptLangStrings, ","),
+				"verification_type": input.Data.VerificationType,
+				"verification_id":   input.Data.VerificationID,
+				"verification_ts":   input.Data.VerificationTime,
 			}).
 		ToSQL()
 
 	_, err = core.db.Exec(sqlString)
 	if err != nil {
-		return iam.TerminalRefKeyZero(), "", err
+		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+			Err: errors.Wrap("data insert", err)}}
 	}
 
-	terminalRef = iam.NewTerminalRefKey(input.ApplicationRef, input.UserRef, termID)
+	terminalRef := iam.NewTerminalRefKey(input.ApplicationRef, input.Data.UserRef, termID)
 	if generateSecret {
-		return terminalRef, termSecret, nil
+		return TerminalRegistrationOutput{Data: TerminalRegistrationOutputData{
+			TerminalRef:    terminalRef,
+			TerminalSecret: termSecret,
+		}}
 	}
-	return terminalRef, "", nil
+	return TerminalRegistrationOutput{Data: TerminalRegistrationOutputData{
+		TerminalRef: terminalRef,
+	}}
 }
 
 func (core *Core) DeleteTerminal(

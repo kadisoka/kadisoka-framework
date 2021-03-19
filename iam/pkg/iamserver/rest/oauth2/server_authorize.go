@@ -211,25 +211,26 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 
 	state, _ := req.BodyParameter("state")
-	preferredLanguages := restSrv.parseRequestAcceptLanguage(req, reqCtx)
 	termDisplayName := ""
 	var termRef iam.TerminalRefKey
 
 	switch responseType {
 	case oauth2.ResponseTypeCode:
-		termRef, _, err = restSrv.serverCore.
-			RegisterTerminal(reqCtx,
-				iamserver.TerminalRegistrationInput{
-					ApplicationRef:   appRef,
+		regOutput := restSrv.serverCore.
+			RegisterTerminal(iamserver.TerminalRegistrationInput{
+				Context:        reqCtx,
+				ApplicationRef: appRef,
+				Data: iamserver.TerminalRegistrationInputData{
 					UserRef:          ctxAuth.UserRef(),
 					DisplayName:      termDisplayName,
-					AcceptLanguage:   preferredLanguages,
 					VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
 					VerificationID:   0,
-				})
-		if err != nil {
-			panic(err)
+				}})
+		if regOutput.Context.Err != nil {
+			panic(regOutput.Context.Err)
 		}
+
+		termRef = regOutput.Data.TerminalRef
 
 		redirectURI.RawQuery = oauth2.MustQueryString(oauth2.AuthorizationResponse{
 			Code:  termRef.AZERText(),
@@ -237,21 +238,22 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		})
 
 	case oauth2.ResponseTypeToken:
-		termRef, _, err = restSrv.serverCore.
-			RegisterTerminal(reqCtx,
-				iamserver.TerminalRegistrationInput{
-					ApplicationRef:   appRef,
+		regOutput := restSrv.serverCore.
+			RegisterTerminal(iamserver.TerminalRegistrationInput{
+				Context:        reqCtx,
+				ApplicationRef: appRef,
+				Data: iamserver.TerminalRegistrationInputData{
 					UserRef:          ctxAuth.UserRef(),
 					DisplayName:      termDisplayName,
-					AcceptLanguage:   preferredLanguages,
 					VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
 					VerificationID:   0,
-				})
-		if err != nil {
-			panic(err)
+				}})
+		if regOutput.Context.Err != nil {
+			panic(regOutput.Context.Err)
 		}
 
 		issueTime := time.Now().UTC()
+		termRef = regOutput.Data.TerminalRef
 
 		tokenString, err := restSrv.serverCore.
 			GenerateAccessTokenJWT(reqCtx, termRef, ctxAuth.UserRef(), issueTime)

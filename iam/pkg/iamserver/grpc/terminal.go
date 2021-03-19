@@ -7,10 +7,8 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	pbtypes "github.com/gogo/protobuf/types"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
-	"golang.org/x/text/language"
 	"google.golang.org/grpc"
 	grpccodes "google.golang.org/grpc/codes"
-	grpcmd "google.golang.org/grpc/metadata"
 	grpcstatus "google.golang.org/grpc/status"
 
 	grpcerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc/errors"
@@ -54,16 +52,6 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		panic(err)
 	}
 
-	termLangTags := authServer.parseRequestAcceptLanguageTags(
-		reqProto.TerminalInfo.AcceptLanguage)
-
-	md, _ := grpcmd.FromIncomingContext(callCtx)
-	var userAgentString string
-	ual := md.Get("user-agent")
-	if len(ual) > 0 {
-		userAgentString = ual[0]
-	}
-
 	phoneNumber, err := iam.PhoneNumberFromString(reqProto.PhoneNumber)
 	if err != nil {
 		logCtx(reqCtx).
@@ -81,9 +69,7 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 					PhoneNumber:         phoneNumber,
 					VerificationMethods: nil,
 					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
-						DisplayName:            reqProto.TerminalInfo.DisplayName,
-						UserAgentString:        userAgentString,
-						UserPreferredLanguages: termLangTags,
+						DisplayName: reqProto.TerminalInfo.DisplayName,
 					},
 				},
 			})
@@ -226,14 +212,4 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 			SubjectUserId: userRef.AZERText(),
 		},
 	}, nil
-}
-
-func (authServer *TerminalAuthorizationServiceServer) parseRequestAcceptLanguageTags(
-	overrideAcceptLanguage string,
-) (termLangTags []language.Tag) {
-	termLangTags, _, err := language.ParseAcceptLanguage(overrideAcceptLanguage)
-	if err != nil {
-		return nil
-	}
-	return termLangTags
 }

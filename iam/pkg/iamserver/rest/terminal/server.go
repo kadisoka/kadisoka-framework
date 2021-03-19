@@ -8,7 +8,6 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
-	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
@@ -318,8 +317,6 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 		return
 	}
 
-	termLangTags := restSrv.parseRequestAcceptLanguageTags(reqCtx, "")
-
 	phoneNumber, err := iam.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName)
 	if err != nil {
 		logCtx(reqCtx).
@@ -347,9 +344,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 					PhoneNumber:         phoneNumber,
 					VerificationMethods: verificationMethods,
 					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
-						DisplayName:            terminalRegisterReq.DisplayName,
-						UserAgentString:        reqCtx.HTTPRequest().UserAgent(),
-						UserPreferredLanguages: termLangTags,
+						DisplayName: terminalRegisterReq.DisplayName,
 					},
 				},
 			})
@@ -393,7 +388,6 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 		return
 	}
 
-	termLangTags := restSrv.parseRequestAcceptLanguageTags(reqCtx, "")
 	emailAddressStr := terminalRegisterReq.VerificationResourceName
 	if !iam.IsValidEmailAddress(emailAddressStr) {
 		logCtx(reqCtx).
@@ -430,9 +424,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 					EmailAddress:        emailAddress,
 					VerificationMethods: verificationMethods,
 					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
-						DisplayName:            terminalRegisterReq.DisplayName,
-						UserAgentString:        reqCtx.HTTPRequest().UserAgent(),
-						UserPreferredLanguages: termLangTags,
+						DisplayName: terminalRegisterReq.DisplayName,
 					},
 				},
 			})
@@ -485,70 +477,27 @@ func (restSrv *Server) handleTerminalRegisterByImplicit(
 		return
 	}
 
-	//TODO: get from CallCtx
-	termLangStrings := restSrv.parseRequestAcceptLanguage(reqCtx, "")
 	termDisplayName := strings.TrimSpace(terminalRegisterReq.DisplayName)
 
-	termRef, termSecret, err := restSrv.serverCore.
-		RegisterTerminal(reqCtx, iamserver.TerminalRegistrationInput{
-			ApplicationRef:   authApp.ID,
-			UserRef:          iam.UserRefKeyZero(),
-			DisplayName:      termDisplayName,
-			AcceptLanguage:   termLangStrings,
-			VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
-			VerificationID:   0,
-		})
-	if err != nil {
-		panic(err)
+	regOutput := restSrv.serverCore.
+		RegisterTerminal(iamserver.TerminalRegistrationInput{
+			Context:        reqCtx,
+			ApplicationRef: authApp.ID,
+			Data: iamserver.TerminalRegistrationInputData{
+				UserRef:          iam.UserRefKeyZero(),
+				DisplayName:      termDisplayName,
+				VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
+				VerificationID:   0,
+			}})
+	if regOutput.Context.Err != nil {
+		panic(regOutput.Context.Err)
 	}
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID:     termRef.AZERText(),
-			TerminalSecret: termSecret,
+			TerminalID:     regOutput.Data.TerminalRef.AZERText(),
+			TerminalSecret: regOutput.Data.TerminalSecret,
 		})
-}
-
-// Parse accept languages from request
-func (restSrv *Server) parseRequestAcceptLanguageTags(
-	reqCtx *iam.RESTRequestContext,
-	overrideAcceptLanguage string,
-) (termLangTags []language.Tag) {
-	termLangTags, _, err := language.ParseAcceptLanguage(overrideAcceptLanguage)
-	if overrideAcceptLanguage != "" && err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).
-			Msgf("Unable to parse preferred languages from body %q", overrideAcceptLanguage)
-	}
-	if len(termLangTags) == 0 || err != nil {
-		if httpReq := reqCtx.HTTPRequest(); httpReq != nil {
-			var headerLangTags []language.Tag
-			headerLangTags, _, err = language.
-				ParseAcceptLanguage(httpReq.Header.Get("Accept-Language"))
-			if err != nil {
-				logCtx(reqCtx).
-					Warn().Err(err).Msg("Unable to parse preferred languages from HTTP header")
-			} else {
-				if len(headerLangTags) > 0 {
-					termLangTags = headerLangTags
-				}
-			}
-		}
-	}
-
-	return termLangTags
-}
-
-// Parse accept languages from request
-func (restSrv *Server) parseRequestAcceptLanguage(
-	reqCtx *iam.RESTRequestContext,
-	overrideAcceptLanguage string,
-) (langTagSet []language.Tag) {
-	termLangTags := restSrv.parseRequestAcceptLanguageTags(reqCtx, overrideAcceptLanguage)
-	for _, langTag := range termLangTags {
-		langTagSet = append(langTagSet, langTag)
-	}
-	return langTagSet
 }
 
 type terminalFCMRegistrationTokenPutRequest struct {

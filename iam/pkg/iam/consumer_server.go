@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/square/go-jose/v3/jwt"
 	"github.com/tomasen/realip"
+	"golang.org/x/text/language"
 	grpcmd "google.golang.org/grpc/metadata"
 	grpcpeer "google.golang.org/grpc/peer"
 
@@ -262,7 +263,26 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 	if peer, _ := grpcpeer.FromContext(grpcCallCtx); peer != nil {
 		remoteAddr = peer.Addr.String() //TODO: attempt to resolve if it's proxied
 	}
-	originInfo := api.CallOriginInfo{Address: remoteAddr}
+
+	var originEnvString string
+	var originAcceptLanguages []language.Tag
+
+	if md, mdOK := grpcmd.FromIncomingContext(grpcCallCtx); mdOK {
+		userAgentMDVal := md.Get("user-agent")
+		if len(userAgentMDVal) > 0 {
+			originEnvString = userAgentMDVal[0]
+		}
+		acceptLanguageMDVal := md.Get("accept-language")
+		if len(acceptLanguageMDVal) > 0 {
+			originAcceptLanguages, _, _ = language.ParseAcceptLanguage(acceptLanguageMDVal[0])
+		}
+	}
+
+	originInfo := api.CallOriginInfo{
+		Address:           remoteAddr,
+		AcceptLanguage:    originAcceptLanguages,
+		EnvironmentString: originEnvString,
+	}
 
 	ctxAuth, err := consumerSrv.authorizationFromGRPCContext(grpcCallCtx)
 	if err != nil {
@@ -345,10 +365,12 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	}
 
 	remoteEnvString := req.UserAgent()
+	acceptLanguages, _, _ := language.ParseAcceptLanguage(req.Header.Get("Accept-Language"))
 
 	originInfo := api.CallOriginInfo{
 		Address:           remoteAddr,
 		EnvironmentString: remoteEnvString,
+		AcceptLanguage:    acceptLanguages,
 	}
 
 	// Get from query too?

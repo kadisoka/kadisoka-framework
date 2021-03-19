@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/text/language"
 )
 
 // A RequestID in our implementation is used as idempotency token.
@@ -56,5 +57,5 @@ type CallOriginInfo struct {
 	// returns the browser's user-agent string.
 	EnvironmentString string
 
-	Locales []string
+	AcceptLanguage []language.Tag
 }
