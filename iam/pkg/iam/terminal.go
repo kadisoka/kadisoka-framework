@@ -19,7 +19,6 @@ const (
 	TerminalVerificationResourceTypeEmailAddress = "email-address"
 
 	TerminalVerificationResourceTypeOAuthAuthorizationCode = "oauth2-authorization-code"
-	TerminalVerificationResourceTypeOAuthImplicit          = "oauth2-implicit"
 	TerminalVerificationResourceTypeOAuthClientCredentials = "oauth2-client-credentials"
 )
 

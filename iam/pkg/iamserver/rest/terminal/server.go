@@ -3,7 +3,6 @@ package terminal
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
@@ -449,54 +448,6 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 		&iam.TerminalRegistrationResponseJSONV1{
 			TerminalID: authStartOutput.Data.TerminalRef.AZERText(),
 			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
-		})
-}
-
-func (restSrv *Server) handleTerminalRegisterByImplicit(
-	resp *restful.Response,
-	reqCtx *iam.RESTRequestContext,
-	authApp *iam.Application,
-	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
-) {
-	// Only if the client is able to secure its credentials.
-	if !authApp.ID.ID().IsService() && !authApp.ID.ID().IsUserAgentAuthorizationConfidential() {
-		logCtx(reqCtx).
-			Warn().Msgf("Client %v is not allowed to use this verification resource type", authApp.ID)
-		rest.RespondTo(resp).EmptyError(
-			http.StatusForbidden)
-		return
-	}
-
-	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsUserContext() {
-		//TODO: determine if we should support user context
-		logCtx(reqCtx).
-			Warn().Msgf("Client %v is authenticating by implicit grant with valid user context", authApp.ID)
-		rest.RespondTo(resp).EmptyError(
-			http.StatusForbidden)
-		return
-	}
-
-	termDisplayName := strings.TrimSpace(terminalRegisterReq.DisplayName)
-
-	regOutput := restSrv.serverCore.
-		RegisterTerminal(iamserver.TerminalRegistrationInput{
-			Context:        reqCtx,
-			ApplicationRef: authApp.ID,
-			Data: iamserver.TerminalRegistrationInputData{
-				UserRef:          iam.UserRefKeyZero(),
-				DisplayName:      termDisplayName,
-				VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
-				VerificationID:   0,
-			}})
-	if regOutput.Context.Err != nil {
-		panic(regOutput.Context.Err)
-	}
-
-	rest.RespondTo(resp).Success(
-		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID:     regOutput.Data.TerminalRef.AZERText(),
-			TerminalSecret: regOutput.Data.TerminalSecret,
 		})
 }
 

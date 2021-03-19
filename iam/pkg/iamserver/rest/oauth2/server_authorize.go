@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/emicklei/go-restful"
 
@@ -115,6 +114,17 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		return
 	}
 
+	responseTypeArgVal, _ := req.BodyParameter("response_type")
+	responseType := oauth2.ResponseTypeFromString(responseTypeArgVal)
+	if responseType != oauth2.ResponseTypeCode {
+		logReq(r).
+			Warn().Str("query.response_type", responseType.String()).
+			Msg("Unsupported")
+		rest.RespondTo(resp).EmptyError(
+			http.StatusBadRequest)
+		return
+	}
+
 	//TODO:
 	// - check the scopes
 	// - ensure that the client is allowed to use this flow
@@ -214,60 +224,26 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	termDisplayName := ""
 	var termRef iam.TerminalRefKey
 
-	switch responseType {
-	case oauth2.ResponseTypeCode:
-		regOutput := restSrv.serverCore.
-			RegisterTerminal(iamserver.TerminalRegistrationInput{
-				Context:        reqCtx,
-				ApplicationRef: appRef,
-				Data: iamserver.TerminalRegistrationInputData{
-					UserRef:          ctxAuth.UserRef(),
-					DisplayName:      termDisplayName,
-					VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
-					VerificationID:   0,
-				}})
-		if regOutput.Context.Err != nil {
-			panic(regOutput.Context.Err)
-		}
-
-		termRef = regOutput.Data.TerminalRef
-
-		redirectURI.RawQuery = oauth2.MustQueryString(oauth2.AuthorizationResponse{
-			Code:  termRef.AZERText(),
-			State: state,
-		})
-
-	case oauth2.ResponseTypeToken:
-		regOutput := restSrv.serverCore.
-			RegisterTerminal(iamserver.TerminalRegistrationInput{
-				Context:        reqCtx,
-				ApplicationRef: appRef,
-				Data: iamserver.TerminalRegistrationInputData{
-					UserRef:          ctxAuth.UserRef(),
-					DisplayName:      termDisplayName,
-					VerificationType: iam.TerminalVerificationResourceTypeOAuthImplicit,
-					VerificationID:   0,
-				}})
-		if regOutput.Context.Err != nil {
-			panic(regOutput.Context.Err)
-		}
-
-		issueTime := time.Now().UTC()
-		termRef = regOutput.Data.TerminalRef
-
-		tokenString, err := restSrv.serverCore.
-			GenerateAccessTokenJWT(reqCtx, termRef, ctxAuth.UserRef(), issueTime)
-		if err != nil {
-			panic(err)
-		}
-
-		redirectURI.Fragment = oauth2.MustQueryString(iam.OAuth2TokenResponse{
-			TokenResponse: oauth2.TokenResponse{
-				TokenType:   oauth2.TokenTypeBearer,
-				AccessToken: tokenString,
-				State:       state,
+	regOutput := restSrv.serverCore.
+		RegisterTerminal(iamserver.TerminalRegistrationInput{
+			Context:        reqCtx,
+			ApplicationRef: appRef,
+			Data: iamserver.TerminalRegistrationInputData{
+				UserRef:          ctxAuth.UserRef(),
+				DisplayName:      termDisplayName,
+				VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
+				VerificationID:   0,
 			}})
+	if regOutput.Context.Err != nil {
+		panic(regOutput.Context.Err)
 	}
+
+	termRef = regOutput.Data.TerminalRef
+
+	redirectURI.RawQuery = oauth2.MustQueryString(oauth2.AuthorizationResponse{
+		Code:  termRef.AZERText(),
+		State: state,
+	})
 
 	rest.RespondTo(resp).Success(
 		&iam.OAuth2AuthorizePostResponse{
