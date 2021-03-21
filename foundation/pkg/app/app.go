@@ -25,6 +25,11 @@ type Info struct {
 	BuildInfo BuildInfo
 }
 
+func (info Info) HeaderString() string {
+	return info.Name + " revision " + info.BuildInfo.RevisionID +
+		" built at " + info.BuildInfo.Timestamp
+}
+
 type AppBase struct {
 	appInfo    Info
 	instanceID string

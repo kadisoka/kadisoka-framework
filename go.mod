@@ -7,7 +7,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/alloyzeus/go-azfl v0.0.0-20210306140744-dcc1bd4a25a3
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.37.33
+	github.com/aws/aws-sdk-go v1.38.1
 	github.com/doug-martin/goqu/v9 v9.11.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
@@ -33,7 +33,7 @@ require (
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
-	github.com/rez-go/stev v0.0.0-20200515184012-e0723a6f3c19
+	github.com/rez-go/stev v0.0.0-20210321151513-d35b27413c7c
 	github.com/richardlehane/crock32 v1.0.1
 	github.com/rs/zerolog v1.20.0
 	github.com/smartystreets/assertions v1.2.0 // indirect
@@ -46,9 +46,9 @@ require (
 	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4 // indirect
-	golang.org/x/sys v0.0.0-20210317225723-c4fcb01b228e // indirect
+	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 // indirect
 	golang.org/x/text v0.3.5
-	google.golang.org/genproto v0.0.0-20210317182105-75c7a8546eb9 // indirect
+	google.golang.org/genproto v0.0.0-20210319143718-93e7006c17a6 // indirect
 	google.golang.org/grpc v1.36.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect

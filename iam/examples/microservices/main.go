@@ -32,16 +32,16 @@ var (
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr,
-		"%s revision %s built at %s\n",
-		appName, revisionID, buildTimestamp)
-	appBase, err := app.Init(app.Info{
+	appInfo := app.Info{
 		Name: appName,
 		BuildInfo: app.BuildInfo{
 			RevisionID: revisionID,
 			Timestamp:  buildTimestamp,
 		},
-	})
+	}
+
+	fmt.Fprintf(os.Stderr, "%s\n", appInfo.HeaderString())
+	appBase, err := app.Init(appInfo)
 	if err != nil {
 		log.Fatal().Err(err).Msg("App initialization")
 	}

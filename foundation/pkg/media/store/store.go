@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/base64"
 	"io"
 	"strconv"
 	"strings"
@@ -76,7 +77,15 @@ const nameGenKeyDefault = "N0kY"
 // based on the content. It utilizes hash so the result could be used to
 // prevent duplicates when storing the media object.
 func (mediaStore *Store) GenerateName(stream io.Reader) string {
-	keyBytes := []byte(mediaStore.config.NameGenerationKey)
+	var keyBytes []byte
+	if mediaStore.config.NameGenerationKey != "" {
+		key := strings.TrimRight(mediaStore.config.NameGenerationKey, "=")
+		var err error
+		keyBytes, err = base64.RawStdEncoding.DecodeString(key)
+		if err != nil {
+			panic(err)
+		}
+	}
 	if len(keyBytes) == 0 {
 		keyBytes = []byte(nameGenKeyDefault)
 	}

@@ -22,7 +22,7 @@ type Config struct {
 	FolderPath string `env:"FOLDER_PATH"`
 
 	ImagesServePath    string                  `env:"IMAGES_SERVE_PATH"`
-	ImageServerHandler *imagesrv.HandlerConfig `env:"IMAGE_SERVER_HANDLER"`
+	ImageServerHandler *imagesrv.HandlerConfig `env:"IMAGE_SERVER"`
 
 	ServerServePath string `env:"SERVER_SERVE_PATH"`
 	ServerServePort int16  `env:"SERVER_SERVE_PORT"`

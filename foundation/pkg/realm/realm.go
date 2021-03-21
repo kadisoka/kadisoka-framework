@@ -20,22 +20,22 @@ import (
 const EnvVarsPrefixDefault = "REALM_"
 
 const (
-	NameDefault                            = "UNKNOWN Realm"
-	URLDefault                             = "https://github.com/kadisoka"
-	ContactEmailAddressDefault             = "nop@example.com"
-	NotificationEmailsSenderAddressDefault = "no-reply@example.com"
-	DeveloperNameDefault                   = "Team Kadisoka"
-	MaintainerNameDefault                  = DeveloperNameDefault
+	NameDefault                                   = "UNKNOWN Realm"
+	URLDefault                                    = "https://github.com/kadisoka"
+	ContactEmailAddressDefault                    = "nop@example.com"
+	ServiceNotificationEmailsSenderAddressDefault = "no-reply@example.com"
+	DeveloperNameDefault                          = "Team Kadisoka"
+	MaintainerNameDefault                         = DeveloperNameDefault
 )
 
 func DefaultInfo() Info {
 	return Info{
-		Name:                            NameDefault,
-		URL:                             URLDefault,
-		ContactInfo:                     ContactInfo{EmailAddress: ContactEmailAddressDefault},
-		DeveloperInfo:                   DeveloperInfo{Name: DeveloperNameDefault},
-		MaintainerInfo:                  MaintainerInfo{Name: MaintainerNameDefault},
-		NotificationEmailsSenderAddress: NotificationEmailsSenderAddressDefault,
+		Name:                                   NameDefault,
+		URL:                                    URLDefault,
+		Contact:                                ContactInfo{EmailAddress: ContactEmailAddressDefault},
+		Developer:                              DeveloperInfo{Name: DeveloperNameDefault},
+		Maintainer:                             MaintainerInfo{Name: MaintainerNameDefault},
+		ServiceNotificationEmailsSenderAddress: ServiceNotificationEmailsSenderAddressDefault,
 	}
 }
 
@@ -52,10 +52,10 @@ type Info struct {
 	TermsOfServiceURL string
 	PrivacyPolicyURL  string
 
-	ContactInfo                     ContactInfo
-	DeveloperInfo                   DeveloperInfo
-	MaintainerInfo                  MaintainerInfo
-	NotificationEmailsSenderAddress string
+	Contact                                ContactInfo
+	Developer                              DeveloperInfo
+	Maintainer                             MaintainerInfo
+	ServiceNotificationEmailsSenderAddress string
 }
 
 // InfoZero returns a zero-valued Info.

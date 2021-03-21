@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/rez-go/stev"
+	"github.com/rez-go/stev/docgen"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
@@ -25,17 +26,38 @@ var (
 	buildTimestamp = "unknown"
 )
 
+const envVarsPrefix = ""
+
 func main() {
-	fmt.Fprintf(os.Stderr,
-		"%s revision %s built at %s\n",
-		appName, revisionID, buildTimestamp)
-	appBase, err := app.Init(app.Info{
+	appInfo := app.Info{
 		Name: appName,
 		BuildInfo: app.BuildInfo{
 			RevisionID: revisionID,
 			Timestamp:  buildTimestamp,
 		},
-	})
+	}
+
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "env_file_template":
+			fmt.Fprintf(os.Stderr, "Generating env file template...\n")
+			cfg := configSkeleton()
+			fmt.Fprintf(os.Stdout,
+				"# Env file template generated\n# by %s\n",
+				appInfo.HeaderString())
+			err := docgen.WriteEnvTemplate(os.Stdout, &cfg,
+				docgen.EnvTemplateOptions{FieldPrefix: envVarsPrefix})
+			if err != nil {
+				log.Fatal().Err(err).Msg("Unable to generate env file template")
+			} else {
+				fmt.Fprintln(os.Stderr, "Done.")
+			}
+			return
+		}
+	}
+
+	fmt.Fprintf(os.Stderr, "%s\n", appInfo.HeaderString())
+	appBase, err := app.Init(appInfo)
 	if err != nil {
 		log.Fatal().Err(err).Msg("App initialization")
 	}
@@ -57,36 +79,19 @@ type Config struct {
 }
 
 func initApp(appBase app.App) error {
-	curDir, err := os.Getwd()
-	if err != nil {
-		log.Fatal().Err(err).Msg("")
-	}
+	var err error
 
 	realmInfo := realm.Info{
-		Name:        "Kadisoka Monolith Example",
-		ContactInfo: realm.ContactInfo{EmailAddress: "info@example.com"},
+		Name:    "Kadisoka Monolith Example",
+		Contact: realm.ContactInfo{EmailAddress: "info@example.com"},
 	}
 	realmInfo, err = realm.InfoFromEnv("REALM_", &realmInfo)
 	if err != nil {
 		log.Fatal().Err(err).Msg("RealmInfo loading")
 	}
 
-	cfg := Config{
-		WebUI: webui.ServerConfig{
-			ServePath: "/",
-			FilesDir:  filepath.Join(curDir, "resources", "monolith-webui"),
-		},
-		IAM: iamapp.Config{
-			RealmInfo: &realmInfo,
-			Core:      iamserver.CoreConfigSkeleton(),
-			// Serve HTTP services under /accounts
-			HTTPBasePath: "/accounts",
-			// Web UI
-			WebUIEnabled: true,
-			// REST API
-			RESTEnabled: true,
-		},
-	}
+	cfg := configSkeleton()
+	cfg.IAM.RealmInfo = &realmInfo
 
 	err = stev.LoadEnv("", &cfg)
 	if err != nil {
@@ -111,4 +116,27 @@ func initApp(appBase app.App) error {
 	mux.Handle("/", webUIServer)
 
 	return nil
+}
+
+func configSkeleton() Config {
+	curDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal().Err(err).Msg("")
+	}
+
+	return Config{
+		WebUI: webui.ServerConfig{
+			ServePath: "/",
+			FilesDir:  filepath.Join(curDir, "resources", "monolith-webui"),
+		},
+		IAM: iamapp.Config{
+			Core: iamserver.CoreConfigSkeleton(),
+			// Serve HTTP services under /accounts
+			HTTPBasePath: "/accounts",
+			// Web UI
+			WebUIEnabled: true,
+			// REST API
+			RESTEnabled: true,
+		},
+	}
 }

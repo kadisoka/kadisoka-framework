@@ -30,9 +30,9 @@ func NewVerifier(
 	db *sqlx.DB,
 	config Config,
 ) *Verifier {
-	emailSenderAddress := realmInfo.NotificationEmailsSenderAddress
+	emailSenderAddress := realmInfo.ServiceNotificationEmailsSenderAddress
 	if emailSenderAddress == "" {
-		emailSenderAddress = realmInfo.ContactInfo.EmailAddress
+		emailSenderAddress = realmInfo.Contact.EmailAddress
 	}
 
 	if config.SenderAddress == "" && emailSenderAddress == "" {
