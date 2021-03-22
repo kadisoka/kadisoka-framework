@@ -19,7 +19,7 @@ func init() {
 
 type Config struct {
 	CodeTTLDefault          time.Duration `env:"CODE_TTL_DEFAULT"`
-	ConfirmationAttemptsMax int16         `env:"CONFIRMATION_ATTEMPTS_MAX"`
+	ConfirmationAttemptsMax int16         `env:"CONFIRMATION_ATTEMPTS_MAX,docs_hidden"`
 	SenderAddress           string        `env:"SENDER_ADDRESS"`
 	ResourcesDir            string        `env:"RESOURCES_DIR"`
 	SES                     *SESConfig    `env:"SES"`

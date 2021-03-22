@@ -195,8 +195,8 @@ github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d h1:l2qiHnQPq6c9jf4h
 github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d/go.mod h1:rgG3aWE3BAy73pozswKYLc+Va/WraKM393e7yNkbhZ0=
 github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b h1:+aX8gKzE4vzaqE948XCzqA0FPWFreBYPpBrzQYA+fog=
 github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b/go.mod h1:F6U0ADWMzl4qtZndVzPbr4u+Dy5TSX471wMGuwvrzcw=
-github.com/rez-go/stev v0.0.0-20210321151513-d35b27413c7c h1:PrFoW55rxvxOhT1iVUy0xf/tbDmoij7tM6ZRT6nDhEI=
-github.com/rez-go/stev v0.0.0-20210321151513-d35b27413c7c/go.mod h1:xUdOSy/LoZn1eOy7z5jaYPyY8qquyjEAZgNxGTHNzII=
+github.com/rez-go/stev v0.0.0-20210322061542-b92d9076c0eb h1:P2AI0F4BsjIvbtNuTTjbIrTTcWjYE+FW1YxJl8j0xXA=
+github.com/rez-go/stev v0.0.0-20210322061542-b92d9076c0eb/go.mod h1:xUdOSy/LoZn1eOy7z5jaYPyY8qquyjEAZgNxGTHNzII=
 github.com/richardlehane/crock32 v1.0.1 h1:GV9EqtAr7RminQ8oGrDt3gYXkzDDPJ5fROaO1Mux14g=
 github.com/richardlehane/crock32 v1.0.1/go.mod h1:xUIlLABtHBgs1bNIBdUQR9F2xtRzS0TujtbR68hmEWU=
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=

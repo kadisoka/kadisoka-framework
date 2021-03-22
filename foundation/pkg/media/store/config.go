@@ -25,14 +25,28 @@ type Config struct {
 	ImagesBaseURL string `env:"IMAGES_BASE_URL"`
 }
 
-func (Config) FieldDescriptions() map[string]string {
-	return map[string]string{
-		"NameGenerationKey": "Uploaded files are given names based on their " +
-			"respective hash values to reduce duplications. This might cause " +
-			"privacy issue as those who have the same file could look up it " +
-			"in the server. To reduce the possible risk, we use HMAC to " +
-			"generate the filename. HMAC requires key which should be " +
-			"treated as a secret.\n\nThe value must be provided as a " +
-			"standard base64-encoded string, padded or not.",
+func (cfg Config) FieldDocsDescriptor(fieldName string) *stev.FieldDocsDescriptor {
+	switch fieldName {
+	case "StoreService", "STORE_SERVICE":
+		modules := map[string]stev.EnumValueDocs{}
+		for k := range cfg.Modules {
+			modules[k] = stev.EnumValueDocs{}
+		}
+		return &stev.FieldDocsDescriptor{
+			Description:     "The object storage service to use.",
+			AvailableValues: modules,
+		}
+	case "NameGenerationKey", "FILENAME_GENERATION_KEY":
+		return &stev.FieldDocsDescriptor{
+			Description: "Uploaded files are given names based on their " +
+				"respective hash values to reduce duplications. This might cause " +
+				"privacy issue as those who have the same file could look up it " +
+				"in the server. To reduce possible risks, we use HMAC to " +
+				"generate the filename. HMAC requires a key and we use the same " +
+				"key for all files in a site. This key should be " +
+				"treated as a secret.\n\nThe value must be provided as a " +
+				"standard base64-encoded string.",
+		}
 	}
+	return nil
 }
