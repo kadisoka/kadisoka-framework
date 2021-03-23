@@ -26,16 +26,16 @@ func VerificationMethodFromString(str string) VerificationMethod {
 
 //TODO: make this private
 type verificationDBModel struct {
-	ID                     int64              `db:"id"`
-	CountryCode            int32              `db:"country_code"`
-	NationalNumber         int64              `db:"national_number"`
-	Code                   string             `db:"code"`
-	CodeExpiry             *time.Time         `db:"code_expiry"`
-	AttemptsRemaining      int16              `db:"attempts_remaining"`
-	CreationTime           time.Time          `db:"c_ts"`
-	CreationUserID         *iam.UserIDNum     `db:"c_uid"`
-	CreationTerminalID     *iam.TerminalIDNum `db:"c_tid"`
-	ConfirmationTime       *time.Time         `db:"confirmation_ts"`
-	ConfirmationUserID     *iam.UserIDNum     `db:"confirmation_uid"`
-	ConfirmationTerminalID *iam.TerminalIDNum `db:"confirmation_tid"`
+	ID                        int64              `db:"id"`
+	CountryCode               int32              `db:"country_code"`
+	NationalNumber            int64              `db:"national_number"`
+	Code                      string             `db:"code"`
+	CodeExpiry                *time.Time         `db:"code_expiry"`
+	AttemptsRemaining         int16              `db:"attempts_remaining"`
+	CreationTime              time.Time          `db:"c_ts"`
+	CreationUserIDNum         *iam.UserIDNum     `db:"c_uid"`
+	CreationTerminalIDNum     *iam.TerminalIDNum `db:"c_tid"`
+	ConfirmationTime          *time.Time         `db:"confirmation_ts"`
+	ConfirmationUserIDNum     *iam.UserIDNum     `db:"confirmation_uid"`
+	ConfirmationTerminalIDNum *iam.TerminalIDNum `db:"confirmation_tid"`
 }

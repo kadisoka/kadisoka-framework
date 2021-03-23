@@ -75,8 +75,11 @@ func (core *Core) ListUsersByPhoneNumber(
 						"c_uid, c_tid"+
 						") VALUES ($1, $2, $3, $4, $5) "+
 						`ON CONFLICT ON CONSTRAINT `+userContactPhoneNumberDBTableName+`_pkey DO NOTHING`,
-					ctxAuth.UserID().PrimitiveValue(), pn.CountryCode(), pn.NationalNumber(),
-					ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
+					ctxAuth.UserIDNum().PrimitiveValue(),
+					pn.CountryCode(),
+					pn.NationalNumber(),
+					ctxAuth.UserIDNum().PrimitiveValue(),
+					ctxAuth.TerminalIDNum().PrimitiveValue())
 				if err != nil {
 					logCtx(callCtx).
 						Error().Err(err).Str("phone_number", pn.String()).
@@ -208,13 +211,13 @@ func (core *Core) SetUserKeyPhoneNumber(
 
 	//TODO: prone to race condition. solution: simply call
 	// setUserKeyPhoneNumber and translate the error.
-	existingOwnerUserID, err := core.
+	existingOwnerUserIDNum, err := core.
 		getUserIDNumByKeyPhoneNumber(phoneNumber)
 	if err != nil {
 		return 0, nil, errors.Wrap("getUserIDNumByKeyPhoneNumber", err)
 	}
-	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != ctxAuth.UserID() {
+	if existingOwnerUserIDNum.IsValid() {
+		if existingOwnerUserIDNum != ctxAuth.UserIDNum() {
 			return 0, nil, errors.ArgMsg("phoneNumber", "conflict")
 		}
 		return 0, nil, nil
@@ -230,7 +233,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	}
 
 	//TODO: user-set has higher priority over terminal's
-	userLanguages, err := core.getTerminalAcceptLanguagesAllowDeleted(ctxAuth.TerminalID())
+	userLanguages, err := core.getTerminalAcceptLanguagesAllowDeleted(ctxAuth.TerminalIDNum())
 	if err != nil {
 	}
 
@@ -270,8 +273,8 @@ func (core *Core) setUserKeyPhoneNumber(
 		phoneNumber.NationalNumber(),
 		phoneNumber.RawInput(),
 		ctxTime,
-		ctxAuth.UserID().PrimitiveValue(),
-		ctxAuth.TerminalID().PrimitiveValue())
+		ctxAuth.UserIDNum().PrimitiveValue(),
+		ctxAuth.TerminalIDNum().PrimitiveValue())
 	if err != nil {
 		return false, err
 	}
@@ -328,7 +331,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	stateChanged, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
-			ctxAuth.UserID(), *phoneNumber,
+			ctxAuth.UserIDNum(), *phoneNumber,
 			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)

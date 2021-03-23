@@ -98,13 +98,13 @@ func (ctxAuth Authorization) UserRefKeyPtr() *UserRefKey {
 	return nil
 }
 
-func (ctxAuth Authorization) UserID() UserIDNum {
+func (ctxAuth Authorization) UserIDNum() UserIDNum {
 	return ctxAuth.Session.terminal.user.IDNum()
 }
 
-// UserIDPtr returns a pointer to a new copy of user ID. The
+// UserIDNumPtr returns a pointer to a new copy of user ID. The
 // returned value is non-nil when the user ref-key is valid.
-func (ctxAuth Authorization) UserIDPtr() *UserIDNum {
+func (ctxAuth Authorization) UserIDNumPtr() *UserIDNum {
 	return ctxAuth.Session.terminal.user.IDNumPtr()
 }
 
@@ -112,13 +112,13 @@ func (ctxAuth Authorization) TerminalRef() TerminalRefKey {
 	return ctxAuth.Session.terminal
 }
 
-func (ctxAuth Authorization) TerminalID() TerminalIDNum {
+func (ctxAuth Authorization) TerminalIDNum() TerminalIDNum {
 	return ctxAuth.Session.terminal.idNum
 }
 
-// TerminalIDPtr returns a pointer to a new copy of terminal ID. The
+// TerminalIDNumPtr returns a pointer to a new copy of terminal ID. The
 // returned value is non-nil when the terminal ID is valid.
-func (ctxAuth Authorization) TerminalIDPtr() *TerminalIDNum {
+func (ctxAuth Authorization) TerminalIDNumPtr() *TerminalIDNum {
 	return ctxAuth.Session.terminal.IDNumPtr()
 }
 

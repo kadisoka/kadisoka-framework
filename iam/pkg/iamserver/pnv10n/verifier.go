@@ -35,7 +35,7 @@ func NewVerifier(
 	serviceName := config.SMSDeliveryService
 	if serviceName == "" || !strings.Contains(serviceName, ",") {
 		if serviceName == "" {
-			serviceName = "twilio"
+			panic("SMS delivery service must be specified in the config")
 		}
 		deliverySvc, err := NewSMSDeliveryService(serviceName, config.Modules[serviceName])
 		if err != nil || deliverySvc == nil {
@@ -48,7 +48,7 @@ func NewVerifier(
 		for _, codeName := range codeNames {
 			parts := strings.Split(codeName, ":")
 			svcName := strings.TrimSpace(parts[1])
-			svcInst, _ := instantiatedServices[svcName]
+			svcInst := instantiatedServices[svcName]
 			if svcInst == nil {
 				deliverySvc, err := NewSMSDeliveryService(svcName, config.Modules[svcName])
 				if err != nil || deliverySvc == nil {
@@ -166,8 +166,8 @@ func (verifier *Verifier) StartVerification(
 			phoneNumber.CountryCode(),
 			phoneNumber.NationalNumber(),
 			ctxTime,
-			ctxAuth.UserIDPtr(),
-			ctxAuth.TerminalIDPtr(),
+			ctxAuth.UserIDNumPtr(),
+			ctxAuth.TerminalIDNumPtr(),
 			code,
 			codeExp,
 			verifier.confirmationAttemptsMax,
@@ -229,7 +229,7 @@ func (verifier *Verifier) ConfirmVerification(
 		`UPDATE `+verificationDBTableName+` `+
 			"SET confirmation_ts = $1, confirmation_uid = $2, confirmation_tid = $3 "+
 			"WHERE id = $4 AND confirmation_ts IS NULL",
-		ctxTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr(), verificationID)
+		ctxTime, ctxAuth.UserIDNumPtr(), ctxAuth.TerminalIDNumPtr(), verificationID)
 	return err //TODO: determine if it's race-condition
 }
 
@@ -321,7 +321,7 @@ func (verifier *Verifier) sendTextMessage(
 		if !(phoneNumber.CountryCode() == 1 && phoneNumber.NationalNumber() > 5550000 && phoneNumber.NationalNumber() <= 5559999) {
 			var deliverySvc SMSDeliveryService
 			if len(verifier.smsDeliveryServices) > 1 {
-				if svc, _ := verifier.smsDeliveryServices[phoneNumber.CountryCode()]; svc != nil {
+				if svc := verifier.smsDeliveryServices[phoneNumber.CountryCode()]; svc != nil {
 					deliverySvc = svc
 				}
 			}

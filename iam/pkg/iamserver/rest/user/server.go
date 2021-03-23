@@ -234,8 +234,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	requestedUserIDStr := req.PathParameter("user-id")
-	if requestedUserIDStr == "" {
+	requestedUserRefStr := req.PathParameter("user-id")
+	if requestedUserRefStr == "" {
 		logCtx(reqCtx).
 			Warn().Msg("Invalid parameter value path.user-id: empty")
 		rest.RespondTo(resp).EmptyError(
@@ -244,7 +244,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	}
 
 	var requestedUserRef iam.UserRefKey
-	if requestedUserIDStr == "me" {
+	if requestedUserRefStr == "me" {
 		if !reqCtx.IsUserContext() {
 			logCtx(reqCtx).
 				Warn().Msg("Invalid request: 'me' can only be used with user access token")
@@ -254,7 +254,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		}
 		requestedUserRef = ctxAuth.UserRef()
 	} else {
-		requestedUserRef, err = iam.UserRefKeyFromAZERText(requestedUserIDStr)
+		requestedUserRef, err = iam.UserRefKeyFromAZERText(requestedUserRefStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).Msg("Invalid parameter value path.user-id")
@@ -429,7 +429,7 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 	// TODO
 	// - Retrieve list of user profile
 	// - Return as items of user contacts
-	contactUserIDs, err := restSrv.serverCore.GetUserContactUserIDs(
+	contactUserRefs, err := restSrv.serverCore.GetUserContactUserRefs(
 		reqCtx, ctxAuth.UserRef())
 	if err != nil {
 		logCtx(reqCtx).
@@ -442,17 +442,17 @@ func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Re
 
 	var userContactLists []iam.UserJSONV1
 
-	if len(contactUserIDs) > 0 {
-		for _, contactUserID := range contactUserIDs {
+	if len(contactUserRefs) > 0 {
+		for _, contactUserRef := range contactUserRefs {
 			userBaseProfile, err := restSrv.serverCore.
-				GetUserBaseProfile(reqCtx, contactUserID)
+				GetUserBaseProfile(reqCtx, contactUserRef)
 			if err != nil {
 				panic(err)
 			}
-			userProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile, contactUserID)
+			userProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile, contactUserRef)
 
 			userPhoneNumber, err := restSrv.serverCore.
-				GetUserKeyPhoneNumber(reqCtx, contactUserID)
+				GetUserKeyPhoneNumber(reqCtx, contactUserRef)
 
 			if err != nil {
 				panic(err)

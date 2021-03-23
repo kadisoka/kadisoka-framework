@@ -156,8 +156,8 @@ func (verifier *Verifier) StartVerification(
 			emailAddress.DomainPart(),
 			emailAddress.LocalPart(),
 			ctxTime,
-			ctxAuth.UserIDPtr(),
-			ctxAuth.TerminalIDPtr(),
+			ctxAuth.UserIDNumPtr(),
+			ctxAuth.TerminalIDNumPtr(),
 			code,
 			codeExp,
 			verifier.confirmationAttemptsMax,
@@ -228,7 +228,7 @@ func (verifier *Verifier) ConfirmVerification(
 		`UPDATE `+verificationDBTableName+` `+
 			"SET confirmation_ts = $1, confirmation_uid = $2, confirmation_tid = $3 "+
 			"WHERE id = $4 AND confirmation_ts IS NULL",
-		ctxTime, ctxAuth.UserIDPtr(), ctxAuth.TerminalIDPtr(), verificationID)
+		ctxTime, ctxAuth.UserIDNumPtr(), ctxAuth.TerminalIDNumPtr(), verificationID)
 	return err //TODO: determine if it's race-condition
 }
 

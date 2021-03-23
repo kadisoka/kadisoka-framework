@@ -9,11 +9,6 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
-var (
-	ErrUserIDStringInvalid        = errors.Ent("user ID string", nil)
-	ErrServiceUserIDStringInvalid = errors.Ent("service user ID string", nil)
-)
-
 //region IDNum
 
 // UserIDNum is a scoped identifier

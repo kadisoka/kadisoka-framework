@@ -118,7 +118,7 @@ func (core *Core) issueSession(
 	// Note:
 	// - 0xffffffffffffff00 - timestamp
 	// - 0x00000000000000ff - random
-	genSessionID := func(ts int64) (iam.SessionIDNum, error) {
+	genSessionIDNum := func(ts int64) (iam.SessionIDNum, error) {
 		idBytes := make([]byte, 1)
 		_, err := rand.Read(idBytes)
 		if err != nil {
@@ -131,7 +131,7 @@ func (core *Core) issueSession(
 	for attemptNum := 0; ; attemptNum++ {
 		sessionStartTime = time.Now().UTC()
 		sessionExpiry = sessionStartTime.Add(iam.AccessTokenTTLDefault)
-		sessionIDNum, err = genSessionID(sessionStartTime.Unix())
+		sessionIDNum, err = genSessionIDNum(sessionStartTime.Unix())
 		if err != nil {
 			return iam.SessionRefKeyZero(), timeZero, timeZero, err
 		}
@@ -143,8 +143,8 @@ func (core *Core) issueSession(
 					"id":          sessionIDNum.PrimitiveValue(),
 					"expiry":      sessionExpiry,
 					"c_ts":        sessionStartTime,
-					"c_tid":       ctxAuth.TerminalIDPtr(),
-					"c_uid":       ctxAuth.UserIDPtr(),
+					"c_tid":       ctxAuth.TerminalIDNumPtr(),
+					"c_uid":       ctxAuth.UserIDNumPtr(),
 				},
 			).
 			ToSQL()

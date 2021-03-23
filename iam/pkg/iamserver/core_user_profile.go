@@ -33,7 +33,7 @@ func (core *Core) GetUserBaseProfile(
 // use GetUserBaseProfile.
 func (core *Core) getUserBaseProfileNoAC(
 	callCtx iam.CallContext,
-	userID iam.UserRefKey,
+	userRef iam.UserRefKey,
 ) (*iam.UserBaseProfileData, error) {
 	var user iam.UserBaseProfileData
 	var idNum iam.UserIDNum
@@ -52,7 +52,7 @@ func (core *Core) getUserBaseProfileNoAC(
 				`LEFT JOIN `+userProfileImageKeyDBTableName+` upiu ON upiu.user_id = ua.id `+
 				`AND upiu.d_ts IS NULL `+
 				`WHERE ua.id = $1`,
-			userID).
+			userRef).
 		Scan(&idNum, &deletion.Deleted, &displayName, &profileImageURL)
 	if err != nil {
 		switch err {

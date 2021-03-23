@@ -63,7 +63,7 @@ func (core *Core) SetUserPassword(
 			`UPDATE `+userPasswordDBTableName+` SET `+
 				`d_ts = $1, d_uid = $2, d_tid = $3 `+
 				`WHERE user_id = $4 AND d_ts IS NULL`,
-			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
+			ctxTime, ctxAuth.UserIDNum().PrimitiveValue(), ctxAuth.TerminalIDNum().PrimitiveValue(),
 			userRef.IDNum().PrimitiveValue())
 		if txErr != nil {
 			return txErr
@@ -73,7 +73,7 @@ func (core *Core) SetUserPassword(
 				`(user_id, password, c_ts, c_uid, c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
 			userRef.IDNum().PrimitiveValue(), passwordHash,
-			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
+			ctxTime, ctxAuth.UserIDNum().PrimitiveValue(), ctxAuth.TerminalIDNum().PrimitiveValue())
 		return txErr
 	})
 }

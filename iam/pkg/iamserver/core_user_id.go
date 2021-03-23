@@ -13,7 +13,7 @@ func (core *Core) IsUserRefKeyRegistered(refKey iam.UserRefKey) bool {
 	idNum := refKey.IDNum()
 
 	// Look up for an user ID in the cache.
-	if _, idRegistered := core.registeredUserInstanceIDCache.Get(idNum); idRegistered {
+	if _, idRegistered := core.registeredUserIDNumCache.Get(idNum); idRegistered {
 		return true
 	}
 
@@ -24,7 +24,7 @@ func (core *Core) IsUserRefKeyRegistered(refKey iam.UserRefKey) bool {
 	}
 
 	if idRegistered {
-		core.registeredUserInstanceIDCache.Add(idNum, nil)
+		core.registeredUserIDNumCache.Add(idNum, nil)
 	}
 
 	return idRegistered

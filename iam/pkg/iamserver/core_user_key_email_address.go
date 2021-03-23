@@ -142,7 +142,7 @@ func (core *Core) SetUserKeyEmailAddress(
 		return 0, nil, errors.Wrap("getUserIDNumByKeyEmailAddress", err)
 	}
 	if existingOwnerUserIDNum.IsValid() {
-		if existingOwnerUserIDNum != ctxAuth.UserID() {
+		if existingOwnerUserIDNum != ctxAuth.UserIDNum() {
 			return 0, nil, errors.ArgMsg("emailAddress", "conflict")
 		}
 		return 0, nil, nil
@@ -158,7 +158,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	}
 
 	//TODO: user-set has higher priority over terminal's
-	userLanguages, err := core.getTerminalAcceptLanguagesAllowDeleted(ctxAuth.TerminalID())
+	userLanguages, err := core.getTerminalAcceptLanguagesAllowDeleted(ctxAuth.TerminalIDNum())
 	if err != nil {
 	}
 
@@ -198,8 +198,8 @@ func (core *Core) setUserKeyEmailAddress(
 		emailAddress.LocalPart(),
 		emailAddress.RawInput(),
 		ctxTime,
-		ctxAuth.UserID().PrimitiveValue(),
-		ctxAuth.TerminalID().PrimitiveValue())
+		ctxAuth.UserIDNum().PrimitiveValue(),
+		ctxAuth.TerminalIDNum().PrimitiveValue())
 	if err != nil {
 		return false, err
 	}
@@ -256,7 +256,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	stateChanged, err = core.
 		ensureUserEmailAddressVerifiedFlag(
-			ctxAuth.UserID(), *emailAddress,
+			ctxAuth.UserIDNum(), *emailAddress,
 			&ctxTime, verificationID)
 	if err != nil {
 		panic(err)

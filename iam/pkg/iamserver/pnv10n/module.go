@@ -49,7 +49,7 @@ func NewSMSDeliveryService(
 
 	var module Module
 	modulesMu.RLock()
-	module, _ = modules[serviceName]
+	module = modules[serviceName]
 	modulesMu.RUnlock()
 
 	return module.NewSMSDeliveryService(config), nil

@@ -27,9 +27,10 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	if reqApp != nil && !reqApp.ID.IDNum().IsUserAgentAuthorizationConfidential() {
+	if reqApp != nil && !reqApp.ID.IDNum().IsService() {
 		logReq(req.Request).
-			Warn().Msgf("Client %v is not authorized to use grant type password", reqApp.ID)
+			Warn().Str("applicationID", reqApp.ID.AZERText()).
+			Msg("Application is not authorized to use grant type password")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
 		return
@@ -47,7 +48,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsValid() {
 		logCtx(reqCtx).
-			Warn().Msgf("Authorization context must not be valid")
+			Warn().Msg("Authorization context must not be valid")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
@@ -70,12 +71,13 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 			return
 		default:
 			logReq(req.Request).
-				Warn().Msgf("Unrecognized identifier scheme: %v", names[0])
+				Warn().Str("username", username).
+				Msg("Unrecognized identifier scheme")
 		}
 	}
 
 	logReq(req.Request).
-		Warn().Msgf("Password grant with no scheme.")
+		Warn().Msg("Password grant with no scheme.")
 	oauth2.RespondTo(resp).ErrorCode(
 		oauth2.ErrorInvalidGrant)
 }
@@ -84,14 +86,42 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	reqCtx *iam.RESTRequestContext,
 	resp *restful.Response,
 	reqApp *iam.Application,
-	terminalIDStr string,
+	terminalRefStr string,
 	terminalSecret string,
 ) {
-	termRef, err := iam.TerminalRefKeyFromAZERText(terminalIDStr)
+	termRef, err := iam.TerminalRefKeyFromAZERText(terminalRefStr)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).
-			Msgf("Unable to parse username %q as TerminalID", terminalIDStr)
+			Warn().Err(err).Str("terminalRefStr", terminalRefStr).
+			Msg("Unable to parse username as TerminalRefKey")
+		oauth2.RespondTo(resp).ErrorCode(
+			oauth2.ErrorInvalidGrant)
+		return
+	}
+
+	if termRef.IsNotValid() {
+		logCtx(reqCtx).
+			Warn().Str("terminalRefStr", terminalRefStr).Str("terminalRef", termRef.AZERText()).
+			Msg("Terminal ref is invalid")
+		oauth2.RespondTo(resp).ErrorCode(
+			oauth2.ErrorInvalidGrant)
+		return
+	}
+
+	appRef := termRef.Application()
+	if !appRef.IDNum().IsService() {
+		logCtx(reqCtx).
+			Warn().Str("terminalRef", termRef.AZERText()).
+			Msg("Application is not allowed to use grant type")
+		oauth2.RespondTo(resp).ErrorCode(
+			oauth2.ErrorUnauthorizedClient)
+		return
+	}
+
+	if !appRef.EqualsApplicationRefKey(reqApp.ID) {
+		logCtx(reqCtx).
+			Warn().Str("terminalRef", termRef.AZERText()).Str("applicationRef", appRef.AZERText()).
+			Msg("Terminal credentials are that of other application")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
@@ -101,54 +131,28 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		AuthenticateTerminal(termRef, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Err(err).
-			Msgf("Terminal %v authentication failed", termRef)
+			Error().Err(err).Str("terminalRef", termRef.AZERText()).
+			Msg("AuthenticateTerminal")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
 	}
 	if !authOK {
 		logCtx(reqCtx).
-			Warn().Msgf("Terminal %v authentication failed", termRef)
+			Warn().Str("terminalRef", termRef.AZERText()).
+			Msg("Terminal authentication failed")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
 	}
 
 	if userRef.IsValid() {
-		userInstInfo, err := restSrv.serverCore.
-			GetUserInstanceInfo(reqCtx, userRef)
-		if err != nil {
-			logCtx(reqCtx).
-				Warn().Err(err).
-				Msgf("Terminal %v user account state", termRef)
-			oauth2.RespondTo(resp).ErrorCode(
-				oauth2.ErrorServerError)
-			return
-		}
-		if userInstInfo == nil || !userInstInfo.IsActive() {
-			var status string
-			if userInstInfo == nil {
-				status = "not exist"
-			} else {
-				status = "deleted"
-			}
-			logCtx(reqCtx).
-				Warn().Msgf("User %v %s", userRef, status)
-			oauth2.RespondTo(resp).ErrorCode(
-				oauth2.ErrorInvalidGrant)
-			return
-		}
-	}
-
-	if reqApp != nil {
-		if !reqApp.ID.EqualsApplicationRefKey(termRef.Application()) {
-			logCtx(reqCtx).
-				Error().Msgf("Terminal %v is not associated to client %v", termRef, reqApp.ID)
-			oauth2.RespondTo(resp).ErrorCode(
-				oauth2.ErrorServerError)
-			return
-		}
+		logCtx(reqCtx).
+			Warn().Str("terminalRef", termRef.AZERText()).Str("userRef", userRef.AZERText()).
+			Msg("Terminal must not be associated to any user")
+		oauth2.RespondTo(resp).ErrorCode(
+			oauth2.ErrorServerError)
+		return
 	}
 
 	issueTime := time.Now().UTC()

@@ -9,9 +9,12 @@ import (
 
 var messageLocaleDefault = language.MustParse("en-US")
 
+const smsDeliveryServiceDefault = ""
+
 func ConfigSkeleton() Config {
 	moduleConfigs := ModuleConfigSkeletons()
 	return Config{
-		Modules: moduleConfigs,
+		SMSDeliveryService: smsDeliveryServiceDefault,
+		Modules:            moduleConfigs,
 	}
 }

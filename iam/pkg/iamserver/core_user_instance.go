@@ -35,13 +35,13 @@ func (core *Core) GetUserInstanceInfo(
 	instDeletionCacheHit := false
 
 	// Look up for an user ID in the cache.
-	if _, idRegistered = core.registeredUserInstanceIDCache.Get(userRef); idRegistered {
+	if _, idRegistered = core.registeredUserIDNumCache.Get(userRef); idRegistered {
 		// User ID is positively registered.
 		idRegisteredCacheHit = true
 	}
 
 	// Look up in the cache
-	if _, instDeleted = core.deletedUserInstanceIDCache.Get(userRef); instDeleted {
+	if _, instDeleted = core.deletedUserIDNumCache.Get(userRef); instDeleted {
 		// Account is positively deleted
 		instDeletionCacheHit = true
 	}
@@ -68,10 +68,10 @@ func (core *Core) GetUserInstanceInfo(
 	}
 
 	if !idRegisteredCacheHit && idRegistered {
-		core.registeredUserInstanceIDCache.Add(userRef, nil)
+		core.registeredUserIDNumCache.Add(userRef, nil)
 	}
 	if !instDeletionCacheHit && instDeleted {
-		core.deletedUserInstanceIDCache.Add(userRef, nil)
+		core.deletedUserIDNumCache.Add(userRef, nil)
 	}
 
 	if !idRegistered {
@@ -144,8 +144,8 @@ func (core *Core) deleteUserInstanceNoAC(
 				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
 				"WHERE id = $2 AND d_ts IS NULL",
 			callCtx.RequestInfo().ReceiveTime,
-			ctxAuth.UserID().PrimitiveValue(),
-			ctxAuth.TerminalID().PrimitiveValue(),
+			ctxAuth.UserIDNum().PrimitiveValue(),
+			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			input.DeletionNotes)
 		if txErr != nil {
 			return txErr
@@ -162,8 +162,8 @@ func (core *Core) deleteUserInstanceNoAC(
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestInfo().ReceiveTime,
-				ctxAuth.UserID().PrimitiveValue(),
-				ctxAuth.TerminalID().PrimitiveValue())
+				ctxAuth.UserIDNum().PrimitiveValue(),
+				ctxAuth.TerminalIDNum().PrimitiveValue())
 		}
 
 		if txErr == nil {
@@ -172,8 +172,8 @@ func (core *Core) deleteUserInstanceNoAC(
 					"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 					"WHERE user_id = $2 AND d_ts IS NULL",
 				callCtx.RequestInfo().ReceiveTime,
-				ctxAuth.UserID().PrimitiveValue(),
-				ctxAuth.TerminalID().PrimitiveValue())
+				ctxAuth.UserIDNum().PrimitiveValue(),
+				ctxAuth.TerminalIDNum().PrimitiveValue())
 		}
 
 		return txErr
@@ -233,8 +233,8 @@ func (core *Core) newUserInstance(
 				goqu.Record{
 					"id":    newUserIDNum,
 					"c_ts":  cTime,
-					"c_uid": ctxAuth.UserIDPtr(),
-					"c_tid": ctxAuth.TerminalIDPtr(),
+					"c_uid": ctxAuth.UserIDNumPtr(),
+					"c_tid": ctxAuth.TerminalIDNumPtr(),
 				},
 			).
 			ToSQL()

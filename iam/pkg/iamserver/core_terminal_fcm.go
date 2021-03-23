@@ -22,8 +22,11 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 		`UPDATE `+terminalFCMRegistrationTokenDBTableName+` `+
 			"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 			"WHERE terminal_id = $4 AND token = $5 AND d_ts IS NULL",
-		callCtx.RequestInfo().ReceiveTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
-		terminalRef.IDNum().PrimitiveValue(), token)
+		callCtx.RequestInfo().ReceiveTime,
+		ctxAuth.UserIDNum().PrimitiveValue(),
+		ctxAuth.TerminalIDNum().PrimitiveValue(),
+		terminalRef.IDNum().PrimitiveValue(),
+		token)
 	return err
 }
 
@@ -91,8 +94,8 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE terminal_id = $4 AND d_ts IS NULL",
 			callCtx.RequestInfo().ReceiveTime,
-			ctxAuth.UserID().PrimitiveValue(),
-			ctxAuth.TerminalID().PrimitiveValue(),
+			ctxAuth.UserIDNum().PrimitiveValue(),
+			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			terminalRef.IDNum().PrimitiveValue())
 		if err != nil {
 			return err
@@ -104,8 +107,10 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 			`INSERT INTO `+terminalFCMRegistrationTokenDBTableName+` `+
 				"(terminal_id, user_id, c_uid, c_tid, token) "+
 				"VALUES ($1, $2, $3, $4, $5)",
-			terminalRef.IDNum().PrimitiveValue(), userRef.IDNum().PrimitiveValue(),
-			ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
+			terminalRef.IDNum().PrimitiveValue(),
+			userRef.IDNum().PrimitiveValue(),
+			ctxAuth.UserIDNum().PrimitiveValue(),
+			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			token)
 		return err
 	})

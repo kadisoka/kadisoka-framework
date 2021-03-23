@@ -173,12 +173,12 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 
 	if ownerUserRef.IsValid() {
 		// Check if it's fully claimed (already verified)
-		ownerUserID, err := core.getUserIDNumByKeyEmailAddress(emailAddress)
+		ownerUserIDNum, err := core.getUserIDNumByKeyEmailAddress(emailAddress)
 		if err != nil {
 			panic(err)
 		}
-		if ownerUserID.IsValid() {
-			ownerUserRef = iam.NewUserRefKey(ownerUserID)
+		if ownerUserIDNum.IsValid() {
+			ownerUserRef = iam.NewUserRefKey(ownerUserIDNum)
 		}
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
@@ -266,8 +266,8 @@ func (core *Core) ConfirmTerminalAuthorization(
 	}
 	disallowReplay := false
 
-	if termData.UserID.IsValid() {
-		termUserID := termData.UserID
+	if termData.UserIDNum.IsValid() {
+		termUserIDNum := termData.UserIDNum
 
 		switch termData.VerificationType {
 		case iam.TerminalVerificationResourceTypeEmailAddress:
@@ -295,7 +295,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 
 			updated, err := core.
 				ensureUserEmailAddressVerifiedFlag(
-					termUserID,
+					termUserIDNum,
 					*emailAddress,
 					&ctxTime,
 					termData.VerificationID)
@@ -304,12 +304,12 @@ func (core *Core) ConfirmTerminalAuthorization(
 			}
 			if !updated {
 				// Let's check if the email address is associated to other user
-				existingOwnerUserID, err := core.
+				existingOwnerUserIDNum, err := core.
 					getUserIDNumByKeyEmailAddress(*emailAddress)
 				if err != nil {
 					panic(err)
 				}
-				if existingOwnerUserID.IsValid() && existingOwnerUserID != termUserID {
+				if existingOwnerUserIDNum.IsValid() && existingOwnerUserIDNum != termUserIDNum {
 					// The email address has been claimed by another user after
 					// the current user requested the link.
 					return "", iam.UserRefKeyZero(), iam.ErrTerminalVerificationResourceConflict
@@ -341,7 +341,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 
 			updated, err := core.
 				ensureUserPhoneNumberVerifiedFlag(
-					termUserID,
+					termUserIDNum,
 					*phoneNumber,
 					&ctxTime,
 					termData.VerificationID)
@@ -350,12 +350,12 @@ func (core *Core) ConfirmTerminalAuthorization(
 			}
 			if !updated {
 				// Let's check if the phone number is associated to other user
-				existingOwnerUserID, err := core.
+				existingOwnerUserIDNum, err := core.
 					getUserIDNumByKeyPhoneNumber(*phoneNumber)
 				if err != nil {
 					panic(err)
 				}
-				if existingOwnerUserID.IsValid() && existingOwnerUserID != termUserID {
+				if existingOwnerUserIDNum.IsValid() && existingOwnerUserIDNum != termUserIDNum {
 					// The phone number has been claimed by another user after
 					// the current user requested the link.
 					return "", iam.UserRefKeyZero(), iam.ErrTerminalVerificationResourceConflict
@@ -379,7 +379,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 		panic(err)
 	}
 
-	return termSecret, iam.NewUserRefKey(termData.UserID), nil
+	return termSecret, iam.NewUserRefKey(termData.UserIDNum), nil
 }
 
 func (core *Core) getTerminalRaw(idNum iam.TerminalIDNum) (*terminalDBRawModel, error) {
@@ -445,7 +445,7 @@ func (core *Core) GetTerminalInfo(
 		return nil, err
 	}
 
-	if !ctxAuth.UserID().EqualsUserIDNum(ownerUserIDNum) {
+	if !ctxAuth.UserIDNum().EqualsUserIDNum(ownerUserIDNum) {
 		return nil, nil
 	}
 
@@ -535,8 +535,8 @@ func (core *Core) registerTerminalNoAC(
 				"user_id":           input.Data.UserRef.IDNum().PrimitiveValue(),
 				"secret":            termSecret,
 				"c_ts":              ctxTime,
-				"c_uid":             ctxAuth.UserIDPtr(),
-				"c_tid":             ctxAuth.TerminalIDPtr(),
+				"c_uid":             ctxAuth.UserIDNumPtr(),
+				"c_tid":             ctxAuth.TerminalIDNumPtr(),
 				"c_origin_address":  originInfo.Address,
 				"c_origin_env":      originInfo.EnvironmentString,
 				"display_name":      strings.TrimSpace(input.Data.DisplayName),
@@ -587,8 +587,8 @@ func (core *Core) DeleteTerminal(
 		Set(
 			goqu.Record{
 				"d_ts":  ctxTime,
-				"d_tid": ctxAuth.TerminalID().PrimitiveValue(),
-				"d_uid": ctxAuth.UserID().PrimitiveValue(),
+				"d_tid": ctxAuth.TerminalIDNum().PrimitiveValue(),
+				"d_uid": ctxAuth.UserIDNum().PrimitiveValue(),
 			},
 		).
 		ToSQL()

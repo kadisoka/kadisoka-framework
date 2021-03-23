@@ -75,8 +75,8 @@ func (restSrv *Server) handleSetEmailAddress(
 		return
 	}
 
-	if targetUserIDStr := req.PathParameter("user-id"); targetUserIDStr != "" && targetUserIDStr != "me" {
-		targetUserRef, err := iam.UserRefKeyFromAZERText(targetUserIDStr)
+	if targetUserRefStr := req.PathParameter("user-id"); targetUserRefStr != "" && targetUserRefStr != "me" {
+		targetUserRef, err := iam.UserRefKeyFromAZERText(targetUserRefStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).
@@ -126,7 +126,6 @@ func (restSrv *Server) handleSetEmailAddress(
 			CodeExpiry:     *codeExpiry,
 		},
 		http.StatusAccepted)
-	return
 }
 
 //TODO(exa): should we allow confirming without the need to login

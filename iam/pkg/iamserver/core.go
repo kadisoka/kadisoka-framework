@@ -38,8 +38,8 @@ type Core struct {
 	realmInfo realm.Info
 	db        *sqlx.DB
 
-	registeredUserInstanceIDCache *lru.ARCCache
-	deletedUserInstanceIDCache    *lru.ARCCache
+	registeredUserIDNumCache *lru.ARCCache
+	deletedUserIDNumCache    *lru.ARCCache
 
 	iam.ConsumerServer
 
@@ -106,24 +106,24 @@ func NewCoreByConfig(
 		pnv10n.ModuleNames())
 	pnVerifier := pnv10n.NewVerifier(realmName, iamDB, coreCfg.PNV)
 
-	registeredUserIDCache, err := lru.NewARC(65535)
+	registeredUserIDNumCache, err := lru.NewARC(65535)
 	if err != nil {
 		panic(err)
 	}
-	deletedUserAccountIDCache, err := lru.NewARC(65535)
+	deletedUserIDNumCache, err := lru.NewARC(65535)
 	if err != nil {
 		panic(err)
 	}
 
 	inst := &Core{
-		realmInfo:                     realmInfo,
-		db:                            iamDB,
-		registeredUserInstanceIDCache: registeredUserIDCache,
-		deletedUserInstanceIDCache:    deletedUserAccountIDCache,
-		applicationDataProvider:       applicationDataProvider,
-		mediaStore:                    mediaStore,
-		eaVerifier:                    eaVerifier,
-		pnVerifier:                    pnVerifier,
+		realmInfo:                realmInfo,
+		db:                       iamDB,
+		registeredUserIDNumCache: registeredUserIDNumCache,
+		deletedUserIDNumCache:    deletedUserIDNumCache,
+		applicationDataProvider:  applicationDataProvider,
+		mediaStore:               mediaStore,
+		eaVerifier:               eaVerifier,
+		pnVerifier:               pnVerifier,
 	}
 
 	svcForServer, err := iam.NewConsumerServer(nil, jwtKeyChain, inst)

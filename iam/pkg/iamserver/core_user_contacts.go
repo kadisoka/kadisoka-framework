@@ -6,11 +6,11 @@ import (
 
 const userContactPhoneNumberDBTableName = "user_contact_phone_number_dt"
 
-func (core *Core) GetUserContactUserIDs(
+func (core *Core) GetUserContactUserRefs(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
 ) ([]iam.UserRefKey, error) {
-	userIDRows, err := core.db.
+	userIDNumRows, err := core.db.
 		Query(
 			`SELECT DISTINCT `+
 				`ph.user_id `+
@@ -30,18 +30,18 @@ func (core *Core) GetUserContactUserIDs(
 	if err != nil {
 		return nil, err
 	}
-	defer userIDRows.Close()
+	defer userIDNumRows.Close()
 
 	var userRefs []iam.UserRefKey
-	for userIDRows.Next() {
+	for userIDNumRows.Next() {
 		userIDNum := iam.UserIDNumZero
-		err = userIDRows.Scan(&userIDNum)
+		err = userIDNumRows.Scan(&userIDNum)
 		if err != nil {
 			panic(err)
 		}
 		userRefs = append(userRefs, iam.NewUserRefKey(userIDNum))
 	}
-	if err = userIDRows.Err(); err != nil {
+	if err = userIDNumRows.Err(); err != nil {
 		return nil, err
 	}
 
