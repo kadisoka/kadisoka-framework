@@ -33,7 +33,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	}
 
 	// To use this grant type, the client must be able to secure its credentials.
-	if !reqApp.ID.ID().IsService() && !reqApp.ID.ID().IsUserAgentAuthorizationConfidential() {
+	if appIDNum := reqApp.ID.IDNum(); !appIDNum.IsService() && !appIDNum.IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
 			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqApp.ID)
 		oauth2.RespondTo(resp).ErrorCode(
@@ -50,6 +50,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 			oauth2.ErrorServerError)
 		return
 	}
+
 	ctxAuth := reqCtx.Authorization()
 	if ctxAuth.IsValid() {
 		logCtx(reqCtx).

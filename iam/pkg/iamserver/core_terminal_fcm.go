@@ -14,7 +14,7 @@ const terminalFCMRegistrationTokenDBTableName = "terminal_fcm_registration_token
 
 func (core *Core) DisposeTerminalFCMRegistrationToken(
 	callCtx iam.CallContext,
-	terminalID iam.TerminalID,
+	terminalRef iam.TerminalRefKey,
 	token string,
 ) error {
 	ctxAuth := callCtx.Authorization()
@@ -23,35 +23,40 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 			"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 			"WHERE terminal_id = $4 AND token = $5 AND d_ts IS NULL",
 		callCtx.RequestInfo().ReceiveTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
-		terminalID.PrimitiveValue(), token)
+		terminalRef.IDNum().PrimitiveValue(), token)
 	return err
 }
 
 func (core *Core) ListTerminalFCMRegistrationTokensByUser(
 	ownerUserRef iam.UserRefKey,
-) (tokens map[iam.TerminalID]string, err error) {
+) (tokens map[iam.TerminalRefKey]string, err error) {
 	//TODO: use cache service
 
 	termRows, err := core.db.Query(
-		`SELECT tid.id, tft.token `+
+		`SELECT tid.id, tid.application_id, tft.token `+
 			`FROM `+terminalDBTableName+` tid `+
 			`JOIN `+terminalFCMRegistrationTokenDBTableName+` tft `+
 			"ON tft.terminal_id=tid.id AND tft.d_ts IS NULL "+
 			"WHERE tid.user_id=$1 AND tid.d_ts IS NULL AND tid.verification_ts IS NOT NULL",
-		ownerUserRef.ID().PrimitiveValue())
+		ownerUserRef.IDNum().PrimitiveValue())
 	if err != nil {
 		return nil, err
 	}
 	defer termRows.Close()
 
-	result := map[iam.TerminalID]string{}
+	result := map[iam.TerminalRefKey]string{}
 	for termRows.Next() {
-		var terminalID iam.TerminalID
+		var terminalIDNum iam.TerminalIDNum
+		var applicationIDNum iam.ApplicationIDNum
 		var token string
-		if err = termRows.Scan(&terminalID, &token); err != nil {
+		if err = termRows.Scan(&terminalIDNum, &applicationIDNum, &token); err != nil {
 			return nil, err
 		}
-		result[terminalID] = token
+		result[iam.NewTerminalRefKey(
+			iam.NewApplicationRefKey(applicationIDNum),
+			ownerUserRef,
+			terminalIDNum,
+		)] = token
 	}
 	if err = termRows.Err(); err != nil {
 		return nil, err
@@ -70,8 +75,8 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 	}
 
 	ctxTermRef := callCtx.Authorization().TerminalRef()
-	ctxAppID := ctxTermRef.Application().ID()
-	if !ctxAppID.IsFirstParty() || !ctxAppID.IsService() {
+	ctxAppIDNum := ctxTermRef.Application().IDNum()
+	if !ctxAppIDNum.IsFirstParty() || !ctxAppIDNum.IsService() {
 		return errors.ArgMsg("callCtx", "unauthorized application type")
 	}
 	if !ctxTermRef.User().EqualsUserRefKey(userRef) {
@@ -88,7 +93,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 			callCtx.RequestInfo().ReceiveTime,
 			ctxAuth.UserID().PrimitiveValue(),
 			ctxAuth.TerminalID().PrimitiveValue(),
-			terminalRef.ID().PrimitiveValue())
+			terminalRef.IDNum().PrimitiveValue())
 		if err != nil {
 			return err
 		}
@@ -99,7 +104,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 			`INSERT INTO `+terminalFCMRegistrationTokenDBTableName+` `+
 				"(terminal_id, user_id, c_uid, c_tid, token) "+
 				"VALUES ($1, $2, $3, $4, $5)",
-			terminalRef.ID().PrimitiveValue(), userRef.ID().PrimitiveValue(),
+			terminalRef.IDNum().PrimitiveValue(), userRef.IDNum().PrimitiveValue(),
 			ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
 			token)
 		return err

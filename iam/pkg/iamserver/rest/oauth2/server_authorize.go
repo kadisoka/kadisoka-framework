@@ -193,7 +193,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 			http.StatusBadRequest)
 		return
 	}
-	if !appRef.ID().IsUserAgentAuthorizationConfidential() {
+	if !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
 		logCtx(reqCtx).
 			Warn().Str("client_id", appRef.AZERText()).
 			Msg("Requires ua-confidential client type")

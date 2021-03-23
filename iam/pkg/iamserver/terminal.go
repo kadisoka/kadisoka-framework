@@ -81,19 +81,19 @@ type TerminalAuthorizationStartOutputData struct {
 
 // terminalDBRawModel represents a row from terminal table.
 type terminalDBRawModel struct {
-	ID       iam.TerminalID    `db:"id"`
-	ClientID iam.ApplicationID `db:"application_id"`
-	UserID   iam.UserID        `db:"user_id"`
+	ID               iam.TerminalIDNum    `db:"id"`
+	ApplicationIDNum iam.ApplicationIDNum `db:"application_id"`
+	UserID           iam.UserIDNum        `db:"user_id"`
 
-	CreationTime          time.Time       `db:"c_ts"`
-	CreationUserID        *iam.UserID     `db:"c_uid"`
-	CreationTerminalID    *iam.TerminalID `db:"c_tid"`
-	CreationOriginAddress string          `db:"c_origin_address"`
-	CreationOriginEnv     string          `db:"c_origin_env"`
+	CreationTime          time.Time          `db:"c_ts"`
+	CreationUserID        *iam.UserIDNum     `db:"c_uid"`
+	CreationTerminalID    *iam.TerminalIDNum `db:"c_tid"`
+	CreationOriginAddress string             `db:"c_origin_address"`
+	CreationOriginEnv     string             `db:"c_origin_env"`
 
-	DeletionTime       *time.Time      `db:"d_ts"`
-	DeletionUserID     *iam.UserID     `db:"d_uid"`
-	DeletionTerminalID *iam.TerminalID `db:"d_tid"`
+	DeletionTime       *time.Time         `db:"d_ts"`
+	DeletionUserID     *iam.UserIDNum     `db:"d_uid"`
+	DeletionTerminalID *iam.TerminalIDNum `db:"d_tid"`
 
 	Secret         string `db:"secret"`
 	DisplayName    string `db:"display_name"`

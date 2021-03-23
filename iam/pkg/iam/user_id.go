@@ -14,75 +14,76 @@ var (
 	ErrServiceUserIDStringInvalid = errors.Ent("service user ID string", nil)
 )
 
-//region ID
+//region IDNum
 
-// UserID is a scoped identifier
+// UserIDNum is a scoped identifier
 // used to identify an instance of entity User.
-type UserID int64
+type UserIDNum int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.EID = UserIDZero
-var _ azfl.EntityID = UserIDZero
-var _ azer.BinFieldUnmarshalable = &_UserIDZeroVar
-var _ azfl.UserID = UserIDZero
+var _ azfl.IDNum = UserIDNumZero
+var _ azfl.EntityID = UserIDNumZero
+var _ azer.BinFieldUnmarshalable = &_UserIDNumZeroVar
+var _ azfl.UserIDNum = UserIDNumZero
 
-// _UserIDSignificantBitsMask is used to
-// extract significant bits from an instance of UserID.
-const UserIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111
+// UserIDNumSignificantBitsMask is used to
+// extract significant bits from an instance of UserIDNum.
+const UserIDNumSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111
 
-// UserIDZero is the zero value
-// for UserID.
-const UserIDZero = UserID(0)
+// UserIDNumZero is the zero value
+// for UserIDNum.
+const UserIDNumZero = UserIDNum(0)
 
-// _UserIDZeroVar is used for testing
+// _UserIDNumZeroVar is used for testing
 // pointer-based interfaces conformance.
-var _UserIDZeroVar = UserIDZero
+var _UserIDNumZeroVar = UserIDNumZero
 
-// UserIDFromPrimitiveValue creates an instance
-// of UserID from its primitive value.
-func UserIDFromPrimitiveValue(v int64) UserID {
-	return UserID(v)
+// UserIDNumFromPrimitiveValue creates an instance
+// of UserIDNum from its primitive value.
+func UserIDNumFromPrimitiveValue(v int64) UserIDNum {
+	return UserIDNum(v)
 }
 
-// UserIDFromAZERBinField creates UserID from
+// UserIDNumFromAZERBinField creates UserIDNum from
 // its azer-bin-field form.
-func UserIDFromAZERBinField(
+func UserIDNumFromAZERBinField(
 	b []byte, typeHint azer.BinDataType,
-) (id UserID, readLen int, err error) {
+) (idNum UserIDNum, readLen int, err error) {
 	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt64 {
-		return UserID(0), 0,
+		return UserIDNum(0), 0,
 			errors.ArgMsg("typeHint", "unsupported")
 	}
 	i := binary.BigEndian.Uint64(b)
-	return UserID(i), 8, nil
+	return UserIDNum(i), 8, nil
 }
 
-// PrimitiveValue returns the ID in its primitive type. Prefer to use
+// PrimitiveValue returns the value in its primitive type. Prefer to use
 // this method instead of casting directly.
-func (id UserID) PrimitiveValue() int64 {
-	return int64(id)
+func (idNum UserIDNum) PrimitiveValue() int64 {
+	return int64(idNum)
 }
 
-// AZEID is required for conformance
-// with azfl.EID.
-func (UserID) AZEID() {}
+// AZIDNum is required for conformance
+// with azfl.IDNum.
+func (UserIDNum) AZIDNum() {}
 
 // AZEntityID is required for conformance
 // with azfl.EntityID.
-func (UserID) AZEntityID() {}
+func (UserIDNum) AZEntityID() {}
 
-// AZUserID is required for conformance
-// with azfl.UserID.
-func (UserID) AZUserID() {}
+// AZUserIDNum is required for conformance
+// with azfl.UserIDNum.
+func (UserIDNum) AZUserIDNum() {}
 
-// IsZero is required as UserID is a value-object.
-func (id UserID) IsZero() bool {
-	return id == UserIDZero
+// IsZero is required as UserIDNum is a value-object.
+func (idNum UserIDNum) IsZero() bool {
+	return idNum == UserIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as an ID.
-// It doesn't tell whether it refers to a valid instance of User.
+// IsValid returns true if this instance is valid independently
+// as an UserIDNum. It doesn't tell whether it refers to
+// a valid instance of User.
 //
 // To elaborate, validity of a data depends on the perspective of the user.
 // For example, age 1000 is a valid as an instance of age, but on the context
@@ -95,94 +96,98 @@ func (id UserID) IsZero() bool {
 //
 // Similarly, what is considered valid in this context here is that the data
 // contained in this instance doesn't break any rule for an instance of
-// UserID. Whether the instance is valid for certain context,
+// UserIDNum. Whether the instance is valid for certain context,
 // it requires case-by-case validation which is out of the scope of this
 // method.
-func (id UserID) IsValid() bool {
-	return int64(id) > 0 &&
-		(uint64(id)&UserIDSignificantBitsMask) != 0
+func (idNum UserIDNum) IsValid() bool {
+	return int64(idNum) > 0 &&
+		(uint64(idNum)&UserIDNumSignificantBitsMask) != 0
 }
 
 // IsNotValid returns the negation of value returned by IsValid().
-func (id UserID) IsNotValid() bool {
-	return !id.IsValid()
+func (idNum UserIDNum) IsNotValid() bool {
+	return !idNum.IsValid()
 }
 
-// Equals is required as UserID is a value-object.
+// Equals is required as UserIDNum is a value-object.
 //
-// Use EqualsUserID method if the other value
+// Use EqualsUserIDNum method if the other value
 // has the same type.
-func (id UserID) Equals(other interface{}) bool {
-	if x, ok := other.(UserID); ok {
-		return x == id
+func (idNum UserIDNum) Equals(other interface{}) bool {
+	if x, ok := other.(UserIDNum); ok {
+		return x == idNum
 	}
-	if x, _ := other.(*UserID); x != nil {
-		return *x == id
+	if x, _ := other.(*UserIDNum); x != nil {
+		return *x == idNum
 	}
 	return false
 }
 
 // Equal is a wrapper for Equals method. It is required for
 // compatibility with github.com/google/go-cmp
-func (id UserID) Equal(other interface{}) bool {
-	return id.Equals(other)
+func (idNum UserIDNum) Equal(other interface{}) bool {
+	return idNum.Equals(other)
 }
 
-// EqualsUserID determines if the other instance is equal
+// EqualsUserIDNum determines if the other instance is equal
 // to this instance.
-func (id UserID) EqualsUserID(
-	other UserID,
+func (idNum UserIDNum) EqualsUserIDNum(
+	other UserIDNum,
 ) bool {
-	return id == other
+	return idNum == other
 }
 
 // AZERBinField is required for conformance
-// with azfl.EID.
-func (id UserID) AZERBinField() ([]byte, azer.BinDataType) {
+// with azfl.IDNum.
+func (idNum UserIDNum) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(id))
+	binary.BigEndian.PutUint64(b, uint64(idNum))
 	return b, azer.BinDataTypeInt64
 }
 
 // UnmarshalAZERBinField is required for conformance
 // with azer.BinFieldUnmarshalable.
-func (id *UserID) UnmarshalAZERBinField(
+func (idNum *UserIDNum) UnmarshalAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := UserIDFromAZERBinField(b, typeHint)
+	i, readLen, err := UserIDNumFromAZERBinField(b, typeHint)
 	if err == nil {
-		*id = i
+		*idNum = i
 	}
 	return readLen, err
 }
 
-// IsBot returns true if the User instance
-// this ID is for is a Bot User.
+// IsBot returns true if
+// the User instance this UserIDNum is for
+// is a Bot User.
 //
 // Bot account is ....
-func (id UserID) IsBot() bool {
-	return id.IsValid() && id.HasBotBits()
+func (idNum UserIDNum) IsBot() bool {
+	return idNum.IsValid() && idNum.HasBotBits()
 }
+
+const _UserIDNumBotMask = 0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+const _UserIDNumBotBits = 0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
 
 // HasBotBits is only checking the bits
-// without validating other information contained in the ID.
-func (id UserID) HasBotBits() bool {
-	return (uint64(id) &
-		0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000) ==
-		0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+// without validating other information.
+func (idNum UserIDNum) HasBotBits() bool {
+	return (uint64(idNum) &
+		_UserIDNumBotMask) ==
+		_UserIDNumBotBits
 }
 
-type UserIDError interface {
+type UserIDNumError interface {
 	error
-	UserIDError()
+	UserIDNumError()
 }
 
-func (id UserID) IsNormalAccount() bool {
-	return id.IsValid() && !id.HasBotBits()
+func (idNum UserIDNum) IsNormalAccount() bool {
+	return idNum.IsValid() && !idNum.HasBotBits()
 }
 
-func (id UserID) IsServiceAccount() bool {
-	return id.IsBot()
+func (idNum UserIDNum) IsServiceAccount() bool {
+	return idNum.IsBot()
 }
 
 //endregion
@@ -191,14 +196,14 @@ func (id UserID) IsServiceAccount() bool {
 
 // UserRefKey is used to identify
 // an instance of entity User system-wide.
-type UserRefKey UserID
+type UserRefKey UserIDNum
 
 // NewUserRefKey returns a new instance
 // of UserRefKey with the provided attribute values.
 func NewUserRefKey(
-	id UserID,
+	idNum UserIDNum,
 ) UserRefKey {
-	return UserRefKey(id)
+	return UserRefKey(idNum)
 }
 
 // To ensure that it conforms the interfaces. If any of these is failing,
@@ -207,7 +212,7 @@ var _ azfl.RefKey = _UserRefKeyZero
 var _ azfl.EntityRefKey = _UserRefKeyZero
 var _ azfl.UserRefKey = _UserRefKeyZero
 
-const _UserRefKeyZero = UserRefKey(UserIDZero)
+const _UserRefKeyZero = UserRefKey(UserIDNumZero)
 
 var _UserRefKeyZeroVar = _UserRefKeyZero
 
@@ -224,40 +229,41 @@ func (UserRefKey) AZRefKey() {}
 // with azfl.EntityRefKey.
 func (UserRefKey) AZEntityRefKey() {}
 
-// ID returns the scoped identifier of the entity.
-func (refKey UserRefKey) ID() UserID {
-	return UserID(refKey)
+// IDNum returns the scoped identifier of the entity.
+func (refKey UserRefKey) IDNum() UserIDNum {
+	return UserIDNum(refKey)
 }
 
-// IDPtr returns a pointer to a copy of the ID if it's considered valid.
-func (refKey UserRefKey) IDPtr() *UserID {
+// IDNumPtr returns a pointer to a copy of the IDNum if it's considered valid
+// otherwise it returns nil.
+func (refKey UserRefKey) IDNumPtr() *UserIDNum {
 	if refKey.IsNotValid() {
 		return nil
 	}
-	i := refKey.ID()
+	i := refKey.IDNum()
 	return &i
 }
 
-// ID is required for conformance with azfl.RefKey.
-func (refKey UserRefKey) EID() azfl.EID {
-	return UserID(refKey)
+// AZIDNum is required for conformance with azfl.RefKey.
+func (refKey UserRefKey) AZIDNum() azfl.IDNum {
+	return UserIDNum(refKey)
 }
 
-// UserID is required for conformance
+// UserIDNum is required for conformance
 // with azfl.UserRefKey.
-func (refKey UserRefKey) UserID() azfl.UserID {
-	return UserID(refKey)
+func (refKey UserRefKey) UserIDNum() azfl.UserIDNum {
+	return UserIDNum(refKey)
 }
 
 // IsZero is required as UserRefKey is a value-object.
 func (refKey UserRefKey) IsZero() bool {
-	return UserID(refKey) == UserIDZero
+	return UserIDNum(refKey) == UserIDNumZero
 }
 
 // IsValid returns true if this instance is valid independently as a ref-key.
 // It doesn't tell whether it refers to a valid instance of User.
 func (refKey UserRefKey) IsValid() bool {
-	return UserID(refKey).IsValid()
+	return UserIDNum(refKey).IsValid()
 }
 
 // IsNotValid returns the negation of value returned by IsValid().
@@ -310,7 +316,7 @@ func UserRefKeyFromAZERBin(b []byte) (refKey UserRefKey, readLen int, err error)
 	i, readLen, err := UserRefKeyFromAZERBinField(b[1:], typ)
 	if err != nil {
 		return _UserRefKeyZero, 0,
-			errors.ArgWrap("", "id data parsing", err)
+			errors.ArgWrap("", "idnum data parsing", err)
 	}
 
 	return UserRefKey(i), 1 + readLen, nil
@@ -327,17 +333,17 @@ func (refKey *UserRefKey) UnmarshalAZERBin(b []byte) (readLen int, err error) {
 }
 
 func (refKey UserRefKey) AZERBinField() ([]byte, azer.BinDataType) {
-	return UserID(refKey).AZERBinField()
+	return UserIDNum(refKey).AZERBinField()
 }
 
 func UserRefKeyFromAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (refKey UserRefKey, readLen int, err error) {
-	id, n, err := UserIDFromAZERBinField(b, typeHint)
+	idNum, n, err := UserIDNumFromAZERBinField(b, typeHint)
 	if err != nil {
 		return _UserRefKeyZero, n, err
 	}
-	return UserRefKey(id), n, nil
+	return UserRefKey(idNum), n, nil
 }
 
 // UnmarshalAZERBinField is required for conformance
@@ -433,17 +439,20 @@ func (refKey *UserRefKey) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// UserRefKeyService abstracts
+// UserRefKey-related services.
+type UserRefKeyService interface {
+	// IsUserRefKey is to check if the ref-key is
+	// trully registered to system. It does not check whether the instance
+	// is active or not.
+	IsUserRefKeyRegistered(refKey UserRefKey) bool
+}
+
 // UserRefKeyError defines an interface for all
 // UserRefKey-related errors.
 type UserRefKeyError interface {
 	error
 	UserRefKeyError()
-}
-
-type UserRefKeyService interface {
-	// IsUserRefKeyRegistered is to check if the ref-key is
-	// trully registered to system.
-	IsUserRefKeyRegistered(refKey UserRefKey) bool
 }
 
 //endregion

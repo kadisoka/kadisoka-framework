@@ -7,22 +7,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestApplicationIDLimits(t *testing.T) {
-	assert.Equal(t, ApplicationID(0), ApplicationIDZero)
-	assert.Equal(t, true, ApplicationIDZero.IsZero())
-	assert.Equal(t, ApplicationIDFromPrimitiveValue(0), ApplicationIDZero)
-	assert.Equal(t, int32(1), ApplicationID(1).PrimitiveValue())
-	assert.Equal(t, false, ApplicationID(0).IsValid())
-	assert.Equal(t, false, ApplicationID(-1).IsValid())
-	assert.Equal(t, true, ApplicationID(1).IsValid())
-	assert.Equal(t, true, ApplicationID(0xffff).IsValid())
-	assert.Equal(t, true, ApplicationID(0xffffff).IsValid())
-	assert.Equal(t, true, ApplicationID(0x7fffffff).IsValid())
-	assert.Equal(t, false, ApplicationID(1<<28).IsValid())
-	assert.Equal(t, true, ApplicationID((1<<30)|0x1).IsFirstParty())
-	assert.Equal(t, true, ApplicationID(0x01000000).IsValid())
-	assert.Equal(t, true, ApplicationID(0x01000001).IsValid())
-	assert.Equal(t, true, ApplicationID(0x01ffffff).IsValid())
+func TestApplicationIDNumLimits(t *testing.T) {
+	assert.Equal(t, ApplicationIDNum(0), ApplicationIDNumZero)
+	assert.Equal(t, true, ApplicationIDNumZero.IsZero())
+	assert.Equal(t, ApplicationIDNumFromPrimitiveValue(0), ApplicationIDNumZero)
+	assert.Equal(t, int32(1), ApplicationIDNum(1).PrimitiveValue())
+	assert.Equal(t, false, ApplicationIDNum(0).IsValid())
+	assert.Equal(t, false, ApplicationIDNum(-1).IsValid())
+	assert.Equal(t, true, ApplicationIDNum(1).IsValid())
+	assert.Equal(t, true, ApplicationIDNum(0xffff).IsValid())
+	assert.Equal(t, true, ApplicationIDNum(0xffffff).IsValid())
+	assert.Equal(t, true, ApplicationIDNum(0x7fffffff).IsValid())
+	assert.Equal(t, false, ApplicationIDNum(1<<28).IsValid())
+	assert.Equal(t, true, ApplicationIDNum((1<<30)|0x1).IsFirstParty())
+	assert.Equal(t, true, ApplicationIDNum(0x01000000).IsValid())
+	assert.Equal(t, true, ApplicationIDNum(0x01000001).IsValid())
+	assert.Equal(t, true, ApplicationIDNum(0x01ffffff).IsValid())
 }
 
 func TestApplicationRefKeyAZERTextEncoding(t *testing.T) {

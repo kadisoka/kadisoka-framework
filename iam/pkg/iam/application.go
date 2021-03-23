@@ -40,15 +40,15 @@ type ApplicationDataProvider interface {
 func GenerateApplicationRefKey(firstParty bool, clientTyp string) ApplicationRefKey {
 	var typeInfo uint32
 	if firstParty {
-		typeInfo = _ApplicationIDFirstPartyBits
+		typeInfo = _ApplicationIDNumFirstPartyBits
 	}
 	switch clientTyp {
 	case "service":
-		typeInfo |= _ApplicationIDServiceBits
+		typeInfo |= _ApplicationIDNumServiceBits
 	case "ua-public":
-		typeInfo |= _ApplicationIDUserAgentAuthorizationPublicBits
+		typeInfo |= _ApplicationIDNumUserAgentAuthorizationPublicBits
 	case "ua-confidential":
-		typeInfo |= _ApplicationIDUserAgentAuthorizationConfidentialBits
+		typeInfo |= _ApplicationIDNumUserAgentAuthorizationConfidentialBits
 	default:
 		panic("Unsupported client app type")
 	}
@@ -58,7 +58,7 @@ func GenerateApplicationRefKey(firstParty bool, clientTyp string) ApplicationRef
 		panic(err)
 	}
 	//TODO: reserve some ranges (?)
-	instID := binary.BigEndian.Uint32(instIDBytes) & _ApplicationIDSignificantBitsMask
-	appID := ApplicationIDFromPrimitiveValue(int32(typeInfo | instID))
+	instID := binary.BigEndian.Uint32(instIDBytes) & ApplicationIDNumSignificantBitsMask
+	appID := ApplicationIDNumFromPrimitiveValue(int32(typeInfo | instID))
 	return NewApplicationRefKey(appID)
 }

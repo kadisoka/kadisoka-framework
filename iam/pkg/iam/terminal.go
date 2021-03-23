@@ -10,7 +10,7 @@ import (
 type TerminalService interface {
 	GetTerminalInfo(
 		callCtx CallContext,
-		terminalID TerminalID,
+		terminalIDNum TerminalIDNum,
 	) (*TerminalInfo, error)
 }
 
@@ -40,10 +40,10 @@ type TerminalInfo struct {
 type TerminalFCMRegistrationTokenService interface {
 	ListTerminalFCMRegistrationTokensByUser(
 		ownerUserRef UserRefKey,
-	) (tokens map[TerminalID]string, err error)
+	) (tokens map[TerminalRefKey]string, err error)
 	DisposeTerminalFCMRegistrationToken(
 		callCtx CallContext,
-		terminalID TerminalID,
+		terminalRef TerminalRefKey,
 		token string,
 	) error
 }

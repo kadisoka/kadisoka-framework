@@ -307,7 +307,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
 	// Only for non-confidential user-agents
-	if appRef := authApp.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
+	if appRef := authApp.ID; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is not allowed to use this verification resource type",
 			authApp.ID)
@@ -378,7 +378,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	authApp *iam.Application,
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
-	if appRef := authApp.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
+	if appRef := authApp.ID; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is not allowed to use this verification resource type",
 			authApp.ID)

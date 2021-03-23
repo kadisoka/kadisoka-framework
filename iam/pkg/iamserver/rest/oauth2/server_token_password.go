@@ -27,7 +27,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	if reqApp != nil && !reqApp.ID.ID().IsUserAgentAuthorizationConfidential() {
+	if reqApp != nil && !reqApp.ID.IDNum().IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
 			Warn().Msgf("Client %v is not authorized to use grant type password", reqApp.ID)
 		oauth2.RespondTo(resp).ErrorCode(

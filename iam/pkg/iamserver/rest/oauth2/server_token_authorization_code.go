@@ -42,7 +42,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	var termRef iam.TerminalRefKey
 	if strings.HasPrefix(authCode, "otp:") {
 		// Only for non-confidential user-agents
-		if appRef := reqApp.ID; !appRef.ID().IsUserAgentAuthorizationPublic() {
+		if appRef := reqApp.ID; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
 			logReq(req.Request).
 				Warn().Str("client_id", reqApp.ID.AZERText()).
 				Msg("Client is not allowed to use grant type 'authorization_code' with OTP")
@@ -73,7 +73,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		authCode = parts[2]
 	} else {
 		// Only for confidential user-agents
-		if appRef := reqApp.ID; !appRef.ID().IsUserAgentAuthorizationConfidential() {
+		if appRef := reqApp.ID; !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
 			logReq(req.Request).
 				Warn().Str("client_id", reqApp.ID.AZERText()).
 				Msg("Client is not allowed to use grant type 'authorization_code'")

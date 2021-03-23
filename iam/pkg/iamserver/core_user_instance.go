@@ -62,7 +62,7 @@ func (core *Core) GetUserInstanceInfo(
 
 	var err error
 	idRegistered, instDeleted, err = core.
-		getUserInstanceStateByID(userRef.ID())
+		getUserInstanceStateByIDNum(userRef.IDNum())
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +88,8 @@ func (core *Core) GetUserInstanceInfo(
 	}, nil
 }
 
-func (core *Core) getUserInstanceStateByID(
-	id iam.UserID,
+func (core *Core) getUserInstanceStateByIDNum(
+	idNum iam.UserIDNum,
 ) (idRegistered, accountDeleted bool, err error) {
 	sqlString, _, _ := goqu.From(userDBTableName).
 		Select(
@@ -99,7 +99,7 @@ func (core *Core) getUserInstanceStateByID(
 				As("deleted"),
 		).
 		Where(
-			goqu.C("id").Eq(id.PrimitiveValue()),
+			goqu.C("id").Eq(idNum.PrimitiveValue()),
 		).
 		ToSQL()
 
@@ -218,11 +218,11 @@ func (core *Core) newUserInstance(
 	const attemptNumMax = 5
 
 	var err error
-	var newUserID iam.UserID
+	var newUserIDNum iam.UserIDNum
 	cTime := callCtx.RequestInfo().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
-		newUserID, err = core.generateUserID()
+		newUserIDNum, err = core.generateUserIDNum()
 		if err != nil {
 			panic(err)
 		}
@@ -231,7 +231,7 @@ func (core *Core) newUserInstance(
 			Insert(userDBTableName).
 			Rows(
 				goqu.Record{
-					"id":    newUserID,
+					"id":    newUserIDNum,
 					"c_ts":  cTime,
 					"c_uid": ctxAuth.UserIDPtr(),
 					"c_tid": ctxAuth.TerminalIDPtr(),
@@ -258,11 +258,11 @@ func (core *Core) newUserInstance(
 		return iam.UserRefKeyZero(), errors.Wrap("insert", err)
 	}
 
-	return iam.NewUserRefKey(newUserID), nil
+	return iam.NewUserRefKey(newUserIDNum), nil
 }
 
 //TODO: bitfield
-func (core *Core) generateUserID() (iam.UserID, error) {
+func (core *Core) generateUserIDNum() (iam.UserIDNum, error) {
 	tNow := time.Now().UTC()
 	tbin, err := tNow.MarshalBinary()
 	if err != nil {
@@ -280,6 +280,6 @@ func (core *Core) generateUserID() (iam.UserID, error) {
 		panic(err)
 	}
 	copy(idBytes[4:], hashPart)
-	idUint := binary.BigEndian.Uint64(idBytes) & iam.UserIDSignificantBitsMask
-	return iam.UserID(idUint), nil
+	idUint := binary.BigEndian.Uint64(idBytes) & iam.UserIDNumSignificantBitsMask
+	return iam.UserIDNum(idUint), nil
 }

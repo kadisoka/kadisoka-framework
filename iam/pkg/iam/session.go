@@ -32,131 +32,132 @@ var _ = strings.Compare
 //
 // An access token represents a instance of Session.
 
-//region ID
+//region IDNum
 
-// SessionID is a scoped identifier
+// SessionIDNum is a scoped identifier
 // used to identify an instance of adjunct entity Session
 // scoped within its host entity(s).
-type SessionID int32
+type SessionIDNum int32
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.EID = SessionIDZero
-var _ azfl.AdjunctEntityID = SessionIDZero
-var _ azer.BinFieldUnmarshalable = &_SessionIDZeroVar
-var _ azfl.SessionID = SessionIDZero
+var _ azfl.IDNum = SessionIDNumZero
+var _ azfl.AdjunctEntityID = SessionIDNumZero
+var _ azer.BinFieldUnmarshalable = &_SessionIDNumZeroVar
+var _ azfl.SessionIDNum = SessionIDNumZero
 
-// SessionIDSignificantBitsMask is used to
-// extract significant bits from an instance of SessionID.
-const SessionIDSignificantBitsMask uint32 = 0b11111111_11111111_11111111
+// SessionIDNumSignificantBitsMask is used to
+// extract significant bits from an instance of SessionIDNum.
+const SessionIDNumSignificantBitsMask uint32 = 0b11111111_11111111_11111111
 
-// SessionIDZero is the zero value for SessionID.
-const SessionIDZero = SessionID(0)
+// SessionIDNumZero is the zero value for SessionIDNum.
+const SessionIDNumZero = SessionIDNum(0)
 
-// _SessionIDZeroVar is used for testing
+// _SessionIDNumZeroVar is used for testing
 // pointer-based interfaces conformance.
-var _SessionIDZeroVar = SessionIDZero
+var _SessionIDNumZeroVar = SessionIDNumZero
 
-// SessionIDFromPrimitiveValue creates an instance
-// of SessionID from its primitive value.
-func SessionIDFromPrimitiveValue(v int32) SessionID {
-	return SessionID(v)
+// SessionIDNumFromPrimitiveValue creates an instance
+// of SessionIDNum from its primitive value.
+func SessionIDNumFromPrimitiveValue(v int32) SessionIDNum {
+	return SessionIDNum(v)
 }
 
-// SessionIDFromAZERBinField creates SessionID from
+// SessionIDNumFromAZERBinField creates SessionIDNum from
 // its azer-bin form.
-func SessionIDFromAZERBinField(
+func SessionIDNumFromAZERBinField(
 	b []byte, typeHint azer.BinDataType,
-) (id SessionID, readLen int, err error) {
+) (idNum SessionIDNum, readLen int, err error) {
 	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt32 {
-		return SessionID(0), 0,
+		return SessionIDNum(0), 0,
 			errors.ArgMsg("typeHint", "unsupported")
 	}
 	i := binary.BigEndian.Uint32(b)
-	return SessionID(i), 4, nil
+	return SessionIDNum(i), 4, nil
 }
 
-// PrimitiveValue returns the ID in its primitive type. Prefer to use
+// PrimitiveValue returns the value in its primitive type. Prefer to use
 // this method instead of casting directly.
-func (id SessionID) PrimitiveValue() int32 {
-	return int32(id)
+func (idNum SessionIDNum) PrimitiveValue() int32 {
+	return int32(idNum)
 }
 
-// AZEID is required
-// for conformance with azfl.EID.
-func (SessionID) AZEID() {}
+// AZIDNum is required
+// for conformance with azfl.IDNum.
+func (SessionIDNum) AZIDNum() {}
 
 // AZAdjunctEntityID is required
 // for conformance with azfl.AdjunctEntityID.
-func (SessionID) AZAdjunctEntityID() {}
+func (SessionIDNum) AZAdjunctEntityID() {}
 
-// AZSessionID is required for conformance
-// with azfl.SessionID.
-func (SessionID) AZSessionID() {}
+// AZSessionIDNum is required for conformance
+// with azfl.SessionIDNum.
+func (SessionIDNum) AZSessionIDNum() {}
 
-// IsZero is required as SessionID is a value-object.
-func (id SessionID) IsZero() bool {
-	return id == SessionIDZero
+// IsZero is required as SessionIDNum is a value-object.
+func (idNum SessionIDNum) IsZero() bool {
+	return idNum == SessionIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as an ID.
-// It doesn't tell whether it refers to a valid instance of Session.
-func (id SessionID) IsValid() bool {
-	return int32(id) > 0 &&
-		(uint32(id)&SessionIDSignificantBitsMask) != 0
+// IsValid returns true if this instance is valid independently
+// as an SessionIDNum. It doesn't tell whether it refers to
+// a valid instance of Session.
+func (idNum SessionIDNum) IsValid() bool {
+	return int32(idNum) > 0 &&
+		(uint32(idNum)&SessionIDNumSignificantBitsMask) != 0
 }
 
 // IsNotValid returns the negation of value returned by IsValid().
-func (id SessionID) IsNotValid() bool {
-	return !id.IsValid()
+func (idNum SessionIDNum) IsNotValid() bool {
+	return !idNum.IsValid()
 }
 
 // AZERBinField is required for conformance
-// with azfl.EID.
-func (id SessionID) AZERBinField() ([]byte, azer.BinDataType) {
+// with azfl.IDNum.
+func (idNum SessionIDNum) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, uint32(id))
+	binary.BigEndian.PutUint32(b, uint32(idNum))
 	return b, azer.BinDataTypeInt32
 }
 
 // UnmarshalAZERBinField is required for conformance
 // with azer.BinFieldUnmarshalable.
-func (id *SessionID) UnmarshalAZERBinField(
+func (idNum *SessionIDNum) UnmarshalAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := SessionIDFromAZERBinField(b, typeHint)
+	i, readLen, err := SessionIDNumFromAZERBinField(b, typeHint)
 	if err == nil {
-		*id = i
+		*idNum = i
 	}
 	return readLen, err
 }
 
-// Equals is required as SessionID is a value-object.
+// Equals is required as SessionIDNum is a value-object.
 //
-// Use EqualsSessionID method if the other value
+// Use EqualsSessionIDNum method if the other value
 // has the same type.
-func (id SessionID) Equals(other interface{}) bool {
-	if x, ok := other.(SessionID); ok {
-		return x == id
+func (idNum SessionIDNum) Equals(other interface{}) bool {
+	if x, ok := other.(SessionIDNum); ok {
+		return x == idNum
 	}
-	if x, _ := other.(*SessionID); x != nil {
-		return *x == id
+	if x, _ := other.(*SessionIDNum); x != nil {
+		return *x == idNum
 	}
 	return false
 }
 
 // Equal is a wrapper for Equals method. It is required for
 // compatibility with github.com/google/go-cmp
-func (id SessionID) Equal(other interface{}) bool {
-	return id.Equals(other)
+func (idNum SessionIDNum) Equal(other interface{}) bool {
+	return idNum.Equals(other)
 }
 
-// EqualsSessionID determines if the other instance
+// EqualsSessionIDNum determines if the other instance
 // is equal to this instance.
-func (id SessionID) EqualsSessionID(
-	other SessionID,
+func (idNum SessionIDNum) EqualsSessionIDNum(
+	other SessionIDNum,
 ) bool {
-	return id == other
+	return idNum == other
 }
 
 //endregion
@@ -167,7 +168,7 @@ func (id SessionID) EqualsSessionID(
 // an instance of adjunct entity Session system-wide.
 type SessionRefKey struct {
 	terminal TerminalRefKey
-	id       SessionID
+	idNum    SessionIDNum
 }
 
 // The total number of fields in the struct.
@@ -177,11 +178,11 @@ const _SessionRefKeyFieldCount = 1 + 1
 // of SessionRefKey with the provided attribute values.
 func NewSessionRefKey(
 	terminal TerminalRefKey,
-	id SessionID,
+	idNum SessionIDNum,
 ) SessionRefKey {
 	return SessionRefKey{
 		terminal: terminal,
-		id:       id,
+		idNum:    idNum,
 	}
 }
 
@@ -193,7 +194,7 @@ var _ azfl.SessionRefKey = _SessionRefKeyZero
 
 var _SessionRefKeyZero = SessionRefKey{
 	terminal: TerminalRefKeyZero(),
-	id:       SessionIDZero,
+	idNum:    SessionIDNumZero,
 }
 
 // SessionRefKeyZero returns
@@ -209,43 +210,43 @@ func (SessionRefKey) AZRefKey() {}
 // by azfl.AdjunctEntityRefKey interface.
 func (SessionRefKey) AZAdjunctEntityRefKey() {}
 
-// ID returns the scoped identifier of the entity.
-func (refKey SessionRefKey) ID() SessionID {
-	return refKey.id
+// IDNum returns the scoped identifier of the entity.
+func (refKey SessionRefKey) IDNum() SessionIDNum {
+	return refKey.idNum
 }
 
-// IDPtr returns a pointer to a copy of the ID if it's considered valid
+// IDNumPtr returns a pointer to a copy of the IDNum if it's considered valid
 // otherwise it returns nil.
-func (refKey SessionRefKey) IDPtr() *SessionID {
+func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
 	if refKey.IsNotValid() {
 		return nil
 	}
-	i := refKey.ID()
+	i := refKey.IDNum()
 	return &i
 }
 
-// EID is required for conformance with azfl.RefKey.
-func (refKey SessionRefKey) EID() azfl.EID {
-	return refKey.id
+// AZIDNum is required for conformance with azfl.RefKey.
+func (refKey SessionRefKey) AZIDNum() azfl.IDNum {
+	return refKey.idNum
 }
 
-// SessionID is required for conformance
+// SessionIDNum is required for conformance
 // with azfl.SessionRefKey.
-func (refKey SessionRefKey) SessionID() azfl.SessionID {
-	return refKey.id
+func (refKey SessionRefKey) SessionIDNum() azfl.SessionIDNum {
+	return refKey.idNum
 }
 
 // IsZero is required as SessionRefKey is a value-object.
 func (refKey SessionRefKey) IsZero() bool {
 	return refKey.terminal.IsZero() &&
-		refKey.id == SessionIDZero
+		refKey.idNum == SessionIDNumZero
 }
 
 // IsValid returns true if this instance is valid independently as a ref-key.
 // It doesn't tell whether it refers to a valid instance of Session.
 func (refKey SessionRefKey) IsValid() bool {
 	return refKey.terminal.IsValid() &&
-		refKey.id.IsValid()
+		refKey.idNum.IsValid()
 }
 
 // IsNotValid returns the negation of value returned by IsValid().
@@ -257,11 +258,11 @@ func (refKey SessionRefKey) IsNotValid() bool {
 func (refKey SessionRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(SessionRefKey); ok {
 		return refKey.terminal.EqualsTerminalRefKey(x.terminal) &&
-			refKey.id == x.id
+			refKey.idNum == x.idNum
 	}
 	if x, _ := other.(*SessionRefKey); x != nil {
 		return refKey.terminal.EqualsTerminalRefKey(x.terminal) &&
-			refKey.id == x.id
+			refKey.idNum == x.idNum
 	}
 	return false
 }
@@ -277,7 +278,7 @@ func (refKey SessionRefKey) EqualsSessionRefKey(
 	other SessionRefKey,
 ) bool {
 	return refKey.terminal.EqualsTerminalRefKey(other.terminal) &&
-		refKey.id == other.id
+		refKey.idNum == other.idNum
 }
 
 // AZERBin is required for conformance
@@ -319,7 +320,7 @@ func (refKey SessionRefKey) AZERBinField() ([]byte, azer.BinDataType) {
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
-	fieldBytes, fieldType = refKey.id.AZERBinField()
+	fieldBytes, fieldType = refKey.idNum.AZERBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
@@ -367,20 +368,20 @@ func SessionRefKeyFromAZERBinField(
 	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return SessionRefKeyZero(), 0,
-			errors.ArgWrap("", "id type parsing", err)
+			errors.ArgWrap("", "idnum type parsing", err)
 	}
 	typeCursor++
-	id, readLen, err := SessionIDFromAZERBinField(
+	idNum, readLen, err := SessionIDNumFromAZERBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
 		return SessionRefKeyZero(), 0,
-			errors.ArgWrap("", "id data parsing", err)
+			errors.ArgWrap("", "idnum data parsing", err)
 	}
 	dataCursor += readLen
 
 	return SessionRefKey{
 		terminal: terminalRefKey,
-		id:       id,
+		idNum:    idNum,
 	}, dataCursor, nil
 }
 
@@ -490,7 +491,7 @@ func (refKey SessionRefKey) WithTerminal(
 ) SessionRefKey {
 	return SessionRefKey{
 		terminal: terminal,
-		id:       refKey.id,
+		idNum:    refKey.idNum,
 	}
 }
 

@@ -35,7 +35,7 @@ func (core *Core) getUserKeyEmailAddressNoAC(
 		From(userKeyEmailAddressDBTableName).
 		Select("raw_input").
 		Where(
-			goqu.C("user_id").Eq(userRef.ID().PrimitiveValue()),
+			goqu.C("user_id").Eq(userRef.IDNum().PrimitiveValue()),
 			goqu.C("d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
@@ -58,9 +58,9 @@ func (core *Core) getUserKeyEmailAddressNoAC(
 }
 
 // The ID of the user which provided email address is their verified primary.
-func (core *Core) getUserIDByKeyEmailAddress(
+func (core *Core) getUserIDNumByKeyEmailAddress(
 	emailAddress iam.EmailAddress,
-) (ownerUserID iam.UserID, err error) {
+) (ownerUserIDNum iam.UserIDNum, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyEmailAddressDBTableName).
 		Select("user_id").
@@ -73,12 +73,12 @@ func (core *Core) getUserIDByKeyEmailAddress(
 		ToSQL()
 	err = core.db.
 		QueryRow(sqlString).
-		Scan(&ownerUserID)
+		Scan(&ownerUserIDNum)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return iam.UserIDZero, nil
+			return iam.UserIDNumZero, nil
 		}
-		return iam.UserIDZero, err
+		return iam.UserIDNumZero, err
 	}
 
 	return
@@ -107,10 +107,10 @@ func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 		Limit(1).
 		ToSQL()
 
-	var ownerUserID iam.UserID
+	var ownerUserIDNum iam.UserIDNum
 	err = core.db.
 		QueryRow(sqlString).
-		Scan(&ownerUserID, &alreadyVerified)
+		Scan(&ownerUserIDNum, &alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return iam.UserRefKeyZero(), false, nil
@@ -118,7 +118,7 @@ func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 		return iam.UserRefKeyZero(), false, err
 	}
 
-	return iam.NewUserRefKey(ownerUserID), alreadyVerified, nil
+	return iam.NewUserRefKey(ownerUserIDNum), alreadyVerified, nil
 }
 
 func (core *Core) SetUserKeyEmailAddress(
@@ -136,13 +136,13 @@ func (core *Core) SetUserKeyEmailAddress(
 		return 0, nil, iam.ErrOperationNotAllowed
 	}
 
-	existingOwnerUserID, err := core.
-		getUserIDByKeyEmailAddress(emailAddress)
+	existingOwnerUserIDNum, err := core.
+		getUserIDNumByKeyEmailAddress(emailAddress)
 	if err != nil {
-		return 0, nil, errors.Wrap("getUserIDByKeyEmailAddress", err)
+		return 0, nil, errors.Wrap("getUserIDNumByKeyEmailAddress", err)
 	}
-	if existingOwnerUserID.IsValid() {
-		if existingOwnerUserID != ctxAuth.UserID() {
+	if existingOwnerUserIDNum.IsValid() {
+		if existingOwnerUserIDNum != ctxAuth.UserID() {
 			return 0, nil, errors.ArgMsg("emailAddress", "conflict")
 		}
 		return 0, nil, nil
@@ -193,7 +193,7 @@ func (core *Core) setUserKeyEmailAddress(
 			`) `+
 			`ON CONFLICT (user_id, domain_part, local_part) WHERE d_ts IS NULL `+
 			`DO NOTHING`,
-		userRef.ID().PrimitiveValue(),
+		userRef.IDNum().PrimitiveValue(),
 		emailAddress.DomainPart(),
 		emailAddress.LocalPart(),
 		emailAddress.RawInput(),
@@ -216,7 +216,7 @@ func (core *Core) setUserKeyEmailAddress(
 		`SELECT CASE WHEN verification_ts IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userKeyEmailAddressDBTableName+` `+
 			`WHERE user_id = $1 AND domain_part = $2 AND local_part = $3`,
-		userRef.ID().PrimitiveValue(), emailAddress.DomainPart(), emailAddress.LocalPart()).
+		userRef.IDNum().PrimitiveValue(), emailAddress.DomainPart(), emailAddress.LocalPart()).
 		Scan(&alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -266,7 +266,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 }
 
 func (core *Core) ensureUserEmailAddressVerifiedFlag(
-	userID iam.UserID,
+	userIDNum iam.UserIDNum,
 	emailAddress iam.EmailAddress,
 	verificationTime *time.Time,
 	verificationID int64,
@@ -283,7 +283,7 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 			`AND d_ts IS NULL AND verification_ts IS NULL`,
 		verificationTime,
 		verificationID,
-		userID,
+		userIDNum.PrimitiveValue(),
 		emailAddress.DomainPart(),
 		emailAddress.LocalPart())
 	if err != nil {

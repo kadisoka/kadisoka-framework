@@ -64,7 +64,7 @@ func (core *Core) SetUserPassword(
 				`d_ts = $1, d_uid = $2, d_tid = $3 `+
 				`WHERE user_id = $4 AND d_ts IS NULL`,
 			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue(),
-			userRef.ID().PrimitiveValue())
+			userRef.IDNum().PrimitiveValue())
 		if txErr != nil {
 			return txErr
 		}
@@ -72,7 +72,7 @@ func (core *Core) SetUserPassword(
 			`INSERT INTO `+userPasswordDBTableName+` `+
 				`(user_id, password, c_ts, c_uid, c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
-			userRef.ID().PrimitiveValue(), passwordHash,
+			userRef.IDNum().PrimitiveValue(), passwordHash,
 			ctxTime, ctxAuth.UserID().PrimitiveValue(), ctxAuth.TerminalID().PrimitiveValue())
 		return txErr
 	})
@@ -82,7 +82,7 @@ func (core *Core) MatchUserPassword(
 	userRef iam.UserRefKey,
 	clearTextPassword string,
 ) (ok bool, err error) {
-	passwordHash, err := core.getUserPasswordHash(userRef.ID())
+	passwordHash, err := core.getUserPasswordHash(userRef.IDNum())
 	if err != nil {
 		return false, err
 	}
@@ -93,14 +93,14 @@ func (core *Core) MatchUserPassword(
 }
 
 func (core *Core) getUserPasswordHash(
-	userID iam.UserID,
+	userIDNum iam.UserIDNum,
 ) (hashedPassword string, err error) {
 	err = core.db.
 		QueryRow(
 			`SELECT password `+
 				`FROM `+userPasswordDBTableName+` `+
 				`WHERE user_id = $1 AND d_ts IS NULL`,
-			userID).
+			userIDNum).
 		Scan(&hashedPassword)
 	if err != nil {
 		if err == sql.ErrNoRows {

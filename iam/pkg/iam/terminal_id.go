@@ -9,131 +9,132 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
-//region ID
+//region IDNum
 
-// TerminalID is a scoped identifier
+// TerminalIDNum is a scoped identifier
 // used to identify an instance of adjunct entity Terminal
 // scoped within its host entity(s).
-type TerminalID int64
+type TerminalIDNum int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.EID = TerminalIDZero
-var _ azfl.AdjunctEntityID = TerminalIDZero
-var _ azer.BinFieldUnmarshalable = &_TerminalIDZeroVar
-var _ azfl.TerminalID = TerminalIDZero
+var _ azfl.IDNum = TerminalIDNumZero
+var _ azfl.AdjunctEntityID = TerminalIDNumZero
+var _ azer.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
+var _ azfl.TerminalIDNum = TerminalIDNumZero
 
-// TerminalIDSignificantBitsMask is used to
-// extract significant bits from an instance of TerminalID.
-const TerminalIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
+// TerminalIDNumSignificantBitsMask is used to
+// extract significant bits from an instance of TerminalIDNum.
+const TerminalIDNumSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
 
-// TerminalIDZero is the zero value for TerminalID.
-const TerminalIDZero = TerminalID(0)
+// TerminalIDNumZero is the zero value for TerminalIDNum.
+const TerminalIDNumZero = TerminalIDNum(0)
 
-// _TerminalIDZeroVar is used for testing
+// _TerminalIDNumZeroVar is used for testing
 // pointer-based interfaces conformance.
-var _TerminalIDZeroVar = TerminalIDZero
+var _TerminalIDNumZeroVar = TerminalIDNumZero
 
-// TerminalIDFromPrimitiveValue creates an instance
-// of TerminalID from its primitive value.
-func TerminalIDFromPrimitiveValue(v int64) TerminalID {
-	return TerminalID(v)
+// TerminalIDNumFromPrimitiveValue creates an instance
+// of TerminalIDNum from its primitive value.
+func TerminalIDNumFromPrimitiveValue(v int64) TerminalIDNum {
+	return TerminalIDNum(v)
 }
 
-// TerminalIDFromAZERBinField creates TerminalID from
+// TerminalIDNumFromAZERBinField creates TerminalIDNum from
 // its azer-bin form.
-func TerminalIDFromAZERBinField(
+func TerminalIDNumFromAZERBinField(
 	b []byte, typeHint azer.BinDataType,
-) (id TerminalID, readLen int, err error) {
+) (idNum TerminalIDNum, readLen int, err error) {
 	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt64 {
-		return TerminalID(0), 0,
+		return TerminalIDNum(0), 0,
 			errors.ArgMsg("typeHint", "unsupported")
 	}
 	i := binary.BigEndian.Uint64(b)
-	return TerminalID(i), 8, nil
+	return TerminalIDNum(i), 8, nil
 }
 
-// PrimitiveValue returns the ID in its primitive type. Prefer to use
+// PrimitiveValue returns the value in its primitive type. Prefer to use
 // this method instead of casting directly.
-func (id TerminalID) PrimitiveValue() int64 {
-	return int64(id)
+func (idNum TerminalIDNum) PrimitiveValue() int64 {
+	return int64(idNum)
 }
 
-// AZEID is required
-// for conformance with azfl.EID.
-func (TerminalID) AZEID() {}
+// AZIDNum is required
+// for conformance with azfl.IDNum.
+func (TerminalIDNum) AZIDNum() {}
 
 // AZAdjunctEntityID is required
 // for conformance with azfl.AdjunctEntityID.
-func (TerminalID) AZAdjunctEntityID() {}
+func (TerminalIDNum) AZAdjunctEntityID() {}
 
-// AZTerminalID is required for conformance
-// with azfl.TerminalID.
-func (TerminalID) AZTerminalID() {}
+// AZTerminalIDNum is required for conformance
+// with azfl.TerminalIDNum.
+func (TerminalIDNum) AZTerminalIDNum() {}
 
-// IsZero is required as TerminalID is a value-object.
-func (id TerminalID) IsZero() bool {
-	return id == TerminalIDZero
+// IsZero is required as TerminalIDNum is a value-object.
+func (idNum TerminalIDNum) IsZero() bool {
+	return idNum == TerminalIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as an ID.
-// It doesn't tell whether it refers to a valid instance of Terminal.
-func (id TerminalID) IsValid() bool {
-	return int64(id) > 0 &&
-		(uint64(id)&TerminalIDSignificantBitsMask) != 0
+// IsValid returns true if this instance is valid independently
+// as an TerminalIDNum. It doesn't tell whether it refers to
+// a valid instance of Terminal.
+func (idNum TerminalIDNum) IsValid() bool {
+	return int64(idNum) > 0 &&
+		(uint64(idNum)&TerminalIDNumSignificantBitsMask) != 0
 }
 
 // IsNotValid returns the negation of value returned by IsValid().
-func (id TerminalID) IsNotValid() bool {
-	return !id.IsValid()
+func (idNum TerminalIDNum) IsNotValid() bool {
+	return !idNum.IsValid()
 }
 
 // AZERBinField is required for conformance
-// with azfl.EID.
-func (id TerminalID) AZERBinField() ([]byte, azer.BinDataType) {
+// with azfl.IDNum.
+func (idNum TerminalIDNum) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(id))
+	binary.BigEndian.PutUint64(b, uint64(idNum))
 	return b, azer.BinDataTypeInt64
 }
 
 // UnmarshalAZERBinField is required for conformance
 // with azer.BinFieldUnmarshalable.
-func (id *TerminalID) UnmarshalAZERBinField(
+func (idNum *TerminalIDNum) UnmarshalAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := TerminalIDFromAZERBinField(b, typeHint)
+	i, readLen, err := TerminalIDNumFromAZERBinField(b, typeHint)
 	if err == nil {
-		*id = i
+		*idNum = i
 	}
 	return readLen, err
 }
 
-// Equals is required as TerminalID is a value-object.
+// Equals is required as TerminalIDNum is a value-object.
 //
-// Use EqualsTerminalID method if the other value
+// Use EqualsTerminalIDNum method if the other value
 // has the same type.
-func (id TerminalID) Equals(other interface{}) bool {
-	if x, ok := other.(TerminalID); ok {
-		return x == id
+func (idNum TerminalIDNum) Equals(other interface{}) bool {
+	if x, ok := other.(TerminalIDNum); ok {
+		return x == idNum
 	}
-	if x, _ := other.(*TerminalID); x != nil {
-		return *x == id
+	if x, _ := other.(*TerminalIDNum); x != nil {
+		return *x == idNum
 	}
 	return false
 }
 
 // Equal is a wrapper for Equals method. It is required for
 // compatibility with github.com/google/go-cmp
-func (id TerminalID) Equal(other interface{}) bool {
-	return id.Equals(other)
+func (idNum TerminalIDNum) Equal(other interface{}) bool {
+	return idNum.Equals(other)
 }
 
-// EqualsTerminalID determines if the other instance
+// EqualsTerminalIDNum determines if the other instance
 // is equal to this instance.
-func (id TerminalID) EqualsTerminalID(
-	other TerminalID,
+func (idNum TerminalIDNum) EqualsTerminalIDNum(
+	other TerminalIDNum,
 ) bool {
-	return id == other
+	return idNum == other
 }
 
 //endregion
@@ -145,7 +146,7 @@ func (id TerminalID) EqualsTerminalID(
 type TerminalRefKey struct {
 	application ApplicationRefKey
 	user        UserRefKey
-	id          TerminalID
+	idNum       TerminalIDNum
 }
 
 // The total number of fields in the struct.
@@ -156,12 +157,12 @@ const _TerminalRefKeyFieldCount = 2 + 1
 func NewTerminalRefKey(
 	application ApplicationRefKey,
 	user UserRefKey,
-	id TerminalID,
+	idNum TerminalIDNum,
 ) TerminalRefKey {
 	return TerminalRefKey{
 		application: application,
 		user:        user,
-		id:          id,
+		idNum:       idNum,
 	}
 }
 
@@ -174,7 +175,7 @@ var _ azfl.TerminalRefKey = _TerminalRefKeyZero
 var _TerminalRefKeyZero = TerminalRefKey{
 	application: ApplicationRefKeyZero(),
 	user:        UserRefKeyZero(),
-	id:          TerminalIDZero,
+	idNum:       TerminalIDNumZero,
 }
 
 // TerminalRefKeyZero returns
@@ -190,37 +191,37 @@ func (TerminalRefKey) AZRefKey() {}
 // by azfl.AdjunctEntityRefKey interface.
 func (TerminalRefKey) AZAdjunctEntityRefKey() {}
 
-// ID returns the scoped identifier of the entity.
-func (refKey TerminalRefKey) ID() TerminalID {
-	return refKey.id
+// IDNum returns the scoped identifier of the entity.
+func (refKey TerminalRefKey) IDNum() TerminalIDNum {
+	return refKey.idNum
 }
 
-// IDPtr returns a pointer to a copy of the ID if it's considered valid
+// IDNumPtr returns a pointer to a copy of the IDNum if it's considered valid
 // otherwise it returns nil.
-func (refKey TerminalRefKey) IDPtr() *TerminalID {
+func (refKey TerminalRefKey) IDNumPtr() *TerminalIDNum {
 	if refKey.IsNotValid() {
 		return nil
 	}
-	i := refKey.ID()
+	i := refKey.IDNum()
 	return &i
 }
 
-// ID is required for conformance with azfl.RefKey.
-func (refKey TerminalRefKey) EID() azfl.EID {
-	return refKey.id
+// AZIDNum is required for conformance with azfl.RefKey.
+func (refKey TerminalRefKey) AZIDNum() azfl.IDNum {
+	return refKey.idNum
 }
 
-// TerminalID is required for conformance
+// TerminalIDNum is required for conformance
 // with azfl.TerminalRefKey.
-func (refKey TerminalRefKey) TerminalID() azfl.TerminalID {
-	return refKey.id
+func (refKey TerminalRefKey) TerminalIDNum() azfl.TerminalIDNum {
+	return refKey.idNum
 }
 
 // IsZero is required as TerminalRefKey is a value-object.
 func (refKey TerminalRefKey) IsZero() bool {
 	return refKey.application.IsZero() &&
 		refKey.user.IsZero() &&
-		refKey.id == TerminalIDZero
+		refKey.idNum == TerminalIDNumZero
 }
 
 // IsValid returns true if this instance is valid independently as a ref-key.
@@ -228,7 +229,7 @@ func (refKey TerminalRefKey) IsZero() bool {
 func (refKey TerminalRefKey) IsValid() bool {
 	return refKey.application.IsValid() &&
 		refKey.user.IsValid() &&
-		refKey.id.IsValid()
+		refKey.idNum.IsValid()
 }
 
 // IsNotValid returns the negation of value returned by IsValid().
@@ -241,12 +242,12 @@ func (refKey TerminalRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(TerminalRefKey); ok {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
 			refKey.user.EqualsUserRefKey(x.user) &&
-			refKey.id == x.id
+			refKey.idNum == x.idNum
 	}
 	if x, _ := other.(*TerminalRefKey); x != nil {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
 			refKey.user.EqualsUserRefKey(x.user) &&
-			refKey.id == x.id
+			refKey.idNum == x.idNum
 	}
 	return false
 }
@@ -263,7 +264,7 @@ func (refKey TerminalRefKey) EqualsTerminalRefKey(
 ) bool {
 	return refKey.application.EqualsApplicationRefKey(other.application) &&
 		refKey.user.EqualsUserRefKey(other.user) &&
-		refKey.id == other.id
+		refKey.idNum == other.idNum
 }
 
 // AZERBin is required for conformance
@@ -309,7 +310,7 @@ func (refKey TerminalRefKey) AZERBinField() ([]byte, azer.BinDataType) {
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
-	fieldBytes, fieldType = refKey.id.AZERBinField()
+	fieldBytes, fieldType = refKey.idNum.AZERBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
@@ -371,21 +372,21 @@ func TerminalRefKeyFromAZERBinField(
 	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return TerminalRefKeyZero(), 0,
-			errors.ArgWrap("", "id type parsing", err)
+			errors.ArgWrap("", "idnum type parsing", err)
 	}
 	typeCursor++
-	id, readLen, err := TerminalIDFromAZERBinField(
+	idNum, readLen, err := TerminalIDNumFromAZERBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
 		return TerminalRefKeyZero(), 0,
-			errors.ArgWrap("", "id data parsing", err)
+			errors.ArgWrap("", "idnum data parsing", err)
 	}
 	dataCursor += readLen
 
 	return TerminalRefKey{
 		application: applicationRefKey,
 		user:        userRefKey,
-		id:          id,
+		idNum:       idNum,
 	}, dataCursor, nil
 }
 
@@ -496,6 +497,7 @@ func (refKey TerminalRefKey) WithApplication(
 	return TerminalRefKey{
 		application: application,
 		user:        refKey.user,
+		idNum:       refKey.idNum,
 	}
 }
 
@@ -513,6 +515,7 @@ func (refKey TerminalRefKey) WithUser(
 	return TerminalRefKey{
 		application: refKey.application,
 		user:        user,
+		idNum:       refKey.idNum,
 	}
 }
 

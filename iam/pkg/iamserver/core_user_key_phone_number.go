@@ -46,16 +46,16 @@ func (core *Core) ListUsersByPhoneNumber(
 
 	userPhoneNumberList := []iam.UserKeyPhoneNumber{}
 	for userPhoneNumberRows.Next() {
-		uid := iam.UserIDZero
+		userIDNum := iam.UserIDNumZero
 		var countryCode int32
 		var nationalNumber int64
 		err = userPhoneNumberRows.Scan(
-			&uid, &countryCode, &nationalNumber)
+			&userIDNum, &countryCode, &nationalNumber)
 		if err != nil {
 			panic(err)
 		}
 		userPhoneNumber := iam.UserKeyPhoneNumber{
-			UserRef:     iam.NewUserRefKey(uid),
+			UserRef:     iam.NewUserRefKey(userIDNum),
 			PhoneNumber: iam.NewPhoneNumber(countryCode, nationalNumber),
 		}
 		userPhoneNumberList = append(userPhoneNumberList, userPhoneNumber)
@@ -108,7 +108,7 @@ func (core *Core) getUserKeyPhoneNumberNoAC(
 		From(userKeyPhoneNumberDBTableName).
 		Select("country_code", "national_number").
 		Where(
-			goqu.C("user_id").Eq(userRef.ID().PrimitiveValue()),
+			goqu.C("user_id").Eq(userRef.IDNum().PrimitiveValue()),
 			goqu.C("d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
@@ -128,9 +128,9 @@ func (core *Core) getUserKeyPhoneNumberNoAC(
 }
 
 // The ID of the user which provided phone number is their verified primary.
-func (core *Core) getUserIDByKeyPhoneNumber(
+func (core *Core) getUserIDNumByKeyPhoneNumber(
 	phoneNumber iam.PhoneNumber,
-) (ownerUserID iam.UserID, err error) {
+) (ownerUserIDNum iam.UserIDNum, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyPhoneNumberDBTableName).
 		Select("user_id").
@@ -143,12 +143,12 @@ func (core *Core) getUserIDByKeyPhoneNumber(
 		ToSQL()
 	err = core.db.
 		QueryRow(sqlString).
-		Scan(&ownerUserID)
+		Scan(&ownerUserIDNum)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return iam.UserIDZero, nil
+			return iam.UserIDNumZero, nil
 		}
-		return iam.UserIDZero, err
+		return iam.UserIDNumZero, err
 	}
 
 	return
@@ -177,10 +177,10 @@ func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 		Limit(1).
 		ToSQL()
 
-	var ownerUserID iam.UserID
+	var ownerUserIDNum iam.UserIDNum
 	err = core.db.
 		QueryRow(sqlString).
-		Scan(&ownerUserID, &alreadyVerified)
+		Scan(&ownerUserIDNum, &alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return iam.UserRefKeyZero(), false, nil
@@ -188,7 +188,7 @@ func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 		return iam.UserRefKeyZero(), false, err
 	}
 
-	return iam.NewUserRefKey(ownerUserID), alreadyVerified, nil
+	return iam.NewUserRefKey(ownerUserIDNum), alreadyVerified, nil
 }
 
 func (core *Core) SetUserKeyPhoneNumber(
@@ -209,9 +209,9 @@ func (core *Core) SetUserKeyPhoneNumber(
 	//TODO: prone to race condition. solution: simply call
 	// setUserKeyPhoneNumber and translate the error.
 	existingOwnerUserID, err := core.
-		getUserIDByKeyPhoneNumber(phoneNumber)
+		getUserIDNumByKeyPhoneNumber(phoneNumber)
 	if err != nil {
-		return 0, nil, errors.Wrap("getUserIDByKeyPhoneNumber", err)
+		return 0, nil, errors.Wrap("getUserIDNumByKeyPhoneNumber", err)
 	}
 	if existingOwnerUserID.IsValid() {
 		if existingOwnerUserID != ctxAuth.UserID() {
@@ -265,7 +265,7 @@ func (core *Core) setUserKeyPhoneNumber(
 			`) `+
 			`ON CONFLICT (user_id, country_code, national_number) WHERE d_ts IS NULL `+
 			`DO NOTHING`,
-		userRef.ID().PrimitiveValue(),
+		userRef.IDNum().PrimitiveValue(),
 		phoneNumber.CountryCode(),
 		phoneNumber.NationalNumber(),
 		phoneNumber.RawInput(),
@@ -288,7 +288,7 @@ func (core *Core) setUserKeyPhoneNumber(
 		`SELECT CASE WHEN verification_ts IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userKeyPhoneNumberDBTableName+` `+
 			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3`,
-		userRef.ID().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
+		userRef.IDNum().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -344,7 +344,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 //TODO: only the verificationID. We'll use it to look up the verification
 // data.
 func (core *Core) ensureUserPhoneNumberVerifiedFlag(
-	userID iam.UserID,
+	userIDNum iam.UserIDNum,
 	phoneNumber iam.PhoneNumber,
 	verificationTime *time.Time,
 	verificationID int64,
@@ -361,7 +361,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 			`AND d_ts IS NULL AND verification_ts IS NULL`,
 		verificationTime,
 		verificationID,
-		userID,
+		userIDNum.PrimitiveValue(),
 		phoneNumber.CountryCode(),
 		phoneNumber.NationalNumber())
 	if err != nil {

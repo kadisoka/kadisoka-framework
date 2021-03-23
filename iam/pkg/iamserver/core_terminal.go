@@ -28,13 +28,13 @@ func (core *Core) AuthenticateTerminal(
 	terminalSecret string,
 ) (authOK bool, ownerUserRef iam.UserRefKey, err error) {
 	var storedSecret string
-	var ownerUserID iam.UserID
+	var ownerUserIDNum iam.UserIDNum
 
 	sqlString, _, _ := goqu.
 		From(terminalDBTableName).
 		Select("user_id", "secret").
 		Where(
-			goqu.C("id").Eq(terminalRef.ID().PrimitiveValue()),
+			goqu.C("id").Eq(terminalRef.IDNum().PrimitiveValue()),
 			goqu.C("d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull(),
 		).
@@ -42,7 +42,7 @@ func (core *Core) AuthenticateTerminal(
 
 	err = core.db.
 		QueryRow(sqlString).
-		Scan(&ownerUserID, &storedSecret)
+		Scan(&ownerUserIDNum, &storedSecret)
 	if err == sql.ErrNoRows {
 		return false, iam.UserRefKeyZero(), nil
 	}
@@ -54,7 +54,7 @@ func (core *Core) AuthenticateTerminal(
 			[]byte(storedSecret),
 			[]byte(terminalSecret),
 		) == 1,
-		iam.NewUserRefKey(ownerUserID), nil
+		iam.NewUserRefKey(ownerUserIDNum), nil
 }
 
 func (core *Core) StartTerminalAuthorizationByPhoneNumber(
@@ -173,7 +173,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 
 	if ownerUserRef.IsValid() {
 		// Check if it's fully claimed (already verified)
-		ownerUserID, err := core.getUserIDByKeyEmailAddress(emailAddress)
+		ownerUserID, err := core.getUserIDNumByKeyEmailAddress(emailAddress)
 		if err != nil {
 			panic(err)
 		}
@@ -257,7 +257,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 
-	termData, err := core.getTerminalRaw(terminalRef.ID())
+	termData, err := core.getTerminalRaw(terminalRef.IDNum())
 	if err != nil {
 		panic(err)
 	}
@@ -305,7 +305,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 			if !updated {
 				// Let's check if the email address is associated to other user
 				existingOwnerUserID, err := core.
-					getUserIDByKeyEmailAddress(*emailAddress)
+					getUserIDNumByKeyEmailAddress(*emailAddress)
 				if err != nil {
 					panic(err)
 				}
@@ -351,7 +351,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 			if !updated {
 				// Let's check if the phone number is associated to other user
 				existingOwnerUserID, err := core.
-					getUserIDByKeyPhoneNumber(*phoneNumber)
+					getUserIDNumByKeyPhoneNumber(*phoneNumber)
 				if err != nil {
 					panic(err)
 				}
@@ -382,7 +382,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 	return termSecret, iam.NewUserRefKey(termData.UserID), nil
 }
 
-func (core *Core) getTerminalRaw(id iam.TerminalID) (*terminalDBRawModel, error) {
+func (core *Core) getTerminalRaw(idNum iam.TerminalIDNum) (*terminalDBRawModel, error) {
 	var err error
 	var ut terminalDBRawModel
 
@@ -394,7 +394,7 @@ func (core *Core) getTerminalRaw(id iam.TerminalID) (*terminalDBRawModel, error)
 			"display_name", "accept_language",
 			"verification_type", "verification_id", "verification_ts").
 		Where(
-			goqu.C("id").Eq(id.PrimitiveValue())).
+			goqu.C("id").Eq(idNum.PrimitiveValue())).
 		ToSQL()
 
 	err = core.db.
@@ -412,7 +412,7 @@ func (core *Core) getTerminalRaw(id iam.TerminalID) (*terminalDBRawModel, error)
 
 func (core *Core) GetTerminalInfo(
 	callCtx iam.CallContext,
-	terminalID iam.TerminalID,
+	terminalRefKey iam.TerminalRefKey,
 ) (*iam.TerminalInfo, error) {
 	if callCtx == nil {
 		return nil, nil
@@ -422,7 +422,7 @@ func (core *Core) GetTerminalInfo(
 		return nil, nil
 	}
 
-	var ownerUserID iam.UserID
+	var ownerUserIDNum iam.UserIDNum
 	var displayName string
 	var acceptLanguage string
 
@@ -430,14 +430,14 @@ func (core *Core) GetTerminalInfo(
 		From(terminalDBTableName).
 		Select("user_id", "display_name", "accept_language").
 		Where(
-			goqu.C("id").Eq(terminalID.PrimitiveValue()),
+			goqu.C("id").Eq(terminalRefKey.IDNum().PrimitiveValue()),
 			goqu.C("d_ts").IsNull(),
 		).
 		ToSQL()
 
 	err := core.db.
 		QueryRow(sqlString).
-		Scan(&ownerUserID, &displayName, &acceptLanguage)
+		Scan(&ownerUserIDNum, &displayName, &acceptLanguage)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -445,7 +445,7 @@ func (core *Core) GetTerminalInfo(
 		return nil, err
 	}
 
-	if !ctxAuth.UserID().EqualsUserID(ownerUserID) {
+	if !ctxAuth.UserID().EqualsUserIDNum(ownerUserIDNum) {
 		return nil, nil
 	}
 
@@ -520,7 +520,7 @@ func (core *Core) registerTerminalNoAC(
 	}
 
 	//TODO: if id conflict, generate another id and retry
-	termID, err := core.generateTerminalID()
+	termID, err := core.generateTerminalIDNum()
 	if err != nil {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
 			Err: errors.Wrap("ID generation", err)}}
@@ -531,8 +531,8 @@ func (core *Core) registerTerminalNoAC(
 		Rows(
 			goqu.Record{
 				"id":                termID.PrimitiveValue(),
-				"application_id":    input.ApplicationRef.ID().PrimitiveValue(),
-				"user_id":           input.Data.UserRef.ID().PrimitiveValue(),
+				"application_id":    input.ApplicationRef.IDNum().PrimitiveValue(),
+				"user_id":           input.Data.UserRef.IDNum().PrimitiveValue(),
 				"secret":            termSecret,
 				"c_ts":              ctxTime,
 				"c_uid":             ctxAuth.UserIDPtr(),
@@ -580,7 +580,7 @@ func (core *Core) DeleteTerminal(
 	sqlString, _, _ := goqu.
 		From(terminalDBTableName).
 		Where(
-			goqu.C("id").Eq(termRefToDelete.ID().PrimitiveValue()),
+			goqu.C("id").Eq(termRefToDelete.IDNum().PrimitiveValue()),
 			goqu.C("d_ts").IsNull(),
 		).
 		Update().
@@ -613,7 +613,7 @@ func (core *Core) DeleteTerminal(
 //TODO: error if the terminal is deleted?
 func (core *Core) setTerminalVerified(
 	callCtx iam.CallContext,
-	terminalID iam.TerminalID,
+	terminalIDNum iam.TerminalIDNum,
 	disallowReplay bool,
 ) (secret string, err error) {
 	// A secret is used to obtain an access token. if an access token is
@@ -625,7 +625,7 @@ func (core *Core) setTerminalVerified(
 	sqlString, _, _ := goqu.
 		From(terminalDBTableName).
 		Where(
-			goqu.C("id").Eq(terminalID.PrimitiveValue()),
+			goqu.C("id").Eq(terminalIDNum.PrimitiveValue()),
 			goqu.C("verification_ts").IsNull()).
 		Update().
 		Set(
@@ -654,7 +654,7 @@ func (core *Core) setTerminalVerified(
 			From(terminalDBTableName).
 			Select("secret").
 			Where(
-				goqu.C("id").Eq(terminalID.PrimitiveValue())).
+				goqu.C("id").Eq(terminalIDNum.PrimitiveValue())).
 			ToSQL()
 		err = core.db.
 			QueryRow(sqlString).
@@ -667,14 +667,14 @@ func (core *Core) setTerminalVerified(
 	return termSecret, nil
 }
 
-func (core *Core) generateTerminalID() (iam.TerminalID, error) {
+func (core *Core) generateTerminalIDNum() (iam.TerminalIDNum, error) {
 	b := make([]byte, 8)
 	_, err := rand.Read(b[2:])
 	if err != nil {
 		panic(err)
 	}
-	h := binary.BigEndian.Uint64(b) & iam.TerminalIDSignificantBitsMask
-	return iam.TerminalIDFromPrimitiveValue(int64(h)), nil
+	h := binary.BigEndian.Uint64(b) & iam.TerminalIDNumSignificantBitsMask
+	return iam.TerminalIDNumFromPrimitiveValue(int64(h)), nil
 }
 
 func (core *Core) generateTerminalSecret() string {
@@ -687,7 +687,7 @@ func (core *Core) generateTerminalSecret() string {
 }
 
 func (core *Core) getTerminalAcceptLanguagesAllowDeleted(
-	id iam.TerminalID,
+	idNum iam.TerminalIDNum,
 ) ([]language.Tag, error) {
 	var acceptLanguage string
 
@@ -695,7 +695,7 @@ func (core *Core) getTerminalAcceptLanguagesAllowDeleted(
 		From(terminalDBTableName).
 		Select("accept_language").
 		Where(
-			goqu.C("id").Eq(id.PrimitiveValue()),
+			goqu.C("id").Eq(idNum.PrimitiveValue()),
 		).
 		ToSQL()
 

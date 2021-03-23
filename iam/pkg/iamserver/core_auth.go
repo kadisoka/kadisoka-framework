@@ -111,27 +111,27 @@ func (core *Core) issueSession(
 	timeZero := time.Time{}
 	sessionStartTime := timeZero
 	sessionExpiry := timeZero
-	var sessionID iam.SessionID
+	var sessionIDNum iam.SessionIDNum
 
 	//TODO: make this more random. using timestamp might cause some security
 	// and/or privacy issue.
 	// Note:
 	// - 0xffffffffffffff00 - timestamp
 	// - 0x00000000000000ff - random
-	genSessionID := func(ts int64) (iam.SessionID, error) {
+	genSessionID := func(ts int64) (iam.SessionIDNum, error) {
 		idBytes := make([]byte, 1)
 		_, err := rand.Read(idBytes)
 		if err != nil {
-			return iam.SessionIDZero, errors.Wrap("generation", err)
+			return iam.SessionIDNumZero, errors.Wrap("generation", err)
 		}
-		bits := ((ts << 8) | int64(idBytes[0])) & int64(iam.SessionIDSignificantBitsMask)
-		return iam.SessionID(bits), nil
+		bits := ((ts << 8) | int64(idBytes[0])) & int64(iam.SessionIDNumSignificantBitsMask)
+		return iam.SessionIDNum(bits), nil
 	}
 
 	for attemptNum := 0; ; attemptNum++ {
 		sessionStartTime = time.Now().UTC()
 		sessionExpiry = sessionStartTime.Add(iam.AccessTokenTTLDefault)
-		sessionID, err = genSessionID(sessionStartTime.Unix())
+		sessionIDNum, err = genSessionID(sessionStartTime.Unix())
 		if err != nil {
 			return iam.SessionRefKeyZero(), timeZero, timeZero, err
 		}
@@ -139,8 +139,8 @@ func (core *Core) issueSession(
 			Insert(sessionDBTableName).
 			Rows(
 				goqu.Record{
-					"terminal_id": terminalRef.ID().PrimitiveValue(),
-					"id":          sessionID.PrimitiveValue(),
+					"terminal_id": terminalRef.IDNum().PrimitiveValue(),
+					"id":          sessionIDNum.PrimitiveValue(),
 					"expiry":      sessionExpiry,
 					"c_ts":        sessionStartTime,
 					"c_tid":       ctxAuth.TerminalIDPtr(),
@@ -165,8 +165,10 @@ func (core *Core) issueSession(
 			continue
 		}
 
-		return iam.SessionRefKeyZero(), timeZero, timeZero, errors.Wrap("insert", err)
+		return iam.SessionRefKeyZero(), timeZero, timeZero,
+			errors.Wrap("insert", err)
 	}
 
-	return iam.NewSessionRefKey(terminalRef, sessionID), sessionStartTime, sessionExpiry, nil
+	return iam.NewSessionRefKey(terminalRef, sessionIDNum),
+		sessionStartTime, sessionExpiry, nil
 }

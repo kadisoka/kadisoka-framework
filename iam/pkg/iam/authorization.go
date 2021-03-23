@@ -67,19 +67,19 @@ func (ctxAuth Authorization) Actor() Actor {
 
 // IsUser checks if this authorization is represeting a particular user.
 func (ctxAuth Authorization) IsUser(userRef UserRefKey) bool {
-	return ctxAuth.ClientID().IsUserAgent() && ctxAuth.Session.terminal.user.EqualsUserRefKey(userRef)
+	return ctxAuth.ClientApplicationIDNum().IsUserAgent() && ctxAuth.Session.terminal.user.EqualsUserRefKey(userRef)
 }
 
 // IsUserContext is used to determine if this context represents a user.
 func (ctxAuth Authorization) IsUserContext() bool {
-	if ctxAuth.ClientID().IsUserAgent() && ctxAuth.Session.terminal.user.IsValid() {
+	if ctxAuth.ClientApplicationIDNum().IsUserAgent() && ctxAuth.Session.terminal.user.IsValid() {
 		return true
 	}
 	return false
 }
 
 func (ctxAuth Authorization) IsServiceClientContext() bool {
-	if ctxAuth.ClientID().IsService() && ctxAuth.Session.terminal.user.IsNotValid() {
+	if ctxAuth.ClientApplicationIDNum().IsService() && ctxAuth.Session.terminal.user.IsNotValid() {
 		return true
 	}
 	return false
@@ -98,32 +98,32 @@ func (ctxAuth Authorization) UserRefKeyPtr() *UserRefKey {
 	return nil
 }
 
-func (ctxAuth Authorization) UserID() UserID {
-	return ctxAuth.Session.terminal.user.ID()
+func (ctxAuth Authorization) UserID() UserIDNum {
+	return ctxAuth.Session.terminal.user.IDNum()
 }
 
 // UserIDPtr returns a pointer to a new copy of user ID. The
 // returned value is non-nil when the user ref-key is valid.
-func (ctxAuth Authorization) UserIDPtr() *UserID {
-	return ctxAuth.Session.terminal.user.IDPtr()
+func (ctxAuth Authorization) UserIDPtr() *UserIDNum {
+	return ctxAuth.Session.terminal.user.IDNumPtr()
 }
 
 func (ctxAuth Authorization) TerminalRef() TerminalRefKey {
 	return ctxAuth.Session.terminal
 }
 
-func (ctxAuth Authorization) TerminalID() TerminalID {
-	return ctxAuth.Session.terminal.id
+func (ctxAuth Authorization) TerminalID() TerminalIDNum {
+	return ctxAuth.Session.terminal.idNum
 }
 
 // TerminalIDPtr returns a pointer to a new copy of terminal ID. The
 // returned value is non-nil when the terminal ID is valid.
-func (ctxAuth Authorization) TerminalIDPtr() *TerminalID {
-	return ctxAuth.Session.terminal.IDPtr()
+func (ctxAuth Authorization) TerminalIDPtr() *TerminalIDNum {
+	return ctxAuth.Session.terminal.IDNumPtr()
 }
 
-func (ctxAuth Authorization) ClientID() ApplicationID {
-	return ctxAuth.Session.terminal.application.ID()
+func (ctxAuth Authorization) ClientApplicationIDNum() ApplicationIDNum {
+	return ctxAuth.Session.terminal.application.IDNum()
 }
 
 // RawToken returns the token where this instance of Authorization

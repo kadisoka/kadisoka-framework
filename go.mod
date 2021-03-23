@@ -5,9 +5,9 @@ go 1.15
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/alloyzeus/go-azfl v0.0.0-20210306140744-dcc1bd4a25a3
+	github.com/alloyzeus/go-azfl v0.0.0-20210323102529-9b385a88131a
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.38.1
+	github.com/aws/aws-sdk-go v1.38.2
 	github.com/doug-martin/goqu/v9 v9.11.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
@@ -43,12 +43,12 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/thoas/stats v0.0.0-20190407194641-965cb2de1678
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
-	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670
+	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4 // indirect
 	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 // indirect
 	golang.org/x/text v0.3.5
-	google.golang.org/genproto v0.0.0-20210319143718-93e7006c17a6 // indirect
+	google.golang.org/genproto v0.0.0-20210322173543-5f0e89347f5a // indirect
 	google.golang.org/grpc v1.36.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect

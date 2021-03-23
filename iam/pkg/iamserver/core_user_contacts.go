@@ -26,7 +26,7 @@ func (core *Core) GetUserContactUserIDs(
 				`WHERE `+
 				`  cp.user_id = $1 `+
 				`ORDER BY ph.user_id ASC`,
-			userRef.ID().PrimitiveValue())
+			userRef.IDNum().PrimitiveValue())
 	if err != nil {
 		return nil, err
 	}
@@ -34,12 +34,12 @@ func (core *Core) GetUserContactUserIDs(
 
 	var userRefs []iam.UserRefKey
 	for userIDRows.Next() {
-		uid := iam.UserIDZero
-		err = userIDRows.Scan(&uid)
+		userIDNum := iam.UserIDNumZero
+		err = userIDRows.Scan(&userIDNum)
 		if err != nil {
 			panic(err)
 		}
-		userRefs = append(userRefs, iam.NewUserRefKey(uid))
+		userRefs = append(userRefs, iam.NewUserRefKey(userIDNum))
 	}
 	if err = userIDRows.Err(); err != nil {
 		return nil, err

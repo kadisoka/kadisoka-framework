@@ -36,7 +36,7 @@ func (core *Core) getUserBaseProfileNoAC(
 	userID iam.UserRefKey,
 ) (*iam.UserBaseProfileData, error) {
 	var user iam.UserBaseProfileData
-	var id iam.UserID
+	var idNum iam.UserIDNum
 	var deletion iam.UserInstanceDeletionInfo
 	var displayName *string
 	var profileImageURL *string
@@ -53,7 +53,7 @@ func (core *Core) getUserBaseProfileNoAC(
 				`AND upiu.d_ts IS NULL `+
 				`WHERE ua.id = $1`,
 			userID).
-		Scan(&id, &deletion.Deleted, &displayName, &profileImageURL)
+		Scan(&idNum, &deletion.Deleted, &displayName, &profileImageURL)
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:

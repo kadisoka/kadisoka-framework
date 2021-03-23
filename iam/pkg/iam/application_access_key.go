@@ -30,7 +30,7 @@ type ApplicationAccessKeyID int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.EID = ApplicationAccessKeyIDZero
+var _ azfl.IDNum = ApplicationAccessKeyIDZero
 var _ azfl.AdjunctEntityID = ApplicationAccessKeyIDZero
 var _ azer.BinFieldUnmarshalable = &_ApplicationAccessKeyIDZeroVar
 
@@ -70,9 +70,9 @@ func (id ApplicationAccessKeyID) PrimitiveValue() int64 {
 	return int64(id)
 }
 
-// AZEID is required
-// for conformance with azfl.EID.
-func (ApplicationAccessKeyID) AZEID() {}
+// AZIDNum is required
+// for conformance with azfl.IDNum.
+func (ApplicationAccessKeyID) AZIDNum() {}
 
 // AZAdjunctEntityID is required
 // for conformance with azfl.AdjunctEntityID.
@@ -91,7 +91,7 @@ func (id ApplicationAccessKeyID) IsValid() bool {
 }
 
 // AZERBinField is required for conformance
-// with azfl.EID.
+// with azfl.IDNum.
 func (id ApplicationAccessKeyID) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(id))
@@ -189,8 +189,8 @@ func (ApplicationAccessKeyRefKey) AZAdjunctEntityRefKey() {}
 
 func (refKey ApplicationAccessKeyRefKey) ID() ApplicationAccessKeyID { return refKey.id }
 
-// ID is required for conformance with azfl.RefKey.
-func (refKey ApplicationAccessKeyRefKey) EID() azfl.EID {
+// AZIDNum is required for conformance with azfl.RefKey.
+func (refKey ApplicationAccessKeyRefKey) AZIDNum() azfl.IDNum {
 	return refKey.id
 }
 
