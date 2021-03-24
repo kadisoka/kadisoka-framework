@@ -26,8 +26,8 @@ func (cl ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
 }
 
 type Application struct {
-	ID   ApplicationRefKey
-	Data ApplicationData
+	RefKey ApplicationRefKey
+	Data   ApplicationData
 }
 
 type ApplicationDataProvider interface {

@@ -42,9 +42,9 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	var termRef iam.TerminalRefKey
 	if strings.HasPrefix(authCode, "otp:") {
 		// Only for non-confidential user-agents
-		if appRef := reqApp.ID; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
+		if appRef := reqApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
 			logReq(req.Request).
-				Warn().Str("client_id", reqApp.ID.AZERText()).
+				Warn().Str("client_id", reqApp.RefKey.AZERText()).
 				Msg("Client is not allowed to use grant type 'authorization_code' with OTP")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
@@ -73,9 +73,9 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		authCode = parts[2]
 	} else {
 		// Only for confidential user-agents
-		if appRef := reqApp.ID; !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
+		if appRef := reqApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
 			logReq(req.Request).
-				Warn().Str("client_id", reqApp.ID.AZERText()).
+				Warn().Str("client_id", reqApp.RefKey.AZERText()).
 				Msg("Client is not allowed to use grant type 'authorization_code'")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
@@ -123,9 +123,9 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	}
 
 	clientAZERText := req.Request.FormValue("client_id")
-	if clientAZERText != "" && clientAZERText != reqApp.ID.AZERText() {
+	if clientAZERText != "" && clientAZERText != reqApp.RefKey.AZERText() {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZERText, reqApp.ID)
+			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZERText, reqApp.RefKey)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidClient)
 		return

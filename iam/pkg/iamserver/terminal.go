@@ -81,7 +81,7 @@ type TerminalAuthorizationStartOutputData struct {
 
 // terminalDBRawModel represents a row from terminal table.
 type terminalDBRawModel struct {
-	ID               iam.TerminalIDNum    `db:"id"`
+	IDNum            iam.TerminalIDNum    `db:"id"`
 	ApplicationIDNum iam.ApplicationIDNum `db:"application_id"`
 	UserIDNum        iam.UserIDNum        `db:"user_id"`
 

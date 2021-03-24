@@ -371,7 +371,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 	}
 
 	termSecret, err := core.
-		setTerminalVerified(callCtx, termData.ID, disallowReplay)
+		setTerminalVerified(callCtx, termData.IDNum, disallowReplay)
 	if err != nil {
 		if err == errTerminalVerificationConfirmationReplayed {
 			return "", iam.UserRefKeyZero(), iam.ErrAuthorizationCodeAlreadyClaimed

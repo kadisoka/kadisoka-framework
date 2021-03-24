@@ -27,9 +27,9 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	if reqApp != nil && !reqApp.ID.IDNum().IsService() {
+	if reqApp != nil && !reqApp.RefKey.IDNum().IsService() {
 		logReq(req.Request).
-			Warn().Str("applicationID", reqApp.ID.AZERText()).
+			Warn().Str("applicationID", reqApp.RefKey.AZERText()).
 			Msg("Application is not authorized to use grant type password")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
@@ -118,7 +118,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		return
 	}
 
-	if !appRef.EqualsApplicationRefKey(reqApp.ID) {
+	if !appRef.EqualsApplicationRefKey(reqApp.RefKey) {
 		logCtx(reqCtx).
 			Warn().Str("terminalRef", termRef.AZERText()).Str("applicationRef", appRef.AZERText()).
 			Msg("Terminal credentials are that of other application")

@@ -48,7 +48,7 @@ type ServiceClient interface {
 	// will connect to.
 	ServerBaseURL() string
 
-	// TerminalRef returns the terminal ID of the client instance after
+	// TerminalRef returns the terminal ref-key of the client instance after
 	// successful authentication with IAM server.
 	TerminalRef() TerminalRefKey
 

@@ -307,10 +307,10 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
 	// Only for non-confidential user-agents
-	if appRef := authApp.ID; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
+	if appRef := authApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is not allowed to use this verification resource type",
-			authApp.ID)
+			authApp.RefKey)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -329,7 +329,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	var verificationMethods []pnv10n.VerificationMethod
 	for _, s := range terminalRegisterReq.VerificationMethods {
 		m := pnv10n.VerificationMethodFromString(s)
-		if m != pnv10n.VerificationMethodUnspecified {
+		if m.IsValid() {
 			verificationMethods = append(verificationMethods, m)
 		}
 	}
@@ -338,7 +338,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 		StartTerminalAuthorizationByPhoneNumber(
 			iamserver.TerminalAuthorizationByPhoneNumberStartInput{
 				Context:        reqCtx,
-				ApplicationRef: authApp.ID,
+				ApplicationRef: authApp.RefKey,
 				Data: iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
 					PhoneNumber:         phoneNumber,
 					VerificationMethods: verificationMethods,
@@ -378,10 +378,10 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	authApp *iam.Application,
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
-	if appRef := authApp.ID; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
+	if appRef := authApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is not allowed to use this verification resource type",
-			authApp.ID)
+			authApp.RefKey)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -409,7 +409,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	var verificationMethods []eav10n.VerificationMethod
 	for _, s := range terminalRegisterReq.VerificationMethods {
 		m := eav10n.VerificationMethodFromString(s)
-		if m != eav10n.VerificationMethodUnspecified {
+		if m.IsValid() {
 			verificationMethods = append(verificationMethods, m)
 		}
 	}
@@ -418,7 +418,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 		StartTerminalAuthorizationByEmailAddress(
 			iamserver.TerminalAuthorizationByEmailAddressStartInput{
 				Context:        reqCtx,
-				ApplicationRef: authApp.ID,
+				ApplicationRef: authApp.RefKey,
 				Data: iamserver.TerminalAuthorizationByEmailAddressStartInputData{
 					EmailAddress:        emailAddress,
 					VerificationMethods: verificationMethods,

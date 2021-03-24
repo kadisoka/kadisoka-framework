@@ -57,7 +57,7 @@ func (restSrv *Server) putUserPhoneNumber(
 	var verificationMethods []pnv10n.VerificationMethod
 	for _, s := range reqEntity.VerificationMethods {
 		m := pnv10n.VerificationMethodFromString(s)
-		if m != pnv10n.VerificationMethodUnspecified {
+		if m.IsValid() {
 			verificationMethods = append(verificationMethods, m)
 		}
 	}

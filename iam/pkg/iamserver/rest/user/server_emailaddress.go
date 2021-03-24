@@ -50,7 +50,7 @@ func (restSrv *Server) putUserEmailAddress(
 	var verificationMethods []eav10n.VerificationMethod
 	for _, s := range reqEntity.VerificationMethods {
 		m := eav10n.VerificationMethodFromString(s)
-		if m != eav10n.VerificationMethodUnspecified {
+		if m.IsValid() {
 			verificationMethods = append(verificationMethods, m)
 		}
 	}

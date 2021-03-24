@@ -488,6 +488,16 @@ func (refKey TerminalRefKey) Application() ApplicationRefKey {
 	return refKey.application
 }
 
+// ApplicationPtr returns a pointer to a copy of
+// ApplicationRefKey if it's considered valid.
+func (refKey TerminalRefKey) ApplicationPtr() *ApplicationRefKey {
+	if refKey.application.IsValid() {
+		rk := refKey.application
+		return &rk
+	}
+	return nil
+}
+
 // WithApplication returns a copy
 // of TerminalRefKey
 // with its application attribute set to the provided value.
@@ -504,6 +514,16 @@ func (refKey TerminalRefKey) WithApplication(
 // User returns instance's User value.
 func (refKey TerminalRefKey) User() UserRefKey {
 	return refKey.user
+}
+
+// UserPtr returns a pointer to a copy of
+// UserRefKey if it's considered valid.
+func (refKey TerminalRefKey) UserPtr() *UserRefKey {
+	if refKey.user.IsValid() {
+		rk := refKey.user
+		return &rk
+	}
+	return nil
 }
 
 // WithUser returns a copy

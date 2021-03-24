@@ -10,20 +10,29 @@ type VerificationMethod int
 
 const (
 	VerificationMethodUnspecified VerificationMethod = iota
+	VerificationMethodUnknown
+
 	VerificationMethodNone
 )
 
+func (method VerificationMethod) IsValid() bool {
+	return method != VerificationMethodUnspecified &&
+		method != VerificationMethodUnknown
+}
+
 func VerificationMethodFromString(str string) VerificationMethod {
 	switch str {
+	case "":
+		return VerificationMethodUnspecified
 	case "none":
 		return VerificationMethodNone
 	}
-	return VerificationMethodUnspecified
+	return VerificationMethodUnknown
 }
 
 //TODO: make this private
 type verificationDBModel struct {
-	ID                        int64              `db:"id"`
+	IDNum                     int64              `db:"id"`
 	Local                     string             `db:"local_part"`
 	Domain                    string             `db:"domain_part"`
 	Code                      string             `db:"code"`

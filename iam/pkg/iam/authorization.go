@@ -89,21 +89,18 @@ func (ctxAuth Authorization) UserRef() UserRefKey {
 	return ctxAuth.Session.terminal.user
 }
 
-// UserRefKeyPtr returns a pointer to a new copy of user ID. The
+// UserRefKeyPtr returns a pointer to a new copy of user ref-key. The
 // returned value is non-nil when the user ref-key is valid.
 func (ctxAuth Authorization) UserRefKeyPtr() *UserRefKey {
-	if ctxAuth.Session.terminal.user.IsValid() {
-		return &ctxAuth.Session.terminal.user
-	}
-	return nil
+	return ctxAuth.Session.terminal.UserPtr()
 }
 
 func (ctxAuth Authorization) UserIDNum() UserIDNum {
 	return ctxAuth.Session.terminal.user.IDNum()
 }
 
-// UserIDNumPtr returns a pointer to a new copy of user ID. The
-// returned value is non-nil when the user ref-key is valid.
+// UserIDNumPtr returns a pointer to a new copy of user id-num. The
+// returned value is non-nil when the user id-num is valid.
 func (ctxAuth Authorization) UserIDNumPtr() *UserIDNum {
 	return ctxAuth.Session.terminal.user.IDNumPtr()
 }
@@ -116,8 +113,8 @@ func (ctxAuth Authorization) TerminalIDNum() TerminalIDNum {
 	return ctxAuth.Session.terminal.idNum
 }
 
-// TerminalIDNumPtr returns a pointer to a new copy of terminal ID. The
-// returned value is non-nil when the terminal ID is valid.
+// TerminalIDNumPtr returns a pointer to a new copy of terminal id-num. The
+// returned value is non-nil when the terminal id-num is valid.
 func (ctxAuth Authorization) TerminalIDNumPtr() *TerminalIDNum {
 	return ctxAuth.Session.terminal.IDNumPtr()
 }
@@ -147,14 +144,6 @@ type AccessTokenClaims struct {
 	AuthorizedParty string `json:"azp,omitempty"`
 	SubType         string `json:"sub_type,omitempty"`
 	TerminalID      string `json:"terminal_id,omitempty"`
-}
-
-//TODO: unused. remove this.
-func (claims AccessTokenClaims) Valid() error {
-	if claims.ID != "" {
-		return nil
-	}
-	return errors.EntMsg("jti", "empty")
 }
 
 // RefreshTokenTTLDefault is the active duration for a refresh token.

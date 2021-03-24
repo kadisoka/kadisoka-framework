@@ -33,9 +33,9 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	}
 
 	// To use this grant type, the client must be able to secure its credentials.
-	if appIDNum := reqApp.ID.IDNum(); !appIDNum.IsService() && !appIDNum.IsUserAgentAuthorizationConfidential() {
+	if appIDNum := reqApp.RefKey.IDNum(); !appIDNum.IsService() && !appIDNum.IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
-			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqApp.ID)
+			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqApp.RefKey)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
 		return
@@ -65,7 +65,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	regOutput := restSrv.serverCore.
 		RegisterTerminal(iamserver.TerminalRegistrationInput{
 			Context:        reqCtx,
-			ApplicationRef: reqApp.ID,
+			ApplicationRef: reqApp.RefKey,
 			Data: iamserver.TerminalRegistrationInputData{
 				UserRef:          ctxAuth.UserRef(),
 				DisplayName:      termDisplayName,

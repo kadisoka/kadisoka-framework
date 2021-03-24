@@ -21,121 +21,127 @@ var _ = strings.Compare
 
 // Adjunct-entity ApplicationAccessKey of Application.
 
-//region ID
+//region IDNum
 
-// ApplicationAccessKeyID is a scoped identifier
+// ApplicationAccessKeyIDNum is a scoped identifier
 // used to identify an instance of adjunct entity ApplicationAccessKey
 // scoped within its host entity(s).
-type ApplicationAccessKeyID int64
+type ApplicationAccessKeyIDNum int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.IDNum = ApplicationAccessKeyIDZero
-var _ azfl.AdjunctEntityID = ApplicationAccessKeyIDZero
-var _ azer.BinFieldUnmarshalable = &_ApplicationAccessKeyIDZeroVar
+var _ azfl.IDNum = ApplicationAccessKeyIDNumZero
+var _ azfl.AdjunctEntityID = ApplicationAccessKeyIDNumZero
+var _ azer.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
 
-// _ApplicationAccessKeyIDSignificantBitsMask is used to
-// extract significant bits from an instance of ApplicationAccessKeyID.
-const _ApplicationAccessKeyIDSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
+// ApplicationAccessKeyIDNumSignificantBitsMask is used to
+// extract significant bits from an instance of ApplicationAccessKeyIDNum.
+const ApplicationAccessKeyIDNumSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
 
-// ApplicationAccessKeyIDZero is the zero value for ApplicationAccessKeyID.
-const ApplicationAccessKeyIDZero = ApplicationAccessKeyID(0)
+// ApplicationAccessKeyIDNumZero is the zero value for ApplicationAccessKeyIDNum.
+const ApplicationAccessKeyIDNumZero = ApplicationAccessKeyIDNum(0)
 
-// _ApplicationAccessKeyIDZeroVar is used for testing
+// _ApplicationAccessKeyIDNumZeroVar is used for testing
 // pointer-based interfaces conformance.
-var _ApplicationAccessKeyIDZeroVar = ApplicationAccessKeyIDZero
+var _ApplicationAccessKeyIDNumZeroVar = ApplicationAccessKeyIDNumZero
 
-// ApplicationAccessKeyIDFromPrimitiveValue creates an instance
-// of ApplicationAccessKeyID from its primitive value.
-func ApplicationAccessKeyIDFromPrimitiveValue(v int64) ApplicationAccessKeyID {
-	return ApplicationAccessKeyID(v)
+// ApplicationAccessKeyIDNumFromPrimitiveValue creates an instance
+// of ApplicationAccessKeyIDNum from its primitive value.
+func ApplicationAccessKeyIDNumFromPrimitiveValue(v int64) ApplicationAccessKeyIDNum {
+	return ApplicationAccessKeyIDNum(v)
 }
 
-// ApplicationAccessKeyIDFromAZERBinField creates ApplicationAccessKeyID from
+// ApplicationAccessKeyIDNumFromAZERBinField creates ApplicationAccessKeyIDNum from
 // its azer-bin form.
-func ApplicationAccessKeyIDFromAZERBinField(
+func ApplicationAccessKeyIDNumFromAZERBinField(
 	b []byte, typeHint azer.BinDataType,
-) (id ApplicationAccessKeyID, readLen int, err error) {
+) (idNum ApplicationAccessKeyIDNum, readLen int, err error) {
 	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt64 {
-		return ApplicationAccessKeyID(0), 0,
+		return ApplicationAccessKeyIDNum(0), 0,
 			errors.ArgMsg("typeHint", "unsupported")
 	}
 	i := binary.BigEndian.Uint64(b)
-	return ApplicationAccessKeyID(i), 8, nil
+	return ApplicationAccessKeyIDNum(i), 8, nil
 }
 
-// PrimitiveValue returns the ID in its primitive type. Prefer to use
+// PrimitiveValue returns the value in its primitive type. Prefer to use
 // this method instead of casting directly.
-func (id ApplicationAccessKeyID) PrimitiveValue() int64 {
-	return int64(id)
+func (idNum ApplicationAccessKeyIDNum) PrimitiveValue() int64 {
+	return int64(idNum)
 }
 
 // AZIDNum is required
 // for conformance with azfl.IDNum.
-func (ApplicationAccessKeyID) AZIDNum() {}
+func (ApplicationAccessKeyIDNum) AZIDNum() {}
 
 // AZAdjunctEntityID is required
 // for conformance with azfl.AdjunctEntityID.
-func (ApplicationAccessKeyID) AZAdjunctEntityID() {}
+func (ApplicationAccessKeyIDNum) AZAdjunctEntityID() {}
 
-// IsZero is required as ApplicationAccessKeyID is a value-object.
-func (id ApplicationAccessKeyID) IsZero() bool {
-	return id == ApplicationAccessKeyIDZero
+// IsZero is required as ApplicationAccessKeyIDNum is a value-object.
+func (idNum ApplicationAccessKeyIDNum) IsZero() bool {
+	return idNum == ApplicationAccessKeyIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as an ID.
-// It doesn't tell whether it refers to a valid instance of ApplicationAccessKey.
-func (id ApplicationAccessKeyID) IsValid() bool {
-	return int64(id) > 0 &&
-		(uint64(id)&_ApplicationAccessKeyIDSignificantBitsMask) != 0
+// IsValid returns true if this instance is valid independently
+// as an ApplicationAccessKeyIDNum. It doesn't tell whether it refers to
+// a valid instance of ApplicationAccessKey.
+func (idNum ApplicationAccessKeyIDNum) IsValid() bool {
+	return int64(idNum) > 0 &&
+		(uint64(idNum)&ApplicationAccessKeyIDNumSignificantBitsMask) != 0
+}
+
+// IsNotValid returns the negation of value returned by IsValid().
+func (idNum ApplicationAccessKeyIDNum) IsNotValid() bool {
+	return !idNum.IsValid()
 }
 
 // AZERBinField is required for conformance
 // with azfl.IDNum.
-func (id ApplicationAccessKeyID) AZERBinField() ([]byte, azer.BinDataType) {
+func (idNum ApplicationAccessKeyIDNum) AZERBinField() ([]byte, azer.BinDataType) {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(id))
+	binary.BigEndian.PutUint64(b, uint64(idNum))
 	return b, azer.BinDataTypeInt64
 }
 
 // UnmarshalAZERBinField is required for conformance
 // with azer.BinFieldUnmarshalable.
-func (id *ApplicationAccessKeyID) UnmarshalAZERBinField(
+func (idNum *ApplicationAccessKeyIDNum) UnmarshalAZERBinField(
 	b []byte, typeHint azer.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := ApplicationAccessKeyIDFromAZERBinField(b, typeHint)
+	i, readLen, err := ApplicationAccessKeyIDNumFromAZERBinField(b, typeHint)
 	if err == nil {
-		*id = i
+		*idNum = i
 	}
 	return readLen, err
 }
 
-// Equals is required as ApplicationAccessKeyID is a value-object.
+// Equals is required as ApplicationAccessKeyIDNum is a value-object.
 //
-// Use EqualsApplicationAccessKeyID method if the other value
+// Use EqualsApplicationAccessKeyIDNum method if the other value
 // has the same type.
-func (id ApplicationAccessKeyID) Equals(other interface{}) bool {
-	if x, ok := other.(ApplicationAccessKeyID); ok {
-		return x == id
+func (idNum ApplicationAccessKeyIDNum) Equals(other interface{}) bool {
+	if x, ok := other.(ApplicationAccessKeyIDNum); ok {
+		return x == idNum
 	}
-	if x, _ := other.(*ApplicationAccessKeyID); x != nil {
-		return *x == id
+	if x, _ := other.(*ApplicationAccessKeyIDNum); x != nil {
+		return *x == idNum
 	}
 	return false
 }
 
 // Equal is a wrapper for Equals method. It is required for
 // compatibility with github.com/google/go-cmp
-func (id ApplicationAccessKeyID) Equal(other interface{}) bool {
-	return id.Equals(other)
+func (idNum ApplicationAccessKeyIDNum) Equal(other interface{}) bool {
+	return idNum.Equals(other)
 }
 
-// EqualsApplicationAccessKeyID determines if the other instance
+// EqualsApplicationAccessKeyIDNum determines if the other instance
 // is equal to this instance.
-func (id ApplicationAccessKeyID) EqualsApplicationAccessKeyID(
-	other ApplicationAccessKeyID,
+func (idNum ApplicationAccessKeyIDNum) EqualsApplicationAccessKeyIDNum(
+	other ApplicationAccessKeyIDNum,
 ) bool {
-	return id == other
+	return idNum == other
 }
 
 //endregion
@@ -146,7 +152,7 @@ func (id ApplicationAccessKeyID) EqualsApplicationAccessKeyID(
 // an instance of adjunct entity ApplicationAccessKey system-wide.
 type ApplicationAccessKeyRefKey struct {
 	application ApplicationRefKey
-	id          ApplicationAccessKeyID
+	idNum       ApplicationAccessKeyIDNum
 }
 
 // The total number of fields in the struct.
@@ -156,11 +162,11 @@ const _ApplicationAccessKeyRefKeyFieldCount = 1 + 1
 // of ApplicationAccessKeyRefKey with the provided attribute values.
 func NewApplicationAccessKeyRefKey(
 	application ApplicationRefKey,
-	id ApplicationAccessKeyID,
+	idNum ApplicationAccessKeyIDNum,
 ) ApplicationAccessKeyRefKey {
 	return ApplicationAccessKeyRefKey{
 		application: application,
-		id:          id,
+		idNum:       idNum,
 	}
 }
 
@@ -171,7 +177,7 @@ var _ azfl.AdjunctEntityRefKey = _ApplicationAccessKeyRefKeyZero
 
 var _ApplicationAccessKeyRefKeyZero = ApplicationAccessKeyRefKey{
 	application: ApplicationRefKeyZero(),
-	id:          ApplicationAccessKeyIDZero,
+	idNum:       ApplicationAccessKeyIDNumZero,
 }
 
 // ApplicationAccessKeyRefKeyZero returns
@@ -187,35 +193,53 @@ func (ApplicationAccessKeyRefKey) AZRefKey() {}
 // by azfl.AdjunctEntityRefKey interface.
 func (ApplicationAccessKeyRefKey) AZAdjunctEntityRefKey() {}
 
-func (refKey ApplicationAccessKeyRefKey) ID() ApplicationAccessKeyID { return refKey.id }
+// IDNum returns the scoped identifier of the entity.
+func (refKey ApplicationAccessKeyRefKey) IDNum() ApplicationAccessKeyIDNum {
+	return refKey.idNum
+}
+
+// IDNumPtr returns a pointer to a copy of the IDNum if it's considered valid
+// otherwise it returns nil.
+func (refKey ApplicationAccessKeyRefKey) IDNumPtr() *ApplicationAccessKeyIDNum {
+	if refKey.IsNotValid() {
+		return nil
+	}
+	i := refKey.IDNum()
+	return &i
+}
 
 // AZIDNum is required for conformance with azfl.RefKey.
 func (refKey ApplicationAccessKeyRefKey) AZIDNum() azfl.IDNum {
-	return refKey.id
+	return refKey.idNum
 }
 
 // IsZero is required as ApplicationAccessKeyRefKey is a value-object.
 func (refKey ApplicationAccessKeyRefKey) IsZero() bool {
 	return refKey.application.IsZero() &&
-		refKey.id == ApplicationAccessKeyIDZero
+		refKey.idNum == ApplicationAccessKeyIDNumZero
 }
 
 // IsValid returns true if this instance is valid independently as a ref-key.
 // It doesn't tell whether it refers to a valid instance of ApplicationAccessKey.
 func (refKey ApplicationAccessKeyRefKey) IsValid() bool {
 	return refKey.application.IsValid() &&
-		refKey.id.IsValid()
+		refKey.idNum.IsValid()
+}
+
+// IsNotValid returns the negation of value returned by IsValid().
+func (refKey ApplicationAccessKeyRefKey) IsNotValid() bool {
+	return !refKey.IsValid()
 }
 
 // Equals is required for conformance with azfl.AdjunctEntityRefKey.
 func (refKey ApplicationAccessKeyRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(ApplicationAccessKeyRefKey); ok {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
-			refKey.id == x.id
+			refKey.idNum == x.idNum
 	}
 	if x, _ := other.(*ApplicationAccessKeyRefKey); x != nil {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
-			refKey.id == x.id
+			refKey.idNum == x.idNum
 	}
 	return false
 }
@@ -231,7 +255,7 @@ func (refKey ApplicationAccessKeyRefKey) EqualsApplicationAccessKeyRefKey(
 	other ApplicationAccessKeyRefKey,
 ) bool {
 	return refKey.application.EqualsApplicationRefKey(other.application) &&
-		refKey.id == other.id
+		refKey.idNum == other.idNum
 }
 
 // AZERBin is required for conformance
@@ -273,7 +297,7 @@ func (refKey ApplicationAccessKeyRefKey) AZERBinField() ([]byte, azer.BinDataTyp
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
-	fieldBytes, fieldType = refKey.id.AZERBinField()
+	fieldBytes, fieldType = refKey.idNum.AZERBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
@@ -321,20 +345,20 @@ func ApplicationAccessKeyRefKeyFromAZERBinField(
 	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(), 0,
-			errors.ArgWrap("", "id type parsing", err)
+			errors.ArgWrap("", "idnum type parsing", err)
 	}
 	typeCursor++
-	id, readLen, err := ApplicationAccessKeyIDFromAZERBinField(
+	idNum, readLen, err := ApplicationAccessKeyIDNumFromAZERBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(), 0,
-			errors.ArgWrap("", "id data parsing", err)
+			errors.ArgWrap("", "idnum data parsing", err)
 	}
 	dataCursor += readLen
 
 	return ApplicationAccessKeyRefKey{
 		application: applicationRefKey,
-		id:          id,
+		idNum:       idNum,
 	}, dataCursor, nil
 }
 
@@ -397,9 +421,23 @@ func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZERText(s string) error {
 	return err
 }
 
+// MarshalText is for compatibility with Go's encoding.TextMarshaler
+func (refKey ApplicationAccessKeyRefKey) MarshalText() ([]byte, error) {
+	return []byte(refKey.AZERText()), nil
+}
+
+// UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
+func (refKey *ApplicationAccessKeyRefKey) UnmarshalText(b []byte) error {
+	r, err := ApplicationAccessKeyRefKeyFromAZERText(string(b))
+	if err == nil {
+		*refKey = r
+	}
+	return err
+}
+
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey ApplicationAccessKeyRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in AZRS
+	// We assume that there's no symbols in azer-text
 	return []byte("\"" + refKey.AZERText() + "\""), nil
 }
 
@@ -422,6 +460,16 @@ func (refKey ApplicationAccessKeyRefKey) Application() ApplicationRefKey {
 	return refKey.application
 }
 
+// ApplicationPtr returns a pointer to a copy of
+// ApplicationRefKey if it's considered valid.
+func (refKey ApplicationAccessKeyRefKey) ApplicationPtr() *ApplicationRefKey {
+	if refKey.application.IsValid() {
+		rk := refKey.application
+		return &rk
+	}
+	return nil
+}
+
 // WithApplication returns a copy
 // of ApplicationAccessKeyRefKey
 // with its application attribute set to the provided value.
@@ -430,6 +478,7 @@ func (refKey ApplicationAccessKeyRefKey) WithApplication(
 ) ApplicationAccessKeyRefKey {
 	return ApplicationAccessKeyRefKey{
 		application: application,
+		idNum:       refKey.idNum,
 	}
 }
 

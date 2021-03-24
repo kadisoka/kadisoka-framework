@@ -125,6 +125,6 @@ func (clientStaticDataStore *clientStaticDataProvider) GetApplication(
 	if cl == nil {
 		return nil, nil
 	}
-	app := &iam.Application{ID: appID, Data: *cl}
+	app := &iam.Application{RefKey: appID, Data: *cl}
 	return app, nil
 }
