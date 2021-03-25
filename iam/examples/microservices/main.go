@@ -51,7 +51,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
 	}
-	log.Info().Msgf("App instance %v terminal %v", svcApp.InstanceID(), svcApp.TerminalRef().AZERText())
+	log.Info().Msgf("App instance %v terminal %v", svcApp.InstanceID(), svcApp.TerminalRef().AZIDText())
 
 	httpListenPort := "8080"
 

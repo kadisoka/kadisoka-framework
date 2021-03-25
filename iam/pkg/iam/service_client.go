@@ -229,9 +229,9 @@ func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 		return TerminalRefKeyZero(), "", err
 	}
 
-	terminalRef, err = TerminalRefKeyFromAZERText(tokenResp.TerminalID)
+	terminalRef, err = TerminalRefKeyFromAZIDText(tokenResp.TerminalID)
 	if err != nil {
-		return TerminalRefKeyZero(), "", errors.Wrap("TerminalRefKeyFromAZERText", err)
+		return TerminalRefKeyZero(), "", errors.Wrap("TerminalRefKeyFromAZIDText", err)
 	}
 
 	//TODO: to handle expiration, we'll need to store the value of 'ExpiresIn'

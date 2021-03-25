@@ -219,7 +219,7 @@ func (restSrv *Server) deleteTerminal(
 	if termIDStr == "self" {
 		termRef = ctxAuth.TerminalRef()
 	} else {
-		termRef, err = iam.TerminalRefKeyFromAZERText(termIDStr)
+		termRef, err = iam.TerminalRefKeyFromAZIDText(termIDStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).
@@ -366,7 +366,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: authStartOutput.Data.TerminalRef.AZERText(),
+			TerminalID: authStartOutput.Data.TerminalRef.AZIDText(),
 			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
 		})
 }
@@ -446,7 +446,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: authStartOutput.Data.TerminalRef.AZERText(),
+			TerminalID: authStartOutput.Data.TerminalRef.AZIDText(),
 			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
 		})
 }

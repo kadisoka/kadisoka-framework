@@ -17,7 +17,7 @@ func main() {
 	firstParty := os.Args[1] == "true"
 	clientID := iam.GenerateApplicationRefKey(firstParty, os.Args[2])
 	clientSecret := genSecret(16)
-	fmt.Fprintf(os.Stdout, "%s\n%s\n", clientID.AZERText(), clientSecret)
+	fmt.Fprintf(os.Stdout, "%s\n%s\n", clientID.AZIDText(), clientSecret)
 }
 
 func genSecret(len int) string {

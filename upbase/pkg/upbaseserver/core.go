@@ -99,7 +99,7 @@ func (srvCore *Core) getUserOpenIDConnectStandardClaimsNoAC(
 	// }
 
 	// userInfo := oidc.StandardClaims{
-	// 	Sub:                 userRef.AZERText(),
+	// 	Sub:                 userRef.AZIDText(),
 	// 	Name:                userBaseProfile.DisplayName,
 	// 	Email:               emailAddressStr,
 	// 	EmailVerified:       emailAddressVerified,

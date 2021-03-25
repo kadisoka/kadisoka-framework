@@ -203,7 +203,7 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	if claims.ID == "" {
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("jti", "empty"))
 	}
-	sessionRef, err := SessionRefKeyFromAZERText(claims.ID)
+	sessionRef, err := SessionRefKeyFromAZIDText(claims.ID)
 	if err != nil {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("jti", dataerrs.Malformed(err)))
 	}
@@ -211,7 +211,7 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 
 	var userRef UserRefKey
 	if claims.Subject != "" {
-		userRef, err = UserRefKeyFromAZERText(claims.Subject)
+		userRef, err = UserRefKeyFromAZIDText(claims.Subject)
 		if err != nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "malformed"))
 		}
@@ -232,7 +232,7 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	if claims.TerminalID == "" {
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("terminal_id", "empty"))
 	}
-	terminalRef, err = TerminalRefKeyFromAZERText(claims.TerminalID)
+	terminalRef, err = TerminalRefKeyFromAZIDText(claims.TerminalID)
 	if err != nil {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("terminal_id", dataerrs.Malformed(err)))
 	}

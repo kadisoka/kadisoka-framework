@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	azfl "github.com/alloyzeus/go-azfl/azfl"
-	azer "github.com/alloyzeus/go-azfl/azfl/azer"
+	azid "github.com/alloyzeus/go-azfl/azfl/azid"
 	errors "github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
@@ -16,7 +16,7 @@ import (
 var _ = azfl.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = azer.BinDataTypeUnspecified
+var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
 
 // Adjunct-entity ApplicationAccessKey of Application.
@@ -30,9 +30,9 @@ type ApplicationAccessKeyIDNum int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.IDNum = ApplicationAccessKeyIDNumZero
-var _ azfl.AdjunctEntityID = ApplicationAccessKeyIDNumZero
-var _ azer.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
+var _ azid.IDNum = ApplicationAccessKeyIDNumZero
+var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
+var _ azfl.AdjunctEntityIDNum = ApplicationAccessKeyIDNumZero
 
 // ApplicationAccessKeyIDNumSignificantBitsMask is used to
 // extract significant bits from an instance of ApplicationAccessKeyIDNum.
@@ -51,12 +51,12 @@ func ApplicationAccessKeyIDNumFromPrimitiveValue(v int64) ApplicationAccessKeyID
 	return ApplicationAccessKeyIDNum(v)
 }
 
-// ApplicationAccessKeyIDNumFromAZERBinField creates ApplicationAccessKeyIDNum from
-// its azer-bin form.
-func ApplicationAccessKeyIDNumFromAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// ApplicationAccessKeyIDNumFromAZIDBinField creates ApplicationAccessKeyIDNum from
+// its azid-bin form.
+func ApplicationAccessKeyIDNumFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (idNum ApplicationAccessKeyIDNum, readLen int, err error) {
-	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt64 {
+	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt64 {
 		return ApplicationAccessKeyIDNum(0), 0,
 			errors.ArgMsg("typeHint", "unsupported")
 	}
@@ -71,12 +71,12 @@ func (idNum ApplicationAccessKeyIDNum) PrimitiveValue() int64 {
 }
 
 // AZIDNum is required
-// for conformance with azfl.IDNum.
+// for conformance with azid.IDNum.
 func (ApplicationAccessKeyIDNum) AZIDNum() {}
 
-// AZAdjunctEntityID is required
-// for conformance with azfl.AdjunctEntityID.
-func (ApplicationAccessKeyIDNum) AZAdjunctEntityID() {}
+// AZAdjunctEntityIDNum is required
+// for conformance with azfl.AdjunctEntityIDNum.
+func (ApplicationAccessKeyIDNum) AZAdjunctEntityIDNum() {}
 
 // IsZero is required as ApplicationAccessKeyIDNum is a value-object.
 func (idNum ApplicationAccessKeyIDNum) IsZero() bool {
@@ -96,20 +96,20 @@ func (idNum ApplicationAccessKeyIDNum) IsNotValid() bool {
 	return !idNum.IsValid()
 }
 
-// AZERBinField is required for conformance
-// with azfl.IDNum.
-func (idNum ApplicationAccessKeyIDNum) AZERBinField() ([]byte, azer.BinDataType) {
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum ApplicationAccessKeyIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(idNum))
-	return b, azer.BinDataTypeInt64
+	return b, azid.BinDataTypeInt64
 }
 
-// UnmarshalAZERBinField is required for conformance
-// with azer.BinFieldUnmarshalable.
-func (idNum *ApplicationAccessKeyIDNum) UnmarshalAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *ApplicationAccessKeyIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := ApplicationAccessKeyIDNumFromAZERBinField(b, typeHint)
+	i, readLen, err := ApplicationAccessKeyIDNumFromAZIDBinField(b, typeHint)
 	if err == nil {
 		*idNum = i
 	}
@@ -172,7 +172,7 @@ func NewApplicationAccessKeyRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.RefKey = _ApplicationAccessKeyRefKeyZero
+var _ azid.RefKey = _ApplicationAccessKeyRefKeyZero
 var _ azfl.AdjunctEntityRefKey = _ApplicationAccessKeyRefKeyZero
 
 var _ApplicationAccessKeyRefKeyZero = ApplicationAccessKeyRefKey{
@@ -186,7 +186,7 @@ func ApplicationAccessKeyRefKeyZero() ApplicationAccessKeyRefKey {
 	return _ApplicationAccessKeyRefKeyZero
 }
 
-// AZRefKey is required by azfl.RefKey interface.
+// AZRefKey is required by azid.RefKey interface.
 func (ApplicationAccessKeyRefKey) AZRefKey() {}
 
 // AZAdjunctEntityRefKey is required
@@ -198,7 +198,7 @@ func (refKey ApplicationAccessKeyRefKey) IDNum() ApplicationAccessKeyIDNum {
 	return refKey.idNum
 }
 
-// IDNumPtr returns a pointer to a copy of the IDNum if it's considered valid
+// IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey ApplicationAccessKeyRefKey) IDNumPtr() *ApplicationAccessKeyIDNum {
 	if refKey.IsNotValid() {
@@ -208,8 +208,8 @@ func (refKey ApplicationAccessKeyRefKey) IDNumPtr() *ApplicationAccessKeyIDNum {
 	return &i
 }
 
-// AZIDNum is required for conformance with azfl.RefKey.
-func (refKey ApplicationAccessKeyRefKey) AZIDNum() azfl.IDNum {
+// AZIDNum is required for conformance with azid.RefKey.
+func (refKey ApplicationAccessKeyRefKey) AZIDNum() azid.IDNum {
 	return refKey.idNum
 }
 
@@ -258,61 +258,61 @@ func (refKey ApplicationAccessKeyRefKey) EqualsApplicationAccessKeyRefKey(
 		refKey.idNum == other.idNum
 }
 
-// AZERBin is required for conformance
-// with azfl.RefKey.
-func (refKey ApplicationAccessKeyRefKey) AZERBin() []byte {
-	data, typ := refKey.AZERBinField()
+// AZIDBin is required for conformance
+// with azid.RefKey.
+func (refKey ApplicationAccessKeyRefKey) AZIDBin() []byte {
+	data, typ := refKey.AZIDBinField()
 	out := []byte{typ.Byte()}
 	return append(out, data...)
 }
 
-// ApplicationAccessKeyRefKeyFromAZERBin creates a new instance of
-// ApplicationAccessKeyRefKey from its azer-bin form.
-func ApplicationAccessKeyRefKeyFromAZERBin(
+// ApplicationAccessKeyRefKeyFromAZIDBin creates a new instance of
+// ApplicationAccessKeyRefKey from its azid-bin form.
+func ApplicationAccessKeyRefKeyFromAZIDBin(
 	b []byte,
 ) (refKey ApplicationAccessKeyRefKey, readLen int, err error) {
-	typ, err := azer.BinDataTypeFromByte(b[0])
+	typ, err := azid.BinDataTypeFromByte(b[0])
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(), 0,
 			errors.ArgWrap("", "type parsing", err)
 	}
-	if typ != azer.BinDataTypeArray {
+	if typ != azid.BinDataTypeArray {
 		return ApplicationAccessKeyRefKeyZero(), 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
 
-	refKey, readLen, err = ApplicationAccessKeyRefKeyFromAZERBinField(b[1:], typ)
+	refKey, readLen, err = ApplicationAccessKeyRefKeyFromAZIDBinField(b[1:], typ)
 	return refKey, readLen + 1, err
 }
 
-// AZERBinField is required for conformance
-// with azfl.RefKey.
-func (refKey ApplicationAccessKeyRefKey) AZERBinField() ([]byte, azer.BinDataType) {
+// AZIDBinField is required for conformance
+// with azid.RefKey.
+func (refKey ApplicationAccessKeyRefKey) AZIDBinField() ([]byte, azid.BinDataType) {
 	var typesBytes []byte
 	var dataBytes []byte
 	var fieldBytes []byte
-	var fieldType azer.BinDataType
+	var fieldType azid.BinDataType
 
-	fieldBytes, fieldType = refKey.application.AZERBinField()
+	fieldBytes, fieldType = refKey.application.AZIDBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
-	fieldBytes, fieldType = refKey.idNum.AZERBinField()
+	fieldBytes, fieldType = refKey.idNum.AZIDBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
 	var out = []byte{byte(len(typesBytes))}
 	out = append(out, typesBytes...)
 	out = append(out, dataBytes...)
-	return out, azer.BinDataTypeArray
+	return out, azid.BinDataTypeArray
 }
 
-// ApplicationAccessKeyRefKeyFromAZERBinField creates ApplicationAccessKeyRefKey from
-// its azer-bin field form.
-func ApplicationAccessKeyRefKeyFromAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// ApplicationAccessKeyRefKeyFromAZIDBinField creates ApplicationAccessKeyRefKey from
+// its azid-bin field form.
+func ApplicationAccessKeyRefKeyFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (refKey ApplicationAccessKeyRefKey, readLen int, err error) {
-	if typeHint != azer.BinDataTypeArray {
+	if typeHint != azid.BinDataTypeArray {
 		return ApplicationAccessKeyRefKeyZero(), 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
@@ -326,15 +326,15 @@ func ApplicationAccessKeyRefKeyFromAZERBinField(
 	typeCursor := 1
 	dataCursor := typeCursor + arrayLen
 
-	var fieldType azer.BinDataType
+	var fieldType azid.BinDataType
 
-	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
+	fieldType, err = azid.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(), 0,
 			errors.ArgWrap("", "application ref-key type parsing", err)
 	}
 	typeCursor++
-	applicationRefKey, readLen, err := ApplicationRefKeyFromAZERBinField(
+	applicationRefKey, readLen, err := ApplicationRefKeyFromAZIDBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(), 0,
@@ -342,17 +342,17 @@ func ApplicationAccessKeyRefKeyFromAZERBinField(
 	}
 	dataCursor += readLen
 
-	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
+	fieldType, err = azid.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(), 0,
-			errors.ArgWrap("", "idnum type parsing", err)
+			errors.ArgWrap("", "id-num type parsing", err)
 	}
 	typeCursor++
-	idNum, readLen, err := ApplicationAccessKeyIDNumFromAZERBinField(
+	idNum, readLen, err := ApplicationAccessKeyIDNumFromAZIDBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(), 0,
-			errors.ArgWrap("", "idnum data parsing", err)
+			errors.ArgWrap("", "id-num data parsing", err)
 	}
 	dataCursor += readLen
 
@@ -362,48 +362,48 @@ func ApplicationAccessKeyRefKeyFromAZERBinField(
 	}, dataCursor, nil
 }
 
-// UnmarshalAZERBinField is required for conformance
+// UnmarshalAZIDBinField is required for conformance
 // with azfl.BinFieldUnmarshalable.
-func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := ApplicationAccessKeyRefKeyFromAZERBinField(b, typeHint)
+	i, readLen, err := ApplicationAccessKeyRefKeyFromAZIDBinField(b, typeHint)
 	if err == nil {
 		*refKey = i
 	}
 	return readLen, err
 }
 
-const _ApplicationAccessKeyRefKeyAZERTextPrefix = "KAK0"
+const _ApplicationAccessKeyRefKeyAZIDTextPrefix = "KAK0"
 
-// AZERText is required for conformance
-// with azfl.RefKey.
-func (refKey ApplicationAccessKeyRefKey) AZERText() string {
+// AZIDText is required for conformance
+// with azid.RefKey.
+func (refKey ApplicationAccessKeyRefKey) AZIDText() string {
 	if !refKey.IsValid() {
 		return ""
 	}
 
-	return _ApplicationAccessKeyRefKeyAZERTextPrefix +
-		azer.TextEncode(refKey.AZERBin())
+	return _ApplicationAccessKeyRefKeyAZIDTextPrefix +
+		azid.TextEncode(refKey.AZIDBin())
 }
 
-// ApplicationAccessKeyRefKeyFromAZERText creates a new instance of
-// ApplicationAccessKeyRefKey from its azer-text form.
-func ApplicationAccessKeyRefKeyFromAZERText(s string) (ApplicationAccessKeyRefKey, error) {
+// ApplicationAccessKeyRefKeyFromAZIDText creates a new instance of
+// ApplicationAccessKeyRefKey from its azid-text form.
+func ApplicationAccessKeyRefKeyFromAZIDText(s string) (ApplicationAccessKeyRefKey, error) {
 	if s == "" {
 		return ApplicationAccessKeyRefKeyZero(), nil
 	}
-	if !strings.HasPrefix(s, _ApplicationAccessKeyRefKeyAZERTextPrefix) {
+	if !strings.HasPrefix(s, _ApplicationAccessKeyRefKeyAZIDTextPrefix) {
 		return ApplicationAccessKeyRefKeyZero(),
 			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
 	}
-	s = strings.TrimPrefix(s, _ApplicationAccessKeyRefKeyAZERTextPrefix)
-	b, err := azer.TextDecode(s)
+	s = strings.TrimPrefix(s, _ApplicationAccessKeyRefKeyAZIDTextPrefix)
+	b, err := azid.TextDecode(s)
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(),
 			errors.ArgWrap("", "data parsing", err)
 	}
-	refKey, _, err := ApplicationAccessKeyRefKeyFromAZERBin(b)
+	refKey, _, err := ApplicationAccessKeyRefKeyFromAZIDBin(b)
 	if err != nil {
 		return ApplicationAccessKeyRefKeyZero(),
 			errors.ArgWrap("", "data decoding", err)
@@ -411,10 +411,10 @@ func ApplicationAccessKeyRefKeyFromAZERText(s string) (ApplicationAccessKeyRefKe
 	return refKey, nil
 }
 
-// UnmarshalAZERText is required for conformance
-// with azer.TextUnmarshalable.
-func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZERText(s string) error {
-	r, err := ApplicationAccessKeyRefKeyFromAZERText(s)
+// UnmarshalAZIDText is required for conformance
+// with azid.TextUnmarshalable.
+func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZIDText(s string) error {
+	r, err := ApplicationAccessKeyRefKeyFromAZIDText(s)
 	if err == nil {
 		*refKey = r
 	}
@@ -423,12 +423,12 @@ func (refKey *ApplicationAccessKeyRefKey) UnmarshalAZERText(s string) error {
 
 // MarshalText is for compatibility with Go's encoding.TextMarshaler
 func (refKey ApplicationAccessKeyRefKey) MarshalText() ([]byte, error) {
-	return []byte(refKey.AZERText()), nil
+	return []byte(refKey.AZIDText()), nil
 }
 
 // UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
 func (refKey *ApplicationAccessKeyRefKey) UnmarshalText(b []byte) error {
-	r, err := ApplicationAccessKeyRefKeyFromAZERText(string(b))
+	r, err := ApplicationAccessKeyRefKeyFromAZIDText(string(b))
 	if err == nil {
 		*refKey = r
 	}
@@ -437,8 +437,8 @@ func (refKey *ApplicationAccessKeyRefKey) UnmarshalText(b []byte) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey ApplicationAccessKeyRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in azer-text
-	return []byte("\"" + refKey.AZERText() + "\""), nil
+	// We assume that there's no symbols in azid-text
+	return []byte("\"" + refKey.AZIDText() + "\""), nil
 }
 
 // UnmarshalJSON parses a JSON value.
@@ -448,7 +448,7 @@ func (refKey *ApplicationAccessKeyRefKey) UnmarshalJSON(b []byte) error {
 		*refKey = ApplicationAccessKeyRefKeyZero()
 		return nil
 	}
-	i, err := ApplicationAccessKeyRefKeyFromAZERText(s)
+	i, err := ApplicationAccessKeyRefKeyFromAZIDText(s)
 	if err == nil {
 		*refKey = i
 	}

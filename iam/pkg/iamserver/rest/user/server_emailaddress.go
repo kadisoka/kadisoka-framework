@@ -76,7 +76,7 @@ func (restSrv *Server) handleSetEmailAddress(
 	}
 
 	if targetUserRefStr := req.PathParameter("user-id"); targetUserRefStr != "" && targetUserRefStr != "me" {
-		targetUserRef, err := iam.UserRefKeyFromAZERText(targetUserRefStr)
+		targetUserRef, err := iam.UserRefKeyFromAZIDText(targetUserRefStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).

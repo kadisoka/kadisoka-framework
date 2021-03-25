@@ -79,7 +79,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	}
 
 	userInfo := oidc.StandardClaims{
-		Sub:                 requestedUserRef.AZERText(),
+		Sub:                 requestedUserRef.AZIDText(),
 		Name:                userBaseProfile.DisplayName,
 		Email:               emailAddressStr,
 		EmailVerified:       emailAddressVerified,

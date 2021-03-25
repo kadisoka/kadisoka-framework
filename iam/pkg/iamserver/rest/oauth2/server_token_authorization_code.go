@@ -44,7 +44,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		// Only for non-confidential user-agents
 		if appRef := reqApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
 			logReq(req.Request).
-				Warn().Str("client_id", reqApp.RefKey.AZERText()).
+				Warn().Str("client_id", reqApp.RefKey.AZIDText()).
 				Msg("Client is not allowed to use grant type 'authorization_code' with OTP")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
@@ -61,7 +61,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 			return
 		}
 		termRefStr := parts[1]
-		termRef, err = iam.TerminalRefKeyFromAZERText(termRefStr)
+		termRef, err = iam.TerminalRefKeyFromAZIDText(termRefStr)
 		if err != nil || termRef.IsNotValid() {
 			logReq(req.Request).
 				Warn().Err(err).Str("code", authCode).
@@ -75,14 +75,14 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		// Only for confidential user-agents
 		if appRef := reqApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
 			logReq(req.Request).
-				Warn().Str("client_id", reqApp.RefKey.AZERText()).
+				Warn().Str("client_id", reqApp.RefKey.AZIDText()).
 				Msg("Client is not allowed to use grant type 'authorization_code'")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
 			return
 		}
 
-		termRef, err = iam.TerminalRefKeyFromAZERText(authCode)
+		termRef, err = iam.TerminalRefKeyFromAZIDText(authCode)
 		if err != nil || termRef.IsNotValid() {
 			logReq(req.Request).
 				Warn().Err(err).Str("code", authCode).
@@ -122,10 +122,10 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		return
 	}
 
-	clientAZERText := req.Request.FormValue("client_id")
-	if clientAZERText != "" && clientAZERText != reqApp.RefKey.AZERText() {
+	clientAZIDText := req.Request.FormValue("client_id")
+	if clientAZIDText != "" && clientAZIDText != reqApp.RefKey.AZIDText() {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZERText, reqApp.RefKey)
+			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZIDText, reqApp.RefKey)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidClient)
 		return
@@ -197,7 +197,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         userRef.AZERText(),
+			UserID:         userRef.AZIDText(),
 			TerminalSecret: terminalSecret,
 		})
 }

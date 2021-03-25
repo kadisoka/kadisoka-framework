@@ -116,8 +116,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         ctxAuth.UserRef().AZERText(),
-			TerminalID:     termRef.AZERText(),
+			UserID:         ctxAuth.UserRef().AZIDText(),
+			TerminalID:     termRef.AZIDText(),
 			TerminalSecret: termSecret,
 		})
 }

@@ -67,7 +67,7 @@ func newClientStaticDataProviderFromCSVFileByName(
 	clList := map[iam.ApplicationRefKey]*iam.ApplicationData{}
 	for _, r := range rows[skipRows:] {
 		var clID iam.ApplicationRefKey
-		clID, err = iam.ApplicationRefKeyFromAZERText(r[0])
+		clID, err = iam.ApplicationRefKeyFromAZIDText(r[0])
 		if err != nil {
 			return nil, err
 		}

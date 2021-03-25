@@ -254,7 +254,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		}
 		requestedUserRef = ctxAuth.UserRef()
 	} else {
-		requestedUserRef, err = iam.UserRefKeyFromAZERText(requestedUserRefStr)
+		requestedUserRef, err = iam.UserRefKeyFromAZIDText(requestedUserRefStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).Msg("Invalid parameter value path.user-id")
@@ -398,7 +398,7 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 	for _, userPhoneNumberModel := range userPhoneNumberModelList {
 		phoneNumber := userPhoneNumberModel.PhoneNumber
 		responseList = append(responseList, iam.UserPhoneNumberJSONV1{
-			UserID:      userPhoneNumberModel.UserRef.AZERText(),
+			UserID:      userPhoneNumberModel.UserRef.AZIDText(),
 			PhoneNumber: inputMap[phoneNumber.String()],
 		})
 	}

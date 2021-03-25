@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	azfl "github.com/alloyzeus/go-azfl/azfl"
-	azer "github.com/alloyzeus/go-azfl/azfl/azer"
+	azid "github.com/alloyzeus/go-azfl/azfl/azid"
 	errors "github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
@@ -16,7 +16,7 @@ import (
 var _ = azfl.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = azer.BinDataTypeUnspecified
+var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
 
 // Entity Application.
@@ -31,9 +31,9 @@ type ApplicationIDNum int32
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.IDNum = ApplicationIDNumZero
-var _ azfl.EntityID = ApplicationIDNumZero
-var _ azer.BinFieldUnmarshalable = &_ApplicationIDNumZeroVar
+var _ azid.IDNum = ApplicationIDNumZero
+var _ azid.BinFieldUnmarshalable = &_ApplicationIDNumZeroVar
+var _ azfl.EntityIDNum = ApplicationIDNumZero
 
 // ApplicationIDNumSignificantBitsMask is used to
 // extract significant bits from an instance of ApplicationIDNum.
@@ -53,12 +53,12 @@ func ApplicationIDNumFromPrimitiveValue(v int32) ApplicationIDNum {
 	return ApplicationIDNum(v)
 }
 
-// ApplicationIDNumFromAZERBinField creates ApplicationIDNum from
-// its azer-bin-field form.
-func ApplicationIDNumFromAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// ApplicationIDNumFromAZIDBinField creates ApplicationIDNum from
+// its azid-bin-field form.
+func ApplicationIDNumFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (idNum ApplicationIDNum, readLen int, err error) {
-	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt32 {
+	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt32 {
 		return ApplicationIDNum(0), 0,
 			errors.ArgMsg("typeHint", "unsupported")
 	}
@@ -73,12 +73,12 @@ func (idNum ApplicationIDNum) PrimitiveValue() int32 {
 }
 
 // AZIDNum is required for conformance
-// with azfl.IDNum.
+// with azid.IDNum.
 func (ApplicationIDNum) AZIDNum() {}
 
-// AZEntityID is required for conformance
-// with azfl.EntityID.
-func (ApplicationIDNum) AZEntityID() {}
+// AZEntityIDNum is required for conformance
+// with azfl.EntityIDNum.
+func (ApplicationIDNum) AZEntityIDNum() {}
 
 // IsZero is required as ApplicationIDNum is a value-object.
 func (idNum ApplicationIDNum) IsZero() bool {
@@ -141,20 +141,20 @@ func (idNum ApplicationIDNum) EqualsApplicationIDNum(
 	return idNum == other
 }
 
-// AZERBinField is required for conformance
-// with azfl.IDNum.
-func (idNum ApplicationIDNum) AZERBinField() ([]byte, azer.BinDataType) {
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum ApplicationIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
 	b := make([]byte, 4)
 	binary.BigEndian.PutUint32(b, uint32(idNum))
-	return b, azer.BinDataTypeInt32
+	return b, azid.BinDataTypeInt32
 }
 
-// UnmarshalAZERBinField is required for conformance
-// with azer.BinFieldUnmarshalable.
-func (idNum *ApplicationIDNum) UnmarshalAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *ApplicationIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := ApplicationIDNumFromAZERBinField(b, typeHint)
+	i, readLen, err := ApplicationIDNumFromAZIDBinField(b, typeHint)
 	if err == nil {
 		*idNum = i
 	}
@@ -321,7 +321,7 @@ func NewApplicationRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.RefKey = _ApplicationRefKeyZero
+var _ azid.RefKey = _ApplicationRefKeyZero
 var _ azfl.EntityRefKey = _ApplicationRefKeyZero
 
 const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDNumZero)
@@ -334,7 +334,7 @@ func ApplicationRefKeyZero() ApplicationRefKey {
 	return _ApplicationRefKeyZero
 }
 
-// AZRefKey is required for conformance with azfl.RefKey.
+// AZRefKey is required for conformance with azid.RefKey.
 func (ApplicationRefKey) AZRefKey() {}
 
 // AZEntityRefKey is required for conformance
@@ -346,7 +346,7 @@ func (refKey ApplicationRefKey) IDNum() ApplicationIDNum {
 	return ApplicationIDNum(refKey)
 }
 
-// IDNumPtr returns a pointer to a copy of the IDNum if it's considered valid
+// IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey ApplicationRefKey) IDNumPtr() *ApplicationIDNum {
 	if refKey.IsNotValid() {
@@ -356,8 +356,8 @@ func (refKey ApplicationRefKey) IDNumPtr() *ApplicationIDNum {
 	return &i
 }
 
-// IDNum is required for conformance with azfl.RefKey.
-func (refKey ApplicationRefKey) AZIDNum() azfl.IDNum {
+// AZIDNum is required for conformance with azid.RefKey.
+func (refKey ApplicationRefKey) AZIDNum() azid.IDNum {
 	return ApplicationIDNum(refKey)
 }
 
@@ -401,99 +401,99 @@ func (refKey ApplicationRefKey) EqualsApplicationRefKey(
 	return other == refKey
 }
 
-func (refKey ApplicationRefKey) AZERBin() []byte {
+func (refKey ApplicationRefKey) AZIDBin() []byte {
 	b := make([]byte, 4+1)
-	b[0] = azer.BinDataTypeInt32.Byte()
+	b[0] = azid.BinDataTypeInt32.Byte()
 	binary.BigEndian.PutUint32(b[1:], uint32(refKey))
 	return b
 }
 
-func ApplicationRefKeyFromAZERBin(b []byte) (refKey ApplicationRefKey, readLen int, err error) {
-	typ, err := azer.BinDataTypeFromByte(b[0])
+func ApplicationRefKeyFromAZIDBin(b []byte) (refKey ApplicationRefKey, readLen int, err error) {
+	typ, err := azid.BinDataTypeFromByte(b[0])
 	if err != nil {
 		return _ApplicationRefKeyZero, 0,
 			errors.ArgWrap("", "type parsing", err)
 	}
-	if typ != azer.BinDataTypeInt32 {
+	if typ != azid.BinDataTypeInt32 {
 		return _ApplicationRefKeyZero, 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
 
-	i, readLen, err := ApplicationRefKeyFromAZERBinField(b[1:], typ)
+	i, readLen, err := ApplicationRefKeyFromAZIDBinField(b[1:], typ)
 	if err != nil {
 		return _ApplicationRefKeyZero, 0,
-			errors.ArgWrap("", "idnum data parsing", err)
+			errors.ArgWrap("", "id-num data parsing", err)
 	}
 
 	return ApplicationRefKey(i), 1 + readLen, nil
 }
 
-// UnmarshalAZERBin is required for conformance
+// UnmarshalAZIDBin is required for conformance
 // with azfl.BinFieldUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZERBin(b []byte) (readLen int, err error) {
-	i, readLen, err := ApplicationRefKeyFromAZERBin(b)
+func (refKey *ApplicationRefKey) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
+	i, readLen, err := ApplicationRefKeyFromAZIDBin(b)
 	if err == nil {
 		*refKey = i
 	}
 	return readLen, err
 }
 
-func (refKey ApplicationRefKey) AZERBinField() ([]byte, azer.BinDataType) {
-	return ApplicationIDNum(refKey).AZERBinField()
+func (refKey ApplicationRefKey) AZIDBinField() ([]byte, azid.BinDataType) {
+	return ApplicationIDNum(refKey).AZIDBinField()
 }
 
-func ApplicationRefKeyFromAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+func ApplicationRefKeyFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (refKey ApplicationRefKey, readLen int, err error) {
-	idNum, n, err := ApplicationIDNumFromAZERBinField(b, typeHint)
+	idNum, n, err := ApplicationIDNumFromAZIDBinField(b, typeHint)
 	if err != nil {
 		return _ApplicationRefKeyZero, n, err
 	}
 	return ApplicationRefKey(idNum), n, nil
 }
 
-// UnmarshalAZERBinField is required for conformance
+// UnmarshalAZIDBinField is required for conformance
 // with azfl.BinFieldUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+func (refKey *ApplicationRefKey) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := ApplicationRefKeyFromAZERBinField(b, typeHint)
+	i, readLen, err := ApplicationRefKeyFromAZIDBinField(b, typeHint)
 	if err == nil {
 		*refKey = i
 	}
 	return readLen, err
 }
 
-const _ApplicationRefKeyAZERTextPrefix = "KAp0"
+const _ApplicationRefKeyAZIDTextPrefix = "KAp0"
 
-// AZERText is required for conformance
-// with azfl.RefKey.
-func (refKey ApplicationRefKey) AZERText() string {
+// AZIDText is required for conformance
+// with azid.RefKey.
+func (refKey ApplicationRefKey) AZIDText() string {
 	if !refKey.IsValid() {
 		return ""
 	}
 
-	return _ApplicationRefKeyAZERTextPrefix +
-		azer.TextEncode(refKey.AZERBin())
+	return _ApplicationRefKeyAZIDTextPrefix +
+		azid.TextEncode(refKey.AZIDBin())
 }
 
-// ApplicationRefKeyFromAZERText creates a new instance of
-// ApplicationRefKey from its azer-text form.
-func ApplicationRefKeyFromAZERText(s string) (ApplicationRefKey, error) {
+// ApplicationRefKeyFromAZIDText creates a new instance of
+// ApplicationRefKey from its azid-text form.
+func ApplicationRefKeyFromAZIDText(s string) (ApplicationRefKey, error) {
 	if s == "" {
 		return ApplicationRefKeyZero(), nil
 	}
-	if !strings.HasPrefix(s, _ApplicationRefKeyAZERTextPrefix) {
+	if !strings.HasPrefix(s, _ApplicationRefKeyAZIDTextPrefix) {
 		return ApplicationRefKeyZero(),
 			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
 	}
-	s = strings.TrimPrefix(s, _ApplicationRefKeyAZERTextPrefix)
-	b, err := azer.TextDecode(s)
+	s = strings.TrimPrefix(s, _ApplicationRefKeyAZIDTextPrefix)
+	b, err := azid.TextDecode(s)
 	if err != nil {
 		return ApplicationRefKeyZero(),
 			errors.ArgWrap("", "data parsing", err)
 	}
-	refKey, _, err := ApplicationRefKeyFromAZERBin(b)
+	refKey, _, err := ApplicationRefKeyFromAZIDBin(b)
 	if err != nil {
 		return ApplicationRefKeyZero(),
 			errors.ArgWrap("", "data decoding", err)
@@ -501,10 +501,10 @@ func ApplicationRefKeyFromAZERText(s string) (ApplicationRefKey, error) {
 	return refKey, nil
 }
 
-// UnmarshalAZERText is required for conformance
-// with azer.TextUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZERText(s string) error {
-	r, err := ApplicationRefKeyFromAZERText(s)
+// UnmarshalAZIDText is required for conformance
+// with azid.TextUnmarshalable.
+func (refKey *ApplicationRefKey) UnmarshalAZIDText(s string) error {
+	r, err := ApplicationRefKeyFromAZIDText(s)
 	if err == nil {
 		*refKey = r
 	}
@@ -513,12 +513,12 @@ func (refKey *ApplicationRefKey) UnmarshalAZERText(s string) error {
 
 // MarshalText is for compatibility with Go's encoding.TextMarshaler
 func (refKey ApplicationRefKey) MarshalText() ([]byte, error) {
-	return []byte(refKey.AZERText()), nil
+	return []byte(refKey.AZIDText()), nil
 }
 
 // UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
 func (refKey *ApplicationRefKey) UnmarshalText(b []byte) error {
-	r, err := ApplicationRefKeyFromAZERText(string(b))
+	r, err := ApplicationRefKeyFromAZIDText(string(b))
 	if err == nil {
 		*refKey = r
 	}
@@ -527,8 +527,8 @@ func (refKey *ApplicationRefKey) UnmarshalText(b []byte) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey ApplicationRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in azer-text
-	return []byte("\"" + refKey.AZERText() + "\""), nil
+	// We assume that there's no symbols in azid-text
+	return []byte("\"" + refKey.AZIDText() + "\""), nil
 }
 
 // UnmarshalJSON parses a JSON value.
@@ -538,7 +538,7 @@ func (refKey *ApplicationRefKey) UnmarshalJSON(b []byte) error {
 		*refKey = ApplicationRefKeyZero()
 		return nil
 	}
-	i, err := ApplicationRefKeyFromAZERText(s)
+	i, err := ApplicationRefKeyFromAZIDText(s)
 	if err == nil {
 		*refKey = i
 	}

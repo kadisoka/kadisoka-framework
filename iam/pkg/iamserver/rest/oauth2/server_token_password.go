@@ -29,7 +29,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 
 	if reqApp != nil && !reqApp.RefKey.IDNum().IsService() {
 		logReq(req.Request).
-			Warn().Str("applicationID", reqApp.RefKey.AZERText()).
+			Warn().Str("applicationID", reqApp.RefKey.AZIDText()).
 			Msg("Application is not authorized to use grant type password")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
@@ -89,7 +89,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	terminalRefStr string,
 	terminalSecret string,
 ) {
-	termRef, err := iam.TerminalRefKeyFromAZERText(terminalRefStr)
+	termRef, err := iam.TerminalRefKeyFromAZIDText(terminalRefStr)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Str("terminalRefStr", terminalRefStr).
@@ -101,7 +101,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 
 	if termRef.IsNotValid() {
 		logCtx(reqCtx).
-			Warn().Str("terminalRefStr", terminalRefStr).Str("terminalRef", termRef.AZERText()).
+			Warn().Str("terminalRefStr", terminalRefStr).Str("terminalRef", termRef.AZIDText()).
 			Msg("Terminal ref is invalid")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
@@ -111,7 +111,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	appRef := termRef.Application()
 	if !appRef.IDNum().IsService() {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZERText()).
+			Warn().Str("terminalRef", termRef.AZIDText()).
 			Msg("Application is not allowed to use grant type")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
@@ -120,7 +120,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 
 	if !appRef.EqualsApplicationRefKey(reqApp.RefKey) {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZERText()).Str("applicationRef", appRef.AZERText()).
+			Warn().Str("terminalRef", termRef.AZIDText()).Str("applicationRef", appRef.AZIDText()).
 			Msg("Terminal credentials are that of other application")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
@@ -131,7 +131,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		AuthenticateTerminal(termRef, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Err(err).Str("terminalRef", termRef.AZERText()).
+			Error().Err(err).Str("terminalRef", termRef.AZIDText()).
 			Msg("AuthenticateTerminal")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
@@ -139,7 +139,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	}
 	if !authOK {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZERText()).
+			Warn().Str("terminalRef", termRef.AZIDText()).
 			Msg("Terminal authentication failed")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
@@ -148,7 +148,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 
 	if userRef.IsValid() {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZERText()).Str("userRef", userRef.AZERText()).
+			Warn().Str("terminalRef", termRef.AZIDText()).Str("userRef", userRef.AZIDText()).
 			Msg("Terminal must not be associated to any user")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
@@ -177,6 +177,6 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID: userRef.AZERText(),
+			UserID: userRef.AZIDText(),
 		})
 }

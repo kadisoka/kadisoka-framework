@@ -68,7 +68,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		return
 	}
 
-	appRef, err := iam.ApplicationRefKeyFromAZERText(val.ClientID)
+	appRef, err := iam.ApplicationRefKeyFromAZIDText(val.ClientID)
 	if err != nil {
 		logReq(r).
 			Warn().Err(err).
@@ -155,7 +155,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 
 	appRefArgVal, _ := req.BodyParameter("client_id")
-	appRef, err := iam.ApplicationRefKeyFromAZERText(appRefArgVal)
+	appRef, err := iam.ApplicationRefKeyFromAZIDText(appRefArgVal)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Str("form.client_id", appRefArgVal).
@@ -179,7 +179,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	client, err := restSrv.serverCore.ApplicationByRefKey(appRef)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Err(err).Str("client_id", appRef.AZERText()).
+			Error().Err(err).Str("client_id", appRef.AZIDText()).
 			Msg("ApplicationByRefKey")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
@@ -187,7 +187,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 	if client == nil {
 		logCtx(reqCtx).
-			Warn().Str("client_id", appRef.AZERText()).
+			Warn().Str("client_id", appRef.AZIDText()).
 			Msg("Not found")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
@@ -195,7 +195,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 	if !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
 		logCtx(reqCtx).
-			Warn().Str("client_id", appRef.AZERText()).
+			Warn().Str("client_id", appRef.AZIDText()).
 			Msg("Requires ua-confidential client type")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
@@ -241,7 +241,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	termRef = regOutput.Data.TerminalRef
 
 	redirectURI.RawQuery = oauth2.MustQueryString(oauth2.AuthorizationResponse{
-		Code:  termRef.AZERText(),
+		Code:  termRef.AZIDText(),
 		State: state,
 	})
 

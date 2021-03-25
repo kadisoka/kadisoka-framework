@@ -45,14 +45,14 @@ func (core *Core) GenerateAccessTokenJWT(
 
 	tokenClaims := &iam.AccessTokenClaims{
 		Claims: jwt.Claims{
-			ID:       sessionRef.AZERText(),
+			ID:       sessionRef.AZIDText(),
 			IssuedAt: jwt.NewNumericDate(issueTime),
 			Issuer:   core.RealmName(),
 			Expiry:   jwt.NewNumericDate(expiry),
-			Subject:  userRef.AZERText(),
+			Subject:  userRef.AZIDText(),
 		},
-		AuthorizedParty: terminalRef.Application().AZERText(),
-		TerminalID:      terminalRef.AZERText(),
+		AuthorizedParty: terminalRef.Application().AZIDText(),
+		TerminalID:      terminalRef.AZIDText(),
 	}
 
 	tokenString, err = jwt.Signed(signer).Claims(tokenClaims).CompactSerialize()
@@ -83,7 +83,7 @@ func (core *Core) GenerateRefreshTokenJWT(
 	tokenClaims := &iam.RefreshTokenClaims{
 		NotBefore:      issueTime.Unix(),
 		ExpiresAt:      issueTime.Add(iam.RefreshTokenTTLDefault).Unix(),
-		TerminalID:     terminalRef.AZERText(),
+		TerminalID:     terminalRef.AZIDText(),
 		TerminalSecret: terminalSecret,
 	}
 

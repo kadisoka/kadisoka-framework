@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	azfl "github.com/alloyzeus/go-azfl/azfl"
-	azer "github.com/alloyzeus/go-azfl/azfl/azer"
+	azid "github.com/alloyzeus/go-azfl/azfl/azid"
 	errors "github.com/alloyzeus/go-azfl/azfl/errors"
 )
 
@@ -16,10 +16,10 @@ import (
 var _ = azfl.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = azer.BinDataTypeUnspecified
+var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
 
-// Adjunct-entity Session of Terminal, User.
+// Adjunct-entity Session of Terminal.
 //
 // A Session represents authorization for a time span. While Terminal
 // usually provide longer authorization period, a Session is used to
@@ -41,9 +41,9 @@ type SessionIDNum int32
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.IDNum = SessionIDNumZero
-var _ azfl.AdjunctEntityID = SessionIDNumZero
-var _ azer.BinFieldUnmarshalable = &_SessionIDNumZeroVar
+var _ azid.IDNum = SessionIDNumZero
+var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
+var _ azfl.AdjunctEntityIDNum = SessionIDNumZero
 var _ azfl.SessionIDNum = SessionIDNumZero
 
 // SessionIDNumSignificantBitsMask is used to
@@ -63,12 +63,12 @@ func SessionIDNumFromPrimitiveValue(v int32) SessionIDNum {
 	return SessionIDNum(v)
 }
 
-// SessionIDNumFromAZERBinField creates SessionIDNum from
-// its azer-bin form.
-func SessionIDNumFromAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// SessionIDNumFromAZIDBinField creates SessionIDNum from
+// its azid-bin form.
+func SessionIDNumFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (idNum SessionIDNum, readLen int, err error) {
-	if typeHint != azer.BinDataTypeUnspecified && typeHint != azer.BinDataTypeInt32 {
+	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt32 {
 		return SessionIDNum(0), 0,
 			errors.ArgMsg("typeHint", "unsupported")
 	}
@@ -83,12 +83,12 @@ func (idNum SessionIDNum) PrimitiveValue() int32 {
 }
 
 // AZIDNum is required
-// for conformance with azfl.IDNum.
+// for conformance with azid.IDNum.
 func (SessionIDNum) AZIDNum() {}
 
-// AZAdjunctEntityID is required
-// for conformance with azfl.AdjunctEntityID.
-func (SessionIDNum) AZAdjunctEntityID() {}
+// AZAdjunctEntityIDNum is required
+// for conformance with azfl.AdjunctEntityIDNum.
+func (SessionIDNum) AZAdjunctEntityIDNum() {}
 
 // AZSessionIDNum is required for conformance
 // with azfl.SessionIDNum.
@@ -112,20 +112,20 @@ func (idNum SessionIDNum) IsNotValid() bool {
 	return !idNum.IsValid()
 }
 
-// AZERBinField is required for conformance
-// with azfl.IDNum.
-func (idNum SessionIDNum) AZERBinField() ([]byte, azer.BinDataType) {
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum SessionIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
 	b := make([]byte, 4)
 	binary.BigEndian.PutUint32(b, uint32(idNum))
-	return b, azer.BinDataTypeInt32
+	return b, azid.BinDataTypeInt32
 }
 
-// UnmarshalAZERBinField is required for conformance
-// with azer.BinFieldUnmarshalable.
-func (idNum *SessionIDNum) UnmarshalAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *SessionIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := SessionIDNumFromAZERBinField(b, typeHint)
+	i, readLen, err := SessionIDNumFromAZIDBinField(b, typeHint)
 	if err == nil {
 		*idNum = i
 	}
@@ -188,7 +188,7 @@ func NewSessionRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azfl.RefKey = _SessionRefKeyZero
+var _ azid.RefKey = _SessionRefKeyZero
 var _ azfl.AdjunctEntityRefKey = _SessionRefKeyZero
 var _ azfl.SessionRefKey = _SessionRefKeyZero
 
@@ -203,7 +203,7 @@ func SessionRefKeyZero() SessionRefKey {
 	return _SessionRefKeyZero
 }
 
-// AZRefKey is required by azfl.RefKey interface.
+// AZRefKey is required by azid.RefKey interface.
 func (SessionRefKey) AZRefKey() {}
 
 // AZAdjunctEntityRefKey is required
@@ -215,7 +215,7 @@ func (refKey SessionRefKey) IDNum() SessionIDNum {
 	return refKey.idNum
 }
 
-// IDNumPtr returns a pointer to a copy of the IDNum if it's considered valid
+// IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
 	if refKey.IsNotValid() {
@@ -225,8 +225,8 @@ func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
 	return &i
 }
 
-// AZIDNum is required for conformance with azfl.RefKey.
-func (refKey SessionRefKey) AZIDNum() azfl.IDNum {
+// AZIDNum is required for conformance with azid.RefKey.
+func (refKey SessionRefKey) AZIDNum() azid.IDNum {
 	return refKey.idNum
 }
 
@@ -281,61 +281,61 @@ func (refKey SessionRefKey) EqualsSessionRefKey(
 		refKey.idNum == other.idNum
 }
 
-// AZERBin is required for conformance
-// with azfl.RefKey.
-func (refKey SessionRefKey) AZERBin() []byte {
-	data, typ := refKey.AZERBinField()
+// AZIDBin is required for conformance
+// with azid.RefKey.
+func (refKey SessionRefKey) AZIDBin() []byte {
+	data, typ := refKey.AZIDBinField()
 	out := []byte{typ.Byte()}
 	return append(out, data...)
 }
 
-// SessionRefKeyFromAZERBin creates a new instance of
-// SessionRefKey from its azer-bin form.
-func SessionRefKeyFromAZERBin(
+// SessionRefKeyFromAZIDBin creates a new instance of
+// SessionRefKey from its azid-bin form.
+func SessionRefKeyFromAZIDBin(
 	b []byte,
 ) (refKey SessionRefKey, readLen int, err error) {
-	typ, err := azer.BinDataTypeFromByte(b[0])
+	typ, err := azid.BinDataTypeFromByte(b[0])
 	if err != nil {
 		return SessionRefKeyZero(), 0,
 			errors.ArgWrap("", "type parsing", err)
 	}
-	if typ != azer.BinDataTypeArray {
+	if typ != azid.BinDataTypeArray {
 		return SessionRefKeyZero(), 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
 
-	refKey, readLen, err = SessionRefKeyFromAZERBinField(b[1:], typ)
+	refKey, readLen, err = SessionRefKeyFromAZIDBinField(b[1:], typ)
 	return refKey, readLen + 1, err
 }
 
-// AZERBinField is required for conformance
-// with azfl.RefKey.
-func (refKey SessionRefKey) AZERBinField() ([]byte, azer.BinDataType) {
+// AZIDBinField is required for conformance
+// with azid.RefKey.
+func (refKey SessionRefKey) AZIDBinField() ([]byte, azid.BinDataType) {
 	var typesBytes []byte
 	var dataBytes []byte
 	var fieldBytes []byte
-	var fieldType azer.BinDataType
+	var fieldType azid.BinDataType
 
-	fieldBytes, fieldType = refKey.terminal.AZERBinField()
+	fieldBytes, fieldType = refKey.terminal.AZIDBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
-	fieldBytes, fieldType = refKey.idNum.AZERBinField()
+	fieldBytes, fieldType = refKey.idNum.AZIDBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
 	var out = []byte{byte(len(typesBytes))}
 	out = append(out, typesBytes...)
 	out = append(out, dataBytes...)
-	return out, azer.BinDataTypeArray
+	return out, azid.BinDataTypeArray
 }
 
-// SessionRefKeyFromAZERBinField creates SessionRefKey from
-// its azer-bin field form.
-func SessionRefKeyFromAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+// SessionRefKeyFromAZIDBinField creates SessionRefKey from
+// its azid-bin field form.
+func SessionRefKeyFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (refKey SessionRefKey, readLen int, err error) {
-	if typeHint != azer.BinDataTypeArray {
+	if typeHint != azid.BinDataTypeArray {
 		return SessionRefKeyZero(), 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
@@ -349,15 +349,15 @@ func SessionRefKeyFromAZERBinField(
 	typeCursor := 1
 	dataCursor := typeCursor + arrayLen
 
-	var fieldType azer.BinDataType
+	var fieldType azid.BinDataType
 
-	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
+	fieldType, err = azid.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return SessionRefKeyZero(), 0,
 			errors.ArgWrap("", "terminal ref-key type parsing", err)
 	}
 	typeCursor++
-	terminalRefKey, readLen, err := TerminalRefKeyFromAZERBinField(
+	terminalRefKey, readLen, err := TerminalRefKeyFromAZIDBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
 		return SessionRefKeyZero(), 0,
@@ -365,17 +365,17 @@ func SessionRefKeyFromAZERBinField(
 	}
 	dataCursor += readLen
 
-	fieldType, err = azer.BinDataTypeFromByte(b[typeCursor])
+	fieldType, err = azid.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
 		return SessionRefKeyZero(), 0,
-			errors.ArgWrap("", "idnum type parsing", err)
+			errors.ArgWrap("", "id-num type parsing", err)
 	}
 	typeCursor++
-	idNum, readLen, err := SessionIDNumFromAZERBinField(
+	idNum, readLen, err := SessionIDNumFromAZIDBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
 		return SessionRefKeyZero(), 0,
-			errors.ArgWrap("", "idnum data parsing", err)
+			errors.ArgWrap("", "id-num data parsing", err)
 	}
 	dataCursor += readLen
 
@@ -385,48 +385,48 @@ func SessionRefKeyFromAZERBinField(
 	}, dataCursor, nil
 }
 
-// UnmarshalAZERBinField is required for conformance
+// UnmarshalAZIDBinField is required for conformance
 // with azfl.BinFieldUnmarshalable.
-func (refKey *SessionRefKey) UnmarshalAZERBinField(
-	b []byte, typeHint azer.BinDataType,
+func (refKey *SessionRefKey) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := SessionRefKeyFromAZERBinField(b, typeHint)
+	i, readLen, err := SessionRefKeyFromAZIDBinField(b, typeHint)
 	if err == nil {
 		*refKey = i
 	}
 	return readLen, err
 }
 
-const _SessionRefKeyAZERTextPrefix = "KSe0"
+const _SessionRefKeyAZIDTextPrefix = "KSe0"
 
-// AZERText is required for conformance
-// with azfl.RefKey.
-func (refKey SessionRefKey) AZERText() string {
+// AZIDText is required for conformance
+// with azid.RefKey.
+func (refKey SessionRefKey) AZIDText() string {
 	if !refKey.IsValid() {
 		return ""
 	}
 
-	return _SessionRefKeyAZERTextPrefix +
-		azer.TextEncode(refKey.AZERBin())
+	return _SessionRefKeyAZIDTextPrefix +
+		azid.TextEncode(refKey.AZIDBin())
 }
 
-// SessionRefKeyFromAZERText creates a new instance of
-// SessionRefKey from its azer-text form.
-func SessionRefKeyFromAZERText(s string) (SessionRefKey, error) {
+// SessionRefKeyFromAZIDText creates a new instance of
+// SessionRefKey from its azid-text form.
+func SessionRefKeyFromAZIDText(s string) (SessionRefKey, error) {
 	if s == "" {
 		return SessionRefKeyZero(), nil
 	}
-	if !strings.HasPrefix(s, _SessionRefKeyAZERTextPrefix) {
+	if !strings.HasPrefix(s, _SessionRefKeyAZIDTextPrefix) {
 		return SessionRefKeyZero(),
 			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
 	}
-	s = strings.TrimPrefix(s, _SessionRefKeyAZERTextPrefix)
-	b, err := azer.TextDecode(s)
+	s = strings.TrimPrefix(s, _SessionRefKeyAZIDTextPrefix)
+	b, err := azid.TextDecode(s)
 	if err != nil {
 		return SessionRefKeyZero(),
 			errors.ArgWrap("", "data parsing", err)
 	}
-	refKey, _, err := SessionRefKeyFromAZERBin(b)
+	refKey, _, err := SessionRefKeyFromAZIDBin(b)
 	if err != nil {
 		return SessionRefKeyZero(),
 			errors.ArgWrap("", "data decoding", err)
@@ -434,10 +434,10 @@ func SessionRefKeyFromAZERText(s string) (SessionRefKey, error) {
 	return refKey, nil
 }
 
-// UnmarshalAZERText is required for conformance
-// with azer.TextUnmarshalable.
-func (refKey *SessionRefKey) UnmarshalAZERText(s string) error {
-	r, err := SessionRefKeyFromAZERText(s)
+// UnmarshalAZIDText is required for conformance
+// with azid.TextUnmarshalable.
+func (refKey *SessionRefKey) UnmarshalAZIDText(s string) error {
+	r, err := SessionRefKeyFromAZIDText(s)
 	if err == nil {
 		*refKey = r
 	}
@@ -446,12 +446,12 @@ func (refKey *SessionRefKey) UnmarshalAZERText(s string) error {
 
 // MarshalText is for compatibility with Go's encoding.TextMarshaler
 func (refKey SessionRefKey) MarshalText() ([]byte, error) {
-	return []byte(refKey.AZERText()), nil
+	return []byte(refKey.AZIDText()), nil
 }
 
 // UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
 func (refKey *SessionRefKey) UnmarshalText(b []byte) error {
-	r, err := SessionRefKeyFromAZERText(string(b))
+	r, err := SessionRefKeyFromAZIDText(string(b))
 	if err == nil {
 		*refKey = r
 	}
@@ -460,8 +460,8 @@ func (refKey *SessionRefKey) UnmarshalText(b []byte) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey SessionRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in azer-text
-	return []byte("\"" + refKey.AZERText() + "\""), nil
+	// We assume that there's no symbols in azid-text
+	return []byte("\"" + refKey.AZIDText() + "\""), nil
 }
 
 // UnmarshalJSON parses a JSON value.
@@ -471,7 +471,7 @@ func (refKey *SessionRefKey) UnmarshalJSON(b []byte) error {
 		*refKey = SessionRefKeyZero()
 		return nil
 	}
-	i, err := SessionRefKeyFromAZERText(s)
+	i, err := SessionRefKeyFromAZIDText(s)
 	if err == nil {
 		*refKey = i
 	}
@@ -481,6 +481,16 @@ func (refKey *SessionRefKey) UnmarshalJSON(b []byte) error {
 // Terminal returns instance's Terminal value.
 func (refKey SessionRefKey) Terminal() TerminalRefKey {
 	return refKey.terminal
+}
+
+// TerminalPtr returns a pointer to a copy of
+// TerminalRefKey if it's considered valid.
+func (refKey SessionRefKey) TerminalPtr() *TerminalRefKey {
+	if refKey.terminal.IsValid() {
+		rk := refKey.terminal
+		return &rk
+	}
+	return nil
 }
 
 // WithTerminal returns a copy

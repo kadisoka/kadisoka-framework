@@ -5,9 +5,9 @@ go 1.15
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/alloyzeus/go-azfl v0.0.0-20210323102529-9b385a88131a
+	github.com/alloyzeus/go-azfl v0.0.0-20210325044722-1c3d7491882a
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.38.2
+	github.com/aws/aws-sdk-go v1.38.4
 	github.com/doug-martin/goqu/v9 v9.11.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
@@ -35,7 +35,7 @@ require (
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
 	github.com/rez-go/stev v0.0.0-20210322061542-b92d9076c0eb
 	github.com/richardlehane/crock32 v1.0.1
-	github.com/rs/zerolog v1.20.0
+	github.com/rs/zerolog v1.21.0
 	github.com/smartystreets/assertions v1.2.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693
@@ -45,10 +45,9 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
-	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4 // indirect
-	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 // indirect
+	golang.org/x/net v0.0.0-20210324205630-d1beb07c2056 // indirect
 	golang.org/x/text v0.3.5
-	google.golang.org/genproto v0.0.0-20210322173543-5f0e89347f5a // indirect
+	google.golang.org/genproto v0.0.0-20210324141432-3032e8ff099e // indirect
 	google.golang.org/grpc v1.36.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect

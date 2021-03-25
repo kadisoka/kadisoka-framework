@@ -63,7 +63,7 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 	if creds[0] == "" {
 		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("username", "empty"))
 	}
-	appRef, err := iam.ApplicationRefKeyFromAZERText(creds[0])
+	appRef, err := iam.ApplicationRefKeyFromAZIDText(creds[0])
 	if err != nil {
 		return nil, iam.ReqFieldErr("Authorization", errors.Ent("username", dataerrs.Malformed(err)))
 	}

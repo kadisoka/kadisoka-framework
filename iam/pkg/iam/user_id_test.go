@@ -15,7 +15,7 @@ func TestUserIDNumLimits(t *testing.T) {
 	assert.Equal(t, false, UserIDNum(0x0001000000000000).IsValid(), "over limit")
 	assert.Equal(t, true, UserIDNum(4294967296).IsValid(), "lowest normal")
 	assert.Equal(t, true, UserIDNum(4294967296).IsNormalAccount(), "lowest normal")
-	assert.Equal(t, false, UserIDNum(4294967296).IsServiceAccount(), "lowest normal")
+	assert.Equal(t, false, UserIDNum(4294967296).IsBot(), "lowest normal")
 }
 
 func TestUserIDNumEncode(t *testing.T) {
