@@ -197,6 +197,8 @@ func NewTerminalRefKey(
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
 var _ azid.RefKey = _TerminalRefKeyZero
+var _ azid.BinFieldUnmarshalable = &_TerminalRefKeyZero
+var _ azid.TextUnmarshalable = &_TerminalRefKeyZero
 var _ azfl.AdjunctEntityRefKey = _TerminalRefKeyZero
 var _ azfl.TerminalRefKey = _TerminalRefKeyZero
 

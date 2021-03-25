@@ -210,6 +210,9 @@ func NewUserRefKey(
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
 var _ azid.RefKey = _UserRefKeyZero
+var _ azid.BinUnmarshalable = &_UserRefKeyZeroVar
+var _ azid.BinFieldUnmarshalable = &_UserRefKeyZeroVar
+var _ azid.TextUnmarshalable = &_UserRefKeyZeroVar
 var _ azfl.EntityRefKey = _UserRefKeyZero
 var _ azfl.UserRefKey = _UserRefKeyZero
 

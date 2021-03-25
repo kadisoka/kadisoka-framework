@@ -173,6 +173,8 @@ func NewApplicationAccessKeyRefKey(
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
 var _ azid.RefKey = _ApplicationAccessKeyRefKeyZero
+var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyRefKeyZero
+var _ azid.TextUnmarshalable = &_ApplicationAccessKeyRefKeyZero
 var _ azfl.AdjunctEntityRefKey = _ApplicationAccessKeyRefKeyZero
 
 var _ApplicationAccessKeyRefKeyZero = ApplicationAccessKeyRefKey{

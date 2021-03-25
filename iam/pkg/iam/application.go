@@ -31,7 +31,7 @@ type Application struct {
 }
 
 type ApplicationDataProvider interface {
-	GetApplication(id ApplicationRefKey) (*Application, error)
+	GetApplication(refKey ApplicationRefKey) (*Application, error)
 }
 
 // GenerateApplicationRefKey generates a new ApplicationRefKey. Note that this function is

@@ -322,6 +322,9 @@ func NewApplicationRefKey(
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
 var _ azid.RefKey = _ApplicationRefKeyZero
+var _ azid.BinUnmarshalable = &_ApplicationRefKeyZeroVar
+var _ azid.BinFieldUnmarshalable = &_ApplicationRefKeyZeroVar
+var _ azid.TextUnmarshalable = &_ApplicationRefKeyZeroVar
 var _ azfl.EntityRefKey = _ApplicationRefKeyZero
 
 const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDNumZero)
