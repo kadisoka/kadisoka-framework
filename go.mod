@@ -45,7 +45,7 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
-	golang.org/x/net v0.0.0-20210324205630-d1beb07c2056 // indirect
+	golang.org/x/net v0.0.0-20210326060303-6b1517762897 // indirect
 	golang.org/x/text v0.3.5
 	google.golang.org/genproto v0.0.0-20210325224202-eed09b1b5210 // indirect
 	google.golang.org/grpc v1.36.1

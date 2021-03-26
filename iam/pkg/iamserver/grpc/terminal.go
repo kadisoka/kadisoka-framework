@@ -14,6 +14,7 @@ import (
 	grpcerrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 type TerminalAuthorizationServiceServer struct {
@@ -52,7 +53,7 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		panic(err)
 	}
 
-	phoneNumber, err := iam.PhoneNumberFromString(reqProto.PhoneNumber)
+	phoneNumber, err := telephony.PhoneNumberFromString(reqProto.PhoneNumber)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Str("phone_number", reqProto.PhoneNumber).

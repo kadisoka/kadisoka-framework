@@ -9,10 +9,11 @@ import (
 	"strings"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 func (sms *SMSDeliveryService) SendTextMessage(
-	recipient string,
+	recipient telephony.PhoneNumber,
 	text string,
 	opts pnv10n.SMSDeliveryOptions,
 ) error {
@@ -22,7 +23,7 @@ func (sms *SMSDeliveryService) SendTextMessage(
 	}
 	endPoint := fmt.Sprintf("%s/%s", apiBaseURL, "json")
 	bodyReq := url.Values{}
-	bodyReq.Set("to", strings.Trim(recipient, "+"))
+	bodyReq.Set("to", strings.Trim(recipient.String(), "+"))
 	bodyReq.Set("text", text)
 	bodyReq.Set("type", "text")
 	bodyReq.Set("from", sender)

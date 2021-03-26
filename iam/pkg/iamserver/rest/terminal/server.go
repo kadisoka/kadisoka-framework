@@ -15,6 +15,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 var (
@@ -174,12 +176,12 @@ func (restSrv *Server) postTerminalsRegister(
 		return
 	}
 
-	if iam.IsValidEmailAddress(terminalRegisterReq.VerificationResourceName) {
+	if email.IsValidAddress(terminalRegisterReq.VerificationResourceName) {
 		restSrv.handleTerminalRegisterByEmailAddress(
 			resp, reqCtx, reqApp, terminalRegisterReq)
 		return
 	}
-	if _, err := iam.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName); err == nil {
+	if _, err := telephony.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName); err == nil {
 		restSrv.handleTerminalRegisterByPhoneNumber(
 			resp, reqCtx, reqApp, terminalRegisterReq)
 		return
@@ -316,7 +318,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 		return
 	}
 
-	phoneNumber, err := iam.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName)
+	phoneNumber, err := telephony.PhoneNumberFromString(terminalRegisterReq.VerificationResourceName)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Msgf("Unable to parse verification resource name %s as phone number",
@@ -388,14 +390,14 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	}
 
 	emailAddressStr := terminalRegisterReq.VerificationResourceName
-	if !iam.IsValidEmailAddress(emailAddressStr) {
+	if !email.IsValidAddress(emailAddressStr) {
 		logCtx(reqCtx).
 			Warn().Msgf("Provided email address %v is not valid", emailAddressStr)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
 	}
-	emailAddress, err := iam.EmailAddressFromString(emailAddressStr)
+	emailAddress, err := email.AddressFromString(emailAddressStr)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

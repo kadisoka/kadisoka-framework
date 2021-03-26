@@ -10,17 +10,18 @@ import (
 	"strings"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 // SendTextMessage is use for send text message using sms delivery service
 func (sms *SMSDeliveryService) SendTextMessage(
-	recipient string,
+	recipient telephony.PhoneNumber,
 	text string,
 	opts pnv10n.SMSDeliveryOptions,
 ) error {
 	endPoint := fmt.Sprintf("%s/%s", apiBaseURL, "messaging")
 	bodyReq := url.Values{}
-	bodyReq.Set("phone_number", strings.Trim(recipient, "+"))
+	bodyReq.Set("phone_number", strings.Trim(recipient.String(), "+"))
 	bodyReq.Set("message", text)
 	bodyReq.Set("message_type", "ARN")
 	payload := strings.NewReader(bodyReq.Encode())

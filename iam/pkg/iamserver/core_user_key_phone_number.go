@@ -12,6 +12,7 @@ import (
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 // Interface conformance assertion.
@@ -21,7 +22,7 @@ const userKeyPhoneNumberDBTableName = `user_key_phone_number_dt`
 
 func (core *Core) ListUsersByPhoneNumber(
 	callCtx iam.CallContext,
-	phoneNumbers []iam.PhoneNumber,
+	phoneNumbers []telephony.PhoneNumber,
 ) ([]iam.UserKeyPhoneNumber, error) {
 	if len(phoneNumbers) == 0 {
 		return []iam.UserKeyPhoneNumber{}, nil
@@ -56,7 +57,7 @@ func (core *Core) ListUsersByPhoneNumber(
 		}
 		userPhoneNumber := iam.UserKeyPhoneNumber{
 			UserRef:     iam.NewUserRefKey(userIDNum),
-			PhoneNumber: iam.NewPhoneNumber(countryCode, nationalNumber),
+			PhoneNumber: telephony.NewPhoneNumber(countryCode, nationalNumber),
 		}
 		userPhoneNumberList = append(userPhoneNumberList, userPhoneNumber)
 	}
@@ -95,7 +96,7 @@ func (core *Core) ListUsersByPhoneNumber(
 func (core *Core) GetUserKeyPhoneNumber(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-) (*iam.PhoneNumber, error) {
+) (*telephony.PhoneNumber, error) {
 	//TODO: access control
 	return core.getUserKeyPhoneNumberNoAC(callCtx, userRef)
 }
@@ -103,7 +104,7 @@ func (core *Core) GetUserKeyPhoneNumber(
 func (core *Core) getUserKeyPhoneNumberNoAC(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-) (*iam.PhoneNumber, error) {
+) (*telephony.PhoneNumber, error) {
 	var countryCode int32
 	var nationalNumber int64
 
@@ -126,13 +127,13 @@ func (core *Core) getUserKeyPhoneNumberNoAC(
 		return nil, err
 	}
 
-	phoneNumber := iam.NewPhoneNumber(countryCode, nationalNumber)
+	phoneNumber := telephony.NewPhoneNumber(countryCode, nationalNumber)
 	return &phoneNumber, nil
 }
 
 // The ID of the user which provided phone number is their verified primary.
 func (core *Core) getUserIDNumByKeyPhoneNumber(
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 ) (ownerUserIDNum iam.UserIDNum, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyPhoneNumberDBTableName).
@@ -160,7 +161,7 @@ func (core *Core) getUserIDNumByKeyPhoneNumber(
 // The ID of the user which provided phone number is their identifier,
 // verified or not.
 func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 ) (ownerUserRef iam.UserRefKey, alreadyVerified bool, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyPhoneNumberDBTableName).
@@ -197,7 +198,7 @@ func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 func (core *Core) SetUserKeyPhoneNumber(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 	verificationMethods []pnv10n.VerificationMethod,
 ) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
 	ctxAuth := callCtx.Authorization()
@@ -254,7 +255,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 func (core *Core) setUserKeyPhoneNumber(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 ) (alreadyVerified bool, err error) {
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	ctxAuth := callCtx.Authorization()
@@ -348,7 +349,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 // data.
 func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 	userIDNum iam.UserIDNum,
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 	verificationTime *time.Time,
 	verificationID int64,
 ) (stateChanged bool, err error) {
@@ -385,7 +386,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 	return n == 1, nil
 }
 
-func phoneNumberSliceToSQLSetString(pnSlice []iam.PhoneNumber) string {
+func phoneNumberSliceToSQLSetString(pnSlice []telephony.PhoneNumber) string {
 	if len(pnSlice) == 0 {
 		return ""
 	}

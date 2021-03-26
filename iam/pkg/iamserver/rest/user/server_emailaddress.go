@@ -7,6 +7,7 @@ import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
@@ -37,7 +38,7 @@ func (restSrv *Server) putUserEmailAddress(
 	}
 
 	emailAddress := reqEntity.EmailAddress
-	parsedEmailAddress, err := iam.EmailAddressFromString(emailAddress)
+	parsedEmailAddress, err := email.AddressFromString(emailAddress)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -63,7 +64,7 @@ func (restSrv *Server) handleSetEmailAddress(
 	reqCtx *iam.RESTRequestContext,
 	req *restful.Request,
 	resp *restful.Response,
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 	verificationMethods []eav10n.VerificationMethod,
 ) {
 	ctxAuth := reqCtx.Authorization()

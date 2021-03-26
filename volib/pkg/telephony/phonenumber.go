@@ -1,9 +1,10 @@
-package iam
+package telephony
 
 import (
 	"strconv"
 	"strings"
 
+	azfl "github.com/alloyzeus/go-azfl/azfl"
 	"github.com/nyaruka/phonenumbers"
 )
 
@@ -14,6 +15,8 @@ type PhoneNumber struct {
 	rawInput       string
 	isValid        bool
 }
+
+var _ azfl.ValueObject = PhoneNumber{}
 
 func NewPhoneNumber(countryCode int32, nationalNumber int64) PhoneNumber {
 	return PhoneNumber{countryCode: countryCode, nationalNumber: nationalNumber}
@@ -43,6 +46,22 @@ func PhoneNumberFromString(phoneNumberStr string) (PhoneNumber, error) {
 
 func (phoneNumber PhoneNumber) IsValid() bool { return phoneNumber.isValid }
 
+func (phoneNumber PhoneNumber) Equal(other interface{}) bool {
+	return phoneNumber.Equals(other)
+}
+
+func (phoneNumber PhoneNumber) Equals(other interface{}) bool {
+	if o, ok := other.(PhoneNumber); ok {
+		return o.countryCode == phoneNumber.countryCode &&
+			o.nationalNumber == phoneNumber.nationalNumber
+	}
+	if o, _ := other.(*PhoneNumber); o != nil {
+		return o.countryCode == phoneNumber.countryCode &&
+			o.nationalNumber == phoneNumber.nationalNumber
+	}
+	return false
+}
+
 func (phoneNumber PhoneNumber) CountryCode() int32    { return phoneNumber.countryCode }
 func (phoneNumber PhoneNumber) NationalNumber() int64 { return phoneNumber.nationalNumber }
 func (phoneNumber PhoneNumber) RawInput() string      { return phoneNumber.rawInput }
@@ -55,4 +74,13 @@ func (phoneNumber PhoneNumber) String() string {
 	}
 	return "+" + strconv.FormatInt(int64(phoneNumber.countryCode), 10) +
 		strconv.FormatInt(phoneNumber.nationalNumber, 10)
+}
+
+// RawOrFormatted returns a string which prefers raw input with formatted
+// string as the default.
+func (phoneNumber PhoneNumber) RawOrFormatted() string {
+	if phoneNumber.rawInput != "" {
+		return phoneNumber.rawInput
+	}
+	return phoneNumber.String()
 }

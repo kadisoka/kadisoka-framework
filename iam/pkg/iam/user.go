@@ -2,6 +2,7 @@ package iam
 
 import (
 	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 type UserService interface {
@@ -26,7 +27,7 @@ var (
 
 type UserKeyPhoneNumber struct {
 	UserRef     UserRefKey
-	PhoneNumber PhoneNumber
+	PhoneNumber telephony.PhoneNumber
 }
 
 // JSONV1 models

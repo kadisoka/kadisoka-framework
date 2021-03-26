@@ -21,6 +21,7 @@ import (
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
 )
 
 const verificationDBTableName = "email_address_verification_dt"
@@ -103,7 +104,7 @@ type Verifier struct {
 //TODO(exa): make the operations atomic
 func (verifier *Verifier) StartVerification(
 	callCtx iam.CallContext,
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 	codeTTL time.Duration,
 	userPreferredLanguages []language.Tag,
 	preferredVerificationMethods []VerificationMethod,
@@ -233,7 +234,7 @@ func (verifier *Verifier) ConfirmVerification(
 }
 
 func (verifier *Verifier) sendVerificationEmail(
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 	code string,
 	userPreferredLanguages []language.Tag,
 	noDelivery bool,
@@ -329,7 +330,7 @@ func (verifier *Verifier) sendVerificationEmail(
 
 func (verifier *Verifier) GetEmailAddressByVerificationID(
 	verificationID int64,
-) (*iam.EmailAddress, error) {
+) (*email.Address, error) {
 	var localPart, domainPart string
 	err := verifier.db.QueryRow(
 		`SELECT domain_part, local_part `+
@@ -340,7 +341,7 @@ func (verifier *Verifier) GetEmailAddressByVerificationID(
 	if err != nil {
 		return nil, err
 	}
-	emailAddress, err := iam.EmailAddressFromString(localPart + "@" + domainPart)
+	emailAddress, err := email.AddressFromString(localPart + "@" + domainPart)
 	if err != nil {
 		panic(err)
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/sec"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 const (
@@ -361,9 +362,9 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 	var unparseablePhoneNumbers []string
 	var invalidPhoneNumbers []string
 	inputMap := map[string]string{}
-	var phoneNumbers []iam.PhoneNumber
+	var phoneNumbers []telephony.PhoneNumber
 	for _, inputStr := range phoneNumberStrList {
-		phoneNumber, err := iam.PhoneNumberFromString(inputStr)
+		phoneNumber, err := telephony.PhoneNumberFromString(inputStr)
 		if err != nil {
 			unparseablePhoneNumbers = append(unparseablePhoneNumbers, inputStr)
 			continue

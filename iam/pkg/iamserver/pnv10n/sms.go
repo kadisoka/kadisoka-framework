@@ -1,8 +1,10 @@
 package pnv10n
 
+import "github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
+
 type SMSDeliveryService interface {
 	SendTextMessage(
-		recipientPhoneNumber string, //TODO: iam.PhoneNumber or telephony.Number
+		recipient telephony.PhoneNumber,
 		text string,
 		opts SMSDeliveryOptions) error
 }
@@ -13,7 +15,7 @@ type smsDeliveryServiceNULL struct {
 }
 
 func (smsDS smsDeliveryServiceNULL) SendTextMessage(
-	recipient string,
+	recipient telephony.PhoneNumber,
 	text string,
 	opts SMSDeliveryOptions,
 ) error {

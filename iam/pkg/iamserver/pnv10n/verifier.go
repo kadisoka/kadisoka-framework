@@ -16,6 +16,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 const verificationDBTableName = "phone_number_verification_dt"
@@ -113,7 +114,7 @@ type Verifier struct {
 //TODO(exa): make the operations atomic
 func (verifier *Verifier) StartVerification(
 	callCtx iam.CallContext,
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 	codeTTL time.Duration,
 	userPreferredLanguages []language.Tag,
 	preferredVerificationMethods []VerificationMethod,
@@ -235,7 +236,7 @@ func (verifier *Verifier) ConfirmVerification(
 
 func (verifier *Verifier) GetPhoneNumberByVerificationID(
 	verificationID int64,
-) (*iam.PhoneNumber, error) {
+) (*telephony.PhoneNumber, error) {
 	var countryCode int32
 	var nationalNumber int64
 	err := verifier.db.QueryRow(
@@ -247,12 +248,12 @@ func (verifier *Verifier) GetPhoneNumberByVerificationID(
 	if err != nil {
 		return nil, err
 	}
-	result := iam.NewPhoneNumber(countryCode, nationalNumber)
+	result := telephony.NewPhoneNumber(countryCode, nationalNumber)
 	return &result, nil
 }
 
 func (verifier *Verifier) GetVerificationCodeByPhoneNumber(
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 ) (code string, err error) {
 	err = verifier.db.QueryRow(
 		"SELECT code "+
@@ -282,7 +283,7 @@ func (verifier *Verifier) generateVerificationCode() string {
 }
 
 func (verifier *Verifier) sendTextMessage(
-	phoneNumber iam.PhoneNumber,
+	phoneNumber telephony.PhoneNumber,
 	code string,
 	userPreferredLanguages []language.Tag,
 	noDelivery bool,
@@ -329,7 +330,7 @@ func (verifier *Verifier) sendTextMessage(
 				deliverySvc = verifier.smsDeliveryServices[0]
 			}
 			err = deliverySvc.SendTextMessage(
-				phoneNumber.String(),
+				phoneNumber,
 				bodyString,
 				SMSDeliveryOptions{})
 		}
@@ -341,7 +342,7 @@ func (verifier *Verifier) sendTextMessage(
 }
 
 func (verifier *Verifier) notifyMaintainersChannels(
-	phoneNumber iam.PhoneNumber, messageBody string, sendError error,
+	phoneNumber telephony.PhoneNumber, messageBody string, sendError error,
 ) {
 	textMessage := fmt.Sprintf(
 		"Phone number verification for `%s`\n```\n%s```",

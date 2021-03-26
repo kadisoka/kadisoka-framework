@@ -20,6 +20,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 
 	// SMS delivery service providers
 	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/telesign"
@@ -136,13 +138,13 @@ func NewCoreByConfig(
 	return inst, nil
 }
 
-func (core *Core) isTestPhoneNumber(phoneNumber iam.PhoneNumber) bool {
+func (core *Core) isTestPhoneNumber(phoneNumber telephony.PhoneNumber) bool {
 	return phoneNumber.CountryCode() == 1 &&
 		phoneNumber.NationalNumber() > 5550000 &&
 		phoneNumber.NationalNumber() <= 5559999
 }
 
-func (core *Core) isTestEmailAddress(emailAddress iam.EmailAddress) bool {
+func (core *Core) isTestEmailAddress(emailAddress email.Address) bool {
 	return false
 }
 

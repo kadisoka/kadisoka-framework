@@ -10,6 +10,7 @@ import (
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
 )
 
 // Interface conformance assertion.
@@ -20,7 +21,7 @@ const userKeyEmailAddressDBTableName = `user_key_email_address_dt`
 func (core *Core) GetUserKeyEmailAddress(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-) (*iam.EmailAddress, error) {
+) (*email.Address, error) {
 	//TODO: access control
 	return core.getUserKeyEmailAddressNoAC(callCtx, userRef)
 }
@@ -28,7 +29,7 @@ func (core *Core) GetUserKeyEmailAddress(
 func (core *Core) getUserKeyEmailAddressNoAC(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-) (*iam.EmailAddress, error) {
+) (*email.Address, error) {
 	var rawInput string
 
 	sqlString, _, _ := goqu.
@@ -50,7 +51,7 @@ func (core *Core) getUserKeyEmailAddressNoAC(
 		return nil, err
 	}
 
-	emailAddress, err := iam.EmailAddressFromString(rawInput)
+	emailAddress, err := email.AddressFromString(rawInput)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +60,7 @@ func (core *Core) getUserKeyEmailAddressNoAC(
 
 // The ID of the user which provided email address is their verified primary.
 func (core *Core) getUserIDNumByKeyEmailAddress(
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 ) (ownerUserIDNum iam.UserIDNum, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyEmailAddressDBTableName).
@@ -87,7 +88,7 @@ func (core *Core) getUserIDNumByKeyEmailAddress(
 // The ID of the user which provided email address is their identifier,
 // verified or not.
 func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 ) (ownerUserRef iam.UserRefKey, alreadyVerified bool, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyEmailAddressDBTableName).
@@ -124,7 +125,7 @@ func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 func (core *Core) SetUserKeyEmailAddress(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 	verificationMethods []eav10n.VerificationMethod,
 ) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
 	ctxAuth := callCtx.Authorization()
@@ -179,7 +180,7 @@ func (core *Core) SetUserKeyEmailAddress(
 func (core *Core) setUserKeyEmailAddress(
 	callCtx iam.CallContext,
 	userRef iam.UserRefKey,
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 ) (alreadyVerified bool, err error) {
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	ctxAuth := callCtx.Authorization()
@@ -267,7 +268,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 
 func (core *Core) ensureUserEmailAddressVerifiedFlag(
 	userIDNum iam.UserIDNum,
-	emailAddress iam.EmailAddress,
+	emailAddress email.Address,
 	verificationTime *time.Time,
 	verificationID int64,
 ) (stateChanged bool, err error) {

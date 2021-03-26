@@ -6,10 +6,10 @@ import (
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/emicklei/go-restful"
-	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 
-	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 func (restSrv *Server) putUserPhoneNumber(
@@ -35,8 +35,16 @@ func (restSrv *Server) putUserPhoneNumber(
 
 	var reqEntity UserPhoneNumberPutRequest
 	err = req.ReadEntity(&reqEntity)
+	if err != nil {
+		logCtx(reqCtx).
+			Warn().Err(err).
+			Msg("Body read")
+		rest.RespondTo(resp).EmptyError(
+			http.StatusUnauthorized)
+		return
+	}
 
-	phoneNumber, err := iam.PhoneNumberFromString(reqEntity.PhoneNumber)
+	phoneNumber, err := telephony.PhoneNumberFromString(reqEntity.PhoneNumber)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

@@ -6,6 +6,8 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
 //TODO: some data should be taken from the context instead of
@@ -44,7 +46,7 @@ type TerminalAuthorizationByEmailAddressStartInput struct {
 }
 
 type TerminalAuthorizationByEmailAddressStartInputData struct {
-	EmailAddress        iam.EmailAddress
+	EmailAddress        email.Address
 	VerificationMethods []eav10n.VerificationMethod
 
 	TerminalAuthorizationStartInputBaseData
@@ -58,7 +60,7 @@ type TerminalAuthorizationByPhoneNumberStartInput struct {
 }
 
 type TerminalAuthorizationByPhoneNumberStartInputData struct {
-	PhoneNumber         iam.PhoneNumber
+	PhoneNumber         telephony.PhoneNumber
 	VerificationMethods []pnv10n.VerificationMethod
 
 	TerminalAuthorizationStartInputBaseData
