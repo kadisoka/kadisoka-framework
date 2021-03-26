@@ -7,9 +7,15 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
-func (sms *SMSDeliveryService) SendTextMessage(recipient, text string) error {
+func (sms *SMSDeliveryService) SendTextMessage(
+	recipient string,
+	text string,
+	opts pnv10n.SMSDeliveryOptions,
+) error {
 	sender := sms.config.Sender
 	if sender == "" {
 		sender = "Nexmo"

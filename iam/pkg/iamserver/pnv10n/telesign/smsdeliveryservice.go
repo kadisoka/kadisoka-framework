@@ -13,7 +13,11 @@ import (
 )
 
 // SendTextMessage is use for send text message using sms delivery service
-func (sms *SMSDeliveryService) SendTextMessage(recipient, text string) error {
+func (sms *SMSDeliveryService) SendTextMessage(
+	recipient string,
+	text string,
+	opts pnv10n.SMSDeliveryOptions,
+) error {
 	endPoint := fmt.Sprintf("%s/%s", apiBaseURL, "messaging")
 	bodyReq := url.Values{}
 	bodyReq.Set("phone_number", strings.Trim(recipient, "+"))

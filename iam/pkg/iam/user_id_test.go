@@ -3,6 +3,7 @@ package iam
 import (
 	"testing"
 
+	"github.com/alloyzeus/go-azfl/azfl/azid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -10,8 +11,8 @@ func TestUserIDNumLimits(t *testing.T) {
 	assert.Equal(t, UserIDNum(0), UserIDNumZero, "zero equal")
 	assert.Equal(t, false, UserIDNum(0).IsValid(), "zero")
 	assert.Equal(t, false, UserIDNum(-1).IsValid(), "neg is invalid")
-	assert.Equal(t, false, UserIDNum(1).IsValid(), "reserved")
-	assert.Equal(t, false, UserIDNum(0xffff).IsValid(), "reserved")
+	assert.Equal(t, true, UserIDNum(1).IsValid(), "")
+	assert.Equal(t, true, UserIDNum(0xffff).IsValid(), "")
 	assert.Equal(t, false, UserIDNum(0x0001000000000000).IsValid(), "over limit")
 	assert.Equal(t, true, UserIDNum(4294967296).IsValid(), "lowest normal")
 	assert.Equal(t, true, UserIDNum(4294967296).IsNormalAccount(), "lowest normal")
@@ -19,7 +20,22 @@ func TestUserIDNumLimits(t *testing.T) {
 }
 
 func TestUserIDNumEncode(t *testing.T) {
-	// assert.Equal(t, "", UserIDNumZero.String(), "zero is empty")
+	testCases := []struct {
+		input         UserIDNum
+		expectedBytes []byte
+		expectedType  azid.BinDataType
+		label         string
+	}{
+		{UserIDNumZero, []byte{0, 0, 0, 0, 0, 0, 0, 0}, azid.BinDataTypeInt64, "zero is empty"},
+		{UserIDNum(-1), []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, azid.BinDataTypeInt64, "neg"},
+	}
+
+	for _, testData := range testCases {
+		d, typ := testData.input.AZIDBinField()
+		assert.Equal(t, testData.expectedBytes, d, testData.label)
+		assert.Equal(t, testData.expectedType, typ, testData.label)
+	}
+	// assert.Equal(t, []byte(""), UserIDNumZero.AZIDBinField(), "zero is empty")
 	// assert.Equal(t, "", UserIDNum(0).String(), "zero is empty")
 	// assert.Equal(t, "", UserIDNum(-1).String(), "neg is empty")
 	// assert.Equal(t, "", UserIDNum(1).String(), "reserved is empty")

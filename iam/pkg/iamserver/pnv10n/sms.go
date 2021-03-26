@@ -1,13 +1,22 @@
 package pnv10n
 
 type SMSDeliveryService interface {
-	SendTextMessage(recipientPhoneNumber, text string) error
+	SendTextMessage(
+		recipientPhoneNumber string, //TODO: iam.PhoneNumber or telephony.Number
+		text string,
+		opts SMSDeliveryOptions) error
 }
+
+type SMSDeliveryOptions struct{}
 
 type smsDeliveryServiceNULL struct {
 }
 
-func (smsDS smsDeliveryServiceNULL) SendTextMessage(recipient, text string) error {
+func (smsDS smsDeliveryServiceNULL) SendTextMessage(
+	recipient string,
+	text string,
+	opts SMSDeliveryOptions,
+) error {
 	return nil
 }
 

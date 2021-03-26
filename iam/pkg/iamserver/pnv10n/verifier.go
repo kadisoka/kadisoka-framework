@@ -328,16 +328,19 @@ func (verifier *Verifier) sendTextMessage(
 			if deliverySvc == nil {
 				deliverySvc = verifier.smsDeliveryServices[0]
 			}
-			err = deliverySvc.SendTextMessage(phoneNumber.String(), bodyString)
+			err = deliverySvc.SendTextMessage(
+				phoneNumber.String(),
+				bodyString,
+				SMSDeliveryOptions{})
 		}
 	}
 
-	verifier.notifyChannels(phoneNumber, bodyBuilder.String(), err)
+	verifier.notifyMaintainersChannels(phoneNumber, bodyBuilder.String(), err)
 
 	return err
 }
 
-func (verifier *Verifier) notifyChannels(
+func (verifier *Verifier) notifyMaintainersChannels(
 	phoneNumber iam.PhoneNumber, messageBody string, sendError error,
 ) {
 	textMessage := fmt.Sprintf(

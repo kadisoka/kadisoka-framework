@@ -13,7 +13,11 @@ import (
 )
 
 // SendTextMessage is use for send text message using sms delivery service
-func (sms *SMSDeliveryService) SendTextMessage(recipient, text string) error {
+func (sms *SMSDeliveryService) SendTextMessage(
+	recipient string,
+	text string,
+	opts pnv10n.SMSDeliveryOptions,
+) error {
 	endPoint := fmt.Sprintf(sms.endpointURL, sms.config.AccountSID)
 
 	bodyReq := url.Values{}
@@ -64,6 +68,7 @@ func (sms *SMSDeliveryService) SendTextMessage(recipient, text string) error {
 	case 21614: // Not a mobile phone number
 		return pnv10n.InvalidPhoneNumberError{Err: errors.New(string(errBody))}
 	case 30008: // Unknown error
+	default:
 		return pnv10n.GatewayError{Err: errors.New(string(errBody))}
 	}
 
