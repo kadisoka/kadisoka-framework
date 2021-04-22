@@ -69,7 +69,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 	}
 
 	phoneNumber := input.Data.PhoneNumber
-	if !phoneNumber.IsValid() && !core.isTestPhoneNumber(phoneNumber) {
+	if !phoneNumber.IsSound() && !core.isTestPhoneNumber(phoneNumber) {
 		return TerminalAuthorizationStartOutput{
 			Context: iam.OpOutputContext{
 				Err: errors.Arg("phoneNumber", nil)}}
@@ -158,7 +158,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 	}
 
 	emailAddress := input.Data.EmailAddress
-	if !emailAddress.IsValid() && !core.isTestEmailAddress(emailAddress) {
+	if !emailAddress.IsSound() && !core.isTestEmailAddress(emailAddress) {
 		return TerminalAuthorizationStartOutput{
 			Context: iam.OpOutputContext{
 				Err: errors.Arg("emailAddress", nil)}}

@@ -44,7 +44,7 @@ func PhoneNumberFromString(phoneNumberStr string) (PhoneNumber, error) {
 	return phoneNumber, nil
 }
 
-func (phoneNumber PhoneNumber) IsValid() bool { return phoneNumber.isValid }
+func (phoneNumber PhoneNumber) IsSound() bool { return phoneNumber.isValid }
 
 func (phoneNumber PhoneNumber) Equal(other interface{}) bool {
 	return phoneNumber.Equals(other)

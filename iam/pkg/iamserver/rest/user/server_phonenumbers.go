@@ -54,7 +54,7 @@ func (restSrv *Server) putUserPhoneNumber(
 			http.StatusBadRequest)
 		return
 	}
-	if !phoneNumber.IsValid() {
+	if !phoneNumber.IsSound() {
 		logCtx(reqCtx).
 			Warn().Msgf("Provided phone number %q is not valid", reqEntity.PhoneNumber)
 		rest.RespondTo(resp).EmptyError(

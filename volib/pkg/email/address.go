@@ -39,7 +39,7 @@ func AddressFromString(str string) (Address, error) {
 }
 
 //TODO: at least common address convention
-func (addr Address) IsValid() bool {
+func (addr Address) IsSound() bool {
 	return addr.localPart != "" && addr.domainPart != ""
 }
 

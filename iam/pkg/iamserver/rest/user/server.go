@@ -360,7 +360,7 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 	}
 
 	var unparseablePhoneNumbers []string
-	var invalidPhoneNumbers []string
+	var unsoundPhoneNumbers []string
 	inputMap := map[string]string{}
 	var phoneNumbers []telephony.PhoneNumber
 	for _, inputStr := range phoneNumberStrList {
@@ -369,8 +369,8 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 			unparseablePhoneNumbers = append(unparseablePhoneNumbers, inputStr)
 			continue
 		}
-		if !phoneNumber.IsValid() {
-			invalidPhoneNumbers = append(invalidPhoneNumbers, inputStr)
+		if !phoneNumber.IsSound() {
+			unsoundPhoneNumbers = append(unsoundPhoneNumbers, inputStr)
 			continue
 		}
 		normalizedStr := phoneNumber.String()
@@ -381,11 +381,11 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 		phoneNumbers = append(phoneNumbers, phoneNumber)
 	}
 
-	if len(unparseablePhoneNumbers) > 0 || len(invalidPhoneNumbers) > 0 {
+	if len(unparseablePhoneNumbers) > 0 || len(unsoundPhoneNumbers) > 0 {
 		logCtx(reqCtx).
 			Warn().
 			Strs("unparsable", unparseablePhoneNumbers).
-			Strs("invalid", invalidPhoneNumbers).
+			Strs("unsound", unsoundPhoneNumbers).
 			Msg("Some phone numbers are ignored")
 	}
 
