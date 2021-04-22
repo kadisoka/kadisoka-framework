@@ -45,7 +45,7 @@ func newEmptyAuthorization() *Authorization {
 }
 
 func (ctxAuth Authorization) IsValid() bool {
-	return ctxAuth.Session.IsValid()
+	return ctxAuth.Session.IsSound()
 }
 
 func (ctxAuth Authorization) IsNotValid() bool {
@@ -55,7 +55,7 @@ func (ctxAuth Authorization) IsNotValid() bool {
 // IsTerminal returns true if the authorized terminal is the same as termRef.
 func (ctxAuth Authorization) IsTerminal(termRef TerminalRefKey) bool {
 	ctxTerm := ctxAuth.Session.terminal
-	return ctxTerm.IsValid() && ctxTerm.EqualsTerminalRefKey(termRef)
+	return ctxTerm.IsSound() && ctxTerm.EqualsTerminalRefKey(termRef)
 }
 
 func (ctxAuth Authorization) Actor() Actor {
@@ -72,14 +72,14 @@ func (ctxAuth Authorization) IsUser(userRef UserRefKey) bool {
 
 // IsUserContext is used to determine if this context represents a user.
 func (ctxAuth Authorization) IsUserContext() bool {
-	if ctxAuth.ClientApplicationIDNum().IsUserAgent() && ctxAuth.Session.terminal.user.IsValid() {
+	if ctxAuth.ClientApplicationIDNum().IsUserAgent() && ctxAuth.Session.terminal.user.IsSound() {
 		return true
 	}
 	return false
 }
 
 func (ctxAuth Authorization) IsServiceClientContext() bool {
-	if ctxAuth.ClientApplicationIDNum().IsService() && ctxAuth.Session.terminal.user.IsNotValid() {
+	if ctxAuth.ClientApplicationIDNum().IsService() && ctxAuth.Session.terminal.user.IsNotSound() {
 		return true
 	}
 	return false

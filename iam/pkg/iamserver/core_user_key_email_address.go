@@ -142,7 +142,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	if err != nil {
 		return 0, nil, errors.Wrap("getUserIDNumByKeyEmailAddress", err)
 	}
-	if existingOwnerUserIDNum.IsValid() {
+	if existingOwnerUserIDNum.IsSound() {
 		if existingOwnerUserIDNum != ctxAuth.UserIDNum() {
 			return 0, nil, errors.ArgMsg("emailAddress", "conflict")
 		}

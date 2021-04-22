@@ -177,7 +177,7 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
-	if userRef.IsValid() {
+	if userRef.IsSound() {
 		userInstInfo, err := authServer.iamServerCore.
 			GetUserInstanceInfo(reqCtx, userRef)
 		if err != nil {

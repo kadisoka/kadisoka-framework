@@ -1,5 +1,5 @@
 package iam
 
 func (idNum UserIDNum) IsNormalAccount() bool {
-	return idNum.IsValid() && !idNum.HasBotBits()
+	return idNum.IsSound() && !idNum.HasBotBits()
 }

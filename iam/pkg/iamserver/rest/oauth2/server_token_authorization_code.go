@@ -62,7 +62,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		}
 		termRefStr := parts[1]
 		termRef, err = iam.TerminalRefKeyFromAZIDText(termRefStr)
-		if err != nil || termRef.IsNotValid() {
+		if err != nil || termRef.IsNotSound() {
 			logReq(req.Request).
 				Warn().Err(err).Str("code", authCode).
 				Msg("Code malformed")
@@ -83,7 +83,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		}
 
 		termRef, err = iam.TerminalRefKeyFromAZIDText(authCode)
-		if err != nil || termRef.IsNotValid() {
+		if err != nil || termRef.IsNotSound() {
 			logReq(req.Request).
 				Warn().Err(err).Str("code", authCode).
 				Msg("Code malformed")

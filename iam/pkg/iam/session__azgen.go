@@ -99,17 +99,17 @@ func (idNum SessionIDNum) IsZero() bool {
 	return idNum == SessionIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently
+// IsSound returns true if this instance is valid independently
 // as an SessionIDNum. It doesn't tell whether it refers to
 // a valid instance of Session.
-func (idNum SessionIDNum) IsValid() bool {
+func (idNum SessionIDNum) IsSound() bool {
 	return int32(idNum) > 0 &&
 		(uint32(idNum)&SessionIDNumSignificantBitsMask) != 0
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (idNum SessionIDNum) IsNotValid() bool {
-	return !idNum.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (idNum SessionIDNum) IsNotSound() bool {
+	return !idNum.IsSound()
 }
 
 // AZIDBinField is required for conformance
@@ -220,7 +220,7 @@ func (refKey SessionRefKey) IDNum() SessionIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
-	if refKey.IsNotValid() {
+	if refKey.IsNotSound() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -244,16 +244,16 @@ func (refKey SessionRefKey) IsZero() bool {
 		refKey.idNum == SessionIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as a ref-key.
+// IsSound returns true if this instance is valid independently as a ref-key.
 // It doesn't tell whether it refers to a valid instance of Session.
-func (refKey SessionRefKey) IsValid() bool {
-	return refKey.terminal.IsValid() &&
-		refKey.idNum.IsValid()
+func (refKey SessionRefKey) IsSound() bool {
+	return refKey.terminal.IsSound() &&
+		refKey.idNum.IsSound()
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (refKey SessionRefKey) IsNotValid() bool {
-	return !refKey.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (refKey SessionRefKey) IsNotSound() bool {
+	return !refKey.IsSound()
 }
 
 // Equals is required for conformance with azfl.AdjunctEntityRefKey.
@@ -404,7 +404,7 @@ const _SessionRefKeyAZIDTextPrefix = "KSe0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey SessionRefKey) AZIDText() string {
-	if !refKey.IsValid() {
+	if !refKey.IsSound() {
 		return ""
 	}
 
@@ -488,7 +488,7 @@ func (refKey SessionRefKey) Terminal() TerminalRefKey {
 // TerminalPtr returns a pointer to a copy of
 // TerminalRefKey if it's considered valid.
 func (refKey SessionRefKey) TerminalPtr() *TerminalRefKey {
-	if refKey.terminal.IsValid() {
+	if refKey.terminal.IsSound() {
 		rk := refKey.terminal
 		return &rk
 	}

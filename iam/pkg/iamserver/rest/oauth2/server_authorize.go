@@ -80,7 +80,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	if appRef.IsNotValid() {
+	if appRef.IsNotSound() {
 		logReq(r).
 			Warn().Err(err).
 			Msg("client_id is invalid")

@@ -83,17 +83,17 @@ func (idNum ApplicationAccessKeyIDNum) IsZero() bool {
 	return idNum == ApplicationAccessKeyIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently
+// IsSound returns true if this instance is valid independently
 // as an ApplicationAccessKeyIDNum. It doesn't tell whether it refers to
 // a valid instance of ApplicationAccessKey.
-func (idNum ApplicationAccessKeyIDNum) IsValid() bool {
+func (idNum ApplicationAccessKeyIDNum) IsSound() bool {
 	return int64(idNum) > 0 &&
 		(uint64(idNum)&ApplicationAccessKeyIDNumSignificantBitsMask) != 0
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (idNum ApplicationAccessKeyIDNum) IsNotValid() bool {
-	return !idNum.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (idNum ApplicationAccessKeyIDNum) IsNotSound() bool {
+	return !idNum.IsSound()
 }
 
 // AZIDBinField is required for conformance
@@ -203,7 +203,7 @@ func (refKey ApplicationAccessKeyRefKey) IDNum() ApplicationAccessKeyIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey ApplicationAccessKeyRefKey) IDNumPtr() *ApplicationAccessKeyIDNum {
-	if refKey.IsNotValid() {
+	if refKey.IsNotSound() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -221,16 +221,16 @@ func (refKey ApplicationAccessKeyRefKey) IsZero() bool {
 		refKey.idNum == ApplicationAccessKeyIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as a ref-key.
+// IsSound returns true if this instance is valid independently as a ref-key.
 // It doesn't tell whether it refers to a valid instance of ApplicationAccessKey.
-func (refKey ApplicationAccessKeyRefKey) IsValid() bool {
-	return refKey.application.IsValid() &&
-		refKey.idNum.IsValid()
+func (refKey ApplicationAccessKeyRefKey) IsSound() bool {
+	return refKey.application.IsSound() &&
+		refKey.idNum.IsSound()
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (refKey ApplicationAccessKeyRefKey) IsNotValid() bool {
-	return !refKey.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (refKey ApplicationAccessKeyRefKey) IsNotSound() bool {
+	return !refKey.IsSound()
 }
 
 // Equals is required for conformance with azfl.AdjunctEntityRefKey.
@@ -381,7 +381,7 @@ const _ApplicationAccessKeyRefKeyAZIDTextPrefix = "KAK0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey ApplicationAccessKeyRefKey) AZIDText() string {
-	if !refKey.IsValid() {
+	if !refKey.IsSound() {
 		return ""
 	}
 
@@ -465,7 +465,7 @@ func (refKey ApplicationAccessKeyRefKey) Application() ApplicationRefKey {
 // ApplicationPtr returns a pointer to a copy of
 // ApplicationRefKey if it's considered valid.
 func (refKey ApplicationAccessKeyRefKey) ApplicationPtr() *ApplicationRefKey {
-	if refKey.application.IsValid() {
+	if refKey.application.IsSound() {
 		rk := refKey.application
 		return &rk
 	}

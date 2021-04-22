@@ -88,7 +88,7 @@ func (idNum UserIDNum) IsZero() bool {
 	return idNum == UserIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently
+// IsSound returns true if this instance is valid independently
 // as an UserIDNum. It doesn't tell whether it refers to
 // a valid instance of User.
 //
@@ -106,14 +106,14 @@ func (idNum UserIDNum) IsZero() bool {
 // UserIDNum. Whether the instance is valid for certain context,
 // it requires case-by-case validation which is out of the scope of this
 // method.
-func (idNum UserIDNum) IsValid() bool {
+func (idNum UserIDNum) IsSound() bool {
 	return int64(idNum) > 0 &&
 		(uint64(idNum)&UserIDNumSignificantBitsMask) != 0
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (idNum UserIDNum) IsNotValid() bool {
-	return !idNum.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (idNum UserIDNum) IsNotSound() bool {
+	return !idNum.IsSound()
 }
 
 // Equals is required as UserIDNum is a value-object.
@@ -170,7 +170,7 @@ func (idNum *UserIDNum) UnmarshalAZIDBinField(
 //
 // Bot account is ....
 func (idNum UserIDNum) IsBot() bool {
-	return idNum.IsValid() && idNum.HasBotBits()
+	return idNum.IsSound() && idNum.HasBotBits()
 }
 
 const _UserIDNumBotMask = 0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
@@ -241,7 +241,7 @@ func (refKey UserRefKey) IDNum() UserIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey UserRefKey) IDNumPtr() *UserIDNum {
-	if refKey.IsNotValid() {
+	if refKey.IsNotSound() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -264,15 +264,15 @@ func (refKey UserRefKey) IsZero() bool {
 	return UserIDNum(refKey) == UserIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as a ref-key.
+// IsSound returns true if this instance is valid independently as a ref-key.
 // It doesn't tell whether it refers to a valid instance of User.
-func (refKey UserRefKey) IsValid() bool {
-	return UserIDNum(refKey).IsValid()
+func (refKey UserRefKey) IsSound() bool {
+	return UserIDNum(refKey).IsSound()
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (refKey UserRefKey) IsNotValid() bool {
-	return !refKey.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (refKey UserRefKey) IsNotSound() bool {
+	return !refKey.IsSound()
 }
 
 // Equals is required for conformance with azfl.EntityRefKey.
@@ -367,7 +367,7 @@ const _UserRefKeyAZIDTextPrefix = "KUs0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey UserRefKey) AZIDText() string {
-	if !refKey.IsValid() {
+	if !refKey.IsSound() {
 		return ""
 	}
 

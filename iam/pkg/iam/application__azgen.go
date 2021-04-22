@@ -85,7 +85,7 @@ func (idNum ApplicationIDNum) IsZero() bool {
 	return idNum == ApplicationIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently
+// IsSound returns true if this instance is valid independently
 // as an ApplicationIDNum. It doesn't tell whether it refers to
 // a valid instance of Application.
 //
@@ -103,14 +103,14 @@ func (idNum ApplicationIDNum) IsZero() bool {
 // ApplicationIDNum. Whether the instance is valid for certain context,
 // it requires case-by-case validation which is out of the scope of this
 // method.
-func (idNum ApplicationIDNum) IsValid() bool {
+func (idNum ApplicationIDNum) IsSound() bool {
 	return int32(idNum) > 0 &&
 		(uint32(idNum)&ApplicationIDNumSignificantBitsMask) != 0
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (idNum ApplicationIDNum) IsNotValid() bool {
-	return !idNum.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (idNum ApplicationIDNum) IsNotSound() bool {
+	return !idNum.IsSound()
 }
 
 // Equals is required as ApplicationIDNum is a value-object.
@@ -176,7 +176,7 @@ func (idNum *ApplicationIDNum) UnmarshalAZIDBinField(
 // First-party applications could be in various forms, e.g.,
 // official mobile app, web app, or system dashboard.
 func (idNum ApplicationIDNum) IsFirstParty() bool {
-	return idNum.IsValid() && idNum.HasFirstPartyBits()
+	return idNum.IsSound() && idNum.HasFirstPartyBits()
 }
 
 const _ApplicationIDNumFirstPartyMask = 0b1000000_00000000_00000000_00000000
@@ -201,7 +201,7 @@ func (idNum ApplicationIDNum) HasFirstPartyBits() bool {
 // All service applications are confidential OAuth 2.0
 // clients (RFC6749 section 2.1).
 func (idNum ApplicationIDNum) IsService() bool {
-	return idNum.IsValid() && idNum.HasServiceBits()
+	return idNum.IsSound() && idNum.HasServiceBits()
 }
 
 const _ApplicationIDNumServiceMask = 0b100000_00000000_00000000_00000000
@@ -227,7 +227,7 @@ func (idNum ApplicationIDNum) HasServiceBits() bool {
 // These types align with OAuth 2.0 client types (RFC6749
 // section 2.1).
 func (idNum ApplicationIDNum) IsUserAgent() bool {
-	return idNum.IsValid() && idNum.HasUserAgentBits()
+	return idNum.IsSound() && idNum.HasUserAgentBits()
 }
 
 const _ApplicationIDNumUserAgentMask = 0b100000_00000000_00000000_00000000
@@ -258,7 +258,7 @@ func (idNum ApplicationIDNum) HasUserAgentBits() bool {
 // be focused on testing the user's claims and less of the
 // application's claims.
 func (idNum ApplicationIDNum) IsUserAgentAuthorizationPublic() bool {
-	return idNum.IsValid() && idNum.HasUserAgentAuthorizationPublicBits()
+	return idNum.IsSound() && idNum.HasUserAgentAuthorizationPublicBits()
 }
 
 const _ApplicationIDNumUserAgentAuthorizationPublicMask = 0b110000_00000000_00000000_00000000
@@ -282,7 +282,7 @@ func (idNum ApplicationIDNum) HasUserAgentAuthorizationPublicBits() bool {
 // A confidential user-agent can not be used for directly
 // performing user authentication.
 func (idNum ApplicationIDNum) IsUserAgentAuthorizationConfidential() bool {
-	return idNum.IsValid() && idNum.HasUserAgentAuthorizationConfidentialBits()
+	return idNum.IsSound() && idNum.HasUserAgentAuthorizationConfidentialBits()
 }
 
 const _ApplicationIDNumUserAgentAuthorizationConfidentialMask = 0b110000_00000000_00000000_00000000
@@ -352,7 +352,7 @@ func (refKey ApplicationRefKey) IDNum() ApplicationIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey ApplicationRefKey) IDNumPtr() *ApplicationIDNum {
-	if refKey.IsNotValid() {
+	if refKey.IsNotSound() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -369,15 +369,15 @@ func (refKey ApplicationRefKey) IsZero() bool {
 	return ApplicationIDNum(refKey) == ApplicationIDNumZero
 }
 
-// IsValid returns true if this instance is valid independently as a ref-key.
+// IsSound returns true if this instance is valid independently as a ref-key.
 // It doesn't tell whether it refers to a valid instance of Application.
-func (refKey ApplicationRefKey) IsValid() bool {
-	return ApplicationIDNum(refKey).IsValid()
+func (refKey ApplicationRefKey) IsSound() bool {
+	return ApplicationIDNum(refKey).IsSound()
 }
 
-// IsNotValid returns the negation of value returned by IsValid().
-func (refKey ApplicationRefKey) IsNotValid() bool {
-	return !refKey.IsValid()
+// IsNotSound returns the negation of value returned by IsSound.
+func (refKey ApplicationRefKey) IsNotSound() bool {
+	return !refKey.IsSound()
 }
 
 // Equals is required for conformance with azfl.EntityRefKey.
@@ -472,7 +472,7 @@ const _ApplicationRefKeyAZIDTextPrefix = "KAp0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey ApplicationRefKey) AZIDText() string {
-	if !refKey.IsValid() {
+	if !refKey.IsSound() {
 		return ""
 	}
 
