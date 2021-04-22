@@ -1,5 +1,5 @@
 
-GOLANG_IMAGE ?= golang:1.15
+GOLANG_IMAGE ?= golang:1.16
 TESTER_IMAGE ?= kadisoka-foundation-tester
 
 .PHONY: fmt
