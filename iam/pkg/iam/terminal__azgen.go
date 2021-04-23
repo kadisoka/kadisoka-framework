@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"strings"
 
@@ -18,6 +19,7 @@ var _ = azfl.AZCorePackageIsVersion1
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
+var _ = rand.Reader
 
 // Adjunct-entity Terminal of Application, User.
 //
@@ -51,9 +53,9 @@ var _ azid.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
 var _ azfl.AdjunctEntityIDNum = TerminalIDNumZero
 var _ azfl.TerminalIDNum = TerminalIDNumZero
 
-// TerminalIDNumSignificantBitsMask is used to
-// extract significant bits from an instance of TerminalIDNum.
-const TerminalIDNumSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
+// TerminalIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of TerminalIDNum.
+const TerminalIDNumIdentifierBitsMask uint64 = 0b_00000000_11111111_11111111_11111111_11111111_11111111_11111111_11111111
 
 // TerminalIDNumZero is the zero value for TerminalIDNum.
 const TerminalIDNumZero = TerminalIDNum(0)
@@ -109,32 +111,12 @@ func (idNum TerminalIDNum) IsZero() bool {
 // a valid instance of Terminal.
 func (idNum TerminalIDNum) IsSound() bool {
 	return int64(idNum) > 0 &&
-		(uint64(idNum)&TerminalIDNumSignificantBitsMask) != 0
+		(uint64(idNum)&TerminalIDNumIdentifierBitsMask) != 0
 }
 
 // IsNotSound returns the negation of value returned by IsSound.
 func (idNum TerminalIDNum) IsNotSound() bool {
 	return !idNum.IsSound()
-}
-
-// AZIDBinField is required for conformance
-// with azid.IDNum.
-func (idNum TerminalIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(idNum))
-	return b, azid.BinDataTypeInt64
-}
-
-// UnmarshalAZIDBinField is required for conformance
-// with azid.BinFieldUnmarshalable.
-func (idNum *TerminalIDNum) UnmarshalAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (readLen int, err error) {
-	i, readLen, err := TerminalIDNumFromAZIDBinField(b, typeHint)
-	if err == nil {
-		*idNum = i
-	}
-	return readLen, err
 }
 
 // Equals is required as TerminalIDNum is a value-object.
@@ -163,6 +145,52 @@ func (idNum TerminalIDNum) EqualsTerminalIDNum(
 	other TerminalIDNum,
 ) bool {
 	return idNum == other
+}
+
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum TerminalIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(idNum))
+	return b, azid.BinDataTypeInt64
+}
+
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *TerminalIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := TerminalIDNumFromAZIDBinField(b, typeHint)
+	if err == nil {
+		*idNum = i
+	}
+	return readLen, err
+}
+
+// Embedded fields
+const (
+	TerminalIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+)
+
+// GenerateTerminalIDNum generates a new TerminalIDNum.
+// Note that this function does not consulting any database nor registry.
+// This methode will not create an instance of Terminal, i.e., the
+// resulting TerminalIDNum might or might not refer to valid instance
+// of Terminal. The resulting TerminalIDNum is designed to be
+// used to create a new instance of Terminal.
+//
+// The embeddedFieldBits argument could be constructed by combining
+// TerminalIDNum*Bits constants.
+func GenerateTerminalIDNum(embeddedFieldBits uint64) (TerminalIDNum, error) {
+	idBytes := make([]byte, 8)
+	_, err := rand.Read(idBytes)
+	if err != nil {
+		return TerminalIDNumZero, errors.ArgWrap("", "random source reading", err)
+	}
+
+	idUint := (embeddedFieldBits & TerminalIDNumEmbeddedFieldsMask) |
+		(binary.BigEndian.Uint64(idBytes) & TerminalIDNumIdentifierBitsMask)
+	return TerminalIDNum(idUint), nil
 }
 
 //endregion

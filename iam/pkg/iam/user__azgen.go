@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"strings"
 
@@ -18,6 +19,7 @@ var _ = azfl.AZCorePackageIsVersion1
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
+var _ = rand.Reader
 
 // Entity User.
 
@@ -34,9 +36,9 @@ var _ azid.BinFieldUnmarshalable = &_UserIDNumZeroVar
 var _ azfl.EntityIDNum = UserIDNumZero
 var _ azfl.UserIDNum = UserIDNumZero
 
-// UserIDNumSignificantBitsMask is used to
-// extract significant bits from an instance of UserIDNum.
-const UserIDNumSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111
+// UserIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of UserIDNum.
+const UserIDNumIdentifierBitsMask uint64 = 0b_00000000_00000000_11111111_11111111_11111111_11111111_11111111_11111111
 
 // UserIDNumZero is the zero value
 // for UserIDNum.
@@ -108,7 +110,7 @@ func (idNum UserIDNum) IsZero() bool {
 // method.
 func (idNum UserIDNum) IsSound() bool {
 	return int64(idNum) > 0 &&
-		(uint64(idNum)&UserIDNumSignificantBitsMask) != 0
+		(uint64(idNum)&UserIDNumIdentifierBitsMask) != 0
 }
 
 // IsNotSound returns the negation of value returned by IsSound.
@@ -164,6 +166,14 @@ func (idNum *UserIDNum) UnmarshalAZIDBinField(
 	return readLen, err
 }
 
+// Embedded fields
+const (
+	UserIDNumEmbeddedFieldsMask = 0b_01000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+
+	UserIDNumBotMask = 0b_01000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+	UserIDNumBotBits = 0b_01000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+)
+
 // IsBot returns true if
 // the User instance this UserIDNum is for
 // is a Bot User.
@@ -173,15 +183,12 @@ func (idNum UserIDNum) IsBot() bool {
 	return idNum.IsSound() && idNum.HasBotBits()
 }
 
-const _UserIDNumBotMask = 0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
-const _UserIDNumBotBits = 0b1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
-
 // HasBotBits is only checking the bits
 // without validating other information.
 func (idNum UserIDNum) HasBotBits() bool {
 	return (uint64(idNum) &
-		_UserIDNumBotMask) ==
-		_UserIDNumBotBits
+		UserIDNumBotMask) ==
+		UserIDNumBotBits
 }
 
 type UserIDNumError interface {
@@ -189,7 +196,26 @@ type UserIDNumError interface {
 	UserIDNumError()
 }
 
-//TODO: (Un)MarshalText (for SQL?)
+// GenerateUserIDNum generates a new UserIDNum.
+// Note that this function does not consulting any database nor registry.
+// This methode will not create an instance of User, i.e., the
+// resulting UserIDNum might or might not refer to valid instance
+// of User. The resulting UserIDNum is designed to be
+// used to create a new instance of User.
+//
+// The embeddedFieldBits argument could be constructed by combining
+// UserIDNum*Bits constants.
+func GenerateUserIDNum(embeddedFieldBits uint64) (UserIDNum, error) {
+	idBytes := make([]byte, 8)
+	_, err := rand.Read(idBytes)
+	if err != nil {
+		return UserIDNumZero, errors.ArgWrap("", "random source reading", err)
+	}
+
+	idUint := (embeddedFieldBits & UserIDNumEmbeddedFieldsMask) |
+		(binary.BigEndian.Uint64(idBytes) & UserIDNumIdentifierBitsMask)
+	return UserIDNum(idUint), nil
+}
 
 //endregion
 
@@ -457,6 +483,123 @@ type UserRefKeyService interface {
 type UserRefKeyError interface {
 	error
 	UserRefKeyError()
+}
+
+//endregion
+
+//region Instance
+
+// UserInstanceService is a service which
+// provides methods to manipulate an instance of User.
+type UserInstanceService interface {
+	UserInstanceInfoService
+}
+
+// UserInstanceInfoService is a service which
+// provides access to instances metadata.
+type UserInstanceInfoService interface {
+	// GetUserInstanceInfo checks if the provided
+	// ref-key is valid and whether the instance is deleted.
+	//
+	// This method returns nil if the refKey is not referencing to any valid
+	// instance.
+	GetUserInstanceInfo(
+		callCtx CallContext,
+		refKey UserRefKey,
+	) (*UserInstanceInfo, error)
+}
+
+// UserInstanceInfo holds information about
+// an instance of User.
+type UserInstanceInfo struct {
+	RevisionNumber int32
+
+	// Deletion holds information about the deletion of the instance. If
+	// the instance has not been deleted, this field value will be nil.
+	Deletion *UserInstanceDeletionInfo
+}
+
+// UserInstanceInfoZero returns an instance of
+// UserInstanceInfo with attributes set their respective zero
+// value.
+func UserInstanceInfoZero() UserInstanceInfo {
+	return UserInstanceInfo{}
+}
+
+// IsActive returns true if the instance is considered as active.
+func (instInfo UserInstanceInfo) IsActive() bool {
+	// Note: we will check other flags in the future, but that's said,
+	// deleted instance is considered inactive.
+	return !instInfo.IsDeleted()
+}
+
+// IsDeleted returns true if the instance was deleted.
+func (instInfo UserInstanceInfo) IsDeleted() bool {
+	return instInfo.Deletion != nil && instInfo.Deletion.Deleted
+}
+
+//----
+
+// UserInstanceDeletionInfo holds information about
+// the deletion of an instance if the instance has been deleted.
+type UserInstanceDeletionInfo struct {
+	Deleted       bool
+	DeletionNotes string
+}
+
+//----
+
+// UserInstanceServiceInternal is a service which provides
+// methods for manipulating instances of User. Declared for
+// internal use within a process, this interface contains methods that
+// available to be called from another part of a process.
+type UserInstanceServiceInternal interface {
+	CreateUserInstanceInternal(
+		callCtx CallContext,
+		input UserInstanceCreationInput,
+	) (refKey UserRefKey, initialState UserInstanceInfo, err error)
+
+	// DeleteUserInstanceInternal deletes an instance of
+	// User entity based identfied by refOfInstToDel.
+	// The returned instanceMutated will have the value of
+	// true if this particular call resulted the deletion of the instance and
+	// it will have the value of false of subsequent calls to this method.
+	DeleteUserInstanceInternal(
+		callCtx CallContext,
+		refOfInstToDel UserRefKey,
+		input UserInstanceDeletionInput,
+	) (instanceMutated bool, currentState UserInstanceInfo, err error)
+}
+
+// UserInstanceCreationInput contains data to be passed
+// as an argument when invoking the method CreateUserInstanceInternal
+// of UserInstanceServiceInternal.
+type UserInstanceCreationInput struct {
+}
+
+// UserInstanceDeletionInput contains data to be passed
+// as an argument when invoking the method DeleteUserInstanceInternal
+// of UserInstanceServiceInternal.
+type UserInstanceDeletionInput struct {
+	DeletionNotes string
+}
+
+//endregion
+
+//region Service
+
+// UserService provides a contract
+// for methods related to entity User.
+type UserService interface {
+	// AZxEntityService
+
+	UserInstanceService
+}
+
+// UserServiceClient is the interface for
+// clients of UserService.
+type UserServiceClient interface {
+	UserService
 }
 
 //endregion

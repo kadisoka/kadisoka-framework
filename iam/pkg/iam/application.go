@@ -1,10 +1,5 @@
 package iam
 
-import (
-	"crypto/rand"
-	"encoding/binary"
-)
-
 type ApplicationData struct {
 	DisplayName       string
 	Secret            string
@@ -40,25 +35,22 @@ type ApplicationDataProvider interface {
 func GenerateApplicationRefKey(firstParty bool, clientTyp string) ApplicationRefKey {
 	var typeInfo uint32
 	if firstParty {
-		typeInfo = _ApplicationIDNumFirstPartyBits
+		typeInfo = ApplicationIDNumFirstPartyBits
 	}
 	switch clientTyp {
 	case "service":
-		typeInfo |= _ApplicationIDNumServiceBits
+		typeInfo |= ApplicationIDNumServiceBits
 	case "ua-public":
-		typeInfo |= _ApplicationIDNumUserAgentAuthorizationPublicBits
+		typeInfo |= ApplicationIDNumUserAgentAuthorizationPublicBits
 	case "ua-confidential":
-		typeInfo |= _ApplicationIDNumUserAgentAuthorizationConfidentialBits
+		typeInfo |= ApplicationIDNumUserAgentAuthorizationConfidentialBits
 	default:
 		panic("Unsupported client app type")
 	}
-	instIDBytes := make([]byte, 4)
-	_, err := rand.Read(instIDBytes[1:])
+	//TODO: reserve some ranges (?)
+	appIDNum, err := GenerateApplicationIDNum(typeInfo)
 	if err != nil {
 		panic(err)
 	}
-	//TODO: reserve some ranges (?)
-	instID := binary.BigEndian.Uint32(instIDBytes) & ApplicationIDNumSignificantBitsMask
-	appID := ApplicationIDNumFromPrimitiveValue(int32(typeInfo | instID))
-	return NewApplicationRefKey(appID)
+	return NewApplicationRefKey(appIDNum)
 }

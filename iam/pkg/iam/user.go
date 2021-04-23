@@ -5,14 +5,6 @@ import (
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
-type UserService interface {
-	UserInstanceService
-}
-
-type UserServiceClient interface {
-	UserService
-}
-
 type UserServiceInternal interface {
 	UserInstanceServiceInternal
 	UserProfileService

@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"strings"
 
@@ -18,6 +19,7 @@ var _ = azfl.AZCorePackageIsVersion1
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
+var _ = rand.Reader
 
 // Adjunct-entity Session of Terminal.
 //
@@ -46,9 +48,9 @@ var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
 var _ azfl.AdjunctEntityIDNum = SessionIDNumZero
 var _ azfl.SessionIDNum = SessionIDNumZero
 
-// SessionIDNumSignificantBitsMask is used to
-// extract significant bits from an instance of SessionIDNum.
-const SessionIDNumSignificantBitsMask uint32 = 0b11111111_11111111_11111111
+// SessionIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of SessionIDNum.
+const SessionIDNumIdentifierBitsMask uint32 = 0b_00000000_11111111_11111111_11111111
 
 // SessionIDNumZero is the zero value for SessionIDNum.
 const SessionIDNumZero = SessionIDNum(0)
@@ -104,32 +106,12 @@ func (idNum SessionIDNum) IsZero() bool {
 // a valid instance of Session.
 func (idNum SessionIDNum) IsSound() bool {
 	return int32(idNum) > 0 &&
-		(uint32(idNum)&SessionIDNumSignificantBitsMask) != 0
+		(uint32(idNum)&SessionIDNumIdentifierBitsMask) != 0
 }
 
 // IsNotSound returns the negation of value returned by IsSound.
 func (idNum SessionIDNum) IsNotSound() bool {
 	return !idNum.IsSound()
-}
-
-// AZIDBinField is required for conformance
-// with azid.IDNum.
-func (idNum SessionIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, uint32(idNum))
-	return b, azid.BinDataTypeInt32
-}
-
-// UnmarshalAZIDBinField is required for conformance
-// with azid.BinFieldUnmarshalable.
-func (idNum *SessionIDNum) UnmarshalAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (readLen int, err error) {
-	i, readLen, err := SessionIDNumFromAZIDBinField(b, typeHint)
-	if err == nil {
-		*idNum = i
-	}
-	return readLen, err
 }
 
 // Equals is required as SessionIDNum is a value-object.
@@ -158,6 +140,52 @@ func (idNum SessionIDNum) EqualsSessionIDNum(
 	other SessionIDNum,
 ) bool {
 	return idNum == other
+}
+
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum SessionIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b, uint32(idNum))
+	return b, azid.BinDataTypeInt32
+}
+
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *SessionIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := SessionIDNumFromAZIDBinField(b, typeHint)
+	if err == nil {
+		*idNum = i
+	}
+	return readLen, err
+}
+
+// Embedded fields
+const (
+	SessionIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000
+)
+
+// GenerateSessionIDNum generates a new SessionIDNum.
+// Note that this function does not consulting any database nor registry.
+// This methode will not create an instance of Session, i.e., the
+// resulting SessionIDNum might or might not refer to valid instance
+// of Session. The resulting SessionIDNum is designed to be
+// used to create a new instance of Session.
+//
+// The embeddedFieldBits argument could be constructed by combining
+// SessionIDNum*Bits constants.
+func GenerateSessionIDNum(embeddedFieldBits uint32) (SessionIDNum, error) {
+	idBytes := make([]byte, 4)
+	_, err := rand.Read(idBytes)
+	if err != nil {
+		return SessionIDNumZero, errors.ArgWrap("", "random source reading", err)
+	}
+
+	idUint := (embeddedFieldBits & SessionIDNumEmbeddedFieldsMask) |
+		(binary.BigEndian.Uint32(idBytes) & SessionIDNumIdentifierBitsMask)
+	return SessionIDNum(idUint), nil
 }
 
 //endregion

@@ -5,7 +5,6 @@ import (
 	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
-	"encoding/binary"
 	"strings"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
@@ -520,7 +519,7 @@ func (core *Core) registerTerminalNoAC(
 	}
 
 	//TODO: if id conflict, generate another id and retry
-	termID, err := core.generateTerminalIDNum()
+	termID, err := iam.GenerateTerminalIDNum(0)
 	if err != nil {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
 			Err: errors.Wrap("ID generation", err)}}
@@ -665,16 +664,6 @@ func (core *Core) setTerminalVerified(
 	}
 
 	return termSecret, nil
-}
-
-func (core *Core) generateTerminalIDNum() (iam.TerminalIDNum, error) {
-	b := make([]byte, 8)
-	_, err := rand.Read(b[2:])
-	if err != nil {
-		panic(err)
-	}
-	h := binary.BigEndian.Uint64(b) & iam.TerminalIDNumSignificantBitsMask
-	return iam.TerminalIDNumFromPrimitiveValue(int64(h)), nil
 }
 
 func (core *Core) generateTerminalSecret() string {

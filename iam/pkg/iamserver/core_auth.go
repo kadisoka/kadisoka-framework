@@ -1,7 +1,6 @@
 package iamserver
 
 import (
-	"crypto/rand"
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
@@ -113,25 +112,10 @@ func (core *Core) issueSession(
 	sessionExpiry := timeZero
 	var sessionIDNum iam.SessionIDNum
 
-	//TODO: make this more random. using timestamp might cause some security
-	// and/or privacy issue.
-	// Note:
-	// - 0xffffffffffffff00 - timestamp
-	// - 0x00000000000000ff - random
-	genSessionIDNum := func(ts int64) (iam.SessionIDNum, error) {
-		idBytes := make([]byte, 1)
-		_, err := rand.Read(idBytes)
-		if err != nil {
-			return iam.SessionIDNumZero, errors.Wrap("generation", err)
-		}
-		bits := ((ts << 8) | int64(idBytes[0])) & int64(iam.SessionIDNumSignificantBitsMask)
-		return iam.SessionIDNum(bits), nil
-	}
-
 	for attemptNum := 0; ; attemptNum++ {
 		sessionStartTime = time.Now().UTC()
 		sessionExpiry = sessionStartTime.Add(iam.AccessTokenTTLDefault)
-		sessionIDNum, err = genSessionIDNum(sessionStartTime.Unix())
+		sessionIDNum, err = iam.GenerateSessionIDNum(0)
 		if err != nil {
 			return iam.SessionRefKeyZero(), timeZero, timeZero, err
 		}

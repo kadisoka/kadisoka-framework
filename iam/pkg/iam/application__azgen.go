@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"strings"
 
@@ -18,6 +19,7 @@ var _ = azfl.AZCorePackageIsVersion1
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
+var _ = rand.Reader
 
 // Entity Application.
 //
@@ -35,9 +37,9 @@ var _ azid.IDNum = ApplicationIDNumZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationIDNumZeroVar
 var _ azfl.EntityIDNum = ApplicationIDNumZero
 
-// ApplicationIDNumSignificantBitsMask is used to
-// extract significant bits from an instance of ApplicationIDNum.
-const ApplicationIDNumSignificantBitsMask uint32 = 0b11_11111111_11111111_11111111
+// ApplicationIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of ApplicationIDNum.
+const ApplicationIDNumIdentifierBitsMask uint32 = 0b_00000011_11111111_11111111_11111111
 
 // ApplicationIDNumZero is the zero value
 // for ApplicationIDNum.
@@ -105,7 +107,7 @@ func (idNum ApplicationIDNum) IsZero() bool {
 // method.
 func (idNum ApplicationIDNum) IsSound() bool {
 	return int32(idNum) > 0 &&
-		(uint32(idNum)&ApplicationIDNumSignificantBitsMask) != 0
+		(uint32(idNum)&ApplicationIDNumIdentifierBitsMask) != 0
 }
 
 // IsNotSound returns the negation of value returned by IsSound.
@@ -161,6 +163,22 @@ func (idNum *ApplicationIDNum) UnmarshalAZIDBinField(
 	return readLen, err
 }
 
+// Embedded fields
+const (
+	ApplicationIDNumEmbeddedFieldsMask = 0b_01110000_00000000_00000000_00000000
+
+	ApplicationIDNumFirstPartyMask                         = 0b_01000000_00000000_00000000_00000000
+	ApplicationIDNumFirstPartyBits                         = 0b_01000000_00000000_00000000_00000000
+	ApplicationIDNumServiceMask                            = 0b_00100000_00000000_00000000_00000000
+	ApplicationIDNumServiceBits                            = 0b_00000000_00000000_00000000_00000000
+	ApplicationIDNumUserAgentMask                          = 0b_00100000_00000000_00000000_00000000
+	ApplicationIDNumUserAgentBits                          = 0b_00100000_00000000_00000000_00000000
+	ApplicationIDNumUserAgentAuthorizationPublicMask       = 0b_00110000_00000000_00000000_00000000
+	ApplicationIDNumUserAgentAuthorizationPublicBits       = 0b_00100000_00000000_00000000_00000000
+	ApplicationIDNumUserAgentAuthorizationConfidentialMask = 0b_00110000_00000000_00000000_00000000
+	ApplicationIDNumUserAgentAuthorizationConfidentialBits = 0b_00110000_00000000_00000000_00000000
+)
+
 // IsFirstParty returns true if
 // the Application instance this ApplicationIDNum is for
 // is a FirstParty Application.
@@ -179,15 +197,12 @@ func (idNum ApplicationIDNum) IsFirstParty() bool {
 	return idNum.IsSound() && idNum.HasFirstPartyBits()
 }
 
-const _ApplicationIDNumFirstPartyMask = 0b1000000_00000000_00000000_00000000
-const _ApplicationIDNumFirstPartyBits = 0b1000000_00000000_00000000_00000000
-
 // HasFirstPartyBits is only checking the bits
 // without validating other information.
 func (idNum ApplicationIDNum) HasFirstPartyBits() bool {
 	return (uint32(idNum) &
-		_ApplicationIDNumFirstPartyMask) ==
-		_ApplicationIDNumFirstPartyBits
+		ApplicationIDNumFirstPartyMask) ==
+		ApplicationIDNumFirstPartyBits
 }
 
 // IsService returns true if
@@ -204,15 +219,12 @@ func (idNum ApplicationIDNum) IsService() bool {
 	return idNum.IsSound() && idNum.HasServiceBits()
 }
 
-const _ApplicationIDNumServiceMask = 0b100000_00000000_00000000_00000000
-const _ApplicationIDNumServiceBits = 0b0
-
 // HasServiceBits is only checking the bits
 // without validating other information.
 func (idNum ApplicationIDNum) HasServiceBits() bool {
 	return (uint32(idNum) &
-		_ApplicationIDNumServiceMask) ==
-		_ApplicationIDNumServiceBits
+		ApplicationIDNumServiceMask) ==
+		ApplicationIDNumServiceBits
 }
 
 // IsUserAgent returns true if
@@ -230,15 +242,12 @@ func (idNum ApplicationIDNum) IsUserAgent() bool {
 	return idNum.IsSound() && idNum.HasUserAgentBits()
 }
 
-const _ApplicationIDNumUserAgentMask = 0b100000_00000000_00000000_00000000
-const _ApplicationIDNumUserAgentBits = 0b100000_00000000_00000000_00000000
-
 // HasUserAgentBits is only checking the bits
 // without validating other information.
 func (idNum ApplicationIDNum) HasUserAgentBits() bool {
 	return (uint32(idNum) &
-		_ApplicationIDNumUserAgentMask) ==
-		_ApplicationIDNumUserAgentBits
+		ApplicationIDNumUserAgentMask) ==
+		ApplicationIDNumUserAgentBits
 }
 
 // IsUserAgentAuthorizationPublic returns true if
@@ -261,15 +270,12 @@ func (idNum ApplicationIDNum) IsUserAgentAuthorizationPublic() bool {
 	return idNum.IsSound() && idNum.HasUserAgentAuthorizationPublicBits()
 }
 
-const _ApplicationIDNumUserAgentAuthorizationPublicMask = 0b110000_00000000_00000000_00000000
-const _ApplicationIDNumUserAgentAuthorizationPublicBits = 0b100000_00000000_00000000_00000000
-
 // HasUserAgentAuthorizationPublicBits is only checking the bits
 // without validating other information.
 func (idNum ApplicationIDNum) HasUserAgentAuthorizationPublicBits() bool {
 	return (uint32(idNum) &
-		_ApplicationIDNumUserAgentAuthorizationPublicMask) ==
-		_ApplicationIDNumUserAgentAuthorizationPublicBits
+		ApplicationIDNumUserAgentAuthorizationPublicMask) ==
+		ApplicationIDNumUserAgentAuthorizationPublicBits
 }
 
 // IsUserAgentAuthorizationConfidential returns true if
@@ -285,15 +291,12 @@ func (idNum ApplicationIDNum) IsUserAgentAuthorizationConfidential() bool {
 	return idNum.IsSound() && idNum.HasUserAgentAuthorizationConfidentialBits()
 }
 
-const _ApplicationIDNumUserAgentAuthorizationConfidentialMask = 0b110000_00000000_00000000_00000000
-const _ApplicationIDNumUserAgentAuthorizationConfidentialBits = 0b110000_00000000_00000000_00000000
-
 // HasUserAgentAuthorizationConfidentialBits is only checking the bits
 // without validating other information.
 func (idNum ApplicationIDNum) HasUserAgentAuthorizationConfidentialBits() bool {
 	return (uint32(idNum) &
-		_ApplicationIDNumUserAgentAuthorizationConfidentialMask) ==
-		_ApplicationIDNumUserAgentAuthorizationConfidentialBits
+		ApplicationIDNumUserAgentAuthorizationConfidentialMask) ==
+		ApplicationIDNumUserAgentAuthorizationConfidentialBits
 }
 
 type ApplicationIDNumError interface {
@@ -301,7 +304,26 @@ type ApplicationIDNumError interface {
 	ApplicationIDNumError()
 }
 
-//TODO: (Un)MarshalText (for SQL?)
+// GenerateApplicationIDNum generates a new ApplicationIDNum.
+// Note that this function does not consulting any database nor registry.
+// This methode will not create an instance of Application, i.e., the
+// resulting ApplicationIDNum might or might not refer to valid instance
+// of Application. The resulting ApplicationIDNum is designed to be
+// used to create a new instance of Application.
+//
+// The embeddedFieldBits argument could be constructed by combining
+// ApplicationIDNum*Bits constants.
+func GenerateApplicationIDNum(embeddedFieldBits uint32) (ApplicationIDNum, error) {
+	idBytes := make([]byte, 4)
+	_, err := rand.Read(idBytes)
+	if err != nil {
+		return ApplicationIDNumZero, errors.ArgWrap("", "random source reading", err)
+	}
+
+	idUint := (embeddedFieldBits & ApplicationIDNumEmbeddedFieldsMask) |
+		(binary.BigEndian.Uint32(idBytes) & ApplicationIDNumIdentifierBitsMask)
+	return ApplicationIDNum(idUint), nil
+}
 
 //endregion
 
@@ -562,6 +584,121 @@ type ApplicationRefKeyService interface {
 type ApplicationRefKeyError interface {
 	error
 	ApplicationRefKeyError()
+}
+
+//endregion
+
+//region Instance
+
+// ApplicationInstanceService is a service which
+// provides methods to manipulate an instance of Application.
+type ApplicationInstanceService interface {
+	ApplicationInstanceInfoService
+}
+
+// ApplicationInstanceInfoService is a service which
+// provides access to instances metadata.
+type ApplicationInstanceInfoService interface {
+	// GetApplicationInstanceInfo checks if the provided
+	// ref-key is valid and whether the instance is deleted.
+	//
+	// This method returns nil if the refKey is not referencing to any valid
+	// instance.
+	GetApplicationInstanceInfo(
+		callCtx CallContext,
+		refKey ApplicationRefKey,
+	) (*ApplicationInstanceInfo, error)
+}
+
+// ApplicationInstanceInfo holds information about
+// an instance of Application.
+type ApplicationInstanceInfo struct {
+	RevisionNumber int32
+
+	// Deletion holds information about the deletion of the instance. If
+	// the instance has not been deleted, this field value will be nil.
+	Deletion *ApplicationInstanceDeletionInfo
+}
+
+// ApplicationInstanceInfoZero returns an instance of
+// ApplicationInstanceInfo with attributes set their respective zero
+// value.
+func ApplicationInstanceInfoZero() ApplicationInstanceInfo {
+	return ApplicationInstanceInfo{}
+}
+
+// IsActive returns true if the instance is considered as active.
+func (instInfo ApplicationInstanceInfo) IsActive() bool {
+	// Note: we will check other flags in the future, but that's said,
+	// deleted instance is considered inactive.
+	return !instInfo.IsDeleted()
+}
+
+// IsDeleted returns true if the instance was deleted.
+func (instInfo ApplicationInstanceInfo) IsDeleted() bool {
+	return instInfo.Deletion != nil && instInfo.Deletion.Deleted
+}
+
+//----
+
+// ApplicationInstanceDeletionInfo holds information about
+// the deletion of an instance if the instance has been deleted.
+type ApplicationInstanceDeletionInfo struct {
+	Deleted bool
+}
+
+//----
+
+// ApplicationInstanceServiceInternal is a service which provides
+// methods for manipulating instances of Application. Declared for
+// internal use within a process, this interface contains methods that
+// available to be called from another part of a process.
+type ApplicationInstanceServiceInternal interface {
+	CreateApplicationInstanceInternal(
+		callCtx CallContext,
+		input ApplicationInstanceCreationInput,
+	) (refKey ApplicationRefKey, initialState ApplicationInstanceInfo, err error)
+
+	// DeleteApplicationInstanceInternal deletes an instance of
+	// Application entity based identfied by refOfInstToDel.
+	// The returned instanceMutated will have the value of
+	// true if this particular call resulted the deletion of the instance and
+	// it will have the value of false of subsequent calls to this method.
+	DeleteApplicationInstanceInternal(
+		callCtx CallContext,
+		refOfInstToDel ApplicationRefKey,
+		input ApplicationInstanceDeletionInput,
+	) (instanceMutated bool, currentState ApplicationInstanceInfo, err error)
+}
+
+// ApplicationInstanceCreationInput contains data to be passed
+// as an argument when invoking the method CreateApplicationInstanceInternal
+// of ApplicationInstanceServiceInternal.
+type ApplicationInstanceCreationInput struct {
+}
+
+// ApplicationInstanceDeletionInput contains data to be passed
+// as an argument when invoking the method DeleteApplicationInstanceInternal
+// of ApplicationInstanceServiceInternal.
+type ApplicationInstanceDeletionInput struct {
+}
+
+//endregion
+
+//region Service
+
+// ApplicationService provides a contract
+// for methods related to entity Application.
+type ApplicationService interface {
+	// AZxEntityService
+
+	ApplicationInstanceService
+}
+
+// ApplicationServiceClient is the interface for
+// clients of ApplicationService.
+type ApplicationServiceClient interface {
+	ApplicationService
 }
 
 //endregion

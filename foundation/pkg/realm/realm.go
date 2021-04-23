@@ -33,9 +33,11 @@ func DefaultInfo() Info {
 		Name:                                   NameDefault,
 		URL:                                    URLDefault,
 		Contact:                                ContactInfo{EmailAddress: ContactEmailAddressDefault},
-		Developer:                              DeveloperInfo{Name: DeveloperNameDefault},
-		Maintainer:                             MaintainerInfo{Name: MaintainerNameDefault},
 		ServiceNotificationEmailsSenderAddress: ServiceNotificationEmailsSenderAddressDefault,
+		System: SystemInfo{
+			Developer:  DeveloperInfo{Name: DeveloperNameDefault},
+			Maintainer: MaintainerInfo{Name: MaintainerNameDefault},
+		},
 	}
 }
 
@@ -52,10 +54,11 @@ type Info struct {
 	TermsOfServiceURL string
 	PrivacyPolicyURL  string
 
-	Contact                                ContactInfo
-	Developer                              DeveloperInfo
-	Maintainer                             MaintainerInfo
+	Contact ContactInfo
+
 	ServiceNotificationEmailsSenderAddress string
+
+	System SystemInfo
 }
 
 // InfoZero returns a zero-valued Info.
@@ -89,6 +92,11 @@ func InfoFromEnv(envVarsPrefix string, defaultInfo *Info) (Info, error) {
 //TODO: person or organization.
 type ContactInfo struct {
 	EmailAddress string
+}
+
+type SystemInfo struct {
+	Developer  DeveloperInfo
+	Maintainer MaintainerInfo
 }
 
 //TODO: person or organization.
