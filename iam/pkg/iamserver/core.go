@@ -40,10 +40,9 @@ type Core struct {
 	realmInfo realm.Info
 	db        *sqlx.DB
 
-	registeredUserIDNumCache *lru.ARCCache
-	deletedUserIDNumCache    *lru.ARCCache
-
 	iam.ConsumerServer
+
+	UserService *UserServiceServerBase //TODO: the interface
 
 	applicationDataProvider iam.ApplicationDataProvider
 	mediaStore              *mediastore.Store
@@ -117,18 +116,23 @@ func NewCoreByConfig(
 		panic(err)
 	}
 
-	inst := &Core{
-		realmInfo:                realmInfo,
+	userService := &UserServiceServerBase{
 		db:                       iamDB,
 		registeredUserIDNumCache: registeredUserIDNumCache,
 		deletedUserIDNumCache:    deletedUserIDNumCache,
-		applicationDataProvider:  applicationDataProvider,
-		mediaStore:               mediaStore,
-		eaVerifier:               eaVerifier,
-		pnVerifier:               pnVerifier,
 	}
 
-	svcForServer, err := iam.NewConsumerServer(nil, jwtKeyChain, inst)
+	inst := &Core{
+		realmInfo:               realmInfo,
+		db:                      iamDB,
+		UserService:             userService,
+		applicationDataProvider: applicationDataProvider,
+		mediaStore:              mediaStore,
+		eaVerifier:              eaVerifier,
+		pnVerifier:              pnVerifier,
+	}
+
+	svcForServer, err := iam.NewConsumerServer(nil, jwtKeyChain, userService)
 	if err != nil {
 		panic(err)
 	}

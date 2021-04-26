@@ -178,7 +178,7 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 	}
 
 	if userRef.IsSound() {
-		userInstInfo, err := authServer.iamServerCore.
+		userInstInfo, err := authServer.iamServerCore.UserService.
 			GetUserInstanceInfo(reqCtx, userRef)
 		if err != nil {
 			logCtx(reqCtx).

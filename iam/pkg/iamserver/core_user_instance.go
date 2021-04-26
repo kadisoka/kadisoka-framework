@@ -1,8 +1,6 @@
 package iamserver
 
 import (
-	"database/sql"
-
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/jmoiron/sqlx"
@@ -13,115 +11,6 @@ import (
 
 // Interface conformance assertion.
 var _ iam.UserInstanceServiceInternal = &Core{}
-
-const userDBTableName = "user_dt"
-
-// GetUserInstanceInfo retrieves the state of an user account. It includes
-// the existence of the ID, and wether the account has been deleted.
-//
-// If it's required only to determine the existence of the ID,
-// IsUserRefKeyRegistered is generally more efficient.
-func (core *Core) GetUserInstanceInfo(
-	callCtx iam.CallContext,
-	userRef iam.UserRefKey,
-) (*iam.UserInstanceInfo, error) {
-	//TODO: ACCESS CONTROL
-	return core.getUserInstanceInfoNoAC(callCtx, userRef)
-}
-
-func (core *Core) getUserInstanceInfoNoAC(
-	callCtx iam.CallContext,
-	userRef iam.UserRefKey,
-) (*iam.UserInstanceInfo, error) {
-	idRegistered := false
-	idRegisteredCacheHit := false
-	instDeleted := false
-	instDeletionCacheHit := false
-
-	// Look up for an user ID in the cache.
-	if _, idRegistered = core.registeredUserIDNumCache.Get(userRef); idRegistered {
-		// User ID is positively registered.
-		idRegisteredCacheHit = true
-	}
-
-	// Look up in the cache
-	if _, instDeleted = core.deletedUserIDNumCache.Get(userRef); instDeleted {
-		// Account is positively deleted
-		instDeletionCacheHit = true
-	}
-
-	if idRegisteredCacheHit && instDeletionCacheHit {
-		if !idRegistered {
-			return nil, nil
-		}
-		var deletion *iam.UserInstanceDeletionInfo
-		if instDeleted {
-			deletion = &iam.UserInstanceDeletionInfo{Deleted: true}
-		}
-		//TODO: populate revision number
-		return &iam.UserInstanceInfo{
-			Deletion: deletion,
-		}, nil
-	}
-
-	var err error
-	idRegistered, instDeleted, err = core.
-		getUserInstanceStateByIDNum(userRef.IDNum())
-	if err != nil {
-		return nil, err
-	}
-
-	if !idRegisteredCacheHit && idRegistered {
-		core.registeredUserIDNumCache.Add(userRef, nil)
-	}
-	if !instDeletionCacheHit && instDeleted {
-		core.deletedUserIDNumCache.Add(userRef, nil)
-	}
-
-	if !idRegistered {
-		return nil, nil
-	}
-
-	var deletion *iam.UserInstanceDeletionInfo
-	if instDeleted {
-		//TODO: deletion notes. store the notes as the value in the cache
-		deletion = &iam.UserInstanceDeletionInfo{Deleted: true}
-	}
-
-	//TODO: populate revision number
-	return &iam.UserInstanceInfo{
-		RevisionNumber: -1,
-		Deletion:       deletion,
-	}, nil
-}
-
-func (core *Core) getUserInstanceStateByIDNum(
-	idNum iam.UserIDNum,
-) (idRegistered, accountDeleted bool, err error) {
-	sqlString, _, _ := goqu.From(userDBTableName).
-		Select(
-			goqu.Case().
-				When(goqu.C("d_ts").IsNull(), false).
-				Else(true).
-				As("deleted"),
-		).
-		Where(
-			goqu.C("id").Eq(idNum.PrimitiveValue()),
-		).
-		ToSQL()
-
-	err = core.db.
-		QueryRow(sqlString).
-		Scan(&accountDeleted)
-	if err == sql.ErrNoRows {
-		return false, false, nil
-	}
-	if err != nil {
-		return false, false, err
-	}
-
-	return true, accountDeleted, nil
-}
 
 func (core *Core) CreateUserInstanceInternal(
 	callCtx iam.CallContext,
@@ -264,7 +153,7 @@ func (core *Core) deleteUserInstanceNoAC(
 			DeletionNotes: input.DeletionNotes,
 		}
 	} else {
-		di, err := core.getUserInstanceInfoNoAC(callCtx, userRef)
+		di, err := core.UserService.getUserInstanceInfoNoAC(callCtx, userRef)
 		if err != nil {
 			return false, iam.UserInstanceInfoZero(), err
 		}
@@ -293,7 +182,7 @@ func (core *Core) contextUserOrNewInstance(
 	ctxAuth := callCtx.Authorization()
 	if ctxAuth.IsUserContext() {
 		userRef = ctxAuth.UserRef()
-		if !core.IsUserRefKeyRegistered(userRef) {
+		if !core.UserService.IsUserRefKeyRegistered(userRef) {
 			return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx.Authorization", "invalid")
 		}
 		return userRef, false, nil
