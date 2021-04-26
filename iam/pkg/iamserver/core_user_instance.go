@@ -149,7 +149,7 @@ func (core *Core) createUserInstanceNoAC(
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
 		// type is iam.UserInstanceCreationInput .
-		newUserIDNum, err = iam.GenerateUserIDNum(0)
+		newUserIDNum, err = GenerateUserIDNum(0)
 		if err != nil {
 			panic(err)
 		}

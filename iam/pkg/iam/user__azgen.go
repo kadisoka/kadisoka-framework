@@ -196,27 +196,6 @@ type UserIDNumError interface {
 	UserIDNumError()
 }
 
-// GenerateUserIDNum generates a new UserIDNum.
-// Note that this function does not consulting any database nor registry.
-// This methode will not create an instance of User, i.e., the
-// resulting UserIDNum might or might not refer to valid instance
-// of User. The resulting UserIDNum is designed to be
-// used to create a new instance of User.
-//
-// The embeddedFieldBits argument could be constructed by combining
-// UserIDNum*Bits constants.
-func GenerateUserIDNum(embeddedFieldBits uint64) (UserIDNum, error) {
-	idBytes := make([]byte, 8)
-	_, err := rand.Read(idBytes)
-	if err != nil {
-		return UserIDNumZero, errors.ArgWrap("", "random source reading", err)
-	}
-
-	idUint := (embeddedFieldBits & UserIDNumEmbeddedFieldsMask) |
-		(binary.BigEndian.Uint64(idBytes) & UserIDNumIdentifierBitsMask)
-	return UserIDNum(idUint), nil
-}
-
 //endregion
 
 //region RefKey

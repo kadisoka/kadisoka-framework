@@ -28,29 +28,3 @@ type Application struct {
 type ApplicationDataProvider interface {
 	GetApplication(refKey ApplicationRefKey) (*Application, error)
 }
-
-// GenerateApplicationRefKey generates a new ApplicationRefKey. Note that this function is
-// not consulting any database. To ensure that the generated ApplicationRefKey is
-// unique, check the client database.
-func GenerateApplicationRefKey(firstParty bool, clientTyp string) ApplicationRefKey {
-	var typeInfo uint32
-	if firstParty {
-		typeInfo = ApplicationIDNumFirstPartyBits
-	}
-	switch clientTyp {
-	case "service":
-		typeInfo |= ApplicationIDNumServiceBits
-	case "ua-public":
-		typeInfo |= ApplicationIDNumUserAgentAuthorizationPublicBits
-	case "ua-confidential":
-		typeInfo |= ApplicationIDNumUserAgentAuthorizationConfidentialBits
-	default:
-		panic("Unsupported client app type")
-	}
-	//TODO: reserve some ranges (?)
-	appIDNum, err := GenerateApplicationIDNum(typeInfo)
-	if err != nil {
-		panic(err)
-	}
-	return NewApplicationRefKey(appIDNum)
-}

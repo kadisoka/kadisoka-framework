@@ -304,27 +304,6 @@ type ApplicationIDNumError interface {
 	ApplicationIDNumError()
 }
 
-// GenerateApplicationIDNum generates a new ApplicationIDNum.
-// Note that this function does not consulting any database nor registry.
-// This methode will not create an instance of Application, i.e., the
-// resulting ApplicationIDNum might or might not refer to valid instance
-// of Application. The resulting ApplicationIDNum is designed to be
-// used to create a new instance of Application.
-//
-// The embeddedFieldBits argument could be constructed by combining
-// ApplicationIDNum*Bits constants.
-func GenerateApplicationIDNum(embeddedFieldBits uint32) (ApplicationIDNum, error) {
-	idBytes := make([]byte, 4)
-	_, err := rand.Read(idBytes)
-	if err != nil {
-		return ApplicationIDNumZero, errors.ArgWrap("", "random source reading", err)
-	}
-
-	idUint := (embeddedFieldBits & ApplicationIDNumEmbeddedFieldsMask) |
-		(binary.BigEndian.Uint32(idBytes) & ApplicationIDNumIdentifierBitsMask)
-	return ApplicationIDNum(idUint), nil
-}
-
 //endregion
 
 //region RefKey

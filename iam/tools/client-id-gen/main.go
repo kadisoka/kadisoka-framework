@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
 )
 
 func main() {
@@ -15,9 +16,35 @@ func main() {
 		os.Exit(-1)
 	}
 	firstParty := os.Args[1] == "true"
-	clientID := iam.GenerateApplicationRefKey(firstParty, os.Args[2])
+	clientID := GenerateApplicationRefKey(firstParty, os.Args[2])
 	clientSecret := genSecret(16)
 	fmt.Fprintf(os.Stdout, "%s\n%s\n", clientID.AZIDText(), clientSecret)
+}
+
+// GenerateApplicationRefKey generates a new ApplicationRefKey. Note that this function is
+// not consulting any database. To ensure that the generated ApplicationRefKey is
+// unique, check the client database.
+func GenerateApplicationRefKey(firstParty bool, clientTyp string) iam.ApplicationRefKey {
+	var typeInfo uint32
+	if firstParty {
+		typeInfo = iam.ApplicationIDNumFirstPartyBits
+	}
+	switch clientTyp {
+	case "service":
+		typeInfo |= iam.ApplicationIDNumServiceBits
+	case "ua-public":
+		typeInfo |= iam.ApplicationIDNumUserAgentAuthorizationPublicBits
+	case "ua-confidential":
+		typeInfo |= iam.ApplicationIDNumUserAgentAuthorizationConfidentialBits
+	default:
+		panic("Unsupported client app type")
+	}
+	//TODO: reserve some ranges (?)
+	appIDNum, err := iamserver.GenerateApplicationIDNum(typeInfo)
+	if err != nil {
+		panic(err)
+	}
+	return iam.NewApplicationRefKey(appIDNum)
 }
 
 func genSecret(len int) string {
