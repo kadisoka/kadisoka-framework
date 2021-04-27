@@ -6,9 +6,10 @@ import (
 	"encoding/binary"
 
 	errors "github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/doug-martin/goqu/v9"
+	goqu "github.com/doug-martin/goqu/v9"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
@@ -20,13 +21,18 @@ const applicationDBTableName = "application_dt"
 type ApplicationServiceServerBase struct {
 	db *sqlx.DB
 
+	deletionTxHook func(iam.CallContext, *sqlx.Tx) error
+
 	registeredApplicationIDNumCache *lru.ARCCache
 	deletedApplicationIDNumCache    *lru.ARCCache
 }
 
 // Interface conformance assertions.
-var _ iam.ApplicationService = &ApplicationServiceServerBase{}
-var _ iam.ApplicationRefKeyService = &ApplicationServiceServerBase{}
+var (
+	_ iam.ApplicationService                 = &ApplicationServiceServerBase{}
+	_ iam.ApplicationRefKeyService           = &ApplicationServiceServerBase{}
+	_ iam.ApplicationInstanceServiceInternal = &ApplicationServiceServerBase{}
+)
 
 func (srv *ApplicationServiceServerBase) IsApplicationRefKeyRegistered(refKey iam.ApplicationRefKey) bool {
 	idNum := refKey.IDNum()
@@ -155,6 +161,147 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 	}
 
 	return true, instanceDeleted, nil
+}
+
+func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
+	callCtx iam.CallContext,
+	input iam.ApplicationInstanceCreationInput,
+) (refKey iam.ApplicationRefKey, initialState iam.ApplicationInstanceInfo, err error) {
+	//TODO: access control
+
+	refKey, err = srv.createApplicationInstanceNoAC(callCtx)
+
+	//TODO: revision number
+	return refKey, iam.ApplicationInstanceInfo{RevisionNumber: -1}, err
+}
+
+func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
+	callCtx iam.CallContext,
+) (iam.ApplicationRefKey, error) {
+	ctxAuth := callCtx.Authorization()
+
+	const attemptNumMax = 5
+
+	var err error
+	var newInstanceIDNum iam.ApplicationIDNum
+	cTime := callCtx.RequestInfo().ReceiveTime
+
+	for attemptNum := 0; ; attemptNum++ {
+		//TODO: obtain embedded fields from the argument which
+		// type is iam.ApplicationInstanceCreationInput .
+		newInstanceIDNum, err = GenerateApplicationIDNum(0)
+		if err != nil {
+			panic(err)
+		}
+
+		sqlString, _, _ := goqu.
+			Insert(applicationDBTableName).
+			Rows(
+				goqu.Record{
+					"id":    newInstanceIDNum,
+					"c_ts":  cTime,
+					"c_uid": ctxAuth.UserIDNumPtr(),
+					"c_tid": ctxAuth.TerminalIDNumPtr(),
+				},
+			).
+			ToSQL()
+
+		_, err = srv.db.
+			Exec(sqlString)
+		if err == nil {
+			break
+		}
+
+		pqErr, _ := err.(*pq.Error)
+		if pqErr != nil &&
+			pqErr.Code == "23505" &&
+			pqErr.Constraint == applicationDBTableName+"_pkey" {
+			if attemptNum >= attemptNumMax {
+				return iam.ApplicationRefKeyZero(), errors.Wrap("insert max attempts", err)
+			}
+			continue
+		}
+
+		return iam.ApplicationRefKeyZero(), errors.Wrap("insert", err)
+	}
+
+	//TODO: update caches, emit an event
+
+	return iam.NewApplicationRefKey(newInstanceIDNum), nil
+}
+
+func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
+	callCtx iam.CallContext,
+	toDelete iam.ApplicationRefKey,
+	input iam.ApplicationInstanceDeletionInput,
+) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
+	if callCtx == nil {
+		return false, iam.ApplicationInstanceInfoZero(), nil
+	}
+
+	//TODO: access control
+
+	return srv.deleteApplicationInstanceNoAC(callCtx, toDelete, input)
+}
+
+func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
+	callCtx iam.CallContext,
+	toDelete iam.ApplicationRefKey,
+	input iam.ApplicationInstanceDeletionInput,
+) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
+	ctxAuth := callCtx.Authorization()
+	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
+		xres, txErr := dbTx.Exec(
+			`UPDATE `+applicationDBTableName+` `+
+				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
+				"WHERE id = $2 AND d_ts IS NULL",
+			callCtx.RequestInfo().ReceiveTime,
+			ctxAuth.UserIDNum().PrimitiveValue(),
+			ctxAuth.TerminalIDNum().PrimitiveValue(),
+			"")
+		if txErr != nil {
+			return txErr
+		}
+		n, txErr := xres.RowsAffected()
+		if txErr != nil {
+			return txErr
+		}
+		instanceMutated = n == 1
+
+		if srv.deletionTxHook != nil {
+			return srv.deletionTxHook(callCtx, dbTx)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false, iam.ApplicationInstanceInfoZero(), err
+	}
+
+	var deletion *iam.ApplicationInstanceDeletionInfo
+	if instanceMutated {
+		deletion = &iam.ApplicationInstanceDeletionInfo{
+			Deleted: true,
+		}
+	} else {
+		di, err := srv.getApplicationInstanceInfoNoAC(callCtx, toDelete)
+		if err != nil {
+			return false, iam.ApplicationInstanceInfoZero(), err
+		}
+
+		if di != nil {
+			deletion = di.Deletion
+		}
+	}
+
+	currentState = iam.ApplicationInstanceInfo{
+		RevisionNumber: -1, //TODO: get from the DB
+		Deletion:       deletion,
+	}
+
+	//TODO: update caches, emit an event if there's any changes
+
+	return instanceMutated, currentState, nil
 }
 
 // GenerateApplicationIDNum generates a new iam.ApplicationIDNum.

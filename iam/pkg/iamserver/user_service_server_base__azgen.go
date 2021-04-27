@@ -6,9 +6,10 @@ import (
 	"encoding/binary"
 
 	errors "github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/doug-martin/goqu/v9"
+	goqu "github.com/doug-martin/goqu/v9"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
@@ -20,13 +21,18 @@ const userDBTableName = "user_dt"
 type UserServiceServerBase struct {
 	db *sqlx.DB
 
+	deletionTxHook func(iam.CallContext, *sqlx.Tx) error
+
 	registeredUserIDNumCache *lru.ARCCache
 	deletedUserIDNumCache    *lru.ARCCache
 }
 
 // Interface conformance assertions.
-var _ iam.UserService = &UserServiceServerBase{}
-var _ iam.UserRefKeyService = &UserServiceServerBase{}
+var (
+	_ iam.UserService                 = &UserServiceServerBase{}
+	_ iam.UserRefKeyService           = &UserServiceServerBase{}
+	_ iam.UserInstanceServiceInternal = &UserServiceServerBase{}
+)
 
 func (srv *UserServiceServerBase) IsUserRefKeyRegistered(refKey iam.UserRefKey) bool {
 	idNum := refKey.IDNum()
@@ -155,6 +161,152 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 	}
 
 	return true, instanceDeleted, nil
+}
+
+func (srv *UserServiceServerBase) CreateUserInstanceInternal(
+	callCtx iam.CallContext,
+	input iam.UserInstanceCreationInput,
+) (refKey iam.UserRefKey, initialState iam.UserInstanceInfo, err error) {
+	//TODO: access control
+
+	refKey, err = srv.createUserInstanceNoAC(callCtx)
+
+	//TODO: revision number
+	return refKey, iam.UserInstanceInfo{RevisionNumber: -1}, err
+}
+
+func (srv *UserServiceServerBase) createUserInstanceNoAC(
+	callCtx iam.CallContext,
+) (iam.UserRefKey, error) {
+	ctxAuth := callCtx.Authorization()
+
+	const attemptNumMax = 5
+
+	var err error
+	var newInstanceIDNum iam.UserIDNum
+	cTime := callCtx.RequestInfo().ReceiveTime
+
+	for attemptNum := 0; ; attemptNum++ {
+		//TODO: obtain embedded fields from the argument which
+		// type is iam.UserInstanceCreationInput .
+		newInstanceIDNum, err = GenerateUserIDNum(0)
+		if err != nil {
+			panic(err)
+		}
+
+		sqlString, _, _ := goqu.
+			Insert(userDBTableName).
+			Rows(
+				goqu.Record{
+					"id":    newInstanceIDNum,
+					"c_ts":  cTime,
+					"c_uid": ctxAuth.UserIDNumPtr(),
+					"c_tid": ctxAuth.TerminalIDNumPtr(),
+				},
+			).
+			ToSQL()
+
+		_, err = srv.db.
+			Exec(sqlString)
+		if err == nil {
+			break
+		}
+
+		pqErr, _ := err.(*pq.Error)
+		if pqErr != nil &&
+			pqErr.Code == "23505" &&
+			pqErr.Constraint == userDBTableName+"_pkey" {
+			if attemptNum >= attemptNumMax {
+				return iam.UserRefKeyZero(), errors.Wrap("insert max attempts", err)
+			}
+			continue
+		}
+
+		return iam.UserRefKeyZero(), errors.Wrap("insert", err)
+	}
+
+	//TODO: update caches, emit an event
+
+	return iam.NewUserRefKey(newInstanceIDNum), nil
+}
+
+func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
+	callCtx iam.CallContext,
+	toDelete iam.UserRefKey,
+	input iam.UserInstanceDeletionInput,
+) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
+	if callCtx == nil {
+		return false, iam.UserInstanceInfoZero(), nil
+	}
+	ctxAuth := callCtx.Authorization()
+	if !ctxAuth.IsUser(toDelete) {
+		return false, iam.UserInstanceInfoZero(), nil //TODO: should be an error
+	}
+
+	//TODO: access control
+
+	return srv.deleteUserInstanceNoAC(callCtx, toDelete, input)
+}
+
+func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
+	callCtx iam.CallContext,
+	toDelete iam.UserRefKey,
+	input iam.UserInstanceDeletionInput,
+) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
+	ctxAuth := callCtx.Authorization()
+	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
+		xres, txErr := dbTx.Exec(
+			`UPDATE `+userDBTableName+` `+
+				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
+				"WHERE id = $2 AND d_ts IS NULL",
+			callCtx.RequestInfo().ReceiveTime,
+			ctxAuth.UserIDNum().PrimitiveValue(),
+			ctxAuth.TerminalIDNum().PrimitiveValue(),
+			input.DeletionNotes)
+		if txErr != nil {
+			return txErr
+		}
+		n, txErr := xres.RowsAffected()
+		if txErr != nil {
+			return txErr
+		}
+		instanceMutated = n == 1
+
+		if srv.deletionTxHook != nil {
+			return srv.deletionTxHook(callCtx, dbTx)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false, iam.UserInstanceInfoZero(), err
+	}
+
+	var deletion *iam.UserInstanceDeletionInfo
+	if instanceMutated {
+		deletion = &iam.UserInstanceDeletionInfo{
+			Deleted:       true,
+			DeletionNotes: input.DeletionNotes,
+		}
+	} else {
+		di, err := srv.getUserInstanceInfoNoAC(callCtx, toDelete)
+		if err != nil {
+			return false, iam.UserInstanceInfoZero(), err
+		}
+
+		if di != nil {
+			deletion = di.Deletion
+		}
+	}
+
+	currentState = iam.UserInstanceInfo{
+		RevisionNumber: -1, //TODO: get from the DB
+		Deletion:       deletion,
+	}
+
+	//TODO: update caches, emit an event if there's any changes
+
+	return instanceMutated, currentState, nil
 }
 
 // GenerateUserIDNum generates a new iam.UserIDNum.

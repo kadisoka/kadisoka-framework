@@ -120,6 +120,32 @@ func NewCoreByConfig(
 		db:                       iamDB,
 		registeredUserIDNumCache: registeredUserIDNumCache,
 		deletedUserIDNumCache:    deletedUserIDNumCache,
+		deletionTxHook: func(callCtx iam.CallContext, dbTx *sqlx.Tx) error {
+			ctxAuth := callCtx.Authorization()
+			var txErr error
+
+			if txErr == nil {
+				_, txErr = dbTx.Exec(
+					`UPDATE `+userKeyPhoneNumberDBTableName+` `+
+						"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+						"WHERE user_id = $2 AND d_ts IS NULL",
+					callCtx.RequestInfo().ReceiveTime,
+					ctxAuth.UserIDNum().PrimitiveValue(),
+					ctxAuth.TerminalIDNum().PrimitiveValue())
+			}
+
+			if txErr == nil {
+				_, txErr = dbTx.Exec(
+					`UPDATE `+userProfileImageKeyDBTableName+` `+
+						"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
+						"WHERE user_id = $2 AND d_ts IS NULL",
+					callCtx.RequestInfo().ReceiveTime,
+					ctxAuth.UserIDNum().PrimitiveValue(),
+					ctxAuth.TerminalIDNum().PrimitiveValue())
+			}
+
+			return txErr
+		},
 	}
 
 	inst := &Core{
