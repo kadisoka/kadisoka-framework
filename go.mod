@@ -3,18 +3,16 @@ module github.com/kadisoka/kadisoka-framework
 go 1.15
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/alloyzeus/go-azfl v0.0.0-20210325044722-1c3d7491882a
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/aws/aws-sdk-go v1.38.24
-	github.com/doug-martin/goqu/v9 v9.11.0
+	github.com/doug-martin/goqu/v9 v9.13.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
 	github.com/gabriel-vasile/mimetype v1.2.0
 	github.com/go-openapi/spec v0.20.3
 	github.com/go-openapi/swag v0.19.15 // indirect
-	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.2.0
@@ -26,7 +24,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
 	github.com/lib/pq v1.10.1
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-sqlite3 v1.14.7 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/minio/sha256-simd v1.0.0 // indirect
