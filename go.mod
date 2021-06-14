@@ -7,7 +7,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/alloyzeus/go-azfl v0.0.0-20210325044722-1c3d7491882a
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.38.24
+	github.com/aws/aws-sdk-go v1.38.60
 	github.com/doug-martin/goqu/v9 v9.11.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
