@@ -5,7 +5,6 @@ import (
 )
 
 // ServiceServer abstracts all service servers
-//TODO: ServiceInfo
 type ServiceServer interface {
 	// ServiceInfo returns basic information about the service.
 	ServiceInfo() ServiceInfo

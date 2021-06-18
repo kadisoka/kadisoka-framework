@@ -3,7 +3,6 @@ package telesign
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -19,7 +18,7 @@ func (sms *SMSDeliveryService) SendTextMessage(
 	text string,
 	opts pnv10n.SMSDeliveryOptions,
 ) error {
-	endPoint := fmt.Sprintf("%s/%s", apiBaseURL, "messaging")
+	endPoint := sms.endpointURL
 	bodyReq := url.Values{}
 	bodyReq.Set("phone_number", strings.Trim(recipient.String(), "+"))
 	bodyReq.Set("message", text)
@@ -59,17 +58,15 @@ func (sms *SMSDeliveryService) SendTextMessage(
 	switch errorData.Status.Code {
 	case 11000, 11001, 10033:
 		return pnv10n.InvalidPhoneNumberError{Err: errors.New(string(errBody))}
-	default:
-		return pnv10n.ConfigurationError{Err: errors.New(string(errBody))}
 	}
 
-	return errors.New(errorData.Status.Description)
+	return pnv10n.ConfigurationError{Err: errors.New(string(errBody))}
 }
 
 type telesignResponse struct {
 	ReferenceID string                 `json:"reference_id"`
 	ExternalID  string                 `json:"external_id"`
-	Status      telesignStatusResponse `json:"status""`
+	Status      telesignStatusResponse `json:"status"`
 }
 
 type telesignStatusResponse struct {

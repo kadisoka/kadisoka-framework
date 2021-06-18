@@ -41,6 +41,7 @@ func main() {
 	}
 
 	fmt.Fprintf(os.Stderr, "%s\n", appInfo.HeaderString())
+
 	appBase, err := app.Init(appInfo)
 	if err != nil {
 		log.Fatal().Err(err).Msg("App initialization")

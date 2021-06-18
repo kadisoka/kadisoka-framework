@@ -18,12 +18,11 @@ func init() {
 }
 
 type SMSDeliveryService struct {
-	config *Config
+	config      *Config
+	endpointURL string
 }
 
 var _ pnv10n.SMSDeliveryService = &SMSDeliveryService{}
-
-const apiBaseURL = "https://rest-api.telesign.com/v1"
 
 func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
 	if config == nil {
@@ -42,5 +41,7 @@ func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
 	}
 
 	return &SMSDeliveryService{
-		config: conf}
+		config:      conf,
+		endpointURL: "https://rest-api.telesign.com/v1/messaging",
+	}
 }

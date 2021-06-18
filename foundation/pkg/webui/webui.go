@@ -14,8 +14,8 @@ import (
 	"sync"
 	textt "text/template"
 
-	"github.com/OneOfOne/xxhash"
 	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/cespare/xxhash"
 	"github.com/oxtoacart/bpool"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
@@ -200,7 +200,7 @@ func (srv *Server) processFile(path string, info os.FileInfo, err error) error {
 
 		content := buf.Bytes()
 
-		h := xxhash.Checksum64(content)
+		h := xxhash.Sum64(content)
 		eTagStr := fmt.Sprintf(`W/"%d-%x"`, len(content), h)
 
 		extWithDot := filepath.Ext(path)
@@ -348,7 +348,7 @@ func ETagHandler(innerHandler http.Handler) http.Handler {
 			return
 		}
 
-		h := xxhash.Checksum64(buf.Bytes())
+		h := xxhash.Sum64(buf.Bytes())
 		// The pattern we use here is <size>-<hash> . We use this pattern
 		// because hashes could collide. By including the size, it should
 		// significantly reducing collision probability.

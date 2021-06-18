@@ -123,7 +123,7 @@ func NewServer(
 			resp.WriteErrorString(err.Code, err.Message)
 		})
 	// We need CORS for our webclients
-	rest.SetUpCORSFilterByEnv(container, "CORS_", nil)
+	rest.SetUpCORSFilterByEnv(container, "CORS_", nil) //TODO: from config
 
 	var v1ServePath string
 	if config.V1 != nil {

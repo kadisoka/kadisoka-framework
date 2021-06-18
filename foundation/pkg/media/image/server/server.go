@@ -18,10 +18,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/OneOfOne/xxhash"
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
+	"github.com/cespare/xxhash"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/richardlehane/crock32"
 
@@ -324,7 +324,7 @@ func (handler *Handler) variantKeyFromParams(
 	params processingParameters,
 ) string {
 	encodedParams := params.Encode()
-	h := xxhash.ChecksumString64(encodedParams)
+	h := xxhash.Sum64String(encodedParams)
 	return crock32.Encode(h)
 }
 

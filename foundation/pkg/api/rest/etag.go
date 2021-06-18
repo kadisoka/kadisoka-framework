@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/OneOfOne/xxhash"
+	"github.com/cespare/xxhash"
 	"github.com/emicklei/go-restful"
 	"github.com/golang/protobuf/proto"
 	"github.com/oxtoacart/bpool"
@@ -32,7 +32,7 @@ func (eTagResponder *ETagResponder) RespondGetJSON(
 		return err
 	}
 
-	h := xxhash.Checksum64(buf.Bytes())
+	h := xxhash.Sum64(buf.Bytes())
 	eTagStr := fmt.Sprintf(`W/"%d-%x"`, buf.Len(), h)
 
 	inm := req.Request.Header.Get("If-None-Match")
@@ -58,7 +58,7 @@ func (eTagResponder *ETagResponder) RespondGetProtoMessage(
 
 	messageType := proto.MessageName(protoMsg)
 
-	h := xxhash.Checksum64(dataBytes)
+	h := xxhash.Sum64(dataBytes)
 	eTagStr := fmt.Sprintf(`W/"%d-%x"`, len(dataBytes), h)
 
 	inm := req.Request.Header.Get("If-None-Match")
@@ -88,7 +88,7 @@ func (eTagResponder *ETagResponder) RespondGetProtoMessage(
 func (eTagResponder *ETagResponder) RespondGetOctetStream(
 	req *restful.Request, resp *restful.Response, data []byte,
 ) error {
-	h := xxhash.Checksum64(data)
+	h := xxhash.Sum64(data)
 	eTagStr := fmt.Sprintf(`W/"%d-%x"`, len(data), h)
 
 	inm := req.Request.Header.Get("If-None-Match")

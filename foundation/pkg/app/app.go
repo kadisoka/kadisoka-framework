@@ -25,11 +25,15 @@ type Info struct {
 	BuildInfo BuildInfo
 }
 
+// HeaderString returns a line which contains build information about
+// the app that can be used to provide such info in logs.
 func (info Info) HeaderString() string {
-	return info.Name + " revision " + info.BuildInfo.RevisionID +
+	return info.Name +
+		" revision " + info.BuildInfo.RevisionID +
 		" built at " + info.BuildInfo.Timestamp
 }
 
+// AppBase is the base layer for an app.
 type AppBase struct {
 	appInfo    Info
 	instanceID string
@@ -37,6 +41,8 @@ type AppBase struct {
 	servers   []ServiceServer
 	serversMu sync.RWMutex
 }
+
+var _ App = &AppBase{}
 
 func (appBase *AppBase) AppInfo() Info { return appBase.appInfo }
 

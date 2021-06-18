@@ -12,8 +12,6 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const sessionDBTableName = "session_dt"
-
 func (core *Core) GenerateAccessTokenJWT(
 	callCtx iam.CallContext,
 	terminalRef iam.TerminalRefKey,
@@ -115,7 +113,7 @@ func (core *Core) issueSession(
 	for attemptNum := 0; ; attemptNum++ {
 		sessionStartTime = time.Now().UTC()
 		sessionExpiry = sessionStartTime.Add(iam.AccessTokenTTLDefault)
-		sessionIDNum, err = iam.GenerateSessionIDNum(0)
+		sessionIDNum, err = GenerateSessionIDNum(0)
 		if err != nil {
 			return iam.SessionRefKeyZero(), timeZero, timeZero, err
 		}

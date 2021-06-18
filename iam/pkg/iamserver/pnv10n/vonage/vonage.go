@@ -18,12 +18,11 @@ func init() {
 }
 
 type SMSDeliveryService struct {
-	config *Config
+	config      *Config
+	endpointURL string
 }
 
 var _ pnv10n.SMSDeliveryService = &SMSDeliveryService{}
-
-const apiBaseURL = "https://rest.nexmo.com/sms"
 
 func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
 	if config == nil {
@@ -41,5 +40,8 @@ func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
 		panic("NEXMO API Secret not provided")
 	}
 
-	return &SMSDeliveryService{config: conf}
+	return &SMSDeliveryService{
+		config:      conf,
+		endpointURL: "https://rest.nexmo.com/sms/json",
+	}
 }

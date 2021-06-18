@@ -51,7 +51,6 @@ type TerminalIDNum int64
 var _ azid.IDNum = TerminalIDNumZero
 var _ azid.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
 var _ azfl.AdjunctEntityIDNum = TerminalIDNumZero
-var _ azfl.TerminalIDNum = TerminalIDNumZero
 
 // TerminalIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of TerminalIDNum.
@@ -96,10 +95,6 @@ func (TerminalIDNum) AZIDNum() {}
 // AZAdjunctEntityIDNum is required
 // for conformance with azfl.AdjunctEntityIDNum.
 func (TerminalIDNum) AZAdjunctEntityIDNum() {}
-
-// AZTerminalIDNum is required for conformance
-// with azfl.TerminalIDNum.
-func (TerminalIDNum) AZTerminalIDNum() {}
 
 // IsZero is required as TerminalIDNum is a value-object.
 func (idNum TerminalIDNum) IsZero() bool {
@@ -172,27 +167,6 @@ const (
 	TerminalIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
 )
 
-// GenerateTerminalIDNum generates a new TerminalIDNum.
-// Note that this function does not consulting any database nor registry.
-// This methode will not create an instance of Terminal, i.e., the
-// resulting TerminalIDNum might or might not refer to valid instance
-// of Terminal. The resulting TerminalIDNum is designed to be
-// used to create a new instance of Terminal.
-//
-// The embeddedFieldBits argument could be constructed by combining
-// TerminalIDNum*Bits constants.
-func GenerateTerminalIDNum(embeddedFieldBits uint64) (TerminalIDNum, error) {
-	idBytes := make([]byte, 8)
-	_, err := rand.Read(idBytes)
-	if err != nil {
-		return TerminalIDNumZero, errors.ArgWrap("", "random source reading", err)
-	}
-
-	idUint := (embeddedFieldBits & TerminalIDNumEmbeddedFieldsMask) |
-		(binary.BigEndian.Uint64(idBytes) & TerminalIDNumIdentifierBitsMask)
-	return TerminalIDNum(idUint), nil
-}
-
 //endregion
 
 //region RefKey
@@ -228,7 +202,6 @@ var _ azid.RefKey = _TerminalRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_TerminalRefKeyZero
 var _ azid.TextUnmarshalable = &_TerminalRefKeyZero
 var _ azfl.AdjunctEntityRefKey = _TerminalRefKeyZero
-var _ azfl.TerminalRefKey = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
 	application: ApplicationRefKeyZero(),
@@ -266,12 +239,6 @@ func (refKey TerminalRefKey) IDNumPtr() *TerminalIDNum {
 
 // AZIDNum is required for conformance with azid.RefKey.
 func (refKey TerminalRefKey) AZIDNum() azid.IDNum {
-	return refKey.idNum
-}
-
-// TerminalIDNum is required for conformance
-// with azfl.TerminalRefKey.
-func (refKey TerminalRefKey) TerminalIDNum() azfl.TerminalIDNum {
 	return refKey.idNum
 }
 
@@ -523,7 +490,7 @@ func (refKey *TerminalRefKey) UnmarshalText(b []byte) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey TerminalRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in azid-text
+	// We assume that there are no symbols in azid-text
 	return []byte("\"" + refKey.AZIDText() + "\""), nil
 }
 

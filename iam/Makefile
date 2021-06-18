@@ -4,7 +4,7 @@ TESTER_IMAGE ?= kadisoka-tester
 GOLANG_IMAGE ?= golang:1.16
 POSTGRES_IMAGE ?= postgres:10.7-alpine
 
-DOCKER_COMPOSE_NETWORK ?= iam_default
+DOCKER_NETWORK ?= iam_default
 
 .PHONY: run
 run:
@@ -43,10 +43,14 @@ test:
 
 # audit: https://github.com/securego/gosec
 
+IAM_DB_PASSWORD ?=
+IAM_DB_URL ?= postgres://iam:$(IAM_DB_PASSWORD)@iam-db/iam?sslmode=disable
+
+# TODO: build this into the executable. migrations should be baked into the executable.
 .PHONY: _init_iam_db
 _init_iam_db:
 	docker run --rm -v $(CURDIR)/pkg/iamserver/migrations:/migrations \
-		--entrypoint=psql --network=$(DOCKER_COMPOSE_NETWORK) \
+		--entrypoint=psql --network=$(DOCKER_NETWORK) \
 		$(POSTGRES_IMAGE) \
 		-f ./migrations/000.00-iam.sql \
-		"postgres://iam:hdig8g4g49htuhe@iam-db/iam?sslmode=disable"
+		"$(IAM_DB_URL)"

@@ -323,7 +323,7 @@ func GenerateUserIDNum(embeddedFieldBits uint64) (iam.UserIDNum, error) {
 	idBytes := make([]byte, 8)
 	_, err := rand.Read(idBytes)
 	if err != nil {
-		return iam.UserIDNumZero, errors.ArgWrap("", "random source reading", err)
+		return iam.UserIDNumZero, errors.Wrap("random number source reading", err)
 	}
 
 	idUint := (embeddedFieldBits & iam.UserIDNumEmbeddedFieldsMask) |

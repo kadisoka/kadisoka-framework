@@ -3,7 +3,6 @@ package twilio
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -19,7 +18,9 @@ func (sms *SMSDeliveryService) SendTextMessage(
 	text string,
 	opts pnv10n.SMSDeliveryOptions,
 ) error {
-	endPoint := fmt.Sprintf(sms.endpointURL, sms.config.AccountSID)
+	// Docs: https://www.twilio.com/docs/sms/send-messages
+
+	endPoint := sms.endpointURL
 
 	bodyReq := url.Values{}
 	bodyReq.Set("To", recipient.String())
@@ -49,10 +50,13 @@ func (sms *SMSDeliveryService) SendTextMessage(
 		return nil
 	}
 
-	var errorData twilioErrorResponse
 	errBody, err := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(errBody, &errorData)
+	if err != nil {
+		return err
+	}
 
+	var errorData twilioErrorResponse
+	err = json.Unmarshal(errBody, &errorData)
 	if err != nil {
 		return err
 	}

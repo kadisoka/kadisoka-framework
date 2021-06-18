@@ -318,7 +318,7 @@ func GenerateApplicationIDNum(embeddedFieldBits uint32) (iam.ApplicationIDNum, e
 	idBytes := make([]byte, 4)
 	_, err := rand.Read(idBytes)
 	if err != nil {
-		return iam.ApplicationIDNumZero, errors.ArgWrap("", "random source reading", err)
+		return iam.ApplicationIDNumZero, errors.Wrap("random number source reading", err)
 	}
 
 	idUint := (embeddedFieldBits & iam.ApplicationIDNumEmbeddedFieldsMask) |

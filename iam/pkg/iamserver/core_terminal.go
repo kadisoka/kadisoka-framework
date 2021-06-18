@@ -20,8 +20,6 @@ var (
 	errTerminalVerificationConfirmationReplayed = errors.EntMsg("terminal verification confirmation", "replayed")
 )
 
-const terminalDBTableName = "terminal_dt"
-
 func (core *Core) AuthenticateTerminal(
 	terminalRef iam.TerminalRefKey,
 	terminalSecret string,
@@ -498,7 +496,6 @@ func (core *Core) registerTerminalNoAC(
 ) TerminalRegistrationOutput {
 	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
-
 	ctxTime := callCtx.RequestInfo().ReceiveTime
 	originInfo := callCtx.OriginInfo()
 
@@ -519,7 +516,7 @@ func (core *Core) registerTerminalNoAC(
 	}
 
 	//TODO: if id conflict, generate another id and retry
-	termID, err := iam.GenerateTerminalIDNum(0)
+	termID, err := GenerateTerminalIDNum(0)
 	if err != nil {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
 			Err: errors.Wrap("ID generation", err)}}

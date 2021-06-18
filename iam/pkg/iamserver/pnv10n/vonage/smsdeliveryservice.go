@@ -2,7 +2,6 @@ package vonage
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -21,7 +20,7 @@ func (sms *SMSDeliveryService) SendTextMessage(
 	if sender == "" {
 		sender = "Nexmo"
 	}
-	endPoint := fmt.Sprintf("%s/%s", apiBaseURL, "json")
+	endPoint := sms.endpointURL
 	bodyReq := url.Values{}
 	bodyReq.Set("to", strings.Trim(recipient.String(), "+"))
 	bodyReq.Set("text", text)

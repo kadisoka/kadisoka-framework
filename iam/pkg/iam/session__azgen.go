@@ -46,7 +46,6 @@ type SessionIDNum int32
 var _ azid.IDNum = SessionIDNumZero
 var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
 var _ azfl.AdjunctEntityIDNum = SessionIDNumZero
-var _ azfl.SessionIDNum = SessionIDNumZero
 
 // SessionIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of SessionIDNum.
@@ -91,10 +90,6 @@ func (SessionIDNum) AZIDNum() {}
 // AZAdjunctEntityIDNum is required
 // for conformance with azfl.AdjunctEntityIDNum.
 func (SessionIDNum) AZAdjunctEntityIDNum() {}
-
-// AZSessionIDNum is required for conformance
-// with azfl.SessionIDNum.
-func (SessionIDNum) AZSessionIDNum() {}
 
 // IsZero is required as SessionIDNum is a value-object.
 func (idNum SessionIDNum) IsZero() bool {
@@ -167,27 +162,6 @@ const (
 	SessionIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000
 )
 
-// GenerateSessionIDNum generates a new SessionIDNum.
-// Note that this function does not consulting any database nor registry.
-// This methode will not create an instance of Session, i.e., the
-// resulting SessionIDNum might or might not refer to valid instance
-// of Session. The resulting SessionIDNum is designed to be
-// used to create a new instance of Session.
-//
-// The embeddedFieldBits argument could be constructed by combining
-// SessionIDNum*Bits constants.
-func GenerateSessionIDNum(embeddedFieldBits uint32) (SessionIDNum, error) {
-	idBytes := make([]byte, 4)
-	_, err := rand.Read(idBytes)
-	if err != nil {
-		return SessionIDNumZero, errors.ArgWrap("", "random source reading", err)
-	}
-
-	idUint := (embeddedFieldBits & SessionIDNumEmbeddedFieldsMask) |
-		(binary.BigEndian.Uint32(idBytes) & SessionIDNumIdentifierBitsMask)
-	return SessionIDNum(idUint), nil
-}
-
 //endregion
 
 //region RefKey
@@ -220,7 +194,6 @@ var _ azid.RefKey = _SessionRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_SessionRefKeyZero
 var _ azid.TextUnmarshalable = &_SessionRefKeyZero
 var _ azfl.AdjunctEntityRefKey = _SessionRefKeyZero
-var _ azfl.SessionRefKey = _SessionRefKeyZero
 
 var _SessionRefKeyZero = SessionRefKey{
 	terminal: TerminalRefKeyZero(),
@@ -257,12 +230,6 @@ func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
 
 // AZIDNum is required for conformance with azid.RefKey.
 func (refKey SessionRefKey) AZIDNum() azid.IDNum {
-	return refKey.idNum
-}
-
-// SessionIDNum is required for conformance
-// with azfl.SessionRefKey.
-func (refKey SessionRefKey) SessionIDNum() azfl.SessionIDNum {
 	return refKey.idNum
 }
 
@@ -490,7 +457,7 @@ func (refKey *SessionRefKey) UnmarshalText(b []byte) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey SessionRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in azid-text
+	// We assume that there are no symbols in azid-text
 	return []byte("\"" + refKey.AZIDText() + "\""), nil
 }
 

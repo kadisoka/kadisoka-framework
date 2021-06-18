@@ -24,8 +24,6 @@ type SMSDeliveryService struct {
 
 var _ pnv10n.SMSDeliveryService = &SMSDeliveryService{}
 
-const apiBaseURL = "https://api.twilio.com/2010-04-01/Accounts"
-
 func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
 	if config == nil {
 		panic(errors.New("configuration required"))
@@ -44,5 +42,6 @@ func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
 
 	return &SMSDeliveryService{
 		config:      conf,
-		endpointURL: apiBaseURL + "/%s/Messages.json"}
+		endpointURL: "https://api.twilio.com/2010-04-01/Accounts/" + conf.AccountSID + "/Messages.json",
+	}
 }
