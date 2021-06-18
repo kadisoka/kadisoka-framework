@@ -19,7 +19,7 @@ type ProfileImageFile interface {
 }
 
 func (core *Core) SetUserProfileImageURL(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	profileImageURL string,
 ) error {
@@ -44,7 +44,7 @@ func (core *Core) SetUserProfileImageURL(
 			`UPDATE `+userKeyPhoneNumberDBTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE user_id = $2 AND d_ts IS NULL",
-			callCtx.RequestInfo().ReceiveTime,
+			callCtx.OpInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue())
 		if txErr != nil {
@@ -66,7 +66,7 @@ func (core *Core) SetUserProfileImageURL(
 }
 
 func (core *Core) SetUserProfileImageByFile(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	imageFile ProfileImageFile,
 ) (imageURL string, err error) {

@@ -8,6 +8,7 @@ import (
 // - differentiate between formats with animation support
 // - mapping of input formats with output formats. e.g., we will allow a TIFF
 //   but we will serve it as PNG.
+// - differentiate between 'allowed' and 'supported'.
 var imageAllowedContentTypes = []string{"image/jpg", "image/jpeg", "image/png"}
 
 type imageMediaTypeInfo struct {

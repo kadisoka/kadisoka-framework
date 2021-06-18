@@ -16,21 +16,21 @@ type RESTServiceClient interface {
 	) http.Header
 }
 
-type RESTRequestContext struct {
-	CallContext
+type RESTOpInputContext struct {
+	OpInputContext
 	Request *http.Request
 }
 
-var _ rest.RequestContext = &RESTRequestContext{}
+var _ rest.OpInputContext = &RESTOpInputContext{}
 
-func (reqCtx *RESTRequestContext) HTTPRequest() *http.Request {
+func (reqCtx *RESTOpInputContext) HTTPRequest() *http.Request {
 	if reqCtx != nil {
 		return reqCtx.Request
 	}
 	return nil
 }
 
-func (reqCtx *RESTRequestContext) MethodName() string {
+func (reqCtx *RESTOpInputContext) MethodName() string {
 	if reqCtx == nil || reqCtx.Request == nil {
 		return ""
 	}

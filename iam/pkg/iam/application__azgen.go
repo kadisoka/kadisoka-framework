@@ -584,7 +584,7 @@ type ApplicationInstanceInfoService interface {
 	// This method returns nil if the refKey is not referencing to any valid
 	// instance.
 	GetApplicationInstanceInfo(
-		callCtx CallContext,
+		callCtx OpInputContext,
 		refKey ApplicationRefKey,
 	) (*ApplicationInstanceInfo, error)
 }
@@ -634,7 +634,7 @@ type ApplicationInstanceDeletionInfo struct {
 // available to be called from another part of a process.
 type ApplicationInstanceServiceInternal interface {
 	CreateApplicationInstanceInternal(
-		callCtx CallContext,
+		callCtx OpInputContext,
 		input ApplicationInstanceCreationInput,
 	) (refKey ApplicationRefKey, initialState ApplicationInstanceInfo, err error)
 
@@ -644,7 +644,7 @@ type ApplicationInstanceServiceInternal interface {
 	// true if this particular call resulted the deletion of the instance and
 	// it will have the value of false of subsequent calls to this method.
 	DeleteApplicationInstanceInternal(
-		callCtx CallContext,
+		callCtx OpInputContext,
 		refOfInstToDel ApplicationRefKey,
 		input ApplicationInstanceDeletionInput,
 	) (instanceMutated bool, currentState ApplicationInstanceInfo, err error)

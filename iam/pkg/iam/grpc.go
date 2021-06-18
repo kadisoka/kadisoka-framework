@@ -17,8 +17,8 @@ type GRPCServiceClient interface {
 	) context.Context
 }
 
-type GRPCCallContext struct {
-	CallContext
+type GRPCOpInputContext struct {
+	OpInputContext
 }
 
-var _ grpc.CallContext = &GRPCCallContext{}
+var _ grpc.OpInputContext = &GRPCOpInputContext{}

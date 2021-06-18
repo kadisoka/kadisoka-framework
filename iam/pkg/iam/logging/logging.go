@@ -19,12 +19,12 @@ type Logger struct {
 	foundationlog.PkgLogger
 }
 
-// WithContext creates a new logger which bound to a CallContext.
+// WithContext creates a new logger which bound to a OpInputContext.
 //
 // Call this method only at the logging points. It's not recommended to
 // keep the returned logger around.
 func (logger Logger) WithContext(
-	ctx iam.CallContext,
+	ctx iam.OpInputContext,
 ) *foundationlog.Logger {
 	// Implementation notes: don't panic
 
@@ -36,24 +36,22 @@ func (logger Logger) WithContext(
 	logCtx := logger.With()
 	hasAuth := false
 
-	if iamCtx, ok := ctx.(iam.CallContext); ok {
-		if ctxAuth := iamCtx.Authorization(); ctxAuth.IsValid() {
-			logCtx = logCtx.
-				Str("session", ctxAuth.Session.AZIDText()).
-				Str("terminal", ctxAuth.Session.Terminal().AZIDText()).
-				Str("user", ctxAuth.Session.Terminal().User().AZIDText())
-			hasAuth = true
-		}
+	if ctxAuth := ctx.Authorization(); ctxAuth.IsValid() {
+		logCtx = logCtx.
+			Str("session", ctxAuth.Session.AZIDText()).
+			Str("terminal", ctxAuth.Session.Terminal().AZIDText()).
+			Str("user", ctxAuth.Session.Terminal().User().AZIDText())
+		hasAuth = true
 	}
 	if !hasAuth {
 		//TODO: generalized remote IP resolver
 	}
 	logCtx = logCtx.
-		Str("method", ctx.MethodName())
+		Str("method", ctx.OpName())
 
-	if reqID := ctx.RequestInfo().ID; reqID != nil {
+	if reqID := ctx.OpInputMetadata().ID; reqID != nil {
 		logCtx = logCtx.
-			Str("request_id", reqID.String())
+			Str("op_id", reqID.String())
 	}
 
 	l := logCtx.Logger()

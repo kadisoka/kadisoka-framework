@@ -19,7 +19,7 @@ var _ iam.UserKeyEmailAddressService = &Core{}
 const userKeyEmailAddressDBTableName = `user_key_email_address_dt`
 
 func (core *Core) GetUserKeyEmailAddress(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*email.Address, error) {
 	//TODO: access control
@@ -27,7 +27,7 @@ func (core *Core) GetUserKeyEmailAddress(
 }
 
 func (core *Core) getUserKeyEmailAddressNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*email.Address, error) {
 	var rawInput string
@@ -123,7 +123,7 @@ func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 }
 
 func (core *Core) SetUserKeyEmailAddress(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	emailAddress email.Address,
 	verificationMethods []eav10n.VerificationMethod,
@@ -178,11 +178,11 @@ func (core *Core) SetUserKeyEmailAddress(
 }
 
 func (core *Core) setUserKeyEmailAddress(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	emailAddress email.Address,
 ) (alreadyVerified bool, err error) {
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 	ctxAuth := callCtx.Authorization()
 
 	xres, err := core.db.Exec(
@@ -230,7 +230,7 @@ func (core *Core) setUserKeyEmailAddress(
 }
 
 func (core *Core) ConfirmUserEmailAddressVerification(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	verificationID int64,
 	code string,
 ) (stateChanged bool, err error) {
@@ -254,7 +254,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 		panic(err)
 	}
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 	stateChanged, err = core.
 		ensureUserEmailAddressVerifiedFlag(
 			ctxAuth.UserIDNum(), *emailAddress,

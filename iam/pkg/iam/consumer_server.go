@@ -7,7 +7,6 @@ import (
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
-	"github.com/google/uuid"
 	"github.com/square/go-jose/v3/jwt"
 	"github.com/tomasen/realip"
 	"golang.org/x/text/language"
@@ -120,19 +119,19 @@ type ConsumerServerBase interface {
 // ConsumerGRPCServer is an interface which contains utilities for
 // IAM service clients to handle requests from other clients.
 type ConsumerGRPCServer interface {
-	// GRPCCallContext loads authorization context from
+	// GRPCOpInputContext loads authorization context from
 	// gRPC call context.
-	GRPCCallContext(
+	GRPCOpInputContext(
 		grpcContext context.Context,
-	) (*GRPCCallContext, error)
+	) (*GRPCOpInputContext, error)
 }
 
 // ConsumerRESTServer is an interface which contains utilities for
 // IAM service clients to handle requests from other clients.
 type ConsumerRESTServer interface {
-	// RESTRequestContext returns a RESTRequestContext instance for the request.
+	// RESTOpInputContext returns a RESTOpInputContext instance for the request.
 	// This function will always return an instance even if there's an error.
-	RESTRequestContext(*http.Request) (*RESTRequestContext, error)
+	RESTOpInputContext(*http.Request) (*RESTOpInputContext, error)
 }
 
 type consumerServerCore struct {
@@ -246,19 +245,19 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	}, nil
 }
 
-func (consumerSrv *consumerServerBaseCore) GRPCCallContext(
+func (consumerSrv *consumerServerBaseCore) GRPCOpInputContext(
 	grpcCallCtx context.Context,
-) (*GRPCCallContext, error) {
+) (*GRPCOpInputContext, error) {
 	callCtx, err := consumerSrv.callContextFromGRPCContext(grpcCallCtx)
 	if callCtx == nil {
-		callCtx = NewEmptyCallContext(grpcCallCtx)
+		callCtx = NewEmptyOpInputContext(grpcCallCtx)
 	}
-	return &GRPCCallContext{callCtx}, err
+	return &GRPCOpInputContext{callCtx}, err
 }
 
 func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 	grpcCallCtx context.Context,
-) (CallContext, error) {
+) (OpInputContext, error) {
 	var remoteAddr string
 	if peer, _ := grpcpeer.FromContext(grpcCallCtx); peer != nil {
 		remoteAddr = peer.Addr.String() //TODO: attempt to resolve if it's proxied
@@ -278,7 +277,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 		}
 	}
 
-	originInfo := api.CallOriginInfo{
+	originInfo := api.OpOriginInfo{
 		Address:           remoteAddr,
 		AcceptLanguage:    originAcceptLanguages,
 		EnvironmentString: originEnvString,
@@ -286,34 +285,33 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 
 	ctxAuth, err := consumerSrv.authorizationFromGRPCContext(grpcCallCtx)
 	if err != nil {
-		return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil), err
+		return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil), err
 	}
 
-	var requestID *api.RequestID
+	var opID *api.OpID
 	md, ok := grpcmd.FromIncomingContext(grpcCallCtx)
 	if !ok {
-		return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil), nil
+		return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil), nil
 	}
 
-	reqIDStrs := md.Get("request-id")
-	if len(reqIDStrs) == 0 {
-		reqIDStrs = md.Get("x-request-id")
+	opIDStrs := md.Get("op-id")
+	if len(opIDStrs) == 0 {
+		opIDStrs = md.Get("request-id")
+		if len(opIDStrs) == 0 {
+			opIDStrs = md.Get("x-request-id")
+		}
 	}
-	if len(reqIDStrs) > 0 {
-		reqIDStr := reqIDStrs[0]
-		u, err := uuid.Parse(reqIDStr)
+	if len(opIDStrs) > 0 {
+		opIDStr := opIDStrs[0]
+		i, err := api.OpIDFromString(opIDStr)
 		if err != nil {
-			return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil),
-				ReqFieldErr("Request-ID", dataerrs.Malformed(err))
+			return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil),
+				ReqFieldErr("Request-ID", err)
 		}
-		if isValidRequestID(u) {
-			return newCallContext(grpcCallCtx, ctxAuth, originInfo, nil),
-				ReqFieldErr("Request-ID", nil)
-		}
-		requestID = &u
+		opID = &i
 	}
 
-	return newCallContext(grpcCallCtx, ctxAuth, originInfo, requestID), err
+	return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, opID), err
 }
 
 func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
@@ -342,20 +340,20 @@ func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
 	return consumerSrv.AuthorizationFromJWTString(token)
 }
 
-// RESTRequestContext creates a call context which represents an HTTP request.
-func (consumerSrv *consumerServerBaseCore) RESTRequestContext(
+// RESTOpInputContext creates a call context which represents an HTTP request.
+func (consumerSrv *consumerServerBaseCore) RESTOpInputContext(
 	req *http.Request,
-) (*RESTRequestContext, error) {
+) (*RESTOpInputContext, error) {
 	callCtx, err := consumerSrv.callContextFromHTTPRequest(req)
 	if callCtx == nil {
-		callCtx = NewEmptyCallContext(req.Context())
+		callCtx = NewEmptyOpInputContext(req.Context())
 	}
-	return &RESTRequestContext{callCtx, req}, err
+	return &RESTOpInputContext{callCtx, req}, err
 }
 
 func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	req *http.Request,
-) (CallContext, error) {
+) (OpInputContext, error) {
 	ctx := req.Context()
 	ctxAuth := newEmptyAuthorization()
 
@@ -367,40 +365,39 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	remoteEnvString := req.UserAgent()
 	acceptLanguages, _, _ := language.ParseAcceptLanguage(req.Header.Get("Accept-Language"))
 
-	originInfo := api.CallOriginInfo{
+	originInfo := api.OpOriginInfo{
 		Address:           remoteAddr,
 		EnvironmentString: remoteEnvString,
 		AcceptLanguage:    acceptLanguages,
 	}
 
 	// Get from query too?
-	var requestID *api.RequestID
-	requestIDStr := req.Header.Get("Request-ID")
-	if requestIDStr == "" {
-		requestIDStr = req.Header.Get("X-Request-ID")
+	var opID *api.OpID
+	opIDStr := req.Header.Get("Op-ID")
+	if opIDStr == "" {
+		opIDStr = req.Header.Get("Request-ID")
+		if opIDStr == "" {
+			opIDStr = req.Header.Get("X-Request-ID")
+		}
 	}
-	if requestIDStr != "" {
-		u, err := uuid.Parse(requestIDStr)
+	if opIDStr != "" {
+		i, err := api.OpIDFromString(opIDStr)
 		if err != nil {
-			return newCallContext(ctx, ctxAuth, originInfo, nil),
-				ReqFieldErr("Request-ID", dataerrs.Malformed(err))
+			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
+				ReqFieldErr("Request-ID", err)
 		}
-		if isValidRequestID(u) {
-			return newCallContext(ctx, ctxAuth, originInfo, nil),
-				ReqFieldErr("Request-ID", nil)
-		}
-		requestID = &u
+		opID = &i
 	}
 
 	authorization := strings.TrimSpace(req.Header.Get("Authorization"))
 	if authorization != "" {
 		authParts := strings.SplitN(authorization, " ", 2)
 		if len(authParts) != 2 {
-			return newCallContext(ctx, ctxAuth, originInfo, nil),
+			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed
 		}
 		if authParts[0] != "Bearer" {
-			return newCallContext(ctx, ctxAuth, originInfo, nil),
+			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationTypeUnsupported
 		}
 
@@ -408,7 +405,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 		var err error
 		ctxAuth, err = consumerSrv.AuthorizationFromJWTString(jwtStr)
 		if err != nil {
-			return newCallContext(ctx, ctxAuth, originInfo, nil),
+			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed
 		}
 
@@ -418,11 +415,5 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 		ctxAuth = newEmptyAuthorization()
 	}
 
-	return newCallContext(ctx, ctxAuth, originInfo, requestID), nil
-}
-
-func isValidRequestID(u uuid.UUID) bool {
-	return u.String() != uuid.Nil.String() &&
-		u.Version() == uuid.Version(4) &&
-		u.Variant() == uuid.RFC4122
+	return newOpInputContext(ctx, ctxAuth, originInfo, opID), nil
 }

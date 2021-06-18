@@ -69,7 +69,7 @@ type authGetResponse struct {
 }
 
 func (restSvc *RESTService) getAuth(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSvc.iamCS.RESTRequestContext(req.Request)
+	reqCtx, err := restSvc.iamCS.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).Warn().Err(err).
 			Msg("Request context")
@@ -103,7 +103,7 @@ type helloGetResponse struct {
 }
 
 func (restSvc *RESTService) getHello(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSvc.iamCS.RESTRequestContext(req.Request)
+	reqCtx, err := restSvc.iamCS.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).Warn().Err(err).
 			Msg("Request context")

@@ -21,44 +21,46 @@ var (
 	ErrAccessNotAllowed    = accesserrs.Msg("actor is not allowed to access target resource")
 )
 
-func NewEmptyCallContext(ctx context.Context) CallContext {
+func NewEmptyOpInputContext(ctx context.Context) OpInputContext {
 	return &callContext{
 		Context:       ctx,
 		authorization: newEmptyAuthorization(),
-		requestInfo:   api.CallRequestInfo{ReceiveTime: time.Now().UTC()},
+		requestInfo: api.OpInputMetadata{
+			ReceiveTime: time.Now().UTC(),
+		},
 	}
 }
 
-// CallContext provides call-scoped information.
-type CallContext interface {
-	api.CallContext
+// OpInputContext provides call-scoped information.
+type OpInputContext interface {
+	api.OpInputContext
 	Authorization() Authorization
 	IsUserContext() bool
 }
 
-func newCallContext(
+func newOpInputContext(
 	ctx context.Context,
 	ctxAuth *Authorization,
-	originInfo api.CallOriginInfo,
-	requestID *api.RequestID,
-) CallContext {
+	originInfo api.OpOriginInfo,
+	requestID *api.OpID,
+) OpInputContext {
 	if ctxAuth == nil {
 		panic("ctxAuth must not be nil")
 	}
-	return &callContext{ctx, ctxAuth, api.CallRequestInfo{
+	return &callContext{ctx, ctxAuth, api.OpInputMetadata{
 		ID:          requestID,
 		ReceiveTime: time.Now().UTC(),
 	}, originInfo,
 	}
 }
 
-var _ CallContext = &callContext{}
+var _ OpInputContext = &callContext{}
 
 type callContext struct {
 	context.Context
 	authorization *Authorization
-	requestInfo   api.CallRequestInfo
-	originInfo    api.CallOriginInfo
+	requestInfo   api.OpInputMetadata
+	originInfo    api.OpOriginInfo
 }
 
 func (ctx callContext) Authorization() Authorization {
@@ -74,11 +76,11 @@ func (ctx *callContext) IsUserContext() bool {
 		ctx.authorization.IsUserContext()
 }
 
-func (ctx *callContext) MethodName() string { return "" }
+func (ctx *callContext) OpName() string { return "" }
 
-func (ctx *callContext) RequestInfo() api.CallRequestInfo { return ctx.requestInfo }
+func (ctx *callContext) OpInputMetadata() api.OpInputMetadata { return ctx.requestInfo }
 
-func (ctx *callContext) OriginInfo() api.CallOriginInfo { return ctx.originInfo }
+func (ctx *callContext) OpOriginInfo() api.OpOriginInfo { return ctx.originInfo }
 
 type OpOutputContext struct {
 	Err     error

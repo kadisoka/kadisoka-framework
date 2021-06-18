@@ -16,7 +16,7 @@ type userProfileImagePutResponse struct {
 const multipartFormMaxMemory = 20 * 1024 * 1024
 
 func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

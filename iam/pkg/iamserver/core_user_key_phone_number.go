@@ -21,7 +21,7 @@ var _ iam.UserKeyPhoneNumberService = &Core{}
 const userKeyPhoneNumberDBTableName = `user_key_phone_number_dt`
 
 func (core *Core) ListUsersByPhoneNumber(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	phoneNumbers []telephony.PhoneNumber,
 ) ([]iam.UserKeyPhoneNumber, error) {
 	if len(phoneNumbers) == 0 {
@@ -94,7 +94,7 @@ func (core *Core) ListUsersByPhoneNumber(
 }
 
 func (core *Core) GetUserKeyPhoneNumber(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*telephony.PhoneNumber, error) {
 	//TODO: access control
@@ -102,7 +102,7 @@ func (core *Core) GetUserKeyPhoneNumber(
 }
 
 func (core *Core) getUserKeyPhoneNumberNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*telephony.PhoneNumber, error) {
 	var countryCode int32
@@ -196,7 +196,7 @@ func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 }
 
 func (core *Core) SetUserKeyPhoneNumber(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	phoneNumber telephony.PhoneNumber,
 	verificationMethods []pnv10n.VerificationMethod,
@@ -253,11 +253,11 @@ func (core *Core) SetUserKeyPhoneNumber(
 }
 
 func (core *Core) setUserKeyPhoneNumber(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	phoneNumber telephony.PhoneNumber,
 ) (alreadyVerified bool, err error) {
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 	ctxAuth := callCtx.Authorization()
 
 	xres, err := core.db.Exec(
@@ -305,7 +305,7 @@ func (core *Core) setUserKeyPhoneNumber(
 }
 
 func (core *Core) ConfirmUserPhoneNumberVerification(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	verificationID int64,
 	code string,
 ) (stateChanged bool, err error) {
@@ -329,7 +329,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		panic(err)
 	}
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 	stateChanged, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
 			ctxAuth.UserIDNum(), *phoneNumber,

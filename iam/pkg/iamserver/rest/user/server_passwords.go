@@ -13,7 +13,7 @@ type userPasswordPutRequest struct {
 }
 
 func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

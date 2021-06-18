@@ -7,7 +7,7 @@ import (
 const userContactPhoneNumberDBTableName = "user_contact_phone_number_dt"
 
 func (core *Core) GetUserContactUserRefs(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) ([]iam.UserRefKey, error) {
 	userIDNumRows, err := core.db.

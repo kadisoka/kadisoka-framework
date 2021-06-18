@@ -21,11 +21,11 @@ type Logger struct {
 	foundationlog.PkgLogger
 }
 
-// WithContext creates a new logger which bound to a CallContext.
+// WithContext creates a new logger which bound to a OpInputContext.
 //
 //TODO: don't populate the entry before the actual logging call.
 func (logger Logger) WithContext(
-	ctx api.CallContext,
+	ctx api.OpInputContext,
 ) *foundationlog.Logger {
 	// Implementation notes: don't panic
 
@@ -37,7 +37,7 @@ func (logger Logger) WithContext(
 	logCtx := logger.With()
 	hasAuth := false
 
-	if iamCtx, ok := ctx.(iam.CallContext); ok {
+	if iamCtx, ok := ctx.(iam.OpInputContext); ok {
 		if ctxAuth := iamCtx.Authorization(); ctxAuth.IsValid() {
 			logCtx = logCtx.
 				Str("session", ctxAuth.Session.AZIDText()).
@@ -48,19 +48,19 @@ func (logger Logger) WithContext(
 	}
 	if !hasAuth {
 		logCtx = logCtx.
-			Str("remote_addr", ctx.OriginInfo().Address)
+			Str("remote_addr", ctx.OpOriginInfo().Address)
 	}
 	if method, ok := grpc.Method(ctx); ok {
 		logCtx = logCtx.
 			Str("method", method)
 	} else {
 		logCtx = logCtx.
-			Str("method", ctx.MethodName())
+			Str("method", ctx.OpName())
 	}
 
-	if reqID := ctx.RequestInfo().ID; reqID != nil {
+	if reqID := ctx.OpInputMetadata().ID; reqID != nil {
 		logCtx = logCtx.
-			Str("request_id", reqID.String())
+			Str("op_id", reqID.String())
 	}
 
 	l := logCtx.Logger()

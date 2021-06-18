@@ -36,7 +36,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil && err != iam.ErrReqFieldAuthorizationTypeUnsupported {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -83,7 +83,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 }
 
 func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
-	reqCtx *iam.RESTRequestContext,
+	reqCtx *iam.RESTOpInputContext,
 	resp *restful.Response,
 	reqApp *iam.Application,
 	terminalRefStr string,

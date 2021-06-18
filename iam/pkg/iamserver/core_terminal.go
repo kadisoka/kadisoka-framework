@@ -101,7 +101,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := input.Context.OriginInfo().AcceptLanguage
+	userPreferredLanguages := input.Context.OpOriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.pnVerifier.
 		StartVerification(callCtx, phoneNumber,
@@ -198,7 +198,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := callCtx.OriginInfo().AcceptLanguage
+	userPreferredLanguages := callCtx.OpOriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.eaVerifier.
 		StartVerification(callCtx, emailAddress,
@@ -244,7 +244,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 // terminal by providing the verificationCode which was delivered through
 // selected channel when the authorization was created.
 func (core *Core) ConfirmTerminalAuthorization(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalRef iam.TerminalRefKey,
 	verificationCode string,
 ) (terminalSecret string, userRef iam.UserRefKey, err error) {
@@ -252,7 +252,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 	// was requested. Each of the implementation required to implement
 	// limit the number of failed attempts.
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 
 	termData, err := core.getTerminalRaw(terminalRef.IDNum())
 	if err != nil {
@@ -408,7 +408,7 @@ func (core *Core) getTerminalRaw(idNum iam.TerminalIDNum) (*terminalDBRawModel, 
 }
 
 func (core *Core) GetTerminalInfo(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalRefKey iam.TerminalRefKey,
 ) (*iam.TerminalInfo, error) {
 	if callCtx == nil {
@@ -496,8 +496,8 @@ func (core *Core) registerTerminalNoAC(
 ) TerminalRegistrationOutput {
 	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
-	ctxTime := callCtx.RequestInfo().ReceiveTime
-	originInfo := callCtx.OriginInfo()
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	originInfo := callCtx.OpOriginInfo()
 
 	//var verificationID int64
 	var termSecret string
@@ -562,7 +562,7 @@ func (core *Core) registerTerminalNoAC(
 }
 
 func (core *Core) DeleteTerminal(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	termRefToDelete iam.TerminalRefKey,
 ) (stateChanged bool, err error) {
 	ctxAuth := callCtx.Authorization()
@@ -571,7 +571,7 @@ func (core *Core) DeleteTerminal(
 		return false, iam.ErrOperationNotAllowed
 	}
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 
 	sqlString, _, _ := goqu.
 		From(terminalDBTableName).
@@ -608,7 +608,7 @@ func (core *Core) DeleteTerminal(
 
 //TODO: error if the terminal is deleted?
 func (core *Core) setTerminalVerified(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalIDNum iam.TerminalIDNum,
 	disallowReplay bool,
 ) (secret string, err error) {
@@ -627,7 +627,7 @@ func (core *Core) setTerminalVerified(
 		Set(
 			goqu.Record{
 				"secret":          termSecret,
-				"verification_ts": callCtx.RequestInfo().ReceiveTime,
+				"verification_ts": callCtx.OpInputMetadata().ReceiveTime,
 			}).
 		ToSQL()
 

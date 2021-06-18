@@ -6,7 +6,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 )
 
-type RequestContext interface {
-	api.CallContext
+type OpInputContext interface {
+	api.OpInputContext
 	HTTPRequest() *http.Request
 }

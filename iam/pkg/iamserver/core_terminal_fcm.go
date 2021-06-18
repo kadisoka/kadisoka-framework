@@ -13,7 +13,7 @@ var _ iam.TerminalFCMRegistrationTokenService = &Core{}
 const terminalFCMRegistrationTokenDBTableName = "terminal_fcm_registration_token_dt"
 
 func (core *Core) DisposeTerminalFCMRegistrationToken(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalRef iam.TerminalRefKey,
 	token string,
 ) error {
@@ -22,7 +22,7 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 		`UPDATE `+terminalFCMRegistrationTokenDBTableName+` `+
 			"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 			"WHERE terminal_id = $4 AND token = $5 AND d_ts IS NULL",
-		callCtx.RequestInfo().ReceiveTime,
+		callCtx.OpInputMetadata().ReceiveTime,
 		ctxAuth.UserIDNum().PrimitiveValue(),
 		ctxAuth.TerminalIDNum().PrimitiveValue(),
 		terminalRef.IDNum().PrimitiveValue(),
@@ -69,7 +69,7 @@ func (core *Core) ListTerminalFCMRegistrationTokensByUser(
 }
 
 func (core *Core) SetTerminalFCMRegistrationToken(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalRef iam.TerminalRefKey, userRef iam.UserRefKey,
 	token string,
 ) error {
@@ -93,7 +93,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 			`UPDATE `+terminalFCMRegistrationTokenDBTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 				"WHERE terminal_id = $4 AND d_ts IS NULL",
-			callCtx.RequestInfo().ReceiveTime,
+			callCtx.OpInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			terminalRef.IDNum().PrimitiveValue())

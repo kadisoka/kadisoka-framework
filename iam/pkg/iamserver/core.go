@@ -120,7 +120,7 @@ func NewCoreByConfig(
 		db:                       iamDB,
 		registeredUserIDNumCache: registeredUserIDNumCache,
 		deletedUserIDNumCache:    deletedUserIDNumCache,
-		deletionTxHook: func(callCtx iam.CallContext, dbTx *sqlx.Tx) error {
+		deletionTxHook: func(callCtx iam.OpInputContext, dbTx *sqlx.Tx) error {
 			ctxAuth := callCtx.Authorization()
 			var txErr error
 
@@ -129,7 +129,7 @@ func NewCoreByConfig(
 					`UPDATE `+userKeyPhoneNumberDBTableName+` `+
 						"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 						"WHERE user_id = $2 AND d_ts IS NULL",
-					callCtx.RequestInfo().ReceiveTime,
+					callCtx.OpInputMetadata().ReceiveTime,
 					ctxAuth.UserIDNum().PrimitiveValue(),
 					ctxAuth.TerminalIDNum().PrimitiveValue())
 			}
@@ -139,7 +139,7 @@ func NewCoreByConfig(
 					`UPDATE `+userProfileImageKeyDBTableName+` `+
 						"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
 						"WHERE user_id = $2 AND d_ts IS NULL",
-					callCtx.RequestInfo().ReceiveTime,
+					callCtx.OpInputMetadata().ReceiveTime,
 					ctxAuth.UserIDNum().PrimitiveValue(),
 					ctxAuth.TerminalIDNum().PrimitiveValue())
 			}

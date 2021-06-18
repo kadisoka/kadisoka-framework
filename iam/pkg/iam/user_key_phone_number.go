@@ -6,7 +6,7 @@ import "github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 
 type UserKeyPhoneNumberService interface {
 	GetUserKeyPhoneNumber(
-		callCtx CallContext,
+		callCtx OpInputContext,
 		userRef UserRefKey,
 	) (*telephony.PhoneNumber, error)
 }

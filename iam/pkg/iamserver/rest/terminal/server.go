@@ -44,8 +44,8 @@ type Server struct {
 	basePath   string
 }
 
-func (restSrv *Server) RESTRequestContext(req *http.Request) (*iam.RESTRequestContext, error) {
-	return restSrv.serverCore.RESTRequestContext(req)
+func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTOpInputContext, error) {
+	return restSrv.serverCore.RESTOpInputContext(req)
 }
 
 func (restSrv *Server) RestfulWebService() *restful.WebService {
@@ -139,7 +139,7 @@ func (restSrv *Server) postTerminalsRegister(
 		return
 	}
 
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil && err != iam.ErrReqFieldAuthorizationTypeUnsupported {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -196,7 +196,7 @@ func (restSrv *Server) postTerminalsRegister(
 func (restSrv *Server) deleteTerminal(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -257,7 +257,7 @@ func (restSrv *Server) deleteTerminal(
 func (restSrv *Server) putTerminalFCMRegistrationToken(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -304,7 +304,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 // terminal register using phone number
 func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	resp *restful.Response,
-	reqCtx *iam.RESTRequestContext,
+	reqCtx *iam.RESTOpInputContext,
 	authApp *iam.Application,
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
@@ -376,7 +376,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 // terminal registration using email address
 func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	resp *restful.Response,
-	reqCtx *iam.RESTRequestContext,
+	reqCtx *iam.RESTOpInputContext,
 	authApp *iam.Application,
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {

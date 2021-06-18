@@ -14,7 +14,7 @@ import (
 func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

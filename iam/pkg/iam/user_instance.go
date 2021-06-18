@@ -8,7 +8,7 @@ type UserInstanceInfoServiceClientCore struct {
 }
 
 func (uaStateSvcClient *UserInstanceInfoServiceClientCore) GetUserInstanceInfo(
-	_ CallContext,
+	_ OpInputContext,
 	_ UserRefKey,
 ) (*UserInstanceInfo, error) {
 	return &UserInstanceInfo{RevisionNumber: -1, Deletion: nil}, nil

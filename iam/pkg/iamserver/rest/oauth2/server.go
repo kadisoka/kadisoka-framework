@@ -51,8 +51,8 @@ func (restSrv *Server) jwtKeyChain() *iam.JWTKeyChain {
 	return restSrv.serverCore.JWTKeyChain()
 }
 
-func (restSrv *Server) RESTRequestContext(req *http.Request) (*iam.RESTRequestContext, error) {
-	return restSrv.serverCore.RESTRequestContext(req)
+func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTOpInputContext, error) {
+	return restSrv.serverCore.RESTOpInputContext(req)
 }
 
 // RestfulWebService is used to obtain restful WebService with all endpoints set up.

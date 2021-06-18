@@ -47,8 +47,8 @@ type Server struct {
 	eTagResponder *rest.ETagResponder
 }
 
-func (restSrv *Server) RESTRequestContext(req *http.Request) (*iam.RESTRequestContext, error) {
-	return restSrv.serverCore.RESTRequestContext(req)
+func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTOpInputContext, error) {
+	return restSrv.serverCore.RESTOpInputContext(req)
 }
 
 func (restSrv *Server) RestfulWebService() *restful.WebService {
@@ -217,7 +217,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 }
 
 func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -322,7 +322,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 }
 
 func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -409,7 +409,7 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 }
 
 func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTRequestContext(req.Request)
+	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

@@ -21,7 +21,7 @@ const applicationDBTableName = "application_dt"
 type ApplicationServiceServerBase struct {
 	db *sqlx.DB
 
-	deletionTxHook func(iam.CallContext, *sqlx.Tx) error
+	deletionTxHook func(iam.OpInputContext, *sqlx.Tx) error
 
 	registeredApplicationIDNumCache *lru.ARCCache
 	deletedApplicationIDNumCache    *lru.ARCCache
@@ -62,7 +62,7 @@ func (srv *ApplicationServiceServerBase) IsApplicationRefKeyRegistered(refKey ia
 // If it's required only to determine the existence of the ID,
 // IsApplicationRefKeyRegistered is generally more efficient.
 func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	//TODO: access control
@@ -70,7 +70,7 @@ func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
 }
 
 func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	idRegistered := false
@@ -164,7 +164,7 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 }
 
 func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	input iam.ApplicationInstanceCreationInput,
 ) (refKey iam.ApplicationRefKey, initialState iam.ApplicationInstanceInfo, err error) {
 	//TODO: access control
@@ -176,7 +176,7 @@ func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
 }
 
 func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 ) (iam.ApplicationRefKey, error) {
 	ctxAuth := callCtx.Authorization()
 
@@ -184,7 +184,7 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
 
 	var err error
 	var newInstanceIDNum iam.ApplicationIDNum
-	cTime := callCtx.RequestInfo().ReceiveTime
+	cTime := callCtx.OpInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -231,7 +231,7 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
 }
 
 func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
@@ -245,7 +245,7 @@ func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
 }
 
 func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
@@ -255,7 +255,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
 			`UPDATE `+applicationDBTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
 				"WHERE id = $2 AND d_ts IS NULL",
-			callCtx.RequestInfo().ReceiveTime,
+			callCtx.OpInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			"")

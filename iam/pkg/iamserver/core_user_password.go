@@ -42,7 +42,7 @@ var argon2PasswordHashingParamsDefault = argon2PasswordHashingParams{
 const userPasswordDBTableName = "user_password_dt"
 
 func (core *Core) SetUserPassword(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	clearTextPassword string,
 ) error {
@@ -51,7 +51,7 @@ func (core *Core) SetUserPassword(
 		return iam.ErrOperationNotAllowed
 	}
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 
 	passwordHash, err := core.hashPassword(clearTextPassword)
 	if err != nil {

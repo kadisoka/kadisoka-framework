@@ -21,7 +21,7 @@ const userDBTableName = "user_dt"
 type UserServiceServerBase struct {
 	db *sqlx.DB
 
-	deletionTxHook func(iam.CallContext, *sqlx.Tx) error
+	deletionTxHook func(iam.OpInputContext, *sqlx.Tx) error
 
 	registeredUserIDNumCache *lru.ARCCache
 	deletedUserIDNumCache    *lru.ARCCache
@@ -62,7 +62,7 @@ func (srv *UserServiceServerBase) IsUserRefKeyRegistered(refKey iam.UserRefKey) 
 // If it's required only to determine the existence of the ID,
 // IsUserRefKeyRegistered is generally more efficient.
 func (srv *UserServiceServerBase) GetUserInstanceInfo(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	//TODO: access control
@@ -70,7 +70,7 @@ func (srv *UserServiceServerBase) GetUserInstanceInfo(
 }
 
 func (srv *UserServiceServerBase) getUserInstanceInfoNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	idRegistered := false
@@ -164,7 +164,7 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 }
 
 func (srv *UserServiceServerBase) CreateUserInstanceInternal(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	input iam.UserInstanceCreationInput,
 ) (refKey iam.UserRefKey, initialState iam.UserInstanceInfo, err error) {
 	//TODO: access control
@@ -176,7 +176,7 @@ func (srv *UserServiceServerBase) CreateUserInstanceInternal(
 }
 
 func (srv *UserServiceServerBase) createUserInstanceNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 ) (iam.UserRefKey, error) {
 	ctxAuth := callCtx.Authorization()
 
@@ -184,7 +184,7 @@ func (srv *UserServiceServerBase) createUserInstanceNoAC(
 
 	var err error
 	var newInstanceIDNum iam.UserIDNum
-	cTime := callCtx.RequestInfo().ReceiveTime
+	cTime := callCtx.OpInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -231,7 +231,7 @@ func (srv *UserServiceServerBase) createUserInstanceNoAC(
 }
 
 func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
@@ -249,7 +249,7 @@ func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
 }
 
 func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
@@ -259,7 +259,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
 			`UPDATE `+userDBTableName+` `+
 				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
 				"WHERE id = $2 AND d_ts IS NULL",
-			callCtx.RequestInfo().ReceiveTime,
+			callCtx.OpInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			input.DeletionNotes)

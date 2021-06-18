@@ -8,7 +8,7 @@ import (
 )
 
 func (core *Core) GetUserContactInformation(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*iampb.UserContactInfoData, error) {
 	//TODO: access control
@@ -16,7 +16,7 @@ func (core *Core) GetUserContactInformation(
 }
 
 func (core *Core) getUserContactInformationNoAC(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*iampb.UserContactInfoData, error) {
 	userPhoneNumber, err := core.

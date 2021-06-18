@@ -13,7 +13,7 @@ import (
 )
 
 func (core *Core) GenerateAccessTokenJWT(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalRef iam.TerminalRefKey,
 	userRef iam.UserRefKey,
 	issueTime time.Time,
@@ -60,7 +60,7 @@ func (core *Core) GenerateAccessTokenJWT(
 }
 
 func (core *Core) GenerateRefreshTokenJWT(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalRef iam.TerminalRefKey,
 	terminalSecret string,
 	issueTime time.Time,
@@ -92,7 +92,7 @@ func (core *Core) GenerateRefreshTokenJWT(
 }
 
 func (core *Core) issueSession(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	terminalRef iam.TerminalRefKey,
 	userRef iam.UserRefKey,
 ) (

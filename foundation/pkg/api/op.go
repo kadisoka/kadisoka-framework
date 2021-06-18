@@ -2,49 +2,71 @@ package api
 
 import (
 	"context"
+	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"golang.org/x/text/language"
+
+	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
 )
 
-// A RequestID in our implementation is used as idempotency token.
+// A OpID in our implementation is used as idempotency token.
 //
 // A good explanation of idempotency token can be viewed here:
 // https://www.youtube.com/watch?v=IP-rGJKSZ3s
-type RequestID = uuid.UUID
+type OpID int32
 
-// CallContext holds information obtained from the request. This information
+const OpIDZero = OpID(0)
+
+func OpIDFromString(opIDStr string) (OpID, error) {
+	u, err := strconv.ParseInt(opIDStr, 10, 32)
+	if err != nil {
+		return OpIDZero, dataerrs.Malformed(err)
+	}
+	i := OpID(u)
+	if isOpIDSound(i) {
+		return OpIDZero, dataerrs.ErrMalformed
+	}
+	return i, nil
+}
+
+func isOpIDSound(opID OpID) bool {
+	return opID > 0
+}
+
+func (opID OpID) String() string { return strconv.FormatInt(int64(opID), 10) }
+
+// OpInputContext holds information obtained from the request. This information
 // are generally obtained from the request's metadata (e.g., HTTP request
 // header).
 //TODO: proxied context.
-type CallContext interface {
+type OpInputContext interface {
 	context.Context
 
-	// MethodName returns the name of the method this call is directed to.
+	// OpName returns the name of the method or the endpoint.
 	//
 	// For HTTP, this method returns the value as "<HTTP_METHOD> <URL>", e.g.,
 	// GET /users/me
 	//
-	MethodName() string
+	OpName() string
 
-	// RequestInfo returns some details about the request.
-	RequestInfo() CallRequestInfo
+	// OpInputMetadata returns some details about the request.
+	OpInputMetadata() OpInputMetadata
 
-	// OriginInfo returns some details about the caller.
-	OriginInfo() CallOriginInfo
+	// OpOriginInfo returns some details about the caller.
+	OpOriginInfo() OpOriginInfo
 }
 
-type CallRequestInfo struct {
+type OpInputMetadata struct {
 	// ID returns the idempotency token if provided in the call request.
-	ID *RequestID
+	ID *OpID
 
 	// ReceiveTime returns the time when request was accepted by
 	// the handler.
 	ReceiveTime time.Time
 }
 
-type CallOriginInfo struct {
+type OpOriginInfo struct {
 	// Address returns the IP address or hostname where this call was initiated
 	// from. This field might be empty if it's not possible to resolve
 	// the address (e.g., the server is behind a proxy or a load-balancer and

@@ -37,7 +37,7 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 	callCtx context.Context,
 	reqProto *iampb.InitiateUserTerminalAuthorizationByPhoneNumberRequest,
 ) (*iampb.InitiateUserTerminalAuthorizationByPhoneNumberResponse, error) {
-	reqCtx, err := authServer.iamServerCore.GRPCCallContext(callCtx)
+	reqCtx, err := authServer.iamServerCore.GRPCOpInputContext(callCtx)
 	if err != nil {
 		panic(err) //TODO: translate and return the error
 	}
@@ -107,7 +107,7 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorization(
 	callCtx context.Context, reqProto *iampb.ConfirmTerminalAuthorizationRequest,
 ) (*iampb.ConfirmTerminalAuthorizationResponse, error) {
-	reqCtx, err := authServer.iamServerCore.GRPCCallContext(callCtx)
+	reqCtx, err := authServer.iamServerCore.GRPCOpInputContext(callCtx)
 	if err != nil {
 		panic(err) //TODO: translate and return the error
 	}
@@ -144,7 +144,7 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTerminalCredentials(
 	callCtx context.Context, reqProto *iampb.GenerateAccessTokenByTerminalCredentialsRequest,
 ) (*iampb.GenerateAccessTokenByTerminalCredentialsResponse, error) {
-	reqCtx, err := authServer.iamServerCore.GRPCCallContext(callCtx)
+	reqCtx, err := authServer.iamServerCore.GRPCOpInputContext(callCtx)
 	if err != nil {
 		panic(err) //TODO: translate and return the error
 	}

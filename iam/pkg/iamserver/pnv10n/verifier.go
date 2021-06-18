@@ -113,7 +113,7 @@ type Verifier struct {
 
 //TODO(exa): make the operations atomic
 func (verifier *Verifier) StartVerification(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	phoneNumber telephony.PhoneNumber,
 	codeTTL time.Duration,
 	userPreferredLanguages []language.Tag,
@@ -124,7 +124,7 @@ func (verifier *Verifier) StartVerification(
 	}
 	ctxAuth := callCtx.Authorization()
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 
 	var prevAttempts int16
 	var prevVerificationID int64
@@ -189,7 +189,7 @@ func (verifier *Verifier) StartVerification(
 }
 
 func (verifier *Verifier) ConfirmVerification(
-	callCtx iam.CallContext,
+	callCtx iam.OpInputContext,
 	verificationID int64, code string,
 ) error {
 	if callCtx == nil {
@@ -197,7 +197,7 @@ func (verifier *Verifier) ConfirmVerification(
 	}
 	ctxAuth := callCtx.Authorization()
 
-	ctxTime := callCtx.RequestInfo().ReceiveTime
+	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 	var dbData verificationDBModel
 
 	err := verifier.db.QueryRowx(

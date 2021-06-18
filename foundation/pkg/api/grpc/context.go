@@ -4,6 +4,6 @@ import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 )
 
-type CallContext interface {
-	api.CallContext
+type OpInputContext interface {
+	api.OpInputContext
 }
