@@ -430,7 +430,7 @@ func (refKey *UserRefKey) UnmarshalText(b []byte) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey UserRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in azid-text
+	// We assume that there are no symbols in azid-text
 	return []byte("\"" + refKey.AZIDText() + "\""), nil
 }
 
@@ -483,7 +483,7 @@ type UserInstanceInfoService interface {
 	// This method returns nil if the refKey is not referencing to any valid
 	// instance.
 	GetUserInstanceInfo(
-		callCtx OpInputContext,
+		opInputCtx OpInputContext,
 		refKey UserRefKey,
 	) (*UserInstanceInfo, error)
 }
@@ -534,7 +534,7 @@ type UserInstanceDeletionInfo struct {
 // available to be called from another part of a process.
 type UserInstanceServiceInternal interface {
 	CreateUserInstanceInternal(
-		callCtx OpInputContext,
+		opInputCtx OpInputContext,
 		input UserInstanceCreationInput,
 	) (refKey UserRefKey, initialState UserInstanceInfo, err error)
 
@@ -544,7 +544,7 @@ type UserInstanceServiceInternal interface {
 	// true if this particular call resulted the deletion of the instance and
 	// it will have the value of false of subsequent calls to this method.
 	DeleteUserInstanceInternal(
-		callCtx OpInputContext,
+		opInputCtx OpInputContext,
 		refOfInstToDel UserRefKey,
 		input UserInstanceDeletionInput,
 	) (instanceMutated bool, currentState UserInstanceInfo, err error)
