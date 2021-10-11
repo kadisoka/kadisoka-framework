@@ -29,7 +29,7 @@ require (
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/minio/sha256-simd v1.0.0 // indirect
-	github.com/nyaruka/phonenumbers v1.0.69
+	github.com/nyaruka/phonenumbers v1.0.72
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
