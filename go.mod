@@ -11,7 +11,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.13.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
-	github.com/gabriel-vasile/mimetype v1.3.0
+	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/go-openapi/spec v0.20.3
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/gogo/protobuf v1.3.2
