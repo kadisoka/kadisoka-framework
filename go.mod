@@ -29,7 +29,7 @@ require (
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/minio/sha256-simd v1.0.0 // indirect
-	github.com/nyaruka/phonenumbers v1.0.69
+	github.com/nyaruka/phonenumbers v1.0.73
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
@@ -47,7 +47,7 @@ require (
 	golang.org/x/image v0.0.0-20210504121937-7319ad40d33e // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
 	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.3.7
 	google.golang.org/genproto v0.0.0-20210524171403-669157292da3 // indirect
 	google.golang.org/grpc v1.38.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
