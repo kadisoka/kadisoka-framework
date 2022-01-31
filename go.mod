@@ -6,7 +6,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/alloyzeus/go-azfl v0.0.0-20210325044722-1c3d7491882a
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.38.46
+	github.com/aws/aws-sdk-go v1.42.44
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.13.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
@@ -45,7 +45,6 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/image v0.0.0-20210504121937-7319ad40d33e // indirect
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
 	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
 	golang.org/x/text v0.3.6
 	google.golang.org/genproto v0.0.0-20210524171403-669157292da3 // indirect
