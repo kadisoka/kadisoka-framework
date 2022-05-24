@@ -10,6 +10,9 @@ import (
 	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
 )
 
+type OpInfo interface {
+}
+
 // A OpID in our implementation is used as idempotency token.
 //
 // A good explanation of idempotency token can be viewed here:
@@ -58,7 +61,7 @@ type OpInputContext interface {
 }
 
 type OpInputMetadata struct {
-	// ID returns the idempotency token if provided in the call request.
+	// ID returns the idempotency token for mutating operation.
 	ID *OpID
 
 	// ReceiveTime returns the time when request was accepted by

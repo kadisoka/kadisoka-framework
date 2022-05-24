@@ -9,12 +9,12 @@ import (
 
 func TestUserIDNumLimits(t *testing.T) {
 	assert.Equal(t, UserIDNum(0), UserIDNumZero, "zero equal")
-	assert.Equal(t, false, UserIDNum(0).IsSound(), "zero")
-	assert.Equal(t, false, UserIDNum(-1).IsSound(), "neg is invalid")
-	assert.Equal(t, true, UserIDNum(1).IsSound(), "")
-	assert.Equal(t, true, UserIDNum(0xffff).IsSound(), "")
-	assert.Equal(t, false, UserIDNum(0x0001000000000000).IsSound(), "over limit")
-	assert.Equal(t, true, UserIDNum(4294967296).IsSound(), "lowest normal")
+	assert.Equal(t, false, UserIDNum(0).IsStaticallyValid(), "zero")
+	assert.Equal(t, false, UserIDNum(-1).IsStaticallyValid(), "neg is invalid")
+	assert.Equal(t, true, UserIDNum(1).IsStaticallyValid(), "")
+	assert.Equal(t, true, UserIDNum(0xffff).IsStaticallyValid(), "")
+	assert.Equal(t, false, UserIDNum(0x0001000000000000).IsStaticallyValid(), "over limit")
+	assert.Equal(t, true, UserIDNum(4294967296).IsStaticallyValid(), "lowest normal")
 	assert.Equal(t, true, UserIDNum(4294967296).IsNormalAccount(), "lowest normal")
 	assert.Equal(t, false, UserIDNum(4294967296).IsBot(), "lowest normal")
 }

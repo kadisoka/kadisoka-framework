@@ -90,32 +90,31 @@ func (idNum UserIDNum) IsZero() bool {
 	return idNum == UserIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently
-// as an UserIDNum. It doesn't tell whether it refers to
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of UserIDNum. It doesn't tell whether it refers to
 // a valid instance of User.
 //
-// To elaborate, validity of a data depends on the perspective of the user.
-// For example, age 1000 is a valid as an instance of age, but on the context
+// What is considered valid in this context here is that the data
+// contained in this instance doesn't break any rule for an instance of
+// UserIDNum. Whether the instance is valid in a certain context,
+// it requires case-by-case validation which is out of the scope of this
+// method.
+//
+// For example, age 1000 is a valid as an instance of age, but in the context
 // of human living age, we can consider it as invalid.
 //
-// To use some analogy, a ticket has a date of validity for today, but
+// Another example, a ticket has a date of validity for today, but
 // after it got checked in to the counter, it turns out that its serial number
 // is not registered in the issuer's database. The ticket claims that it's
 // valid, but it's considered invalid because it's a fake.
-//
-// Similarly, what is considered valid in this context here is that the data
-// contained in this instance doesn't break any rule for an instance of
-// UserIDNum. Whether the instance is valid for certain context,
-// it requires case-by-case validation which is out of the scope of this
-// method.
-func (idNum UserIDNum) IsSound() bool {
+func (idNum UserIDNum) IsStaticallyValid() bool {
 	return int64(idNum) > 0 &&
 		(uint64(idNum)&UserIDNumIdentifierBitsMask) != 0
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (idNum UserIDNum) IsNotSound() bool {
-	return !idNum.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum UserIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
 }
 
 // Equals is required as UserIDNum is a value-object.
@@ -180,7 +179,7 @@ const (
 //
 // Bot account is ....
 func (idNum UserIDNum) IsBot() bool {
-	return idNum.IsSound() && idNum.HasBotBits()
+	return idNum.IsStaticallyValid() && idNum.HasBotBits()
 }
 
 // HasBotBits is only checking the bits
@@ -246,7 +245,7 @@ func (refKey UserRefKey) IDNum() UserIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey UserRefKey) IDNumPtr() *UserIDNum {
-	if refKey.IsNotSound() {
+	if refKey.IsNotStaticallyValid() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -269,15 +268,16 @@ func (refKey UserRefKey) IsZero() bool {
 	return UserIDNum(refKey) == UserIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently as a ref-key.
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of UserRefKey.
 // It doesn't tell whether it refers to a valid instance of User.
-func (refKey UserRefKey) IsSound() bool {
-	return UserIDNum(refKey).IsSound()
+func (refKey UserRefKey) IsStaticallyValid() bool {
+	return UserIDNum(refKey).IsStaticallyValid()
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (refKey UserRefKey) IsNotSound() bool {
-	return !refKey.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (refKey UserRefKey) IsNotStaticallyValid() bool {
+	return !refKey.IsStaticallyValid()
 }
 
 // Equals is required for conformance with azfl.EntityRefKey.
@@ -372,7 +372,7 @@ const _UserRefKeyAZIDTextPrefix = "KUs0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey UserRefKey) AZIDText() string {
-	if !refKey.IsSound() {
+	if !refKey.IsStaticallyValid() {
 		return ""
 	}
 

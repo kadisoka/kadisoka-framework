@@ -96,17 +96,17 @@ func (idNum SessionIDNum) IsZero() bool {
 	return idNum == SessionIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently
-// as an SessionIDNum. It doesn't tell whether it refers to
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of SessionIDNum. It doesn't tell whether it refers to
 // a valid instance of Session.
-func (idNum SessionIDNum) IsSound() bool {
+func (idNum SessionIDNum) IsStaticallyValid() bool {
 	return int32(idNum) > 0 &&
 		(uint32(idNum)&SessionIDNumIdentifierBitsMask) != 0
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (idNum SessionIDNum) IsNotSound() bool {
-	return !idNum.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum SessionIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
 }
 
 // Equals is required as SessionIDNum is a value-object.
@@ -221,7 +221,7 @@ func (refKey SessionRefKey) IDNum() SessionIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
-	if refKey.IsNotSound() {
+	if refKey.IsNotStaticallyValid() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -239,16 +239,17 @@ func (refKey SessionRefKey) IsZero() bool {
 		refKey.idNum == SessionIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently as a ref-key.
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of SessionRefKey.
 // It doesn't tell whether it refers to a valid instance of Session.
-func (refKey SessionRefKey) IsSound() bool {
-	return refKey.terminal.IsSound() &&
-		refKey.idNum.IsSound()
+func (refKey SessionRefKey) IsStaticallyValid() bool {
+	return refKey.terminal.IsStaticallyValid() &&
+		refKey.idNum.IsStaticallyValid()
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (refKey SessionRefKey) IsNotSound() bool {
-	return !refKey.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (refKey SessionRefKey) IsNotStaticallyValid() bool {
+	return !refKey.IsStaticallyValid()
 }
 
 // Equals is required for conformance with azfl.AdjunctEntityRefKey.
@@ -399,7 +400,7 @@ const _SessionRefKeyAZIDTextPrefix = "KSe0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey SessionRefKey) AZIDText() string {
-	if !refKey.IsSound() {
+	if !refKey.IsStaticallyValid() {
 		return ""
 	}
 
@@ -483,7 +484,7 @@ func (refKey SessionRefKey) Terminal() TerminalRefKey {
 // TerminalPtr returns a pointer to a copy of
 // TerminalRefKey if it's considered valid.
 func (refKey SessionRefKey) TerminalPtr() *TerminalRefKey {
-	if refKey.terminal.IsSound() {
+	if refKey.terminal.IsStaticallyValid() {
 		rk := refKey.terminal
 		return &rk
 	}

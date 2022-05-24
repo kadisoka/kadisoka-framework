@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"strings"
 
@@ -18,6 +19,7 @@ var _ = azfl.AZCorePackageIsVersion1
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
 var _ = strings.Compare
+var _ = rand.Reader
 
 // Adjunct-entity ApplicationAccessKey of Application.
 
@@ -34,9 +36,9 @@ var _ azid.IDNum = ApplicationAccessKeyIDNumZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
 var _ azfl.AdjunctEntityIDNum = ApplicationAccessKeyIDNumZero
 
-// ApplicationAccessKeyIDNumSignificantBitsMask is used to
-// extract significant bits from an instance of ApplicationAccessKeyIDNum.
-const ApplicationAccessKeyIDNumSignificantBitsMask uint64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111
+// ApplicationAccessKeyIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of ApplicationAccessKeyIDNum.
+const ApplicationAccessKeyIDNumIdentifierBitsMask uint64 = 0b_00000000_11111111_11111111_11111111_11111111_11111111_11111111_11111111
 
 // ApplicationAccessKeyIDNumZero is the zero value for ApplicationAccessKeyIDNum.
 const ApplicationAccessKeyIDNumZero = ApplicationAccessKeyIDNum(0)
@@ -83,37 +85,17 @@ func (idNum ApplicationAccessKeyIDNum) IsZero() bool {
 	return idNum == ApplicationAccessKeyIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently
-// as an ApplicationAccessKeyIDNum. It doesn't tell whether it refers to
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of ApplicationAccessKeyIDNum. It doesn't tell whether it refers to
 // a valid instance of ApplicationAccessKey.
-func (idNum ApplicationAccessKeyIDNum) IsSound() bool {
+func (idNum ApplicationAccessKeyIDNum) IsStaticallyValid() bool {
 	return int64(idNum) > 0 &&
-		(uint64(idNum)&ApplicationAccessKeyIDNumSignificantBitsMask) != 0
+		(uint64(idNum)&ApplicationAccessKeyIDNumIdentifierBitsMask) != 0
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (idNum ApplicationAccessKeyIDNum) IsNotSound() bool {
-	return !idNum.IsSound()
-}
-
-// AZIDBinField is required for conformance
-// with azid.IDNum.
-func (idNum ApplicationAccessKeyIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(idNum))
-	return b, azid.BinDataTypeInt64
-}
-
-// UnmarshalAZIDBinField is required for conformance
-// with azid.BinFieldUnmarshalable.
-func (idNum *ApplicationAccessKeyIDNum) UnmarshalAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (readLen int, err error) {
-	i, readLen, err := ApplicationAccessKeyIDNumFromAZIDBinField(b, typeHint)
-	if err == nil {
-		*idNum = i
-	}
-	return readLen, err
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum ApplicationAccessKeyIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
 }
 
 // Equals is required as ApplicationAccessKeyIDNum is a value-object.
@@ -143,6 +125,31 @@ func (idNum ApplicationAccessKeyIDNum) EqualsApplicationAccessKeyIDNum(
 ) bool {
 	return idNum == other
 }
+
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum ApplicationAccessKeyIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(idNum))
+	return b, azid.BinDataTypeInt64
+}
+
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *ApplicationAccessKeyIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := ApplicationAccessKeyIDNumFromAZIDBinField(b, typeHint)
+	if err == nil {
+		*idNum = i
+	}
+	return readLen, err
+}
+
+// Embedded fields
+const (
+	ApplicationAccessKeyIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+)
 
 //endregion
 
@@ -203,7 +210,7 @@ func (refKey ApplicationAccessKeyRefKey) IDNum() ApplicationAccessKeyIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey ApplicationAccessKeyRefKey) IDNumPtr() *ApplicationAccessKeyIDNum {
-	if refKey.IsNotSound() {
+	if refKey.IsNotStaticallyValid() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -221,16 +228,17 @@ func (refKey ApplicationAccessKeyRefKey) IsZero() bool {
 		refKey.idNum == ApplicationAccessKeyIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently as a ref-key.
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of ApplicationAccessKeyRefKey.
 // It doesn't tell whether it refers to a valid instance of ApplicationAccessKey.
-func (refKey ApplicationAccessKeyRefKey) IsSound() bool {
-	return refKey.application.IsSound() &&
-		refKey.idNum.IsSound()
+func (refKey ApplicationAccessKeyRefKey) IsStaticallyValid() bool {
+	return refKey.application.IsStaticallyValid() &&
+		refKey.idNum.IsStaticallyValid()
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (refKey ApplicationAccessKeyRefKey) IsNotSound() bool {
-	return !refKey.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (refKey ApplicationAccessKeyRefKey) IsNotStaticallyValid() bool {
+	return !refKey.IsStaticallyValid()
 }
 
 // Equals is required for conformance with azfl.AdjunctEntityRefKey.
@@ -381,7 +389,7 @@ const _ApplicationAccessKeyRefKeyAZIDTextPrefix = "KAK0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey ApplicationAccessKeyRefKey) AZIDText() string {
-	if !refKey.IsSound() {
+	if !refKey.IsStaticallyValid() {
 		return ""
 	}
 
@@ -439,7 +447,7 @@ func (refKey *ApplicationAccessKeyRefKey) UnmarshalText(b []byte) error {
 
 // MarshalJSON makes this type JSON-marshalable.
 func (refKey ApplicationAccessKeyRefKey) MarshalJSON() ([]byte, error) {
-	// We assume that there's no symbols in azid-text
+	// We assume that there are no symbols in azid-text
 	return []byte("\"" + refKey.AZIDText() + "\""), nil
 }
 
@@ -465,7 +473,7 @@ func (refKey ApplicationAccessKeyRefKey) Application() ApplicationRefKey {
 // ApplicationPtr returns a pointer to a copy of
 // ApplicationRefKey if it's considered valid.
 func (refKey ApplicationAccessKeyRefKey) ApplicationPtr() *ApplicationRefKey {
-	if refKey.application.IsSound() {
+	if refKey.application.IsStaticallyValid() {
 		rk := refKey.application
 		return &rk
 	}

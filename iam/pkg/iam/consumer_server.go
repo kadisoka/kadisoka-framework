@@ -235,7 +235,7 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	if err != nil {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("terminal_id", dataerrs.Malformed(err)))
 	}
-	if terminalRef.IsNotSound() {
+	if terminalRef.IsNotStaticallyValid() {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("terminal_id", dataerrs.ErrMalformed))
 	}
 

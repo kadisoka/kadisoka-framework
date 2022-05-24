@@ -217,7 +217,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	if err != nil {
 		return 0, nil, errors.Wrap("getUserIDNumByKeyPhoneNumber", err)
 	}
-	if existingOwnerUserIDNum.IsSound() {
+	if existingOwnerUserIDNum.IsStaticallyValid() {
 		if existingOwnerUserIDNum != ctxAuth.UserIDNum() {
 			return 0, nil, errors.ArgMsg("phoneNumber", "conflict")
 		}

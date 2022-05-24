@@ -99,7 +99,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		return
 	}
 
-	if termRef.IsNotSound() {
+	if termRef.IsNotStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Str("terminalRefStr", terminalRefStr).Str("terminalRef", termRef.AZIDText()).
 			Msg("Terminal ref is invalid")
@@ -146,7 +146,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		return
 	}
 
-	if userRef.IsSound() {
+	if userRef.IsStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Str("terminalRef", termRef.AZIDText()).Str("userRef", userRef.AZIDText()).
 			Msg("Terminal must not be associated to any user")

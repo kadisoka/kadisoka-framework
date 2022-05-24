@@ -79,7 +79,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 		panic(err)
 	}
 
-	if ownerUserRef.IsSound() {
+	if ownerUserRef.IsStaticallyValid() {
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
 		if ctxAuth.IsUserContext() && !ctxAuth.IsUser(ownerUserRef) {
@@ -168,13 +168,13 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		panic(err)
 	}
 
-	if ownerUserRef.IsSound() {
+	if ownerUserRef.IsStaticallyValid() {
 		// Check if it's fully claimed (already verified)
 		ownerUserIDNum, err := core.getUserIDNumByKeyEmailAddress(emailAddress)
 		if err != nil {
 			panic(err)
 		}
-		if ownerUserIDNum.IsSound() {
+		if ownerUserIDNum.IsStaticallyValid() {
 			ownerUserRef = iam.NewUserRefKey(ownerUserIDNum)
 		}
 		// As the request is authenticated, check if the phone number
@@ -263,7 +263,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 	}
 	disallowReplay := false
 
-	if termData.UserIDNum.IsSound() {
+	if termData.UserIDNum.IsStaticallyValid() {
 		termUserIDNum := termData.UserIDNum
 
 		switch termData.VerificationType {
@@ -306,7 +306,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 				if err != nil {
 					panic(err)
 				}
-				if existingOwnerUserIDNum.IsSound() && existingOwnerUserIDNum != termUserIDNum {
+				if existingOwnerUserIDNum.IsStaticallyValid() && existingOwnerUserIDNum != termUserIDNum {
 					// The email address has been claimed by another user after
 					// the current user requested the link.
 					return "", iam.UserRefKeyZero(), iam.ErrTerminalVerificationResourceConflict
@@ -352,7 +352,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 				if err != nil {
 					panic(err)
 				}
-				if existingOwnerUserIDNum.IsSound() && existingOwnerUserIDNum != termUserIDNum {
+				if existingOwnerUserIDNum.IsStaticallyValid() && existingOwnerUserIDNum != termUserIDNum {
 					// The phone number has been claimed by another user after
 					// the current user requested the link.
 					return "", iam.UserRefKeyZero(), iam.ErrTerminalVerificationResourceConflict
@@ -462,13 +462,13 @@ func (core *Core) GetTerminalInfo(
 func (core *Core) RegisterTerminal(
 	input TerminalRegistrationInput,
 ) TerminalRegistrationOutput {
-	if input.ApplicationRef.IsNotSound() {
+	if input.ApplicationRef.IsNotStaticallyValid() {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
 			Err: errors.Arg("input", nil, errors.Ent("ApplicationRef", nil))}}
 	}
 
 	// Allow zero or a valid user ref.
-	if !input.Data.UserRef.IsZero() && input.Data.UserRef.IsNotSound() {
+	if !input.Data.UserRef.IsZero() && input.Data.UserRef.IsNotStaticallyValid() {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
 			Err: errors.Arg("input", nil, errors.Ent("Data.UserRef", nil))}}
 	}

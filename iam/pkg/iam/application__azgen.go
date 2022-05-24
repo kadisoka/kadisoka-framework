@@ -87,32 +87,31 @@ func (idNum ApplicationIDNum) IsZero() bool {
 	return idNum == ApplicationIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently
-// as an ApplicationIDNum. It doesn't tell whether it refers to
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of ApplicationIDNum. It doesn't tell whether it refers to
 // a valid instance of Application.
 //
-// To elaborate, validity of a data depends on the perspective of the user.
-// For example, age 1000 is a valid as an instance of age, but on the context
+// What is considered valid in this context here is that the data
+// contained in this instance doesn't break any rule for an instance of
+// ApplicationIDNum. Whether the instance is valid in a certain context,
+// it requires case-by-case validation which is out of the scope of this
+// method.
+//
+// For example, age 1000 is a valid as an instance of age, but in the context
 // of human living age, we can consider it as invalid.
 //
-// To use some analogy, a ticket has a date of validity for today, but
+// Another example, a ticket has a date of validity for today, but
 // after it got checked in to the counter, it turns out that its serial number
 // is not registered in the issuer's database. The ticket claims that it's
 // valid, but it's considered invalid because it's a fake.
-//
-// Similarly, what is considered valid in this context here is that the data
-// contained in this instance doesn't break any rule for an instance of
-// ApplicationIDNum. Whether the instance is valid for certain context,
-// it requires case-by-case validation which is out of the scope of this
-// method.
-func (idNum ApplicationIDNum) IsSound() bool {
+func (idNum ApplicationIDNum) IsStaticallyValid() bool {
 	return int32(idNum) > 0 &&
 		(uint32(idNum)&ApplicationIDNumIdentifierBitsMask) != 0
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (idNum ApplicationIDNum) IsNotSound() bool {
-	return !idNum.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum ApplicationIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
 }
 
 // Equals is required as ApplicationIDNum is a value-object.
@@ -194,7 +193,7 @@ const (
 // First-party applications could be in various forms, e.g.,
 // official mobile app, web app, or system dashboard.
 func (idNum ApplicationIDNum) IsFirstParty() bool {
-	return idNum.IsSound() && idNum.HasFirstPartyBits()
+	return idNum.IsStaticallyValid() && idNum.HasFirstPartyBits()
 }
 
 // HasFirstPartyBits is only checking the bits
@@ -216,7 +215,7 @@ func (idNum ApplicationIDNum) HasFirstPartyBits() bool {
 // All service applications are confidential OAuth 2.0
 // clients (RFC6749 section 2.1).
 func (idNum ApplicationIDNum) IsService() bool {
-	return idNum.IsSound() && idNum.HasServiceBits()
+	return idNum.IsStaticallyValid() && idNum.HasServiceBits()
 }
 
 // HasServiceBits is only checking the bits
@@ -239,7 +238,7 @@ func (idNum ApplicationIDNum) HasServiceBits() bool {
 // These types align with OAuth 2.0 client types (RFC6749
 // section 2.1).
 func (idNum ApplicationIDNum) IsUserAgent() bool {
-	return idNum.IsSound() && idNum.HasUserAgentBits()
+	return idNum.IsStaticallyValid() && idNum.HasUserAgentBits()
 }
 
 // HasUserAgentBits is only checking the bits
@@ -267,7 +266,7 @@ func (idNum ApplicationIDNum) HasUserAgentBits() bool {
 // be focused on testing the user's claims and less of the
 // application's claims.
 func (idNum ApplicationIDNum) IsUserAgentAuthorizationPublic() bool {
-	return idNum.IsSound() && idNum.HasUserAgentAuthorizationPublicBits()
+	return idNum.IsStaticallyValid() && idNum.HasUserAgentAuthorizationPublicBits()
 }
 
 // HasUserAgentAuthorizationPublicBits is only checking the bits
@@ -288,7 +287,7 @@ func (idNum ApplicationIDNum) HasUserAgentAuthorizationPublicBits() bool {
 // A confidential user-agent can not be used for directly
 // performing user authentication.
 func (idNum ApplicationIDNum) IsUserAgentAuthorizationConfidential() bool {
-	return idNum.IsSound() && idNum.HasUserAgentAuthorizationConfidentialBits()
+	return idNum.IsStaticallyValid() && idNum.HasUserAgentAuthorizationConfidentialBits()
 }
 
 // HasUserAgentAuthorizationConfidentialBits is only checking the bits
@@ -353,7 +352,7 @@ func (refKey ApplicationRefKey) IDNum() ApplicationIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey ApplicationRefKey) IDNumPtr() *ApplicationIDNum {
-	if refKey.IsNotSound() {
+	if refKey.IsNotStaticallyValid() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -370,15 +369,16 @@ func (refKey ApplicationRefKey) IsZero() bool {
 	return ApplicationIDNum(refKey) == ApplicationIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently as a ref-key.
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of ApplicationRefKey.
 // It doesn't tell whether it refers to a valid instance of Application.
-func (refKey ApplicationRefKey) IsSound() bool {
-	return ApplicationIDNum(refKey).IsSound()
+func (refKey ApplicationRefKey) IsStaticallyValid() bool {
+	return ApplicationIDNum(refKey).IsStaticallyValid()
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (refKey ApplicationRefKey) IsNotSound() bool {
-	return !refKey.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (refKey ApplicationRefKey) IsNotStaticallyValid() bool {
+	return !refKey.IsStaticallyValid()
 }
 
 // Equals is required for conformance with azfl.EntityRefKey.
@@ -473,7 +473,7 @@ const _ApplicationRefKeyAZIDTextPrefix = "KAp0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey ApplicationRefKey) AZIDText() string {
-	if !refKey.IsSound() {
+	if !refKey.IsStaticallyValid() {
 		return ""
 	}
 

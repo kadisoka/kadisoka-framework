@@ -67,7 +67,7 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 	if err != nil {
 		return nil, iam.ReqFieldErr("Authorization", errors.Ent("username", dataerrs.Malformed(err)))
 	}
-	if appRef.IsNotSound() {
+	if appRef.IsNotStaticallyValid() {
 		return nil, iam.ReqFieldErr("Authorization", errors.Ent("username", nil))
 	}
 

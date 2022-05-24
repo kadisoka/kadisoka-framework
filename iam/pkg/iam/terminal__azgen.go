@@ -101,17 +101,17 @@ func (idNum TerminalIDNum) IsZero() bool {
 	return idNum == TerminalIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently
-// as an TerminalIDNum. It doesn't tell whether it refers to
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of TerminalIDNum. It doesn't tell whether it refers to
 // a valid instance of Terminal.
-func (idNum TerminalIDNum) IsSound() bool {
+func (idNum TerminalIDNum) IsStaticallyValid() bool {
 	return int64(idNum) > 0 &&
 		(uint64(idNum)&TerminalIDNumIdentifierBitsMask) != 0
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (idNum TerminalIDNum) IsNotSound() bool {
-	return !idNum.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum TerminalIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
 }
 
 // Equals is required as TerminalIDNum is a value-object.
@@ -230,7 +230,7 @@ func (refKey TerminalRefKey) IDNum() TerminalIDNum {
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
 func (refKey TerminalRefKey) IDNumPtr() *TerminalIDNum {
-	if refKey.IsNotSound() {
+	if refKey.IsNotStaticallyValid() {
 		return nil
 	}
 	i := refKey.IDNum()
@@ -249,17 +249,18 @@ func (refKey TerminalRefKey) IsZero() bool {
 		refKey.idNum == TerminalIDNumZero
 }
 
-// IsSound returns true if this instance is valid independently as a ref-key.
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of TerminalRefKey.
 // It doesn't tell whether it refers to a valid instance of Terminal.
-func (refKey TerminalRefKey) IsSound() bool {
-	return refKey.application.IsSound() &&
-		refKey.user.IsSound() &&
-		refKey.idNum.IsSound()
+func (refKey TerminalRefKey) IsStaticallyValid() bool {
+	return refKey.application.IsStaticallyValid() &&
+		refKey.user.IsStaticallyValid() &&
+		refKey.idNum.IsStaticallyValid()
 }
 
-// IsNotSound returns the negation of value returned by IsSound.
-func (refKey TerminalRefKey) IsNotSound() bool {
-	return !refKey.IsSound()
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (refKey TerminalRefKey) IsNotStaticallyValid() bool {
+	return !refKey.IsStaticallyValid()
 }
 
 // Equals is required for conformance with azfl.AdjunctEntityRefKey.
@@ -432,7 +433,7 @@ const _TerminalRefKeyAZIDTextPrefix = "KTx0"
 // AZIDText is required for conformance
 // with azid.RefKey.
 func (refKey TerminalRefKey) AZIDText() string {
-	if !refKey.IsSound() {
+	if !refKey.IsStaticallyValid() {
 		return ""
 	}
 
@@ -516,7 +517,7 @@ func (refKey TerminalRefKey) Application() ApplicationRefKey {
 // ApplicationPtr returns a pointer to a copy of
 // ApplicationRefKey if it's considered valid.
 func (refKey TerminalRefKey) ApplicationPtr() *ApplicationRefKey {
-	if refKey.application.IsSound() {
+	if refKey.application.IsStaticallyValid() {
 		rk := refKey.application
 		return &rk
 	}
@@ -544,7 +545,7 @@ func (refKey TerminalRefKey) User() UserRefKey {
 // UserPtr returns a pointer to a copy of
 // UserRefKey if it's considered valid.
 func (refKey TerminalRefKey) UserPtr() *UserRefKey {
-	if refKey.user.IsSound() {
+	if refKey.user.IsStaticallyValid() {
 		rk := refKey.user
 		return &rk
 	}
