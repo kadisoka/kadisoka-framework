@@ -1,7 +1,7 @@
 
 LINTER_IMAGE ?= kadisoka-linter
 TESTER_IMAGE ?= kadisoka-tester
-GOLANG_IMAGE ?= golang:1.16
+GOLANG_IMAGE ?= golang:1.18
 POSTGRES_IMAGE ?= postgres:10.7-alpine
 
 DOCKER_NETWORK ?= iam_default

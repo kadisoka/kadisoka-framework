@@ -6,7 +6,7 @@
 		"dockerfile": "Dockerfile",
 		"args": {
 			// Update the VARIANT arg to pick a version of Go: 1, 1.15, 1.14
-			"VARIANT": "1.15",
+			"VARIANT": "1.18",
 			// Options
 			"INSTALL_NODE": "false",
 			"NODE_VERSION": "lts/*"
@@ -26,7 +26,8 @@
 
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-		"golang.Go"
+		"golang.Go",
+		"mikestead.dotenv"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
