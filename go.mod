@@ -23,7 +23,7 @@ require (
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
-	github.com/rez-go/stev v0.0.0-20210322061542-b92d9076c0eb
+	github.com/rez-go/stev v0.0.0-20220524143224-48d542e71e2f
 	github.com/richardlehane/crock32 v1.0.1
 	github.com/rs/zerolog v1.26.1
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693
