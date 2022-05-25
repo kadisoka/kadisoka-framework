@@ -47,7 +47,7 @@ func main() {
 				"# Env file template generated\n# by %s\n",
 				appInfo.HeaderString())
 			err := docgen.WriteEnvTemplate(os.Stdout, &cfg,
-				docgen.EnvTemplateOptions{FieldPrefix: envVarsPrefix})
+				docgen.EnvTemplateWriteOptions{FieldPrefix: envVarsPrefix})
 			if err != nil {
 				log.Fatal().Err(err).Msg("Unable to generate env file template")
 			} else {

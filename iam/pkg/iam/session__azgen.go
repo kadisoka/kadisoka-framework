@@ -43,9 +43,9 @@ type SessionIDNum int32
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.IDNum = SessionIDNumZero
+var _ azid.IDNumMethods = SessionIDNumZero
 var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
-var _ azfl.AdjunctEntityIDNum = SessionIDNumZero
+var _ azfl.AdjunctEntityIDNumMethods = SessionIDNumZero
 
 // SessionIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of SessionIDNum.
@@ -190,10 +190,10 @@ func NewSessionRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.RefKey = _SessionRefKeyZero
+var _ azid.RefKey[SessionIDNum] = _SessionRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_SessionRefKeyZero
 var _ azid.TextUnmarshalable = &_SessionRefKeyZero
-var _ azfl.AdjunctEntityRefKey = _SessionRefKeyZero
+var _ azfl.AdjunctEntityRefKey[SessionIDNum] = _SessionRefKeyZero
 
 var _SessionRefKeyZero = SessionRefKey{
 	terminal: TerminalRefKeyZero(),
@@ -229,7 +229,7 @@ func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
 }
 
 // AZIDNum is required for conformance with azid.RefKey.
-func (refKey SessionRefKey) AZIDNum() azid.IDNum {
+func (refKey SessionRefKey) AZIDNum() SessionIDNum {
 	return refKey.idNum
 }
 

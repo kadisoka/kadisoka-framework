@@ -32,9 +32,9 @@ type ApplicationAccessKeyIDNum int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.IDNum = ApplicationAccessKeyIDNumZero
+var _ azid.IDNumMethods = ApplicationAccessKeyIDNumZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
-var _ azfl.AdjunctEntityIDNum = ApplicationAccessKeyIDNumZero
+var _ azfl.AdjunctEntityIDNumMethods = ApplicationAccessKeyIDNumZero
 
 // ApplicationAccessKeyIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of ApplicationAccessKeyIDNum.
@@ -179,10 +179,10 @@ func NewApplicationAccessKeyRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.RefKey = _ApplicationAccessKeyRefKeyZero
+var _ azid.RefKey[ApplicationAccessKeyIDNum] = _ApplicationAccessKeyRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyRefKeyZero
 var _ azid.TextUnmarshalable = &_ApplicationAccessKeyRefKeyZero
-var _ azfl.AdjunctEntityRefKey = _ApplicationAccessKeyRefKeyZero
+var _ azfl.AdjunctEntityRefKey[ApplicationAccessKeyIDNum] = _ApplicationAccessKeyRefKeyZero
 
 var _ApplicationAccessKeyRefKeyZero = ApplicationAccessKeyRefKey{
 	application: ApplicationRefKeyZero(),
@@ -218,7 +218,7 @@ func (refKey ApplicationAccessKeyRefKey) IDNumPtr() *ApplicationAccessKeyIDNum {
 }
 
 // AZIDNum is required for conformance with azid.RefKey.
-func (refKey ApplicationAccessKeyRefKey) AZIDNum() azid.IDNum {
+func (refKey ApplicationAccessKeyRefKey) AZIDNum() ApplicationAccessKeyIDNum {
 	return refKey.idNum
 }
 

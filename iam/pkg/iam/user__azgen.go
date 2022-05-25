@@ -31,10 +31,10 @@ type UserIDNum int64
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.IDNum = UserIDNumZero
+var _ azid.IDNumMethods = UserIDNumZero
 var _ azid.BinFieldUnmarshalable = &_UserIDNumZeroVar
-var _ azfl.EntityIDNum = UserIDNumZero
-var _ azfl.UserIDNum = UserIDNumZero
+var _ azfl.EntityIDNumMethods = UserIDNumZero
+var _ azfl.UserIDNumMethods = UserIDNumZero
 
 // UserIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of UserIDNum.
@@ -213,12 +213,12 @@ func NewUserRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.RefKey = _UserRefKeyZero
+var _ azid.RefKey[UserIDNum] = _UserRefKeyZero
 var _ azid.BinUnmarshalable = &_UserRefKeyZeroVar
 var _ azid.BinFieldUnmarshalable = &_UserRefKeyZeroVar
 var _ azid.TextUnmarshalable = &_UserRefKeyZeroVar
-var _ azfl.EntityRefKey = _UserRefKeyZero
-var _ azfl.UserRefKey = _UserRefKeyZero
+var _ azfl.EntityRefKey[UserIDNum] = _UserRefKeyZero
+var _ azfl.UserRefKey[UserIDNum] = _UserRefKeyZero
 
 const _UserRefKeyZero = UserRefKey(UserIDNumZero)
 
@@ -253,13 +253,13 @@ func (refKey UserRefKey) IDNumPtr() *UserIDNum {
 }
 
 // AZIDNum is required for conformance with azid.RefKey.
-func (refKey UserRefKey) AZIDNum() azid.IDNum {
+func (refKey UserRefKey) AZIDNum() UserIDNum {
 	return UserIDNum(refKey)
 }
 
 // UserIDNum is required for conformance
 // with azfl.UserRefKey.
-func (refKey UserRefKey) UserIDNum() azfl.UserIDNum {
+func (refKey UserRefKey) UserIDNum() UserIDNum {
 	return UserIDNum(refKey)
 }
 

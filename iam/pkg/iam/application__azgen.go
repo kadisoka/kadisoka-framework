@@ -33,9 +33,9 @@ type ApplicationIDNum int32
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.IDNum = ApplicationIDNumZero
+var _ azid.IDNumMethods = ApplicationIDNumZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationIDNumZeroVar
-var _ azfl.EntityIDNum = ApplicationIDNumZero
+var _ azfl.EntityIDNumMethods = ApplicationIDNumZero
 
 // ApplicationIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of ApplicationIDNum.
@@ -321,11 +321,11 @@ func NewApplicationRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.RefKey = _ApplicationRefKeyZero
+var _ azid.RefKey[ApplicationIDNum] = _ApplicationRefKeyZero
 var _ azid.BinUnmarshalable = &_ApplicationRefKeyZeroVar
 var _ azid.BinFieldUnmarshalable = &_ApplicationRefKeyZeroVar
 var _ azid.TextUnmarshalable = &_ApplicationRefKeyZeroVar
-var _ azfl.EntityRefKey = _ApplicationRefKeyZero
+var _ azfl.EntityRefKey[ApplicationIDNum] = _ApplicationRefKeyZero
 
 const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDNumZero)
 
@@ -360,7 +360,7 @@ func (refKey ApplicationRefKey) IDNumPtr() *ApplicationIDNum {
 }
 
 // AZIDNum is required for conformance with azid.RefKey.
-func (refKey ApplicationRefKey) AZIDNum() azid.IDNum {
+func (refKey ApplicationRefKey) AZIDNum() ApplicationIDNum {
 	return ApplicationIDNum(refKey)
 }
 
