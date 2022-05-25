@@ -4,7 +4,6 @@ WORKDIR /workspace
 
 # Get the dependencies so it can be cached into a layer
 COPY go.mod go.sum ./
-COPY localpackages ./localpackages
 RUN go mod download
 
 # Now copy all the source...

@@ -14,11 +14,10 @@ func ConfigFromEnv(envVarsPrefix string) (*Config, error) {
 	return &cfg, nil
 }
 
-// Config File Core cofiguration
+// Config provides configuration for media store.
 type Config struct {
-	//TODO: declare the encoding (hex?)
 	NameGenerationKey string `env:"FILENAME_GENERATION_KEY"`
-	StoreService      string `env:"STORE_SERVICE"`
+	StoreService      string `env:"STORE_SERVICE,required"`
 
 	Modules map[string]interface{} `env:",map,squash"`
 
