@@ -1,6 +1,7 @@
 //
 
-//+build integration
+//go:build integration
+// +build integration
 
 package oauth2_test
 

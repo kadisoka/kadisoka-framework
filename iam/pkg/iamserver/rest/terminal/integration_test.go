@@ -1,6 +1,7 @@
 //
 
-//+build integration
+//go:build integration
+// +build integration
 
 package terminalservice_test
 
