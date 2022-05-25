@@ -127,8 +127,8 @@ func NewCoreByConfig(
 			if txErr == nil {
 				_, txErr = dbTx.Exec(
 					`UPDATE `+userKeyPhoneNumberDBTableName+` `+
-						"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
-						"WHERE user_id = $2 AND d_ts IS NULL",
+						"SET _md_ts = $1, _md_uid = $2, _md_tid = $3 "+
+						"WHERE user_id = $2 AND _md_ts IS NULL",
 					callCtx.OpInputMetadata().ReceiveTime,
 					ctxAuth.UserIDNum().PrimitiveValue(),
 					ctxAuth.TerminalIDNum().PrimitiveValue())
@@ -137,8 +137,8 @@ func NewCoreByConfig(
 			if txErr == nil {
 				_, txErr = dbTx.Exec(
 					`UPDATE `+userProfileImageKeyDBTableName+` `+
-						"SET d_ts = $1, d_uid = $2, d_tid = $3 "+
-						"WHERE user_id = $2 AND d_ts IS NULL",
+						"SET _md_ts = $1, _md_uid = $2, _md_tid = $3 "+
+						"WHERE user_id = $2 AND _md_ts IS NULL",
 					callCtx.OpInputMetadata().ReceiveTime,
 					ctxAuth.UserIDNum().PrimitiveValue(),
 					ctxAuth.TerminalIDNum().PrimitiveValue())

@@ -18,11 +18,11 @@ func (core *Core) GetUserContactUserRefs(
 				`JOIN `+userKeyPhoneNumberDBTableName+` AS ph ON `+
 				`  ph.country_code = cp.contact_country_code `+
 				`  AND ph.national_number = cp.contact_national_number `+
-				`  AND ph.d_ts IS NULL `+
+				`  AND ph._md_ts IS NULL `+
 				`  AND ph.verification_ts IS NOT NULL `+
 				`JOIN `+userDBTableName+` AS usr ON `+
 				`  usr.id = ph.user_id `+
-				`  AND usr.d_ts IS NULL `+
+				`  AND usr._md_ts IS NULL `+
 				`WHERE `+
 				`  cp.user_id = $1 `+
 				`ORDER BY ph.user_id ASC`,

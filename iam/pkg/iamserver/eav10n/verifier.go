@@ -108,7 +108,7 @@ func (verifier *Verifier) StartVerification(
 	codeTTL time.Duration,
 	userPreferredLanguages []language.Tag,
 	preferredVerificationMethods []VerificationMethod,
-) (id int64, codeExpiry *time.Time, err error) {
+) (idNum int64, codeExpiry *time.Time, err error) {
 	if callCtx == nil {
 		return 0, nil, errors.ArgMsg("callCtx", "missing")
 	}
@@ -121,10 +121,10 @@ func (verifier *Verifier) StartVerification(
 	var prevCodeExpiry time.Time
 	err = verifier.db.
 		QueryRow(
-			"SELECT id, code_expiry, attempts_remaining "+
+			"SELECT id_num, code_expiry, attempts_remaining "+
 				`FROM `+verificationDBTableName+` `+
 				"WHERE domain_part = $1 AND local_part = $2 AND confirmation_ts IS NULL "+
-				"ORDER BY id DESC "+
+				"ORDER BY id_num DESC "+
 				"LIMIT 1",
 			emailAddress.DomainPart(),
 			emailAddress.LocalPart()).
@@ -150,10 +150,10 @@ func (verifier *Verifier) StartVerification(
 		QueryRow(
 			`INSERT INTO `+verificationDBTableName+` (`+
 				`domain_part, local_part, `+
-				"c_ts, c_uid, c_tid, "+
+				"_mc_ts, _mc_uid, _mc_tid, "+
 				"code, code_expiry, attempts_remaining"+
 				") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "+
-				"RETURNING id",
+				"RETURNING id_num",
 			emailAddress.DomainPart(),
 			emailAddress.LocalPart(),
 			ctxTime,
@@ -162,7 +162,7 @@ func (verifier *Verifier) StartVerification(
 			code,
 			codeExp,
 			verifier.confirmationAttemptsMax,
-		).Scan(&id)
+		).Scan(&idNum)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -203,7 +203,7 @@ func (verifier *Verifier) ConfirmVerification(
 	err := verifier.db.QueryRowx(
 		`UPDATE `+verificationDBTableName+` `+
 			`SET attempts_remaining = attempts_remaining - 1 `+
-			`WHERE id = $1 `+
+			`WHERE id_num = $1 `+
 			`RETURNING *`,
 		verificationID).
 		StructScan(&dbData)
@@ -228,7 +228,7 @@ func (verifier *Verifier) ConfirmVerification(
 	_, err = verifier.db.Exec(
 		`UPDATE `+verificationDBTableName+` `+
 			"SET confirmation_ts = $1, confirmation_uid = $2, confirmation_tid = $3 "+
-			"WHERE id = $4 AND confirmation_ts IS NULL",
+			"WHERE id_num = $4 AND confirmation_ts IS NULL",
 		ctxTime, ctxAuth.UserIDNumPtr(), ctxAuth.TerminalIDNumPtr(), verificationID)
 	return err //TODO: determine if it's race-condition
 }
@@ -335,7 +335,7 @@ func (verifier *Verifier) GetEmailAddressByVerificationID(
 	err := verifier.db.QueryRow(
 		`SELECT domain_part, local_part `+
 			`FROM `+verificationDBTableName+` `+
-			`WHERE id = $1 `,
+			`WHERE id_num = $1 `,
 		verificationID).
 		Scan(&domainPart, &localPart)
 	if err != nil {

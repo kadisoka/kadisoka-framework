@@ -62,15 +62,15 @@ func (srv *UserServiceServerBase) IsUserRefKeyRegistered(refKey iam.UserRefKey) 
 // If it's required only to determine the existence of the ID,
 // IsUserRefKeyRegistered is generally more efficient.
 func (srv *UserServiceServerBase) GetUserInstanceInfo(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	//TODO: access control
-	return srv.getUserInstanceInfoNoAC(callCtx, refKey)
+	return srv.getUserInstanceInfoNoAC(opInputCtx, refKey)
 }
 
 func (srv *UserServiceServerBase) getUserInstanceInfoNoAC(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	idRegistered := false
@@ -141,12 +141,12 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 	sqlString, _, _ := goqu.From(userDBTableName).
 		Select(
 			goqu.Case().
-				When(goqu.C("d_ts").IsNull(), false).
+				When(goqu.C("_md_ts").IsNull(), false).
 				Else(true).
 				As("deleted"),
 		).
 		Where(
-			goqu.C("id").Eq(idNum.PrimitiveValue()),
+			goqu.C("id_num").Eq(idNum.PrimitiveValue()),
 		).
 		ToSQL()
 
@@ -164,27 +164,27 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 }
 
 func (srv *UserServiceServerBase) CreateUserInstanceInternal(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	input iam.UserInstanceCreationInput,
 ) (refKey iam.UserRefKey, initialState iam.UserInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createUserInstanceNoAC(callCtx)
+	refKey, err = srv.createUserInstanceNoAC(opInputCtx)
 
 	//TODO: revision number
 	return refKey, iam.UserInstanceInfo{RevisionNumber: -1}, err
 }
 
 func (srv *UserServiceServerBase) createUserInstanceNoAC(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 ) (iam.UserRefKey, error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := opInputCtx.Authorization()
 
 	const attemptNumMax = 5
 
 	var err error
 	var newInstanceIDNum iam.UserIDNum
-	cTime := callCtx.OpInputMetadata().ReceiveTime
+	cTime := opInputCtx.OpInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -198,10 +198,10 @@ func (srv *UserServiceServerBase) createUserInstanceNoAC(
 			Insert(userDBTableName).
 			Rows(
 				goqu.Record{
-					"id":    newInstanceIDNum,
-					"c_ts":  cTime,
-					"c_uid": ctxAuth.UserIDNumPtr(),
-					"c_tid": ctxAuth.TerminalIDNumPtr(),
+					"id_num":  newInstanceIDNum,
+					"_mc_ts":  cTime,
+					"_mc_uid": ctxAuth.UserIDNumPtr(),
+					"_mc_tid": ctxAuth.TerminalIDNumPtr(),
 				},
 			).
 			ToSQL()
@@ -231,35 +231,35 @@ func (srv *UserServiceServerBase) createUserInstanceNoAC(
 }
 
 func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
-	if callCtx == nil {
+	if opInputCtx == nil {
 		return false, iam.UserInstanceInfoZero(), nil
 	}
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := opInputCtx.Authorization()
 	if !ctxAuth.IsUser(toDelete) {
 		return false, iam.UserInstanceInfoZero(), nil //TODO: should be an error
 	}
 
 	//TODO: access control
 
-	return srv.deleteUserInstanceNoAC(callCtx, toDelete, input)
+	return srv.deleteUserInstanceNoAC(opInputCtx, toDelete, input)
 }
 
 func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := opInputCtx.Authorization()
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
 		xres, txErr := dbTx.Exec(
 			`UPDATE `+userDBTableName+` `+
-				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
-				"WHERE id = $2 AND d_ts IS NULL",
-			callCtx.OpInputMetadata().ReceiveTime,
+				"SET _md_ts = $1, _md_uid = $2, _md_tid = $3, _md_notes = $4 "+
+				"WHERE id_num = $2 AND _md_ts IS NULL",
+			opInputCtx.OpInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			input.DeletionNotes)
@@ -273,7 +273,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
 		instanceMutated = n == 1
 
 		if srv.deletionTxHook != nil {
-			return srv.deletionTxHook(callCtx, dbTx)
+			return srv.deletionTxHook(opInputCtx, dbTx)
 		}
 
 		return nil
@@ -289,7 +289,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
 			DeletionNotes: input.DeletionNotes,
 		}
 	} else {
-		di, err := srv.getUserInstanceInfoNoAC(callCtx, toDelete)
+		di, err := srv.getUserInstanceInfoNoAC(opInputCtx, toDelete)
 		if err != nil {
 			return false, iam.UserInstanceInfoZero(), err
 		}
@@ -309,8 +309,30 @@ func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
 	return instanceMutated, currentState, nil
 }
 
+// Designed to perform the migration if required
+//TODO: context: target version, current version (assert), prefix, etc.
+func (srv *UserServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
+	_, err := dbTx.Exec(
+		`CREATE TABLE ` + userDBTableName + ` ( ` +
+			`id_num   bigint PRIMARY KEY, ` +
+			`_mc_ts     timestamp with time zone NOT NULL DEFAULT now(), ` +
+			`_mc_tid    bigint, ` +
+			`_mc_uid    bigint, ` +
+			`_md_ts     timestamp with time zone, ` +
+			`_md_tid    bigint, ` +
+			`_md_uid    bigint, ` +
+			`_md_notes  jsonb, ` +
+			`CHECK (id_num > 0) ` +
+			`);`,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // GenerateUserIDNum generates a new iam.UserIDNum.
-// Note that this function does not consulting any database nor registry.
+// Note that this function does not consult any database nor registry.
 // This method will not create an instance of iam.User, i.e., the
 // resulting iam.UserIDNum might or might not refer to valid instance
 // of iam.User. The resulting iam.UserIDNum is designed to be

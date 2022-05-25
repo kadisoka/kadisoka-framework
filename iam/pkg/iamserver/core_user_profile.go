@@ -43,15 +43,15 @@ func (core *Core) getUserBaseProfileNoAC(
 
 	err := core.db.
 		QueryRow(
-			`SELECT ua.id, `+
-				`CASE WHEN ua.d_ts IS NULL THEN false ELSE true END AS is_deleted, `+
+			`SELECT ua.id_num, `+
+				`CASE WHEN ua._md_ts IS NULL THEN false ELSE true END AS is_deleted, `+
 				`udn.display_name, upiu.profile_image_key `+
 				`FROM `+userDBTableName+` AS ua `+
-				`LEFT JOIN `+userProfileDisplayNameDBTableName+` udn ON udn.user_id = ua.id `+
-				`AND udn.d_ts IS NULL `+
-				`LEFT JOIN `+userProfileImageKeyDBTableName+` upiu ON upiu.user_id = ua.id `+
-				`AND upiu.d_ts IS NULL `+
-				`WHERE ua.id = $1`,
+				`LEFT JOIN `+userProfileDisplayNameDBTableName+` udn ON udn.user_id = ua.id_num `+
+				`AND udn._md_ts IS NULL `+
+				`LEFT JOIN `+userProfileImageKeyDBTableName+` upiu ON upiu.user_id = ua.id_num `+
+				`AND upiu._md_ts IS NULL `+
+				`WHERE ua.id_num = $1`,
 			userRef).
 		Scan(&idNum, &deletion.Deleted, &displayName, &profileImageURL)
 	if err != nil {

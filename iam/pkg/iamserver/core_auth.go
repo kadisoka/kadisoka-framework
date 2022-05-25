@@ -122,11 +122,11 @@ func (core *Core) issueSession(
 			Rows(
 				goqu.Record{
 					"terminal_id": terminalRef.IDNum().PrimitiveValue(),
-					"id":          sessionIDNum.PrimitiveValue(),
+					"id_num":      sessionIDNum.PrimitiveValue(),
 					"expiry":      sessionExpiry,
-					"c_ts":        sessionStartTime,
-					"c_tid":       ctxAuth.TerminalIDNumPtr(),
-					"c_uid":       ctxAuth.UserIDNumPtr(),
+					"_mc_ts":      sessionStartTime,
+					"_mc_tid":     ctxAuth.TerminalIDNumPtr(),
+					"_mc_uid":     ctxAuth.UserIDNumPtr(),
 				},
 			).
 			ToSQL()

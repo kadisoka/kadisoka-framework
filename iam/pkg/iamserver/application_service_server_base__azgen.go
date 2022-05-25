@@ -62,15 +62,15 @@ func (srv *ApplicationServiceServerBase) IsApplicationRefKeyRegistered(refKey ia
 // If it's required only to determine the existence of the ID,
 // IsApplicationRefKeyRegistered is generally more efficient.
 func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	//TODO: access control
-	return srv.getApplicationInstanceInfoNoAC(callCtx, refKey)
+	return srv.getApplicationInstanceInfoNoAC(opInputCtx, refKey)
 }
 
 func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoNoAC(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	idRegistered := false
@@ -141,12 +141,12 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 	sqlString, _, _ := goqu.From(applicationDBTableName).
 		Select(
 			goqu.Case().
-				When(goqu.C("d_ts").IsNull(), false).
+				When(goqu.C("_md_ts").IsNull(), false).
 				Else(true).
 				As("deleted"),
 		).
 		Where(
-			goqu.C("id").Eq(idNum.PrimitiveValue()),
+			goqu.C("id_num").Eq(idNum.PrimitiveValue()),
 		).
 		ToSQL()
 
@@ -164,27 +164,27 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 }
 
 func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	input iam.ApplicationInstanceCreationInput,
 ) (refKey iam.ApplicationRefKey, initialState iam.ApplicationInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createApplicationInstanceNoAC(callCtx)
+	refKey, err = srv.createApplicationInstanceNoAC(opInputCtx)
 
 	//TODO: revision number
 	return refKey, iam.ApplicationInstanceInfo{RevisionNumber: -1}, err
 }
 
 func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 ) (iam.ApplicationRefKey, error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := opInputCtx.Authorization()
 
 	const attemptNumMax = 5
 
 	var err error
 	var newInstanceIDNum iam.ApplicationIDNum
-	cTime := callCtx.OpInputMetadata().ReceiveTime
+	cTime := opInputCtx.OpInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -198,10 +198,10 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
 			Insert(applicationDBTableName).
 			Rows(
 				goqu.Record{
-					"id":    newInstanceIDNum,
-					"c_ts":  cTime,
-					"c_uid": ctxAuth.UserIDNumPtr(),
-					"c_tid": ctxAuth.TerminalIDNumPtr(),
+					"id_num":  newInstanceIDNum,
+					"_mc_ts":  cTime,
+					"_mc_uid": ctxAuth.UserIDNumPtr(),
+					"_mc_tid": ctxAuth.TerminalIDNumPtr(),
 				},
 			).
 			ToSQL()
@@ -231,31 +231,31 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
 }
 
 func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
-	if callCtx == nil {
+	if opInputCtx == nil {
 		return false, iam.ApplicationInstanceInfoZero(), nil
 	}
 
 	//TODO: access control
 
-	return srv.deleteApplicationInstanceNoAC(callCtx, toDelete, input)
+	return srv.deleteApplicationInstanceNoAC(opInputCtx, toDelete, input)
 }
 
 func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
-	callCtx iam.OpInputContext,
+	opInputCtx iam.OpInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := opInputCtx.Authorization()
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
 		xres, txErr := dbTx.Exec(
 			`UPDATE `+applicationDBTableName+` `+
-				"SET d_ts = $1, d_uid = $2, d_tid = $3, d_notes = $4 "+
-				"WHERE id = $2 AND d_ts IS NULL",
-			callCtx.OpInputMetadata().ReceiveTime,
+				"SET _md_ts = $1, _md_uid = $2, _md_tid = $3, _md_notes = $4 "+
+				"WHERE id_num = $2 AND _md_ts IS NULL",
+			opInputCtx.OpInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue(),
 			"")
@@ -269,7 +269,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
 		instanceMutated = n == 1
 
 		if srv.deletionTxHook != nil {
-			return srv.deletionTxHook(callCtx, dbTx)
+			return srv.deletionTxHook(opInputCtx, dbTx)
 		}
 
 		return nil
@@ -284,7 +284,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
 			Deleted: true,
 		}
 	} else {
-		di, err := srv.getApplicationInstanceInfoNoAC(callCtx, toDelete)
+		di, err := srv.getApplicationInstanceInfoNoAC(opInputCtx, toDelete)
 		if err != nil {
 			return false, iam.ApplicationInstanceInfoZero(), err
 		}
@@ -304,8 +304,30 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
 	return instanceMutated, currentState, nil
 }
 
+// Designed to perform the migration if required
+//TODO: context: target version, current version (assert), prefix, etc.
+func (srv *ApplicationServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
+	_, err := dbTx.Exec(
+		`CREATE TABLE ` + applicationDBTableName + ` ( ` +
+			`id_num   integer PRIMARY KEY, ` +
+			`_mc_ts     timestamp with time zone NOT NULL DEFAULT now(), ` +
+			`_mc_tid    bigint, ` +
+			`_mc_uid    bigint, ` +
+			`_md_ts     timestamp with time zone, ` +
+			`_md_tid    bigint, ` +
+			`_md_uid    bigint, ` +
+			`_md_notes  jsonb, ` +
+			`CHECK (id_num > 0) ` +
+			`);`,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // GenerateApplicationIDNum generates a new iam.ApplicationIDNum.
-// Note that this function does not consulting any database nor registry.
+// Note that this function does not consult any database nor registry.
 // This method will not create an instance of iam.Application, i.e., the
 // resulting iam.ApplicationIDNum might or might not refer to valid instance
 // of iam.Application. The resulting iam.ApplicationIDNum is designed to be

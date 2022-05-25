@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 go build -o ./iam/bin/monolith \
     ./iam/examples/monolith
 
 # Build the runtime image
-FROM alpine:3.13
+FROM alpine:3.16
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
