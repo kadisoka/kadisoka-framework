@@ -87,17 +87,6 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Returns(http.StatusOK, "OK", iam.UserPhoneNumberListJSONV1{}))
 
 	restWS.Route(restWS.
-		GET("/me/contacts").
-		To(restSrv.getUserContactList).
-		Metadata(restfulspec.KeyOpenAPITags, hidden).
-		Doc("Retrieve a list of user contacts").
-		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
-			Required(true)).
-		Returns(http.StatusOK, "OK", iam.UserContactListsJSONV1{}).
-		Returns(http.StatusUnauthorized, "Client authorization check failure", rest.ErrorResponse{}).
-		Returns(http.StatusBadRequest, "Request has missing data or contains invalid data", rest.ErrorResponse{}))
-
-	restWS.Route(restWS.
 		PUT("/me/password").
 		To(restSrv.putUserPassword).
 		Metadata(restfulspec.KeyOpenAPITags, tags).
@@ -406,69 +395,4 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 
 	restSrv.eTagResponder.RespondGetJSON(req, resp,
 		iam.UserPhoneNumberListJSONV1{Items: responseList})
-}
-
-func (restSrv *Server) getUserContactList(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
-	if err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).
-			Msg("Request context")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusInternalServerError)
-		return
-	}
-	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotValid() || !ctxAuth.IsUserContext() {
-		logCtx(reqCtx).
-			Warn().Msg("Unauthorized")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusUnauthorized)
-		return
-	}
-
-	// TODO
-	// - Retrieve list of user profile
-	// - Return as items of user contacts
-	contactUserRefs, err := restSrv.serverCore.GetUserContactUserRefs(
-		reqCtx, ctxAuth.UserRef())
-	if err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).
-			Msg("User contacts user ID fetch")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusInternalServerError)
-		return
-	}
-
-	var userContactLists []iam.UserJSONV1
-
-	if len(contactUserRefs) > 0 {
-		for _, contactUserRef := range contactUserRefs {
-			userBaseProfile, err := restSrv.serverCore.
-				GetUserBaseProfile(reqCtx, contactUserRef)
-			if err != nil {
-				panic(err)
-			}
-			userProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile, contactUserRef)
-
-			userPhoneNumber, err := restSrv.serverCore.
-				GetUserKeyPhoneNumber(reqCtx, contactUserRef)
-
-			if err != nil {
-				panic(err)
-			}
-
-			if userPhoneNumber != nil {
-				userProfile.Data.PhoneNumber = userPhoneNumber.String()
-			}
-
-			userContactLists = append(userContactLists, *userProfile)
-		}
-	}
-
-	restSrv.eTagResponder.RespondGetJSON(req, resp,
-		&iam.UserContactListsJSONV1{
-			Items: userContactLists,
-		})
 }
