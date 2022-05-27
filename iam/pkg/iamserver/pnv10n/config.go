@@ -7,6 +7,19 @@ import (
 	"github.com/rez-go/stev"
 )
 
+func init() {
+	RegisterModule(
+		"null",
+		Module{
+			ConfigSkeleton: func() ModuleConfig {
+				return &moduleNULLConfig{}
+			},
+			NewSMSDeliveryService: func(config interface{}) SMSDeliveryService {
+				return &smsDeliveryServiceNULL{}
+			},
+		})
+}
+
 func ConfigFromEnv(prefix string, seedCfg *Config) (*Config, error) {
 	if seedCfg == nil {
 		seedCfg = &Config{}
@@ -28,15 +41,21 @@ type Config struct {
 	// The SMS delivery service to use.
 	SMSDeliveryService string `env:"SMS_DELIVERY_SERVICE,required"`
 	// Configurations for modules
-	Modules map[string]interface{} `env:",map,squash"`
+	Modules map[string]ModuleConfig `env:",map,squash"`
 }
 
 func (cfg Config) FieldDocsDescriptor(fieldName string) *stev.FieldDocsDescriptor {
 	switch fieldName {
 	case "SMSDeliveryService", "SMS_DELIVERY_SERVICE":
 		modules := map[string]stev.EnumValueDocs{}
-		for k := range cfg.Modules {
-			modules[k] = stev.EnumValueDocs{}
+		for k, v := range cfg.Modules {
+			var shortDesc string
+			if smsCfg := v.SMSDeliveryServiceConfig(); smsCfg != nil {
+				if moduleDesc := stev.LoadSelfDocsDescriptor(smsCfg); moduleDesc != nil {
+					shortDesc = moduleDesc.ShortDesc
+				}
+			}
+			modules[k] = stev.EnumValueDocs{ShortDesc: shortDesc}
 		}
 		return &stev.FieldDocsDescriptor{
 			Description:     "The SMS delivery service to use.",

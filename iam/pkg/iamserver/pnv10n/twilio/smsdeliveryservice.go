@@ -8,9 +8,54 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/rez-go/stev"
+
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
+
+type SMSDeliveryServiceConfig struct {
+	AccountSID string `env:"ACCOUNT_SID,required"`
+	AuthToken  string `env:"AUTH_TOKEN,required"`
+	Sender     string `env:"SENDER,required"`
+}
+
+func SMSDeliveryServiceConfigSkeleton() SMSDeliveryServiceConfig { return SMSDeliveryServiceConfig{} }
+
+func (SMSDeliveryServiceConfig) SelfDocsDescriptor() stev.SelfDocsDescriptor {
+	return stev.SelfDocsDescriptor{
+		ShortDesc: "Use Twilio to deliver the SMS",
+	}
+}
+
+type SMSDeliveryService struct {
+	config      *SMSDeliveryServiceConfig
+	endpointURL string
+}
+
+var _ pnv10n.SMSDeliveryService = &SMSDeliveryService{}
+
+func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
+	if config == nil {
+		panic(errors.New("configuration required"))
+	}
+	conf, ok := config.(*SMSDeliveryServiceConfig)
+	if !ok {
+		panic(errors.New("configuration of invalid type"))
+	}
+
+	if conf.AccountSID == "" {
+		panic("Twilio Account SID not found")
+	}
+	if conf.AuthToken == "" {
+		panic("Unable to find twilio auth token")
+	}
+
+	return &SMSDeliveryService{
+		config:      conf,
+		endpointURL: "https://api.twilio.com/2010-04-01/Accounts/" + conf.AccountSID + "/Messages.json",
+	}
+}
 
 // SendTextMessage is use for send text message using sms delivery service
 func (sms *SMSDeliveryService) SendTextMessage(

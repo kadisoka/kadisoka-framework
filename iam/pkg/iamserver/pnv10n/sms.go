@@ -1,6 +1,10 @@
 package pnv10n
 
-import "github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
+import (
+	"github.com/rez-go/stev"
+
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
+)
 
 type SMSDeliveryService interface {
 	SendTextMessage(
@@ -22,17 +26,17 @@ func (smsDS smsDeliveryServiceNULL) SendTextMessage(
 	return nil
 }
 
-func init() {
-	type smsDeliveryServiceNULLConfig struct{}
+type smsDeliveryServiceNULLConfig struct{}
 
-	RegisterModule(
-		"null",
-		Module{
-			ConfigSkeleton: func() interface{} {
-				return &smsDeliveryServiceNULLConfig{}
-			},
-			NewSMSDeliveryService: func(config interface{}) SMSDeliveryService {
-				return &smsDeliveryServiceNULL{}
-			},
-		})
+func (smsDeliveryServiceNULLConfig) SelfDocsDescriptor() stev.SelfDocsDescriptor {
+	return stev.SelfDocsDescriptor{
+		ShortDesc: "SMSes will not be delivered",
+	}
+}
+
+type moduleNULLConfig struct {
+}
+
+func (moduleNULLConfig) SMSDeliveryServiceConfig() interface{} {
+	return &smsDeliveryServiceNULLConfig{}
 }

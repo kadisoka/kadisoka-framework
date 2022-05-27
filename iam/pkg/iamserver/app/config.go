@@ -24,7 +24,7 @@ type Config struct {
 	GRPC         *grpc.ServerConfig  `env:"GRPC"`
 }
 
-func (Config) EnvVarsDocs() map[string]string {
+func (Config) FieldDescriptions() map[string]string {
 	return map[string]string{
 		"HTTPBasePath": "The default serving path for all HTTP services, e.g., " +
 			"web UI and REST. Individual HTTP services might accept specific " +

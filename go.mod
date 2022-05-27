@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/alloyzeus/go-azfl v0.0.0-20220525140012-9f1b86e1e227
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.44.21
+	github.com/aws/aws-sdk-go v1.44.22
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
@@ -23,14 +23,14 @@ require (
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
-	github.com/rez-go/stev v0.0.0-20220525080941-e5fab4d55bc5
+	github.com/rez-go/stev v0.0.0-20220526094618-e1d57a1b739e
 	github.com/richardlehane/crock32 v1.0.1
 	github.com/rs/zerolog v1.26.1
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693
 	github.com/stretchr/testify v1.7.1
 	github.com/thoas/stats v0.0.0-20190407194641-965cb2de1678
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
-	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/text v0.3.7
 	google.golang.org/grpc v1.46.2
 )

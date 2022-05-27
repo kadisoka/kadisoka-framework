@@ -38,11 +38,14 @@ func NewVerifier(
 		if serviceName == "" {
 			panic("SMS delivery service must be specified in the config")
 		}
-		deliverySvc, err := NewSMSDeliveryService(serviceName, config.Modules[serviceName])
-		if err != nil || deliverySvc == nil {
-			panic("SMS delivery service not configured")
+		moduleCfg := config.Modules[serviceName]
+		if moduleCfg != nil {
+			deliverySvc, err := NewSMSDeliveryService(serviceName, moduleCfg.SMSDeliveryServiceConfig())
+			if err != nil || deliverySvc == nil {
+				panic("SMS delivery service not configured")
+			}
+			smsDeliveryServices[0] = deliverySvc
 		}
-		smsDeliveryServices[0] = deliverySvc
 	} else {
 		codeNames := strings.Split(serviceName, ",")
 		instantiatedServices := map[string]SMSDeliveryService{}
@@ -51,12 +54,15 @@ func NewVerifier(
 			svcName := strings.TrimSpace(parts[1])
 			svcInst := instantiatedServices[svcName]
 			if svcInst == nil {
-				deliverySvc, err := NewSMSDeliveryService(svcName, config.Modules[svcName])
-				if err != nil || deliverySvc == nil {
-					panic("SMS delivery service not configured")
+				moduleCfg := config.Modules[serviceName]
+				if moduleCfg != nil {
+					deliverySvc, err := NewSMSDeliveryService(serviceName, moduleCfg.SMSDeliveryServiceConfig())
+					if err != nil || deliverySvc == nil {
+						panic("SMS delivery service not configured")
+					}
+					instantiatedServices[svcName] = deliverySvc
+					svcInst = deliverySvc
 				}
-				instantiatedServices[svcName] = deliverySvc
-				svcInst = deliverySvc
 			}
 			ccStr := parts[0]
 			if ccStr == "*" {

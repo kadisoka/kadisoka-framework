@@ -28,11 +28,15 @@ func (cfg Config) FieldDocsDescriptor(fieldName string) *stev.FieldDocsDescripto
 	switch fieldName {
 	case "StoreService", "STORE_SERVICE":
 		modules := map[string]stev.EnumValueDocs{}
-		for k := range cfg.Modules {
-			modules[k] = stev.EnumValueDocs{}
+		for k, v := range cfg.Modules {
+			var shortDesc string
+			if moduleDesc := stev.LoadSelfDocsDescriptor(v); moduleDesc != nil {
+				shortDesc = moduleDesc.ShortDesc
+			}
+			modules[k] = stev.EnumValueDocs{ShortDesc: shortDesc}
 		}
 		return &stev.FieldDocsDescriptor{
-			Description:     "The object storage service to use.",
+			Description:     "The object storage service to store the media files.",
 			AvailableValues: modules,
 		}
 	case "NameGenerationKey", "FILENAME_GENERATION_KEY":

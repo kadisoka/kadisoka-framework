@@ -4,8 +4,18 @@ import (
 	"sync"
 )
 
+type ModuleConfig interface {
+	SMSDeliveryServiceConfig() interface{}
+}
+
+// Module provides details about a module of pn10n
 type Module struct {
-	ConfigSkeleton        func() interface{} // returns pointer
+	// ConfigSkeleton returns a configuration skeleton for the module.
+	ConfigSkeleton func() ModuleConfig
+
+	// NewSMSDeliveryService returns an instance of module's SMS delivery
+	// service. If the module does not provide such functionality, it
+	// must return nil.
 	NewSMSDeliveryService func(config interface{}) SMSDeliveryService
 }
 
@@ -55,11 +65,11 @@ func NewSMSDeliveryService(
 	return module.NewSMSDeliveryService(config), nil
 }
 
-func ModuleConfigSkeletons() map[string]interface{} {
+func ModuleConfigSkeletons() map[string]ModuleConfig {
 	modulesMu.RLock()
 	defer modulesMu.RUnlock()
 
-	configs := map[string]interface{}{}
+	configs := map[string]ModuleConfig{}
 	for serviceName, module := range modules {
 		if module.ConfigSkeleton != nil {
 			configs[serviceName] = module.ConfigSkeleton()

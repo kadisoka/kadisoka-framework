@@ -235,6 +235,12 @@ type CoreConfig struct {
 	PNV   pnv10n.Config     `env:"PNV"`
 }
 
+func (CoreConfig) FieldDescriptions() map[string]string {
+	return map[string]string{
+		"DBURL": "Connection string, e.g, for PostgreSQL postgresql://postgresql.db.server:5430/my_database",
+	}
+}
+
 // CoreConfigSkeleton returns an instance of CoreConfig which has been
 // configured to load config based on the internal system configuration.
 // One kind of usages for a skeleton is to generate a template or documentations.

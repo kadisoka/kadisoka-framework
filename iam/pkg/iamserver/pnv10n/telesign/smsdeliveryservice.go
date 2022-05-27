@@ -12,6 +12,42 @@ import (
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
+type SMSDeliveryServiceConfig struct {
+	CustomerID string `env:"CUSTOMER_ID,required"`
+	APIKey     string `env:"API_KEY,required"`
+}
+
+func SMSDeliveryServiceConfigSkeleton() SMSDeliveryServiceConfig { return SMSDeliveryServiceConfig{} }
+
+type SMSDeliveryService struct {
+	config      *SMSDeliveryServiceConfig
+	endpointURL string
+}
+
+var _ pnv10n.SMSDeliveryService = &SMSDeliveryService{}
+
+func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
+	if config == nil {
+		panic(errors.New("configuration required"))
+	}
+	conf, ok := config.(*SMSDeliveryServiceConfig)
+	if !ok {
+		panic(errors.New("configuration of invalid type"))
+	}
+
+	if len(conf.APIKey) <= 0 {
+		panic("Telesign API Key not provided")
+	}
+	if len(conf.CustomerID) <= 0 {
+		panic("Telesign Customer ID not provided")
+	}
+
+	return &SMSDeliveryService{
+		config:      conf,
+		endpointURL: "https://rest-api.telesign.com/v1/messaging",
+	}
+}
+
 // SendTextMessage is use for send text message using sms delivery service
 func (sms *SMSDeliveryService) SendTextMessage(
 	recipient telephony.PhoneNumber,

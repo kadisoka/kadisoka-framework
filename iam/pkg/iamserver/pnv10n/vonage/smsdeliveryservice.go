@@ -11,6 +11,43 @@ import (
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
+type SMSDeliveryServiceConfig struct {
+	APIKey    string `env:"API_KEY,required"`
+	APISecret string `env:"API_SECRET,required"`
+	Sender    string `env:"SENDER,required"`
+}
+
+func SMSDeliveryServiceConfigSkeleton() SMSDeliveryServiceConfig { return SMSDeliveryServiceConfig{} }
+
+type SMSDeliveryService struct {
+	config      *SMSDeliveryServiceConfig
+	endpointURL string
+}
+
+var _ pnv10n.SMSDeliveryService = &SMSDeliveryService{}
+
+func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
+	if config == nil {
+		panic(errors.New("configuration required"))
+	}
+	conf, ok := config.(*SMSDeliveryServiceConfig)
+	if !ok {
+		panic(errors.New("configuration of invalid type"))
+	}
+
+	if conf.APIKey == "" {
+		panic("NEXMO API Key not provided")
+	}
+	if conf.APISecret == "" {
+		panic("NEXMO API Secret not provided")
+	}
+
+	return &SMSDeliveryService{
+		config:      conf,
+		endpointURL: "https://rest.nexmo.com/sms/json",
+	}
+}
+
 func (sms *SMSDeliveryService) SendTextMessage(
 	recipient telephony.PhoneNumber,
 	text string,

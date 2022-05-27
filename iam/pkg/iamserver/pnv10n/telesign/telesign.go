@@ -1,8 +1,6 @@
 package telesign
 
 import (
-	"errors"
-
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n"
 )
 
@@ -12,36 +10,25 @@ func init() {
 	pnv10n.RegisterModule(
 		ServiceName,
 		pnv10n.Module{
-			ConfigSkeleton:        func() interface{} { cfg := ConfigSkeleton(); return &cfg },
+			ConfigSkeleton: func() pnv10n.ModuleConfig {
+				cfg := ModuleConfigSkeleton()
+				return &cfg
+			},
 			NewSMSDeliveryService: NewSMSDeliveryService,
 		})
 }
 
-type SMSDeliveryService struct {
-	config      *Config
-	endpointURL string
+func ModuleConfigSkeleton() ModuleConfig {
+	smsCfg := SMSDeliveryServiceConfigSkeleton()
+	return ModuleConfig{
+		SMS: &smsCfg,
+	}
 }
 
-var _ pnv10n.SMSDeliveryService = &SMSDeliveryService{}
+type ModuleConfig struct {
+	SMS *SMSDeliveryServiceConfig `env:"SMS"`
+}
 
-func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
-	if config == nil {
-		panic(errors.New("configuration required"))
-	}
-	conf, ok := config.(*Config)
-	if !ok {
-		panic(errors.New("configuration of invalid type"))
-	}
-
-	if len(conf.APIKey) <= 0 {
-		panic("Telesign API Key not provided")
-	}
-	if len(conf.CustomerID) <= 0 {
-		panic("Telesign Customer ID not provided")
-	}
-
-	return &SMSDeliveryService{
-		config:      conf,
-		endpointURL: "https://rest-api.telesign.com/v1/messaging",
-	}
+func (moduleCfg ModuleConfig) SMSDeliveryServiceConfig() interface{} {
+	return moduleCfg.SMS
 }
