@@ -52,7 +52,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	}
 
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsValid() {
+	if ctxAuth.IsStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Authorization context must not be valid")
 		oauth2.RespondTo(resp).ErrorCode(

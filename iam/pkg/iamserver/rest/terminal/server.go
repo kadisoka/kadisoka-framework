@@ -150,7 +150,7 @@ func (restSrv *Server) postTerminalsRegister(
 	}
 
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsValid() {
+	if ctxAuth.IsStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Authorization context must not be valid")
 		rest.RespondTo(resp).EmptyError(

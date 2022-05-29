@@ -250,15 +250,27 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
 	ctxAuth := opInputCtx.Authorization()
+	ctxTime := opInputCtx.OpInputMetadata().ReceiveTime
+
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
-		xres, txErr := dbTx.Exec(
-			`UPDATE `+applicationDBTableName+` `+
-				"SET _md_ts = $1, _md_uid = $2, _md_tid = $3, _md_notes = $4 "+
-				"WHERE id_num = $2 AND _md_ts IS NULL",
-			opInputCtx.OpInputMetadata().ReceiveTime,
-			ctxAuth.UserIDNum().PrimitiveValue(),
-			ctxAuth.TerminalIDNum().PrimitiveValue(),
-			"")
+		sqlString, _, _ := goqu.
+			From(applicationDBTableName).
+			Where(
+				goqu.C("id_num").Eq(ctxAuth.UserIDNum().PrimitiveValue()),
+				goqu.C("_md_ts").IsNull(),
+			).
+			Update().
+			Set(
+				goqu.Record{
+					"_md_ts":  ctxTime,
+					"_md_tid": ctxAuth.TerminalIDNum().PrimitiveValue(),
+					"_md_uid": ctxAuth.UserIDNum().PrimitiveValue(),
+				},
+			).
+			ToSQL()
+
+		xres, txErr := dbTx.
+			Exec(sqlString)
 		if txErr != nil {
 			return txErr
 		}
@@ -309,14 +321,13 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
 func (srv *ApplicationServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 	_, err := dbTx.Exec(
 		`CREATE TABLE ` + applicationDBTableName + ` ( ` +
-			`id_num   integer PRIMARY KEY, ` +
+			`id_num     integer PRIMARY KEY, ` +
 			`_mc_ts     timestamp with time zone NOT NULL DEFAULT now(), ` +
 			`_mc_tid    bigint, ` +
 			`_mc_uid    bigint, ` +
 			`_md_ts     timestamp with time zone, ` +
 			`_md_tid    bigint, ` +
 			`_md_uid    bigint, ` +
-			`_md_notes  jsonb, ` +
 			`CHECK (id_num > 0) ` +
 			`);`,
 	)

@@ -216,7 +216,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotValid() {
+	if ctxAuth.IsNotStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
@@ -321,7 +321,7 @@ func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotValid() {
+	if ctxAuth.IsNotStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(

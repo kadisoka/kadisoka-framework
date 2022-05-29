@@ -13,7 +13,7 @@ func (core *Core) contextUserOrNewInstance(
 		return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx", "missing")
 	}
 	ctxAuth := callCtx.Authorization()
-	if ctxAuth.IsUserContext() {
+	if ctxAuth.IsUserSubject() {
 		userRef = ctxAuth.UserRef()
 		if !core.UserService.IsUserRefKeyRegistered(userRef) {
 			return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx.Authorization", "invalid")

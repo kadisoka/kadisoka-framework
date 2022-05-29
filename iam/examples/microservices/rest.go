@@ -77,7 +77,7 @@ func (restSvc *RESTService) getAuth(req *restful.Request, resp *restful.Response
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsUserContext() {
+	if ctxAuth.IsUserSubject() {
 		logCtx(reqCtx).Warn().Msg("Already authorized")
 		resp.WriteHeaderAndJson(http.StatusOK,
 			&authGetResponse{AccessToken: ctxAuth.RawToken()},
@@ -111,7 +111,7 @@ func (restSvc *RESTService) getHello(req *restful.Request, resp *restful.Respons
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if !ctxAuth.IsUserContext() {
+	if !ctxAuth.IsUserSubject() {
 		logCtx(reqCtx).
 			Warn().Msg("Unauthorized")
 		resp.WriteHeaderAndJson(http.StatusUnauthorized, &rest.ErrorResponse{},

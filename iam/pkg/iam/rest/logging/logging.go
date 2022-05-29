@@ -40,7 +40,7 @@ func (logger Logger) WithContext(
 	hasAuth := false
 
 	if iamCtx, _ := ctx.(iam.OpInputContext); iamCtx != nil {
-		if ctxAuth := iamCtx.Authorization(); ctxAuth.IsValid() {
+		if ctxAuth := iamCtx.Authorization(); ctxAuth.IsStaticallyValid() {
 			logCtx = logCtx.
 				Str("session", ctxAuth.Session.AZIDText()).
 				Str("terminal", ctxAuth.Session.Terminal().AZIDText()).

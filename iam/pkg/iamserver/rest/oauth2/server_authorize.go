@@ -146,7 +146,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 
 	ctxAuth := reqCtx.Authorization()
-	if !ctxAuth.IsUserContext() {
+	if !ctxAuth.IsUserSubject() {
 		logCtx(reqCtx).
 			Warn().Msg("User context required")
 		rest.RespondTo(resp).EmptyError(

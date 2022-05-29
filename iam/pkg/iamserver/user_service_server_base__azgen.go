@@ -254,15 +254,28 @@ func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
 	ctxAuth := opInputCtx.Authorization()
+	ctxTime := opInputCtx.OpInputMetadata().ReceiveTime
+
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
-		xres, txErr := dbTx.Exec(
-			`UPDATE `+userDBTableName+` `+
-				"SET _md_ts = $1, _md_uid = $2, _md_tid = $3, _md_notes = $4 "+
-				"WHERE id_num = $2 AND _md_ts IS NULL",
-			opInputCtx.OpInputMetadata().ReceiveTime,
-			ctxAuth.UserIDNum().PrimitiveValue(),
-			ctxAuth.TerminalIDNum().PrimitiveValue(),
-			input.DeletionNotes)
+		sqlString, _, _ := goqu.
+			From(userDBTableName).
+			Where(
+				goqu.C("id_num").Eq(ctxAuth.UserIDNum().PrimitiveValue()),
+				goqu.C("_md_ts").IsNull(),
+			).
+			Update().
+			Set(
+				goqu.Record{
+					"_md_ts":    ctxTime,
+					"_md_tid":   ctxAuth.TerminalIDNum().PrimitiveValue(),
+					"_md_uid":   ctxAuth.UserIDNum().PrimitiveValue(),
+					"_md_notes": input.DeletionNotes,
+				},
+			).
+			ToSQL()
+
+		xres, txErr := dbTx.
+			Exec(sqlString)
 		if txErr != nil {
 			return txErr
 		}
@@ -314,7 +327,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
 func (srv *UserServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 	_, err := dbTx.Exec(
 		`CREATE TABLE ` + userDBTableName + ` ( ` +
-			`id_num   bigint PRIMARY KEY, ` +
+			`id_num     bigint PRIMARY KEY, ` +
 			`_mc_ts     timestamp with time zone NOT NULL DEFAULT now(), ` +
 			`_mc_tid    bigint, ` +
 			`_mc_uid    bigint, ` +

@@ -3,7 +3,7 @@ module github.com/kadisoka/kadisoka-framework
 go 1.18
 
 require (
-	github.com/alloyzeus/go-azfl v0.0.0-20220525140012-9f1b86e1e227
+	github.com/alloyzeus/go-azfl v0.0.0-20220529145731-1a54ce24d33b
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/aws/aws-sdk-go v1.44.22
 	github.com/cespare/xxhash v1.1.0

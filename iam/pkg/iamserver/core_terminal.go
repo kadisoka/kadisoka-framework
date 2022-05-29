@@ -59,7 +59,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 ) TerminalAuthorizationStartOutput {
 	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
-	if ctxAuth.IsValid() && !ctxAuth.IsUserContext() {
+	if ctxAuth.IsStaticallyValid() && !ctxAuth.IsUserSubject() {
 		return TerminalAuthorizationStartOutput{
 			Context: iam.OpOutputContext{
 				Err: iam.ErrAuthorizationInvalid}}
@@ -82,7 +82,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 	if ownerUserRef.IsStaticallyValid() {
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
-		if ctxAuth.IsUserContext() && !ctxAuth.IsUser(ownerUserRef) {
+		if ctxAuth.IsUserSubject() && !ctxAuth.IsUser(ownerUserRef) {
 			return TerminalAuthorizationStartOutput{
 				Context: iam.OpOutputContext{
 					Err: errors.ArgMsg("phoneNumber", "conflict")}}
@@ -148,7 +148,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 ) TerminalAuthorizationStartOutput {
 	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
-	if ctxAuth.IsValid() && !ctxAuth.IsUserContext() {
+	if ctxAuth.IsStaticallyValid() && !ctxAuth.IsUserSubject() {
 		return TerminalAuthorizationStartOutput{
 			Context: iam.OpOutputContext{
 				Err: iam.ErrAuthorizationInvalid}}
@@ -179,7 +179,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		}
 		// As the request is authenticated, check if the phone number
 		// is associated to the authenticated user.
-		if ctxAuth.IsUserContext() && !ctxAuth.IsUser(ownerUserRef) {
+		if ctxAuth.IsUserSubject() && !ctxAuth.IsUser(ownerUserRef) {
 			return TerminalAuthorizationStartOutput{
 				Context: iam.OpOutputContext{
 					Err: errors.ArgMsg("emailAddress", "conflict")}}
@@ -415,7 +415,7 @@ func (core *Core) GetTerminalInfo(
 		return nil, nil
 	}
 	ctxAuth := callCtx.Authorization()
-	if !ctxAuth.IsUserContext() {
+	if !ctxAuth.IsUserSubject() {
 		return nil, nil
 	}
 
@@ -567,6 +567,7 @@ func (core *Core) DeleteTerminal(
 ) (stateChanged bool, err error) {
 	ctxAuth := callCtx.Authorization()
 
+	//TODO: allow delete any owned terminal
 	if !ctxAuth.IsTerminal(termRefToDelete) {
 		return false, iam.ErrOperationNotAllowed
 	}

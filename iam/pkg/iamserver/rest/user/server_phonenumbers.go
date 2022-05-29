@@ -25,7 +25,7 @@ func (restSrv *Server) putUserPhoneNumber(
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotValid() && !ctxAuth.IsUserContext() {
+	if ctxAuth.IsNotStaticallyValid() && !ctxAuth.IsUserSubject() {
 		logCtx(reqCtx).
 			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(

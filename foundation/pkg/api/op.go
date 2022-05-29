@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/text/language"
 
+	azcore "github.com/alloyzeus/go-azfl/azfl"
 	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
 )
 
@@ -17,7 +18,11 @@ type OpInfo interface {
 //
 // A good explanation of idempotency token can be viewed here:
 // https://www.youtube.com/watch?v=IP-rGJKSZ3s
+//
+// Check the RFC https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-01
 type OpID int32
+
+var _ azcore.ServiceMethodOpID = OpIDZero
 
 const OpIDZero = OpID(0)
 
@@ -38,6 +43,18 @@ func isOpIDSound(opID OpID) bool {
 }
 
 func (opID OpID) String() string { return strconv.FormatInt(int64(opID), 10) }
+
+func (OpID) AZServiceMethodOpID()              {}
+func (opID OpID) Equal(other interface{}) bool { return opID.Equals(other) }
+func (opID OpID) Equals(other interface{}) bool {
+	if x, ok := other.(OpID); ok {
+		return x == opID
+	}
+	if x, _ := other.(*OpID); x != nil {
+		return *x == opID
+	}
+	return false
+}
 
 // OpInputContext holds information obtained from the request. This information
 // are generally obtained from the request's metadata (e.g., HTTP request
@@ -82,5 +99,15 @@ type OpOriginInfo struct {
 	// returns the browser's user-agent string.
 	EnvironmentString string
 
+	// AcceptLanguage is analogous to HTTP Accept-Language header field. The
+	// languages must be ordered by the human's preference.
+	// If the languages comes as weighted, as found in HTTP Accept-Language,
+	// sort the languages by their weights then drop the weights.
 	AcceptLanguage []language.Tag
+
+	// DateTime is the time of the device where this operation was initiated
+	// from at the time the operation was posted.
+	//
+	// Analogous to HTTP Date header field.
+	DateTime *time.Time
 }

@@ -42,7 +42,7 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		panic(err) //TODO: translate and return the error
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsValid() {
+	if ctxAuth.IsStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msgf("Authorization context must not be valid: %#v", reqCtx)
 		return nil, grpcstatus.Error(grpccodes.Unauthenticated, "")
@@ -112,7 +112,7 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 		panic(err) //TODO: translate and return the error
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsValid() {
+	if ctxAuth.IsStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msgf("Authorization context must not be valid: %#v", ctxAuth)
 		return nil, grpcstatus.Error(grpccodes.Unauthenticated, "")
@@ -149,7 +149,7 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		panic(err) //TODO: translate and return the error
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsValid() {
+	if ctxAuth.IsStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msgf("Authorization context must not be valid: %#v", ctxAuth)
 		return nil, grpcstatus.Error(grpccodes.Unauthenticated, "")

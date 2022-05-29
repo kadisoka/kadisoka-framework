@@ -73,7 +73,7 @@ func (ctx callContext) Authorization() Authorization {
 
 func (ctx *callContext) IsUserContext() bool {
 	return ctx != nil && ctx.authorization != nil &&
-		ctx.authorization.IsUserContext()
+		ctx.authorization.IsUserSubject()
 }
 
 func (ctx *callContext) OpName() string { return "" }

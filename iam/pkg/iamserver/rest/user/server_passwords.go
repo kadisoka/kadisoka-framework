@@ -23,7 +23,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotValid() || !ctxAuth.IsUserContext() {
+	if ctxAuth.IsNotStaticallyValid() || !ctxAuth.IsUserSubject() {
 		logCtx(reqCtx).
 			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(

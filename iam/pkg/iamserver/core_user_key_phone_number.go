@@ -67,7 +67,7 @@ func (core *Core) ListUsersByPhoneNumber(
 	// Already deferred above but we are closing it now because we want to do more queries
 	userPhoneNumberRows.Close()
 
-	if ctxAuth.IsUserContext() {
+	if ctxAuth.IsUserSubject() {
 		go func() {
 			for _, pn := range phoneNumbers {
 				_, err = core.db.Exec(
@@ -202,7 +202,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	verificationMethods []pnv10n.VerificationMethod,
 ) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
 	ctxAuth := callCtx.Authorization()
-	if !ctxAuth.IsUserContext() {
+	if !ctxAuth.IsUserSubject() {
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now

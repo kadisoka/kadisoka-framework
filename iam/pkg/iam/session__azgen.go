@@ -46,6 +46,7 @@ type SessionIDNum int32
 var _ azid.IDNumMethods = SessionIDNumZero
 var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
 var _ azfl.AdjunctEntityIDNumMethods = SessionIDNumZero
+var _ azfl.SessionIDNumMethods = SessionIDNumZero
 
 // SessionIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of SessionIDNum.
@@ -90,6 +91,10 @@ func (SessionIDNum) AZIDNum() {}
 // AZAdjunctEntityIDNum is required
 // for conformance with azfl.AdjunctEntityIDNum.
 func (SessionIDNum) AZAdjunctEntityIDNum() {}
+
+// AZSessionIDNum is required for conformance
+// with azfl.SessionIDNum.
+func (SessionIDNum) AZSessionIDNum() {}
 
 // IsZero is required as SessionIDNum is a value-object.
 func (idNum SessionIDNum) IsZero() bool {
@@ -194,6 +199,7 @@ var _ azid.RefKey[SessionIDNum] = _SessionRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_SessionRefKeyZero
 var _ azid.TextUnmarshalable = &_SessionRefKeyZero
 var _ azfl.AdjunctEntityRefKey[SessionIDNum] = _SessionRefKeyZero
+var _ azfl.SessionRefKey[SessionIDNum] = _SessionRefKeyZero
 
 var _SessionRefKeyZero = SessionRefKey{
 	terminal: TerminalRefKeyZero(),
@@ -230,6 +236,12 @@ func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
 
 // AZIDNum is required for conformance with azid.RefKey.
 func (refKey SessionRefKey) AZIDNum() SessionIDNum {
+	return refKey.idNum
+}
+
+// SessionIDNum is required for conformance
+// with azfl.SessionRefKey.
+func (refKey SessionRefKey) SessionIDNum() SessionIDNum {
 	return refKey.idNum
 }
 

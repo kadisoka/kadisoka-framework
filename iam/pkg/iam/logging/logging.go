@@ -36,7 +36,7 @@ func (logger Logger) WithContext(
 	logCtx := logger.With()
 	hasAuth := false
 
-	if ctxAuth := ctx.Authorization(); ctxAuth.IsValid() {
+	if ctxAuth := ctx.Authorization(); ctxAuth.IsStaticallyValid() {
 		logCtx = logCtx.
 			Str("session", ctxAuth.Session.AZIDText()).
 			Str("terminal", ctxAuth.Session.Terminal().AZIDText()).

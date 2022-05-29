@@ -51,6 +51,7 @@ type TerminalIDNum int64
 var _ azid.IDNumMethods = TerminalIDNumZero
 var _ azid.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
 var _ azfl.AdjunctEntityIDNumMethods = TerminalIDNumZero
+var _ azfl.TerminalIDNumMethods = TerminalIDNumZero
 
 // TerminalIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of TerminalIDNum.
@@ -95,6 +96,10 @@ func (TerminalIDNum) AZIDNum() {}
 // AZAdjunctEntityIDNum is required
 // for conformance with azfl.AdjunctEntityIDNum.
 func (TerminalIDNum) AZAdjunctEntityIDNum() {}
+
+// AZTerminalIDNum is required for conformance
+// with azfl.TerminalIDNum.
+func (TerminalIDNum) AZTerminalIDNum() {}
 
 // IsZero is required as TerminalIDNum is a value-object.
 func (idNum TerminalIDNum) IsZero() bool {
@@ -202,6 +207,7 @@ var _ azid.RefKey[TerminalIDNum] = _TerminalRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_TerminalRefKeyZero
 var _ azid.TextUnmarshalable = &_TerminalRefKeyZero
 var _ azfl.AdjunctEntityRefKey[TerminalIDNum] = _TerminalRefKeyZero
+var _ azfl.TerminalRefKey[TerminalIDNum] = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
 	application: ApplicationRefKeyZero(),
@@ -239,6 +245,12 @@ func (refKey TerminalRefKey) IDNumPtr() *TerminalIDNum {
 
 // AZIDNum is required for conformance with azid.RefKey.
 func (refKey TerminalRefKey) AZIDNum() TerminalIDNum {
+	return refKey.idNum
+}
+
+// TerminalIDNum is required for conformance
+// with azfl.TerminalRefKey.
+func (refKey TerminalRefKey) TerminalIDNum() TerminalIDNum {
 	return refKey.idNum
 }
 

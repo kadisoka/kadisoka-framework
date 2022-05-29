@@ -1,5 +1,7 @@
 package iam
 
+import azcore "github.com/alloyzeus/go-azfl/azfl"
+
 // Actor provides information about who or what performed an action.
 //
 //TODO: assuming actor
@@ -11,3 +13,20 @@ type Actor struct {
 	// initiated from.
 	TerminalRef TerminalRefKey
 }
+
+var _ azcore.Subject[
+	TerminalIDNum, TerminalRefKey, UserIDNum, UserRefKey] = Actor{}
+
+// AZSubject is required by azcore.Subject
+func (Actor) AZSubject() {}
+
+// IsRepresentingAUser is required by azcore.Subject
+func (actor Actor) IsRepresentingAUser() bool {
+	return actor.UserRef.IsStaticallyValid()
+}
+
+// TerminalRefKey is required by azcore.Subject
+func (actor Actor) TerminalRefKey() TerminalRefKey { return actor.TerminalRef }
+
+// UserRefKey is required by azcore.Subject
+func (actor Actor) UserRefKey() UserRefKey { return actor.UserRef }

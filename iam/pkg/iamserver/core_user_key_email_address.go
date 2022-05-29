@@ -129,7 +129,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	verificationMethods []eav10n.VerificationMethod,
 ) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
 	ctxAuth := callCtx.Authorization()
-	if !ctxAuth.IsUserContext() {
+	if !ctxAuth.IsUserSubject() {
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now

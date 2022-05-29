@@ -24,7 +24,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotValid() {
+	if ctxAuth.IsNotStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(

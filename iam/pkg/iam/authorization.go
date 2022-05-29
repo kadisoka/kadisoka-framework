@@ -3,6 +3,7 @@ package iam
 import (
 	"time"
 
+	azcore "github.com/alloyzeus/go-azfl/azfl"
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
 	"github.com/square/go-jose/v3/jwt"
@@ -38,98 +39,118 @@ type Authorization struct {
 	rawToken string
 }
 
+var _ azcore.Session[
+	SessionIDNum, SessionRefKey,
+	TerminalIDNum, TerminalRefKey,
+	UserIDNum, UserRefKey,
+	Actor,
+] = Authorization{}
+
+func (authz Authorization) ParentSessionRefKey() SessionRefKey {
+	if authz.AssumingAuthorization != nil {
+		return authz.AssumingAuthorization.Session
+	}
+	return SessionRefKeyZero()
+}
+
+func (authz Authorization) RefKey() SessionRefKey { return authz.Session }
+
+func (authz Authorization) Subject() Actor {
+	return authz.Actor()
+}
+
 // newEmptyAuthorization creates a new instance of Authorization without
 // any data.
 func newEmptyAuthorization() *Authorization {
 	return &Authorization{}
 }
 
-func (ctxAuth Authorization) IsValid() bool {
-	return ctxAuth.Session.IsStaticallyValid()
+func (authz Authorization) IsStaticallyValid() bool {
+	return authz.Session.IsStaticallyValid()
 }
 
-func (ctxAuth Authorization) IsNotValid() bool {
-	return !ctxAuth.IsValid()
+func (authz Authorization) IsNotStaticallyValid() bool {
+	return !authz.IsStaticallyValid()
+}
+
+func (authz Authorization) Actor() Actor {
+	return Actor{
+		UserRef:     authz.Session.terminal.user,
+		TerminalRef: authz.Session.terminal,
+	}
 }
 
 // IsTerminal returns true if the authorized terminal is the same as termRef.
-func (ctxAuth Authorization) IsTerminal(termRef TerminalRefKey) bool {
-	ctxTerm := ctxAuth.Session.terminal
+func (authz Authorization) IsTerminal(termRef TerminalRefKey) bool {
+	ctxTerm := authz.Session.terminal
 	return ctxTerm.IsStaticallyValid() && ctxTerm.EqualsTerminalRefKey(termRef)
 }
 
-func (ctxAuth Authorization) Actor() Actor {
-	return Actor{
-		UserRef:     ctxAuth.Session.terminal.user,
-		TerminalRef: ctxAuth.Session.terminal,
-	}
-}
-
 // IsUser checks if this authorization is represeting a particular user.
-func (ctxAuth Authorization) IsUser(userRef UserRefKey) bool {
-	return ctxAuth.ClientApplicationIDNum().IsUserAgent() &&
-		ctxAuth.Session.terminal.user.EqualsUserRefKey(userRef)
+func (authz Authorization) IsUser(userRef UserRefKey) bool {
+	return authz.ClientApplicationIDNum().IsUserAgent() &&
+		authz.Session.terminal.user.EqualsUserRefKey(userRef)
 }
 
-// IsUserContext is used to determine if this context represents a user.
-func (ctxAuth Authorization) IsUserContext() bool {
-	if ctxAuth.ClientApplicationIDNum().IsUserAgent() &&
-		ctxAuth.Session.terminal.user.IsStaticallyValid() {
+// IsUserSubject is used to determine if this authorization represents a user.
+func (authz Authorization) IsUserSubject() bool {
+	if authz.ClientApplicationIDNum().IsUserAgent() &&
+		authz.Session.terminal.user.IsStaticallyValid() {
 		return true
 	}
 	return false
 }
 
-func (ctxAuth Authorization) IsServiceClientContext() bool {
-	if ctxAuth.ClientApplicationIDNum().IsService() &&
-		ctxAuth.Session.terminal.user.IsNotStaticallyValid() {
+func (authz Authorization) IsServiceClientContext() bool {
+	if authz.ClientApplicationIDNum().IsService() &&
+		authz.Session.terminal.user.IsNotStaticallyValid() {
 		return true
 	}
 	return false
 }
 
-func (ctxAuth Authorization) UserRef() UserRefKey {
-	return ctxAuth.Session.terminal.user
+func (authz Authorization) UserRef() UserRefKey {
+	return authz.Session.terminal.user
 }
 
 // UserRefKeyPtr returns a pointer to a new copy of user ref-key. The
 // returned value is non-nil when the user ref-key is valid.
-func (ctxAuth Authorization) UserRefKeyPtr() *UserRefKey {
-	return ctxAuth.Session.terminal.UserPtr()
+func (authz Authorization) UserRefKeyPtr() *UserRefKey {
+	return authz.Session.terminal.UserPtr()
 }
 
-func (ctxAuth Authorization) UserIDNum() UserIDNum {
-	return ctxAuth.Session.terminal.user.IDNum()
+func (authz Authorization) UserIDNum() UserIDNum {
+	return authz.Session.terminal.user.IDNum()
 }
 
 // UserIDNumPtr returns a pointer to a new copy of user id-num. The
 // returned value is non-nil when the user id-num is valid.
-func (ctxAuth Authorization) UserIDNumPtr() *UserIDNum {
-	return ctxAuth.Session.terminal.user.IDNumPtr()
+func (authz Authorization) UserIDNumPtr() *UserIDNum {
+	return authz.Session.terminal.user.IDNumPtr()
 }
 
-func (ctxAuth Authorization) TerminalRef() TerminalRefKey {
-	return ctxAuth.Session.terminal
+func (authz Authorization) TerminalRef() TerminalRefKey {
+	return authz.Session.terminal
 }
 
-func (ctxAuth Authorization) TerminalIDNum() TerminalIDNum {
-	return ctxAuth.Session.terminal.idNum
+func (authz Authorization) TerminalIDNum() TerminalIDNum {
+	return authz.Session.terminal.idNum
 }
 
 // TerminalIDNumPtr returns a pointer to a new copy of terminal id-num. The
 // returned value is non-nil when the terminal id-num is valid.
-func (ctxAuth Authorization) TerminalIDNumPtr() *TerminalIDNum {
-	return ctxAuth.Session.terminal.IDNumPtr()
+func (authz Authorization) TerminalIDNumPtr() *TerminalIDNum {
+	return authz.Session.terminal.IDNumPtr()
 }
 
-func (ctxAuth Authorization) ClientApplicationIDNum() ApplicationIDNum {
-	return ctxAuth.Session.terminal.application.IDNum()
+func (authz Authorization) ClientApplicationIDNum() ApplicationIDNum {
+	return authz.Session.terminal.application.IDNum()
 }
 
 // RawToken returns the token where this instance of Authorization
 // was parsed from.
-func (ctxAuth Authorization) RawToken() string {
-	return ctxAuth.rawToken
+func (authz Authorization) RawToken() string {
+	return authz.rawToken
 }
 
 const (

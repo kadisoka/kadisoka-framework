@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
 	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
@@ -271,6 +272,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 		if len(userAgentMDVal) > 0 {
 			originEnvString = userAgentMDVal[0]
 		}
+
 		acceptLanguageMDVal := md.Get("accept-language")
 		if len(acceptLanguageMDVal) > 0 {
 			originAcceptLanguages, _, _ = language.ParseAcceptLanguage(acceptLanguageMDVal[0])
@@ -294,6 +296,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 		return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil), nil
 	}
 
+	//TODO: idempotency key https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-01
 	opIDStrs := md.Get("op-id")
 	if len(opIDStrs) == 0 {
 		opIDStrs = md.Get("request-id")
@@ -365,10 +368,19 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	remoteEnvString := req.UserAgent()
 	acceptLanguages, _, _ := language.ParseAcceptLanguage(req.Header.Get("Accept-Language"))
 
+	var originDateTime *time.Time
+	if s := req.Header.Get("Date"); s != "" {
+		dt, err := time.Parse(time.RFC1123, s)
+		if err == nil {
+			originDateTime = &dt
+		}
+	}
+
 	originInfo := api.OpOriginInfo{
 		Address:           remoteAddr,
 		EnvironmentString: remoteEnvString,
 		AcceptLanguage:    acceptLanguages,
+		DateTime:          originDateTime,
 	}
 
 	// Get from query too?

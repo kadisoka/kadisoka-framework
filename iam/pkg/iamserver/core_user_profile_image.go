@@ -26,7 +26,7 @@ func (core *Core) SetUserProfileImageURL(
 	ctxAuth := callCtx.Authorization()
 	// Change this if we want to allow service client to update a user's profile
 	// (we'll need a better access control for service clients)
-	if !ctxAuth.IsUserContext() {
+	if !ctxAuth.IsUserSubject() {
 		return iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
