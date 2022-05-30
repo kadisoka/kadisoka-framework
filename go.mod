@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/alloyzeus/go-azfl v0.0.0-20220529145731-1a54ce24d33b
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.44.22
+	github.com/aws/aws-sdk-go v1.44.24
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
