@@ -26,7 +26,7 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 		return
 	}
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotStaticallyValid() && !ctxAuth.IsUserSubject() {
+	if ctxAuth.IsNotStaticallyValid() || !ctxAuth.IsUserSubject() {
 		logCtx(reqCtx).
 			Warn().Msg("Unauthorized")
 		rest.RespondTo(resp).EmptyError(

@@ -68,7 +68,7 @@ func (restSrv *Server) handleSetEmailAddress(
 	verificationMethods []eav10n.VerificationMethod,
 ) {
 	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotStaticallyValid() && !ctxAuth.IsUserSubject() {
+	if ctxAuth.IsNotStaticallyValid() || !ctxAuth.IsUserSubject() {
 		logCtx(reqCtx).
 			Warn().Msgf("Unauthorized")
 		rest.RespondTo(resp).EmptyError(
