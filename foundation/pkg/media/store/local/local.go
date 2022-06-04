@@ -106,7 +106,7 @@ func NewService(
 		httpServeMux: httpServeMux,
 	}
 
-	appApp.AddServer(svc)
+	appApp.AddServiceServer(svc)
 
 	return svc, nil
 }

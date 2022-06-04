@@ -4,10 +4,27 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog"
 )
+
+//TODO: implement lookup by key which constructed from the package name
+// e.g., for package example.com/mypackage, we will lookup the environment
+// variables prefixed with LOG_EXAMPLE_COM_MYPACKAGE_ .
+const envVarsPrefix = "LOG_"
+
+func init() {
+	if v := os.Getenv(envVarsPrefix + "TRIM_PKG_PREFIXES"); v != "" {
+		parts := strings.Split(v, ",")
+		ls := make([]string, 0, len(parts))
+		for _, p := range parts {
+			ls = append(ls, strings.TrimSpace(p))
+		}
+		addPackagePrefixToTrim(ls...)
+	}
+}
 
 type (
 	Logger = zerolog.Logger
@@ -24,26 +41,43 @@ type PkgLogger struct {
 // not when logging.
 func NewPkgLogger() PkgLogger {
 	// Call depth 1 because it's for the one that called NewPkgLogger
-	return NewPkgLoggerExplicit(CallerPkgName(1))
+	return NewPkgLoggerWithProvidedName(ResolvePkgName(1))
 }
 
 // Packages with this prefix will be left without the prefix. This is to
 // reduce noise.
-const trimPackagePrefix = "github.com/kadisoka/kadisoka-framework/"
+var trimPackagePrefixList = []string{}
+var trimPackagePrefixListMutex = sync.RWMutex{}
 
-// NewPkgLoggerExplicit creates a package logger which field 'pkg' is
-// set to the provided name.
-func NewPkgLoggerExplicit(name string) PkgLogger {
-	//TODO: configurable prefix trimming
-	name = strings.TrimPrefix(name, trimPackagePrefix)
-	logCtx := newLoggerByEnv().With().Str("pkg", name)
-	return PkgLogger{logCtx.Logger()}
+func addPackagePrefixToTrim(pkgPrefix ...string) int {
+	if len(pkgPrefix) == 0 {
+		return 0
+	}
+
+	trimPackagePrefixListMutex.Lock()
+	trimPackagePrefixList = append(trimPackagePrefixList, pkgPrefix...)
+	trimPackagePrefixListMutex.Unlock()
+
+	return len(pkgPrefix)
 }
 
-//TODO: implement lookup by key which constructed from the package name
-// e.g., for package example.com/mypackage, we will lookup the environment
-// variables prefixed with LOG_EXAMPLE_COM_MYPACKAGE_ .
-const envVarsPrefix = "LOG_"
+// NewPkgLoggerWithProvidedName creates a package logger which field 'pkg' is
+// set to the provided pkgName.
+func NewPkgLoggerWithProvidedName(pkgName string) PkgLogger {
+	//TODO: configurable prefix trimming
+	trimPackagePrefixListMutex.RLock()
+	for _, pfx := range trimPackagePrefixList {
+		if strings.HasPrefix(pkgName, pfx) {
+			pkgName = pkgName[len(pfx):]
+			// Only the first
+			break
+		}
+	}
+	trimPackagePrefixListMutex.RUnlock()
+
+	logCtx := newLoggerByEnv().With().Str("pkg", pkgName)
+	return PkgLogger{logCtx.Logger()}
+}
 
 func newLogger(prettyLog bool) Logger {
 	if prettyLog {
@@ -91,14 +125,15 @@ func includeTimestampField() bool {
 	return true
 }
 
-func CallerPkgName(callDepth int) string {
+func ResolvePkgName(callDepth int) string {
 	// plus one because we need to skip the call to this method
 	pc, _, _, ok := runtime.Caller(callDepth + 1)
 	if !ok {
 		return "<unknown>"
 	}
 
-	parts := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+	absFuncName := runtime.FuncForPC(pc).Name()
+	parts := strings.Split(absFuncName, ".")
 	partsCount := len(parts)
 
 	if parts[partsCount-2][0] == '(' {

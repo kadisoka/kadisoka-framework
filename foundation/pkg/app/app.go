@@ -14,9 +14,10 @@ type App interface {
 	AppInfo() Info
 	InstanceID() string
 
-	AddServer(ServiceServer)
+	AddServiceServer(ServiceServer)
+	IsAllServiceServersAcceptingClients() bool
+
 	Run()
-	IsAllServersAcceptingClients() bool
 }
 
 type Info struct {
@@ -48,9 +49,9 @@ func (appBase *AppBase) AppInfo() Info { return appBase.appInfo }
 
 func (appBase *AppBase) InstanceID() string { return appBase.instanceID }
 
-// AddServer adds a server to be run simultaneously. Do NOT call this
+// AddServiceServer adds a server to be run simultaneously. Do NOT call this
 // method after the app has been started.
-func (appBase *AppBase) AddServer(srv ServiceServer) {
+func (appBase *AppBase) AddServiceServer(srv ServiceServer) {
 	appBase.serversMu.Lock()
 	appBase.servers = append(appBase.servers, srv)
 	appBase.serversMu.Unlock()
@@ -59,12 +60,12 @@ func (appBase *AppBase) AddServer(srv ServiceServer) {
 // Run runs all the servers. Do NOT add any new server after this method
 // was called.
 func (appBase *AppBase) Run() {
-	RunServers(appBase.Servers(), nil)
+	RunServers(appBase.ServiceServers(), nil)
 }
 
 // IsAllServersAcceptingClients checks if every server is accepting clients.
-func (appBase *AppBase) IsAllServersAcceptingClients() bool {
-	servers := appBase.Servers()
+func (appBase *AppBase) IsAllServiceServersAcceptingClients() bool {
+	servers := appBase.ServiceServers()
 	for _, srv := range servers {
 		if !srv.IsAcceptingClients() {
 			return false
@@ -73,8 +74,8 @@ func (appBase *AppBase) IsAllServersAcceptingClients() bool {
 	return true
 }
 
-// Servers returns an array of servers added to this app.
-func (appBase *AppBase) Servers() []ServiceServer {
+// ServiceServers returns an array of servers added to this app.
+func (appBase *AppBase) ServiceServers() []ServiceServer {
 	out := make([]ServiceServer, len(appBase.servers))
 	appBase.serversMu.RLock()
 	copy(out, appBase.servers)

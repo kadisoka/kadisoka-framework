@@ -43,7 +43,7 @@ func RunServers(servers []ServiceServer, shutdownSignal <-chan os.Signal) {
 	// We set up the signal handler (interrupt and terminate).
 	// We are using the signal to gracefully and forcefully stop the server.
 	if shutdownSignal == nil {
-		sigChan := make(chan os.Signal)
+		sigChan := make(chan os.Signal, 1)
 		// Listen to interrupt and terminal signals
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		shutdownSignal = sigChan
@@ -82,5 +82,5 @@ func RunServers(servers []ServiceServer, shutdownSignal <-chan os.Signal) {
 	// Wait for all servers to stop.
 	serversStopWaiter.Wait()
 
-	log.Info().Msg("Done.")
+	log.Info().Msg("Gracefully stopped.")
 }

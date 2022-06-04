@@ -38,7 +38,7 @@ const (
 )
 
 type HandlerConfig struct {
-	ProcessedFilesDir string `env:"PROCESSED_FILES_DIR`
+	ProcessedFilesDir string `env:"PROCESSED_FILES_DIR"`
 	RawFilesDir       string `env:"-"`
 	HeightDefault     int32  `env:"HEIGHT_DEFAULT"`
 	WidthDefault      int32  `env:"WIDTH_DEFAULT"`
@@ -330,7 +330,7 @@ func (handler *Handler) variantKeyFromParams(
 
 var (
 	imageScaleDownAlg = transform.Lanczos
-	imageScaleUpAlg   = transform.MitchellNetravali
+	// imageScaleUpAlg   = transform.MitchellNetravali
 )
 
 type processingParameters struct {

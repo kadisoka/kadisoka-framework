@@ -10,13 +10,17 @@ import (
 	iamlog "github.com/kadisoka/kadisoka-framework/iam/pkg/iam/logging"
 )
 
+var (
+	ResolvePkgName = foundationlog.ResolvePkgName
+)
+
 // NewPkgLogger creates a logger for use within a package. This logger
 // automatically adds the name of the package where this function was called,
 // not when logging.
 func NewPkgLogger() Logger {
 	// Call depth 1 because it's for the one that called NewPkgLogger
 	return Logger{iamlog.Logger{PkgLogger: foundationlog.
-		NewPkgLoggerExplicit(foundationlog.CallerPkgName(1))}}
+		NewPkgLoggerWithProvidedName(foundationlog.ResolvePkgName(1))}}
 }
 
 // Logger wraps other logger to provide additional functionalities.

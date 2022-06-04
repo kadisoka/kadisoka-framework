@@ -12,7 +12,7 @@ import (
 func NewPkgLogger() Logger {
 	// Call depth 1 because it's for the one that called NewPkgLogger
 	return Logger{iamlog.Logger{PkgLogger: foundationlog.
-		NewPkgLoggerExplicit(foundationlog.CallerPkgName(1))}}
+		NewPkgLoggerWithProvidedName(foundationlog.ResolvePkgName(1))}}
 }
 
 // Logger wraps other logger to provide additional functionalities.

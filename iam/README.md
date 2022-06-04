@@ -1,12 +1,12 @@
 # Kadisoka Identity Server
 
-Kadisoka IAM is a service module which provides identity and access
-management subsystem either as separate service (following microservice
-paradigm) or as a library for monolithic service applications.
+Kadisoka IAM is a service module that provides identity and access
+management (IAM) subsystem either as separate service (following microservice
+paradigm) or as a library in monolithic service applications.
 
 ## Features
 
-* Flexible utilizations: as microservice or as a package to be imported into
+* Flexible utilizations: as a microservice or as a package to be imported into
   your Go applications. Transitioning between utilization types is possible.
 * OAuth 2.0 conforming authorization server
 * Web UI which provides good user experience. We want that out of the box,

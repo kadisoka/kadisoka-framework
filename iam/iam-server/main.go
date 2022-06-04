@@ -19,8 +19,6 @@ import (
 	srvwebui "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/webui"
 )
 
-var log = logging.NewPkgLogger()
-
 var (
 	appName        = "Kadisoka IAM Server"
 	revisionID     = "unknown"
@@ -28,6 +26,8 @@ var (
 )
 
 const envVarsPrefix = "IAM_"
+
+var log = logging.NewPkgLogger()
 
 func main() {
 	appInfo := app.Info{
@@ -72,7 +72,7 @@ func main() {
 	go func() {
 		for {
 			time.Sleep(200 * time.Millisecond)
-			if srvApp.IsAllServersAcceptingClients() {
+			if srvApp.IsAllServiceServersAcceptingClients() {
 				log.Info().Msg("Services are ready")
 				break
 			}

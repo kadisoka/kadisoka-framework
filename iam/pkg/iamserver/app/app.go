@@ -208,7 +208,7 @@ func (srvApp *App) initServers(appBase app.App, cfg Config) error {
 			return errors.Wrap("REST API server initialization", err)
 		}
 
-		srvApp.AddServer(restServer)
+		srvApp.AddServiceServer(restServer)
 	}
 
 	if cfg.WebUIEnabled {
@@ -218,7 +218,7 @@ func (srvApp *App) initServers(appBase app.App, cfg Config) error {
 			return errors.Wrap("Web UI server initialization", err)
 		}
 
-		srvApp.AddServer(webUIServer)
+		srvApp.AddServiceServer(webUIServer)
 	}
 
 	if cfg.GRPCEnabled {
@@ -230,7 +230,7 @@ func (srvApp *App) initServers(appBase app.App, cfg Config) error {
 			return errors.Wrap("gRPC API server initialization", err)
 		}
 
-		srvApp.AddServer(grpcServer)
+		srvApp.AddServiceServer(grpcServer)
 	}
 
 	return nil

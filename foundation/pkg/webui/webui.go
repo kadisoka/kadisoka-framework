@@ -315,6 +315,7 @@ func ETagHandler(innerHandler http.Handler) http.Handler {
 	responseBufferPool := bpool.NewBufferPool(24)
 	pathETagsMutex := sync.RWMutex{}
 	pathETags := map[string]string{}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			innerHandler.ServeHTTP(w, r)

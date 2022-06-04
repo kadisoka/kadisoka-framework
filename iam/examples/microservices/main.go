@@ -21,14 +21,14 @@ import (
 )
 
 var (
-	log    = logging.NewPkgLogger()
-	logCtx = log.WithContext
-)
-
-var (
 	appName        = "Kadisoka IAM Test Client Application"
 	revisionID     = "unknown"
 	buildTimestamp = "unknown"
+)
+
+var (
+	log    = logging.NewPkgLogger()
+	logCtx = log.WithContext
 )
 
 func main() {

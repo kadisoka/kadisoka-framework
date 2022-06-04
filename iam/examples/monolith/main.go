@@ -18,8 +18,6 @@ import (
 	iamapp "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/app"
 )
 
-var log = logging.NewPkgLogger()
-
 var (
 	appName        = "Kadisoka Monolith Example Server"
 	revisionID     = "unknown"
@@ -27,6 +25,8 @@ var (
 )
 
 const envVarsPrefix = ""
+
+var log = logging.NewPkgLogger()
 
 func main() {
 	appInfo := app.Info{
