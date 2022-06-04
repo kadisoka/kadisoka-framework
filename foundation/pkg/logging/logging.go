@@ -21,14 +21,15 @@ type PkgLogger struct {
 // automatically adds the name of the package where this function was called,
 // not when logging.
 func NewPkgLogger() PkgLogger {
-	return NewPkgLoggerInternal(CallerPkgName())
+	// Call depth 1 because it's for the one that called NewPkgLogger
+	return NewPkgLoggerInternal(CallerPkgName(1))
 }
 
 // NewPkgLoggerInternal creates a package logger which field 'pkg' is
 // set to the provided name.
 func NewPkgLoggerInternal(name string) PkgLogger {
 	//TODO: configurable prefix trimming
-	name = strings.TrimPrefix(name, "github.com/kadisoka/")
+	name = strings.TrimPrefix(name, "github.com/kadisoka/kadisoka-framework/")
 	logCtx := newLoggerByEnv().With().Str("pkg", name)
 	return PkgLogger{logCtx.Logger()}
 }
@@ -38,17 +39,25 @@ func NewPkgLoggerInternal(name string) PkgLogger {
 // variables prefixed with LOG_EXAMPLE_COM_MYPACKAGE_ .
 const envVarsPrefix = "LOG_"
 
-func newLogger() Logger {
-	//TODO: for the default, we detect the environment we are running on.
-	// e.g., if it's local, it's pretty as the default.
-	if logPretty := os.Getenv(envVarsPrefix + "PRETTY"); logPretty == "true" {
-		return zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+func newLogger(prettyLog bool) Logger {
+	if prettyLog {
+		return zerolog.New(zerolog.ConsoleWriter{
+			Out:        os.Stderr,
+			TimeFormat: time.RFC3339,
+		})
 	}
 	return zerolog.New(os.Stderr)
 }
 
 func newLoggerByEnv() Logger {
-	logger := newLogger()
+	prettyLog := false
+	//TODO: for the default, we detect the environment we are running on.
+	// e.g., if it's local, it's pretty as the default.
+	if v := os.Getenv(envVarsPrefix + "PRETTY"); v == "true" {
+		prettyLog = true
+	}
+
+	logger := newLogger(prettyLog)
 
 	if logLevelStr := os.Getenv(envVarsPrefix + "LEVEL"); logLevelStr != "" {
 		logLevel, err := zerolog.ParseLevel(logLevelStr)
@@ -70,20 +79,20 @@ func newLoggerByEnv() Logger {
 	return logCtx.Logger()
 }
 
-func CallerPkgName() string {
-	pc, _, _, ok := runtime.Caller(2)
+func CallerPkgName(callDepth int) string {
+	// plus one because we need to skip the call to this method
+	pc, _, _, ok := runtime.Caller(callDepth + 1)
 	if !ok {
 		return "<unknown>"
 	}
+
 	parts := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 	partsCount := len(parts)
-	pkgPath := ""
-	funcName := parts[partsCount-1]
+
 	if parts[partsCount-2][0] == '(' {
-		funcName = parts[partsCount-2] + "." + funcName
-		pkgPath = strings.Join(parts[0:partsCount-2], ".")
-	} else {
-		pkgPath = strings.Join(parts[0:partsCount-1], ".")
+		// Skip the function
+		return strings.Join(parts[0:partsCount-2], ".")
 	}
-	return pkgPath
+
+	return strings.Join(parts[0:partsCount-1], ".")
 }

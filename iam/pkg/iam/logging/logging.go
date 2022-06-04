@@ -10,8 +10,9 @@ import (
 // automatically adds the name of the package where this function was called,
 // not when logging.
 func NewPkgLogger() Logger {
+	// Call depth 1 because it's for the one that called NewPkgLogger
 	return Logger{PkgLogger: foundationlog.
-		NewPkgLoggerInternal(foundationlog.CallerPkgName())}
+		NewPkgLoggerInternal(foundationlog.CallerPkgName(1))}
 }
 
 // Logger is a specialized logger for logging with IAM-specific contexes.

@@ -3,9 +3,9 @@ module github.com/kadisoka/kadisoka-framework
 go 1.18
 
 require (
-	github.com/alloyzeus/go-azfl v0.0.0-20220529145731-1a54ce24d33b
+	github.com/alloyzeus/go-azfl v0.0.0-20220603092459-72d4228ca7ae
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.44.22
+	github.com/aws/aws-sdk-go v1.44.27
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
@@ -32,7 +32,7 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/text v0.3.7
-	google.golang.org/grpc v1.46.2
+	google.golang.org/grpc v1.47.0
 )
 
 require (
@@ -59,13 +59,13 @@ require (
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
-	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9 // indirect
-	golang.org/x/net v0.0.0-20220524220425-1d687d428aca // indirect
+	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd // indirect
+	golang.org/x/net v0.0.0-20220531201128-c960675eff93 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
-	google.golang.org/genproto v0.0.0-20220525015930-6ca3db687a9d // indirect
+	google.golang.org/genproto v0.0.0-20220602131408-e326c6e8e9c8 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/ini.v1 v1.66.4 // indirect
+	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

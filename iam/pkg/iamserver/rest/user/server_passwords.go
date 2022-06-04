@@ -35,7 +35,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	err = req.ReadEntity(&reqBody)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Msg("Request body parsing")
+			Warn().Err(err).Msg("Request entity")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -73,7 +73,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msg("User password update")
+			Msg("SetUserPassword")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return

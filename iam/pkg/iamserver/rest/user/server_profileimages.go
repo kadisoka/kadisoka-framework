@@ -47,7 +47,7 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
-			Msg("Request file retrieval")
+			Msg("Request file")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -61,14 +61,14 @@ func (restSrv *Server) putUserProfileImage(req *restful.Request, resp *restful.R
 			//TODO: translate the error
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msg("User profile image update")
+				Msg("SetUserProfileImageByFile")
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msg("Unable to update user profile image")
+			Msg("SetUserProfileImageByFile")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return

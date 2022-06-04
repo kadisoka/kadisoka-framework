@@ -79,13 +79,13 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		case errors.CallError:
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed",
+				Msgf("StartTerminalAuthorizationByPhoneNumber %v",
 					phoneNumber)
 			return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed",
+			Msgf("StartTerminalAuthorizationByPhoneNumber %v",
 				phoneNumber)
 		return nil, grpcerrs.Error(err)
 	}

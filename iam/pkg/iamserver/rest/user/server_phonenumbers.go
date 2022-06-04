@@ -77,7 +77,7 @@ func (restSrv *Server) putUserPhoneNumber(
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("SetUserKeyPhoneNumber to %v",
+				Msgf("SetUserKeyPhoneNumber %v",
 					phoneNumber)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
@@ -85,7 +85,7 @@ func (restSrv *Server) putUserPhoneNumber(
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("SetUserKeyPhoneNumber to %v",
+			Msgf("SetUserKeyPhoneNumber %v",
 				phoneNumber)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
@@ -125,7 +125,7 @@ func (restSrv *Server) postUserPhoneNumberVerificationConfirmation(
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
-			Msg("Unable to load request content")
+			Msg("Request entity")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -138,7 +138,7 @@ func (restSrv *Server) postUserPhoneNumberVerificationConfirmation(
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("ConfirmUserPhoneNumberVerification %v failed",
+				Msgf("ConfirmUserPhoneNumberVerification %v",
 					reqEntity.VerificationID)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
@@ -146,7 +146,7 @@ func (restSrv *Server) postUserPhoneNumberVerificationConfirmation(
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("ConfirmUserPhoneNumberVerification %v failed",
+			Msgf("ConfirmUserPhoneNumberVerification %v",
 				reqEntity.VerificationID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)

@@ -1,9 +1,7 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
@@ -14,11 +12,6 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/logging"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam/rest/sec"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver"
-	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
-)
-
-const (
-	phoneNumberListLengthMax = 50
 )
 
 var (
@@ -73,18 +66,6 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 			"Set to a valid user ID or 'me'.").
 			Required(true)).
 		Returns(http.StatusOK, "OK", iam.UserJSONV1{}))
-
-	restWS.Route(restWS.
-		GET("/by_phone_numbers").
-		To(restSrv.getUserListByPhoneNumberList).
-		Metadata(restfulspec.KeyOpenAPITags, hidden).
-		Doc("Retrieve a list of user by their phone numbers").
-		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
-			Required(true)).
-		Param(restWS.QueryParameter("phone_numbers",
-			fmt.Sprintf("A comma-separated list of phone numbers (max. %d phone numbers)", phoneNumberListLengthMax)).
-			Required(true)).
-		Returns(http.StatusOK, "OK", iam.UserPhoneNumberListJSONV1{}))
 
 	restWS.Route(restWS.
 		PUT("/me/password").
@@ -308,91 +289,4 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	}
 
 	restSrv.eTagResponder.RespondGetJSON(req, resp, restUserProfile)
-}
-
-func (restSrv *Server) getUserListByPhoneNumberList(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
-	if err != nil {
-		logCtx(reqCtx).
-			Warn().Err(err).
-			Msg("Request context")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusInternalServerError)
-		return
-	}
-	ctxAuth := reqCtx.Authorization()
-	if ctxAuth.IsNotStaticallyValid() {
-		logCtx(reqCtx).
-			Warn().Msg("Unauthorized")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusUnauthorized)
-		return
-	}
-	//TODO: check permissions an such
-
-	// use encoding/csv if it became more complex
-	phoneNumberStrList := strings.Split(req.QueryParameter("phone_numbers"), ",")
-	if len(phoneNumberStrList) == 0 {
-		logCtx(reqCtx).
-			Warn().Msg("Phone number list empty")
-		rest.RespondTo(resp).EmptyError(
-			http.StatusBadRequest)
-		return
-	}
-	if len(phoneNumberStrList) > phoneNumberListLengthMax {
-		logCtx(reqCtx).
-			Warn().Msgf("Phone number list is too large at %d (max. %d)",
-			len(phoneNumberStrList), phoneNumberListLengthMax)
-		rest.RespondTo(resp).EmptyError(
-			http.StatusBadRequest)
-		return
-	}
-
-	var unparseablePhoneNumbers []string
-	var unsoundPhoneNumbers []string
-	inputMap := map[string]string{}
-	var phoneNumbers []telephony.PhoneNumber
-	for _, inputStr := range phoneNumberStrList {
-		phoneNumber, err := telephony.PhoneNumberFromString(inputStr)
-		if err != nil {
-			unparseablePhoneNumbers = append(unparseablePhoneNumbers, inputStr)
-			continue
-		}
-		if !phoneNumber.IsSound() {
-			unsoundPhoneNumbers = append(unsoundPhoneNumbers, inputStr)
-			continue
-		}
-		normalizedStr := phoneNumber.String()
-		if _, exist := inputMap[normalizedStr]; exist {
-			continue
-		}
-		inputMap[normalizedStr] = inputStr
-		phoneNumbers = append(phoneNumbers, phoneNumber)
-	}
-
-	if len(unparseablePhoneNumbers) > 0 || len(unsoundPhoneNumbers) > 0 {
-		logCtx(reqCtx).
-			Warn().
-			Strs("unparsable", unparseablePhoneNumbers).
-			Strs("unsound", unsoundPhoneNumbers).
-			Msg("Some phone numbers are ignored")
-	}
-
-	userPhoneNumberModelList, err := restSrv.serverCore.
-		ListUsersByPhoneNumber(reqCtx, phoneNumbers)
-	if err != nil {
-		panic(err)
-	}
-
-	responseList := []iam.UserPhoneNumberJSONV1{}
-	for _, userPhoneNumberModel := range userPhoneNumberModelList {
-		phoneNumber := userPhoneNumberModel.PhoneNumber
-		responseList = append(responseList, iam.UserPhoneNumberJSONV1{
-			UserID:      userPhoneNumberModel.UserRef.AZIDText(),
-			PhoneNumber: inputMap[phoneNumber.String()],
-		})
-	}
-
-	restSrv.eTagResponder.RespondGetJSON(req, resp,
-		iam.UserPhoneNumberListJSONV1{Items: responseList})
 }

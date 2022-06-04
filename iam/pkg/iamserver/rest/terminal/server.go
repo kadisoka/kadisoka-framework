@@ -237,14 +237,14 @@ func (restSrv *Server) deleteTerminal(
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("DeleteTerminal with %v failed", termRef)
+				Msgf("DeleteTerminal %v", termRef)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("DeleteTerminal with %v failed", termRef)
+			Msgf("DeleteTerminal %v", termRef)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -353,14 +353,14 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed", phoneNumber)
+				Msgf("StartTerminalAuthorizationByPhoneNumber %v", phoneNumber)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("StartTerminalAuthorizationByPhoneNumber with %v failed", phoneNumber)
+			Msgf("StartTerminalAuthorizationByPhoneNumber %v", phoneNumber)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -433,14 +433,14 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("StartTerminalAuthorizationByEmailAddress with %v failed", emailAddress)
+				Msgf("StartTerminalAuthorizationByEmailAddress %v", emailAddress)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("StartTerminalAuthorizationByEmailAddress with %v failed", emailAddress)
+			Msgf("StartTerminalAuthorizationByEmailAddress %v", emailAddress)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return

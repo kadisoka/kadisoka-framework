@@ -31,7 +31,7 @@ func (restSrv *Server) putUserEmailAddress(
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
-			Msg("Unable to read request body")
+			Msg("Request entity")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -103,14 +103,14 @@ func (restSrv *Server) handleSetEmailAddress(
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("SetUserKeyEmailAddress to %v", emailAddress)
+				Msgf("SetUserKeyEmailAddress %v", emailAddress)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("SetUserKeyEmailAddress to %v", emailAddress)
+			Msgf("SetUserKeyEmailAddress %v", emailAddress)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -148,7 +148,7 @@ func (restSrv *Server) postUserEmailAddressVerificationConfirmation(
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
-			Msg("Unable to load request content")
+			Msg("Request entity")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -161,7 +161,7 @@ func (restSrv *Server) postUserEmailAddressVerificationConfirmation(
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("ConfirmUserEmailAddressVerification %v failed",
+				Msgf("ConfirmUserEmailAddressVerification %v",
 					reqEntity.VerificationID)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
@@ -169,7 +169,7 @@ func (restSrv *Server) postUserEmailAddressVerificationConfirmation(
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("ConfirmUserEmailAddressVerification %v failed",
+			Msgf("ConfirmUserEmailAddressVerification %v",
 				reqEntity.VerificationID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)

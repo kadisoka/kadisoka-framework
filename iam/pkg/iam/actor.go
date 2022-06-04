@@ -14,11 +14,11 @@ type Actor struct {
 	TerminalRef TerminalRefKey
 }
 
-var _ azcore.Subject[
+var _ azcore.SessionSubject[
 	TerminalIDNum, TerminalRefKey, UserIDNum, UserRefKey] = Actor{}
 
 // AZSubject is required by azcore.Subject
-func (Actor) AZSubject() {}
+func (Actor) AZSessionSubject() {}
 
 // IsRepresentingAUser is required by azcore.Subject
 func (actor Actor) IsRepresentingAUser() bool {

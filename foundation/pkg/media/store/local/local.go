@@ -71,7 +71,7 @@ func NewService(
 
 	filesBasePath, err := filepath.Abs(conf.FolderPath)
 	if err != nil {
-		return nil, errors.Ent("conf.FolderPath", err)
+		return nil, errors.ArgWrap("config.FolderPath", "absolute resolution", err)
 	}
 
 	filesDirNoSlash := filesBasePath
