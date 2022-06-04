@@ -12,10 +12,10 @@ func (core *Core) GetUserContactInformation(
 	userRef iam.UserRefKey,
 ) (*iampb.UserContactInfoData, error) {
 	//TODO: access control
-	return core.getUserContactInformationNoAC(callCtx, userRef)
+	return core.getUserContactInformationInsecure(callCtx, userRef)
 }
 
-func (core *Core) getUserContactInformationNoAC(
+func (core *Core) getUserContactInformationInsecure(
 	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*iampb.UserContactInfoData, error) {

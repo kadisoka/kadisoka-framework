@@ -24,14 +24,14 @@ func (core *Core) GetUserBaseProfile(
 	}
 	//TODO(exa): ensure that the context user has the privilege
 
-	return core.getUserBaseProfileNoAC(callCtx, userRef)
+	return core.getUserBaseProfileInsecure(callCtx, userRef)
 }
 
-// getUserBaseProfileNoAC is the implementation of GetUserBaseProfile
+// getUserBaseProfileInsecure is the implementation of GetUserBaseProfile
 // but without access-control. This method must be only used behind the
 // access control; for the end-point for public-facing APIs,
 // use GetUserBaseProfile.
-func (core *Core) getUserBaseProfileNoAC(
+func (core *Core) getUserBaseProfileInsecure(
 	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*iam.UserBaseProfileData, error) {
@@ -84,15 +84,15 @@ func (core *Core) GetUserInfoV1(
 ) (*iampb.UserInfoData, error) {
 	//TODO: access control
 
-	return core.getUserInfoV1NoAC(callCtx, userRef)
+	return core.getUserInfoV1Insecure(callCtx, userRef)
 }
 
-func (core *Core) getUserInfoV1NoAC(
+func (core *Core) getUserInfoV1Insecure(
 	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*iampb.UserInfoData, error) {
 	userBaseProfile, err := core.
-		getUserBaseProfileNoAC(callCtx, userRef)
+		getUserBaseProfileInsecure(callCtx, userRef)
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +115,7 @@ func (core *Core) getUserInfoV1NoAC(
 	}
 
 	contactInfo, err := core.
-		getUserContactInformationNoAC(callCtx, userRef)
+		getUserContactInformationInsecure(callCtx, userRef)
 	if err != nil {
 		panic(err)
 	}

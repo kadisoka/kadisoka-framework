@@ -488,10 +488,10 @@ func (core *Core) RegisterTerminal(
 	// - check user ref validity against verification type and client type
 	// - assert platform type againts client data
 
-	return core.registerTerminalNoAC(input)
+	return core.registerTerminalInsecure(input)
 }
 
-func (core *Core) registerTerminalNoAC(
+func (core *Core) registerTerminalInsecure(
 	input TerminalRegistrationInput,
 ) TerminalRegistrationOutput {
 	callCtx := input.Context

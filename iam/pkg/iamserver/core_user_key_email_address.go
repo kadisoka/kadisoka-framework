@@ -23,10 +23,10 @@ func (core *Core) GetUserKeyEmailAddress(
 	userRef iam.UserRefKey,
 ) (*email.Address, error) {
 	//TODO: access control
-	return core.getUserKeyEmailAddressNoAC(callCtx, userRef)
+	return core.getUserKeyEmailAddressInsecure(callCtx, userRef)
 }
 
-func (core *Core) getUserKeyEmailAddressNoAC(
+func (core *Core) getUserKeyEmailAddressInsecure(
 	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*email.Address, error) {

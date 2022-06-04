@@ -21,7 +21,7 @@ func (core *Core) contextUserOrNewInstance(
 		return userRef, false, nil
 	}
 
-	userRef, err = core.UserService.createUserInstanceNoAC(callCtx)
+	userRef, err = core.UserService.createUserInstanceInsecure(callCtx)
 	if err != nil {
 		return iam.UserRefKeyZero(), false, err
 	}

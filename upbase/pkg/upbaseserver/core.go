@@ -45,10 +45,10 @@ func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
 		return nil, nil
 	}
 
-	return srvCore.getUserOpenIDConnectStandardClaimsNoAC(callCtx, userRef)
+	return srvCore.getUserOpenIDConnectStandardClaimsInsecure(callCtx, userRef)
 }
 
-func (srvCore *Core) getUserOpenIDConnectStandardClaimsNoAC(
+func (srvCore *Core) getUserOpenIDConnectStandardClaimsInsecure(
 	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*oidc.StandardClaims, error) {

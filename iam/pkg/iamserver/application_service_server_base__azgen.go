@@ -66,10 +66,10 @@ func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	//TODO: access control
-	return srv.getApplicationInstanceInfoNoAC(opInputCtx, refKey)
+	return srv.getApplicationInstanceInfoInsecure(opInputCtx, refKey)
 }
 
-func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoNoAC(
+func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoInsecure(
 	opInputCtx iam.OpInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
@@ -169,13 +169,13 @@ func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
 ) (refKey iam.ApplicationRefKey, initialState iam.ApplicationInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createApplicationInstanceNoAC(opInputCtx)
+	refKey, err = srv.createApplicationInstanceInsecure(opInputCtx)
 
 	//TODO: revision number
 	return refKey, iam.ApplicationInstanceInfo{RevisionNumber: -1}, err
 }
 
-func (srv *ApplicationServiceServerBase) createApplicationInstanceNoAC(
+func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 	opInputCtx iam.OpInputContext,
 ) (iam.ApplicationRefKey, error) {
 	ctxAuth := opInputCtx.Authorization()
@@ -241,10 +241,10 @@ func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
 
 	//TODO: access control
 
-	return srv.deleteApplicationInstanceNoAC(opInputCtx, toDelete, input)
+	return srv.deleteApplicationInstanceInsecure(opInputCtx, toDelete, input)
 }
 
-func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
+func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 	opInputCtx iam.OpInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
@@ -296,7 +296,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceNoAC(
 			Deleted: true,
 		}
 	} else {
-		di, err := srv.getApplicationInstanceInfoNoAC(opInputCtx, toDelete)
+		di, err := srv.getApplicationInstanceInfoInsecure(opInputCtx, toDelete)
 		if err != nil {
 			return false, iam.ApplicationInstanceInfoZero(), err
 		}

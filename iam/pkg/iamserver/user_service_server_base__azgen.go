@@ -66,10 +66,10 @@ func (srv *UserServiceServerBase) GetUserInstanceInfo(
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	//TODO: access control
-	return srv.getUserInstanceInfoNoAC(opInputCtx, refKey)
+	return srv.getUserInstanceInfoInsecure(opInputCtx, refKey)
 }
 
-func (srv *UserServiceServerBase) getUserInstanceInfoNoAC(
+func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
 	opInputCtx iam.OpInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
@@ -169,13 +169,13 @@ func (srv *UserServiceServerBase) CreateUserInstanceInternal(
 ) (refKey iam.UserRefKey, initialState iam.UserInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createUserInstanceNoAC(opInputCtx)
+	refKey, err = srv.createUserInstanceInsecure(opInputCtx)
 
 	//TODO: revision number
 	return refKey, iam.UserInstanceInfo{RevisionNumber: -1}, err
 }
 
-func (srv *UserServiceServerBase) createUserInstanceNoAC(
+func (srv *UserServiceServerBase) createUserInstanceInsecure(
 	opInputCtx iam.OpInputContext,
 ) (iam.UserRefKey, error) {
 	ctxAuth := opInputCtx.Authorization()
@@ -245,10 +245,10 @@ func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
 
 	//TODO: access control
 
-	return srv.deleteUserInstanceNoAC(opInputCtx, toDelete, input)
+	return srv.deleteUserInstanceInsecure(opInputCtx, toDelete, input)
 }
 
-func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
+func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 	opInputCtx iam.OpInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
@@ -302,7 +302,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceNoAC(
 			DeletionNotes: input.DeletionNotes,
 		}
 	} else {
-		di, err := srv.getUserInstanceInfoNoAC(opInputCtx, toDelete)
+		di, err := srv.getUserInstanceInfoInsecure(opInputCtx, toDelete)
 		if err != nil {
 			return false, iam.UserInstanceInfoZero(), err
 		}

@@ -25,10 +25,10 @@ func (core *Core) GetUserKeyPhoneNumber(
 	userRef iam.UserRefKey,
 ) (*telephony.PhoneNumber, error) {
 	//TODO: access control
-	return core.getUserKeyPhoneNumberNoAC(callCtx, userRef)
+	return core.getUserKeyPhoneNumberInsecure(callCtx, userRef)
 }
 
-func (core *Core) getUserKeyPhoneNumberNoAC(
+func (core *Core) getUserKeyPhoneNumberInsecure(
 	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 ) (*telephony.PhoneNumber, error) {
