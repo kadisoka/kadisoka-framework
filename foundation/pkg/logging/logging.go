@@ -13,6 +13,8 @@ type (
 	Logger = zerolog.Logger
 )
 
+// PkgLogger is a logger for a specific package. It includes the field 'pkg'
+// which value is the identifier of the package.
 type PkgLogger struct {
 	Logger
 }
@@ -22,14 +24,18 @@ type PkgLogger struct {
 // not when logging.
 func NewPkgLogger() PkgLogger {
 	// Call depth 1 because it's for the one that called NewPkgLogger
-	return NewPkgLoggerInternal(CallerPkgName(1))
+	return NewPkgLoggerExplicit(CallerPkgName(1))
 }
 
-// NewPkgLoggerInternal creates a package logger which field 'pkg' is
+// Packages with this prefix will be left without the prefix. This is to
+// reduce noise.
+const trimPackagePrefix = "github.com/kadisoka/kadisoka-framework/"
+
+// NewPkgLoggerExplicit creates a package logger which field 'pkg' is
 // set to the provided name.
-func NewPkgLoggerInternal(name string) PkgLogger {
+func NewPkgLoggerExplicit(name string) PkgLogger {
 	//TODO: configurable prefix trimming
-	name = strings.TrimPrefix(name, "github.com/kadisoka/kadisoka-framework/")
+	name = strings.TrimPrefix(name, trimPackagePrefix)
 	logCtx := newLoggerByEnv().With().Str("pkg", name)
 	return PkgLogger{logCtx.Logger()}
 }
@@ -68,15 +74,21 @@ func newLoggerByEnv() Logger {
 	}
 
 	logCtx := logger.With()
-	if os.Getenv("AWS_EXECUTION_ENV") != "" {
-		//TODO: not just on AWS. If we are detecting an environment which
-		// already providing timestamp, we should disable the timestamp
-		// by default.
-	} else {
+	if includeTimestampField() {
 		logCtx = logCtx.Timestamp()
 	}
 
 	return logCtx.Logger()
+}
+
+func includeTimestampField() bool {
+	//TODO: not just on AWS. If we are detecting an environment which
+	// already providing timestamp, we should disable the timestamp
+	// by default.
+	if os.Getenv("AWS_EXECUTION_ENV") != "" {
+		return false
+	}
+	return true
 }
 
 func CallerPkgName(callDepth int) string {

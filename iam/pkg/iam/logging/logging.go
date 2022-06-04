@@ -12,7 +12,7 @@ import (
 func NewPkgLogger() Logger {
 	// Call depth 1 because it's for the one that called NewPkgLogger
 	return Logger{PkgLogger: foundationlog.
-		NewPkgLoggerInternal(foundationlog.CallerPkgName(1))}
+		NewPkgLoggerExplicit(foundationlog.CallerPkgName(1))}
 }
 
 // Logger is a specialized logger for logging with IAM-specific contexes.
@@ -30,11 +30,14 @@ func (logger Logger) WithContext(
 	// Implementation notes: don't panic
 
 	if ctx == nil {
-		l := logger.With().Str("class", "iam").Logger()
+		l := logger.With().Str("module", "iam").Logger()
 		return &l
 	}
 
 	logCtx := logger.With()
+	logCtx = logCtx.
+		Str("method", ctx.OpName())
+
 	hasAuth := false
 
 	if ctxAuth := ctx.Authorization(); ctxAuth.IsStaticallyValid() {
@@ -44,11 +47,15 @@ func (logger Logger) WithContext(
 			Str("user", ctxAuth.Session.Terminal().User().AZIDText())
 		hasAuth = true
 	}
+
 	if !hasAuth {
-		//TODO: generalized remote IP resolver
+		originInfo := ctx.OpOriginInfo()
+		logCtx = logCtx.
+			Str("origin_addr", originInfo.Address)
+		if originEnv := originInfo.EnvironmentString; originEnv != "" {
+			logCtx = logCtx.Str("origin_env", originEnv)
+		}
 	}
-	logCtx = logCtx.
-		Str("method", ctx.OpName())
 
 	if reqID := ctx.OpInputMetadata().ID; reqID != nil {
 		logCtx = logCtx.
