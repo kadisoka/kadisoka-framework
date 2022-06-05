@@ -24,7 +24,7 @@ func SMSDeliveryServiceConfigSkeleton() SMSDeliveryServiceConfig { return SMSDel
 
 func (SMSDeliveryServiceConfig) SelfDocsDescriptor() stev.SelfDocsDescriptor {
 	return stev.SelfDocsDescriptor{
-		ShortDesc: "Use Twilio to deliver the SMS",
+		ShortDesc: "Use Twilio to deliver the SMSes",
 	}
 }
 
@@ -58,18 +58,18 @@ func NewSMSDeliveryService(config interface{}) pnv10n.SMSDeliveryService {
 }
 
 // SendTextMessage is use for send text message using sms delivery service
-func (sms *SMSDeliveryService) SendTextMessage(
+func (smsDelivelySvc *SMSDeliveryService) SendTextMessage(
 	recipient telephony.PhoneNumber,
 	text string,
 	opts pnv10n.SMSDeliveryOptions,
 ) error {
 	// Docs: https://www.twilio.com/docs/sms/send-messages
 
-	endPoint := sms.endpointURL
+	endPoint := smsDelivelySvc.endpointURL
 
 	bodyReq := url.Values{}
 	bodyReq.Set("To", recipient.String())
-	bodyReq.Set("From", sms.config.Sender)
+	bodyReq.Set("From", smsDelivelySvc.config.Sender)
 	bodyReq.Set("Body", text)
 	payload := strings.NewReader(bodyReq.Encode())
 
@@ -79,7 +79,7 @@ func (sms *SMSDeliveryService) SendTextMessage(
 		return errors.New("Unable to build new request -> " + err.Error())
 	}
 
-	req.SetBasicAuth(sms.config.AccountSID, sms.config.AuthToken)
+	req.SetBasicAuth(smsDelivelySvc.config.AccountSID, smsDelivelySvc.config.AuthToken)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 

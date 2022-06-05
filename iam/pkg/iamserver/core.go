@@ -23,7 +23,10 @@ import (
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 
-	// SMS delivery service providers
+	// Email address verification modules
+	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/eav10n/ses"
+
+	// Phone number verification modules
 	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/telesign"
 	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/twilio"
 	_ "github.com/kadisoka/kadisoka-framework/iam/pkg/iamserver/pnv10n/vonage"
@@ -65,8 +68,6 @@ func NewCoreByConfig(
 	appApp app.App,
 	realmInfo realm.Info,
 ) (*Core, error) {
-	realmName := realmInfo.Name
-
 	iamDB, err := connectPostgres(coreCfg.DBURL)
 	if err != nil {
 		if argErr, ok := err.(errors.ArgumentError); ok {
@@ -108,7 +109,7 @@ func NewCoreByConfig(
 	log.Info().Msg("Initializing phone-number verification service...")
 	log.Info().Msgf("Registered SMS delivery service integrations: %v",
 		pnv10n.ModuleNames())
-	pnVerifier := pnv10n.NewVerifier(realmName, iamDB, coreCfg.PNV)
+	pnVerifier := pnv10n.NewVerifier(realmInfo, iamDB, coreCfg.PNV)
 
 	registeredUserIDNumCache, err := lru.NewARC(65535)
 	if err != nil {
@@ -255,6 +256,7 @@ func CoreConfigSkeleton() CoreConfig {
 	//TODO: customize the skeletons. e.g., serve path for local media store.
 	return CoreConfig{
 		Media: mediastore.ConfigSkeleton(),
+		EAV:   eav10n.ConfigSkeleton(),
 		PNV:   pnv10n.ConfigSkeleton(),
 	}
 }

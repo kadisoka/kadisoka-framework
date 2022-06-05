@@ -17,26 +17,45 @@ func init() {
 	ResourcesDirDefault = filepath.Join(pkgPath, "resources")
 }
 
+func ConfigFromEnv(prefix string, seedCfg *Config) (*Config, error) {
+	if seedCfg == nil {
+		seedCfg = &Config{}
+	}
+	err := stev.LoadEnv(prefix, seedCfg)
+	if err != nil {
+		return nil, errors.Wrap("config loading from environment variables", err)
+	}
+	return seedCfg, nil
+}
+
 type Config struct {
 	CodeTTLDefault          time.Duration `env:"CODE_TTL_DEFAULT"`
 	ConfirmationAttemptsMax int16         `env:"CONFIRMATION_ATTEMPTS_MAX,docs_hidden"`
 	SenderAddress           string        `env:"SENDER_ADDRESS"`
 	ResourcesDir            string        `env:"RESOURCES_DIR"`
-	SES                     *SESConfig    `env:"SES"`
+	// The email delivery service to use.
+	EmailDeliveryService string `env:"EMAIL_DELIVERY_SERVICE,required"`
+	// Configurations for modules
+	Modules map[string]ModuleConfig `env:",map,squash"`
 }
 
-func ConfigFromEnv(prefix string) (*Config, error) {
-	var cfg Config
-	err := stev.LoadEnv(prefix, &cfg)
-	if err != nil {
-		return nil, errors.Wrap("config loading from environment variables", err)
+func (cfg Config) FieldDocsDescriptor(fieldName string) *stev.FieldDocsDescriptor {
+	switch fieldName {
+	case "EmailDeliveryService", "EMAIL_DELIVERY_SERVICE":
+		modules := map[string]stev.EnumValueDocs{}
+		for k, v := range cfg.Modules {
+			var shortDesc string
+			if smsCfg := v.EmailDeliveryServiceConfig(); smsCfg != nil {
+				if moduleDesc := stev.LoadSelfDocsDescriptor(smsCfg); moduleDesc != nil {
+					shortDesc = moduleDesc.ShortDesc
+				}
+			}
+			modules[k] = stev.EnumValueDocs{ShortDesc: shortDesc}
+		}
+		return &stev.FieldDocsDescriptor{
+			Description:     "The email delivery service to use.",
+			AvailableValues: modules,
+		}
 	}
-	return &cfg, nil
-}
-
-//TODO: make module system like pnv10n
-type SESConfig struct {
-	Region          string `env:"REGION,required"`
-	AccessKeyID     string `env:"ACCESS_KEY_ID"`
-	SecretAccessKey string `env:"SECRET_ACCESS_KEY"`
+	return nil
 }

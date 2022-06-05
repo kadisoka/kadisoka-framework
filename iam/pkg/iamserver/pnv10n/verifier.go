@@ -15,6 +15,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/realm"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
@@ -22,11 +23,11 @@ import (
 const verificationDBTableName = "phone_number_verification_dt"
 
 func NewVerifier(
-	appName string,
+	realmInfo realm.Info,
 	db *sqlx.DB,
 	config Config,
 ) *Verifier {
-	if appName == "" {
+	if realmInfo.Name == "" {
 		panic("Invalid config")
 	}
 
@@ -76,7 +77,7 @@ func NewVerifier(
 					panic("Invalid country code " + ccStr)
 				}
 				if _, dup := smsDeliveryServices[int32(countryCode)]; dup {
-					panic("Duplicate country code " + ccStr)
+					panic("Duplicated country code " + ccStr)
 				}
 				smsDeliveryServices[int32(countryCode)] = svcInst
 			}
@@ -99,22 +100,22 @@ func NewVerifier(
 	}
 
 	return &Verifier{
-		appName:                 appName,
-		db:                      db,
-		config:                  config,
-		codeTTLDefaultValue:     codeTTLDefault,
-		smsDeliveryServices:     smsDeliveryServices,
-		confirmationAttemptsMax: confirmationAttemptsMax,
+		realmInfo:                    realmInfo,
+		db:                           db,
+		config:                       config,
+		codeTTLDefaultValue:          codeTTLDefault,
+		smsDeliveryServicesByCountry: smsDeliveryServices,
+		confirmationAttemptsMax:      confirmationAttemptsMax,
 	}
 }
 
 type Verifier struct {
-	appName                 string
-	db                      *sqlx.DB
-	codeTTLDefaultValue     time.Duration
-	confirmationAttemptsMax int16
-	config                  Config
-	smsDeliveryServices     map[int32]SMSDeliveryService
+	realmInfo                    realm.Info
+	db                           *sqlx.DB
+	codeTTLDefaultValue          time.Duration
+	confirmationAttemptsMax      int16
+	config                       Config
+	smsDeliveryServicesByCountry map[int32]SMSDeliveryService
 }
 
 //TODO(exa): make the operations atomic
@@ -128,8 +129,8 @@ func (verifier *Verifier) StartVerification(
 	if callCtx == nil {
 		return 0, nil, errors.ArgMsg("callCtx", "missing")
 	}
-	ctxAuth := callCtx.Authorization()
 
+	ctxAuth := callCtx.Authorization()
 	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 
 	var prevAttempts int16
@@ -310,7 +311,7 @@ func (verifier *Verifier) sendTextMessage(
 	var bodyBuilder strings.Builder
 	err := messageTemplate.
 		Execute(&bodyBuilder, map[string]interface{}{
-			"RealmName": verifier.appName,
+			"RealmName": verifier.realmInfo.Name,
 			"Code":      code,
 		})
 	if err != nil {
@@ -327,13 +328,13 @@ func (verifier *Verifier) sendTextMessage(
 		//NOTE: special treatment for +1555xxxx numbers (for testing)
 		if !(phoneNumber.CountryCode() == 1 && phoneNumber.NationalNumber() > 5550000 && phoneNumber.NationalNumber() <= 5559999) {
 			var deliverySvc SMSDeliveryService
-			if len(verifier.smsDeliveryServices) > 1 {
-				if svc := verifier.smsDeliveryServices[phoneNumber.CountryCode()]; svc != nil {
+			if len(verifier.smsDeliveryServicesByCountry) > 1 {
+				if svc := verifier.smsDeliveryServicesByCountry[phoneNumber.CountryCode()]; svc != nil {
 					deliverySvc = svc
 				}
 			}
 			if deliverySvc == nil {
-				deliverySvc = verifier.smsDeliveryServices[0]
+				deliverySvc = verifier.smsDeliveryServicesByCountry[0]
 			}
 			err = deliverySvc.SendTextMessage(
 				phoneNumber,

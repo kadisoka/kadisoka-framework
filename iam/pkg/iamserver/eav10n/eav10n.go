@@ -12,3 +12,13 @@ const (
 var (
 	messageLocaleDefault = language.MustParse("en-US")
 )
+
+const emailDeliveryServiceDefault = ""
+
+func ConfigSkeleton() Config {
+	moduleConfigs := ModuleConfigSkeletons()
+	return Config{
+		EmailDeliveryService: emailDeliveryServiceDefault,
+		Modules:              moduleConfigs,
+	}
+}

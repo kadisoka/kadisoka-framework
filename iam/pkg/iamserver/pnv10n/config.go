@@ -7,19 +7,6 @@ import (
 	"github.com/rez-go/stev"
 )
 
-func init() {
-	RegisterModule(
-		"null",
-		Module{
-			ConfigSkeleton: func() ModuleConfig {
-				return &moduleNULLConfig{}
-			},
-			NewSMSDeliveryService: func(config interface{}) SMSDeliveryService {
-				return &smsDeliveryServiceNULL{}
-			},
-		})
-}
-
 func ConfigFromEnv(prefix string, seedCfg *Config) (*Config, error) {
 	if seedCfg == nil {
 		seedCfg = &Config{}

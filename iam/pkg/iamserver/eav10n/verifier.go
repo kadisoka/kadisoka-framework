@@ -7,15 +7,11 @@ import (
 	"encoding/binary"
 	"fmt"
 	htmltpl "html/template"
+	"strings"
 	texttpl "text/template"
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	awscreds "github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 
@@ -39,9 +35,6 @@ func NewVerifier(
 	if config.SenderAddress == "" && emailSenderAddress == "" {
 		panic("sender address not configured")
 	}
-	if config.SES == nil || config.SES.Region == "" {
-		panic("SES not configured")
-	}
 
 	resDir := config.ResourcesDir
 	if resDir == "" {
@@ -53,22 +46,56 @@ func NewVerifier(
 		emailSenderAddress = config.SenderAddress
 	}
 
-	var creds *awscreds.Credentials
-	if config.SES.AccessKeyID != "" {
-		creds = awscreds.NewStaticCredentials(
-			config.SES.AccessKeyID,
-			config.SES.SecretAccessKey,
-			"",
-		)
+	emailDeliveryServices := map[string]EmailDeliveryService{}
+	serviceName := config.EmailDeliveryService
+	if serviceName == "" || !strings.Contains(serviceName, ",") {
+		if serviceName == "" {
+			panic("Email delivery service must be specified in the config")
+		}
+		moduleCfg := config.Modules[serviceName]
+		if moduleCfg != nil {
+			deliverySvc, err := NewEmailDeliveryService(serviceName, moduleCfg.EmailDeliveryServiceConfig())
+			if err != nil || deliverySvc == nil {
+				panic("Email delivery service not configured")
+			}
+			emailDeliveryServices[""] = deliverySvc
+		}
+	} else {
+		codeNames := strings.Split(serviceName, ",")
+		instantiatedServices := map[string]EmailDeliveryService{}
+		for _, codeName := range codeNames {
+			parts := strings.Split(codeName, ":")
+			svcName := strings.TrimSpace(parts[1])
+			svcInst := instantiatedServices[svcName]
+			if svcInst == nil {
+				moduleCfg := config.Modules[serviceName]
+				if moduleCfg != nil {
+					deliverySvc, err := NewEmailDeliveryService(serviceName, moduleCfg.EmailDeliveryServiceConfig())
+					if err != nil || deliverySvc == nil {
+						panic("Email delivery service not configured")
+					}
+					instantiatedServices[svcName] = deliverySvc
+					svcInst = deliverySvc
+				}
+			}
+			ccStr := parts[0]
+			if ccStr == "*" {
+				emailDeliveryServices[""] = svcInst
+			} else {
+				targetDomain := ccStr
+				if targetDomain == "" {
+					panic("Invalid domain " + ccStr)
+				}
+				if _, dup := emailDeliveryServices[targetDomain]; dup {
+					panic("Duplicated domain " + ccStr)
+				}
+				emailDeliveryServices[targetDomain] = svcInst
+			}
+		}
 	}
-	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String(config.SES.Region),
-		Credentials: creds,
-	})
-	if err != nil {
-		panic(err)
+	if _, ok := emailDeliveryServices[""]; !ok {
+		panic("Requires at least one email delivery service")
 	}
-	svc := ses.New(sess)
 
 	var codeTTLDefault time.Duration
 	if config.CodeTTLDefault > 0 {
@@ -83,22 +110,22 @@ func NewVerifier(
 	}
 
 	return &Verifier{
-		realmInfo:               realmInfo,
-		db:                      db,
-		senderAddress:           config.SenderAddress,
-		sesClient:               svc,
-		codeTTLDefault:          codeTTLDefault,
-		confirmationAttemptsMax: confirmationAttemptsMax,
+		realmInfo:                     realmInfo,
+		db:                            db,
+		senderAddress:                 emailSenderAddress,
+		codeTTLDefault:                codeTTLDefault,
+		emailDeliveryServicesByDomain: emailDeliveryServices,
+		confirmationAttemptsMax:       confirmationAttemptsMax,
 	}
 }
 
 type Verifier struct {
-	realmInfo               realm.Info
-	db                      *sqlx.DB
-	senderAddress           string
-	sesClient               *ses.SES
-	codeTTLDefault          time.Duration
-	confirmationAttemptsMax int16
+	realmInfo                     realm.Info
+	db                            *sqlx.DB
+	senderAddress                 string
+	codeTTLDefault                time.Duration
+	confirmationAttemptsMax       int16
+	emailDeliveryServicesByDomain map[string]EmailDeliveryService
 }
 
 //TODO(exa): make the operations atomic
@@ -112,8 +139,8 @@ func (verifier *Verifier) StartVerification(
 	if callCtx == nil {
 		return 0, nil, errors.ArgMsg("callCtx", "missing")
 	}
-	ctxAuth := callCtx.Authorization()
 
+	ctxAuth := callCtx.Authorization()
 	ctxTime := callCtx.OpInputMetadata().ReceiveTime
 
 	var prevAttempts int16
@@ -267,65 +294,48 @@ func (verifier *Verifier) sendVerificationEmail(
 	if err != nil {
 		return err
 	}
-	subject := buf.String()
+	subjectText := buf.String()
 
 	buf = new(bytes.Buffer)
 	if err = bodyTemplate.Execute(buf, map[string]interface{}{
 		"RealmInfo": verifier.realmInfo,
-		"Title":     subject, //TODO: title == subject?
+		"Title":     subjectText, //TODO: title == subject?
 		"Code":      code,
 	}); err != nil {
 		panic(err)
 	}
 	htmlBody := buf.String()
 
-	if noDelivery {
-		return nil
-	}
-
-	// Note that SES supports both text and HTML body. For better
-	// support, we might want to utilizes both.
-	input := &ses.SendEmailInput{
-		Destination: &ses.Destination{
-			ToAddresses: []*string{
-				aws.String(emailAddress.String()),
-			},
-		},
-		Message: &ses.Message{
-			Body: &ses.Body{
-				Html: &ses.Content{
-					Charset: aws.String(messageCharset),
-					Data:    aws.String(htmlBody),
-				},
-			},
-			Subject: &ses.Content{
-				Charset: aws.String(messageCharset),
-				Data:    aws.String(subject),
-			},
-		},
-		Source: aws.String(verifier.senderAddress),
-	}
-
-	_, err = verifier.sesClient.SendEmail(input)
-
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			//TODO: translate errors
-			switch aerr.Code() {
-			case ses.ErrCodeMessageRejected:
-				return errors.Wrap("SendEmail", aerr)
-			case ses.ErrCodeMailFromDomainNotVerifiedException:
-				return errors.Wrap("SendEmail", aerr)
-			case ses.ErrCodeConfigurationSetDoesNotExistException:
-				return errors.Wrap("SendEmail", aerr)
-			default:
-				return errors.Wrap("SendEmail", aerr)
-			}
+	if !noDelivery {
+		targetDomain := emailAddress.DomainPart()
+		doSend := true
+		switch targetDomain {
+		case "example.com", "example.org", "example.net":
+			doSend = false
 		}
-		return err
+
+		if doSend {
+			var deliverySvc EmailDeliveryService
+			if len(verifier.emailDeliveryServicesByDomain) > 1 {
+				if svc := verifier.emailDeliveryServicesByDomain[targetDomain]; svc != nil {
+					deliverySvc = svc
+				}
+			}
+			if deliverySvc == nil {
+				deliverySvc = verifier.emailDeliveryServicesByDomain[""]
+			}
+			err = deliverySvc.SendHTMLMessage(
+				emailAddress,
+				subjectText,
+				htmlBody,
+				EmailDeliveryOptions{
+					MessageCharset: messageCharset,
+					SenderAddress:  verifier.senderAddress,
+				})
+		}
 	}
 
-	return nil
+	return err
 }
 
 func (verifier *Verifier) GetEmailAddressByVerificationID(
