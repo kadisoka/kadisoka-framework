@@ -252,7 +252,7 @@ func loadPrivateKeyFromPEMFile(
 	}
 
 	if len(fileBytes) == 0 {
-		return nil, errors.Msg("unable to load any of the specified filenames")
+		return nil, errors.Msg(fmt.Sprintf("none of these files could be loaded: %v", fileNamesToTry))
 	}
 
 	pemData, _ := pem.Decode(fileBytes)

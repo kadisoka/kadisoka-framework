@@ -69,6 +69,9 @@ func NewCoreByConfig(
 
 	iamDB, err := connectPostgres(coreCfg.DBURL)
 	if err != nil {
+		if argErr, ok := err.(errors.ArgumentError); ok {
+			return nil, errors.Arg("coreCfg.DBURL", argErr.Unwrap())
+		}
 		return nil, errors.Wrap("DB connection", err)
 	}
 
@@ -179,6 +182,10 @@ func (core *Core) isTestEmailAddress(emailAddress email.Address) bool {
 }
 
 func connectPostgres(dbURL string) (*sqlx.DB, error) {
+	if dbURL == "" {
+		return nil, errors.ArgMsg("dbURL", "empty")
+	}
+
 	var db *sqlx.DB
 	parsedURL, err := url.Parse(dbURL)
 	if err != nil {
@@ -245,6 +252,7 @@ func (CoreConfig) FieldDescriptions() map[string]string {
 // configured to load config based on the internal system configuration.
 // One kind of usages for a skeleton is to generate a template or documentations.
 func CoreConfigSkeleton() CoreConfig {
+	//TODO: customize the skeletons. e.g., serve path for local media store.
 	return CoreConfig{
 		Media: mediastore.ConfigSkeleton(),
 		PNV:   pnv10n.ConfigSkeleton(),

@@ -143,6 +143,7 @@ func newWithoutServices(appBase app.App, appCfg Config) (*App, error) {
 		realmInfo = *appCfg.RealmInfo
 	}
 
+	log.Info().Msg("Instantiating IAM Server Core...")
 	srvCore, err := iamserver.NewCoreByConfig(appCfg.Core, appBase, realmInfo)
 	if err != nil {
 		return nil, errors.Wrap("core initialization", err)

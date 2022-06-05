@@ -8,8 +8,8 @@ github.com/OneOfOne/xxhash v1.2.8 h1:31czK/TI9sNkxIKfaUfGlU47BAxQ0ztGgd9vPyqimf8
 github.com/OneOfOne/xxhash v1.2.8/go.mod h1:eZbhyaAYD41SGSSsnmcpxVoRiQ/MPUTjUdIIOT9Um7Q=
 github.com/PuerkitoBio/purell v1.1.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
-github.com/alloyzeus/go-azfl v0.0.0-20220603092459-72d4228ca7ae h1:ukZeo81/2T9y1nSas6oK1P0o73QQIvHLlPv3jH9YbPA=
-github.com/alloyzeus/go-azfl v0.0.0-20220603092459-72d4228ca7ae/go.mod h1:1HUVTCODfA+fymnwpfT3DoTz5vIhBzdbIjKsJ1VDVDs=
+github.com/alloyzeus/go-azfl v0.0.0-20220604221734-760d7095026e h1:7nABl4lDF6eT7OAG6UoMRKDFyXuOjRcBj6AxBiLVkKg=
+github.com/alloyzeus/go-azfl v0.0.0-20220604221734-760d7095026e/go.mod h1:1HUVTCODfA+fymnwpfT3DoTz5vIhBzdbIjKsJ1VDVDs=
 github.com/anthonynsimon/bild v0.13.0 h1:mN3tMaNds1wBWi1BrJq0ipDBhpkooYfu7ZFSMhXt1C8=
 github.com/anthonynsimon/bild v0.13.0/go.mod h1:tpzzp0aYkAsMi1zmfhimaDyX1xjn2OUc1AJZK/TF0AE=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
