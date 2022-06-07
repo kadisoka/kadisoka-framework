@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/cespare/xxhash"
-	"github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful/v3"
 	"github.com/golang/protobuf/proto"
 	"github.com/oxtoacart/bpool"
 )

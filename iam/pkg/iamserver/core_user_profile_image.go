@@ -96,6 +96,7 @@ func (core *Core) SetUserProfileImageByFile(
 
 	imageKey, err := core.mediaStore.
 		Upload(
+			callCtx,
 			path.Join(bucketSubPath, filename),
 			imageFile,
 			mediaType)

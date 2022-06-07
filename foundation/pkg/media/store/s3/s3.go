@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"context"
 	"io"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
@@ -86,7 +87,9 @@ type Service struct {
 var _ mediastore.Service = &Service{}
 
 func (svc *Service) PutObject(
-	targetKey string, contentSource io.Reader,
+	ctx context.Context,
+	targetKey string,
+	contentSource io.Reader,
 ) (finalURL string, err error) {
 	result, err := svc.uploader.
 		Upload(&s3manager.UploadInput{

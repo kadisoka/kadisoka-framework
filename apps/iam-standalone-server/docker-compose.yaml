@@ -4,7 +4,7 @@ version: "3"
 
 services:
   iam-db:
-    image: postgres:10.7-alpine
+    image: postgres:14.3-alpine
     ports:
       - "5432:5432"
     volumes:
@@ -21,8 +21,8 @@ services:
     volumes:
       - ./var/iam-object-store:/data
     environment:
-      - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
-      - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE
+      - MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     command: server /data
 
   iam-server:
@@ -36,7 +36,6 @@ services:
     ports:
       - "11111:8080"
       - "11121:9080"
-      - "11122:10080"
       - "11131:50051"
     volumes:
       # To simulate secrets in Swarm mode

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/emicklei/go-restful"
-	restfulspec "github.com/emicklei/go-restful-openapi"
+	restfulopenapi "github.com/emicklei/go-restful-openapi/v2"
+	"github.com/emicklei/go-restful/v3"
 	"github.com/go-openapi/spec"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
@@ -140,7 +140,7 @@ func NewServer(
 	}
 
 	// Setup API specification handler
-	restfulContainer.Add(restfulspec.NewOpenAPIService(*restfulSpecConfig))
+	restfulContainer.Add(restfulopenapi.NewOpenAPIService(*restfulSpecConfig))
 
 	log.Info().Msgf("REST API spec at %s", apiSpecServePath)
 	if config.SwaggerUIAssetsDir != "" {
@@ -185,7 +185,7 @@ func GenerateOpenAPISpec(
 		return nil, errors.Wrap("REST API OpenAPI spec config set up", err)
 	}
 
-	spec := restfulspec.BuildSwagger(*restfulSpecConfig)
+	spec := restfulopenapi.BuildSwagger(*restfulSpecConfig)
 
 	return spec, nil
 }
@@ -252,8 +252,8 @@ func setUpRestfulSpecConfig(
 	appInfo app.Info,
 	apiSpecServePath string,
 	restfulContainer *restful.Container,
-) (*restfulspec.Config, error) {
-	return &restfulspec.Config{
+) (*restfulopenapi.Config, error) {
+	return &restfulopenapi.Config{
 		WebServices: restfulContainer.RegisteredWebServices(),
 		APIPath:     apiSpecServePath,
 		PostBuildSwaggerObjectHandler: func(swaggerSpec *spec.Swagger) {
@@ -268,7 +268,8 @@ func securityDefinitionsDefault() spec.SecurityDefinitions {
 
 var _securityDefinitionsDefault = spec.SecurityDefinitions{
 	sec.AuthorizationBasicOAuth2ClientCredentials.String(): spec.BasicAuth(),
-	sec.AuthorizationBearerAccessToken.String():            spec.APIKeyAuth("Authorization", "header"),
+	//TODO: change to spec.OAuth2AccessToken (?)
+	sec.AuthorizationBearerAccessToken.String(): spec.APIKeyAuth("Authorization", "header"),
 }
 
 func setUpRestfulContainer(
@@ -350,7 +351,7 @@ func processOpenAPIPathOp(
 							continue
 						}
 					}
-					if secDef.Type == "apiKey" {
+					if secDef.Type == "apiKey" || secDef.Type == "accessCode" {
 						if p.Name == secDef.Name && p.In == secDef.In {
 							op.Security = append(op.Security, map[string][]string{k: {}})
 							isSec = true

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"encoding/base64"
 	"io"
 	"strconv"
@@ -51,12 +52,13 @@ func New(config Config, appApp app.App) (*Store, error) {
 
 // Upload uploads a file
 func (mediaStore *Store) Upload(
+	ctx context.Context,
 	mediaName string,
 	contentSource io.Reader,
 	mediaType mediapb.MediaType,
 ) (publicURL string, err error) {
 	objectURL, err := mediaStore.serviceClient.
-		PutObject(mediaName, contentSource)
+		PutObject(ctx, mediaName, contentSource)
 	if err != nil {
 		return "", errors.Wrap("object putting", err)
 	}

@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/emicklei/go-restful"
-	restfulspec "github.com/emicklei/go-restful-openapi"
+	restfulopenapi "github.com/emicklei/go-restful-openapi/v2"
+	"github.com/emicklei/go-restful/v3"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
@@ -60,7 +60,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 
 	restWS.Route(restWS.
 		POST("/register").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSrv.postTerminalsRegister).
 		Doc("Terminal registration endpoint").
 		Notes(
@@ -73,31 +73,42 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"might not be associated to a user.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBasicOAuth2ClientCredentials.String()).
+				"Authorization",
+				sec.AuthorizationBasicOAuth2ClientCredentials.String()).
 			Required(true)).
 		Reads(iam.TerminalRegistrationRequestJSONV1{}).
-		Returns(http.StatusOK, "Terminal registered", iam.TerminalRegistrationResponseJSONV1{}))
+		Returns(
+			http.StatusOK,
+			"Terminal registered",
+			iam.TerminalRegistrationResponseJSONV1{}))
 
 	restWS.Route(restWS.
 		DELETE("/{terminal-id}").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSrv.deleteTerminal).
 		Doc("Terminal deletion (access-revocation) endpoint").
-		Notes("This endpoint is used to revoke all access of a terminal.").
+		Notes(
+			"This endpoint is used to revoke access of a terminal. For user "+
+				"agent application, this equals to logging out from the app.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+				"Authorization",
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Param(restWS.
 			PathParameter(
-				"terminal-id", "The ID of the terminal to delete").
+				"terminal-id",
+				"The ID of the terminal to delete").
 			Required(true)).
 		Reads(iam.TerminalDeletionRequestJSONV1{}).
-		Returns(http.StatusOK, "Terminal deleted", iam.TerminalDeletionResponseJSONV1{}))
+		Returns(
+			http.StatusOK,
+			"Terminal deleted",
+			iam.TerminalDeletionResponseJSONV1{}))
 
 	restWS.Route(restWS.
 		PUT("/fcm_registration_token").
-		Metadata(restfulspec.KeyOpenAPITags, hidden).
+		Metadata(restfulopenapi.KeyOpenAPITags, hidden).
 		To(restSrv.putTerminalFCMRegistrationToken).
 		Doc("Set terminal's FCM token").
 		Notes(
@@ -105,10 +116,14 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"token should be associated to only one terminal.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+				"Authorization",
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Reads(terminalFCMRegistrationTokenPutRequest{}).
-		Returns(http.StatusNoContent, "Terminal's FCM token successfully set", nil))
+		Returns(
+			http.StatusNoContent,
+			"Terminal's FCM token successfully set",
+			nil))
 
 	return restWS
 }

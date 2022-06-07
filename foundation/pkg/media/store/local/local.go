@@ -126,7 +126,9 @@ var _ app.ServiceServer = &Service{}
 
 // PutObject is required by mediastore.Service interface.
 func (svc *Service) PutObject(
-	targetKey string, contentSource io.Reader,
+	ctx context.Context,
+	targetKey string,
+	contentSource io.Reader,
 ) (finalURL string, err error) {
 	folderPath := svc.config.FolderPath
 	targetKeyParts := strings.Split(targetKey, "/")

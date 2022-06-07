@@ -3,7 +3,7 @@ package rest
 import (
 	"strings"
 
-	"github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful/v3"
 	"github.com/rez-go/stev"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"

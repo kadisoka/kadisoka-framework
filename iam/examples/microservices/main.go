@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/emicklei/go-restful"
-	restfulspec "github.com/emicklei/go-restful-openapi"
+	restfulopenapi "github.com/emicklei/go-restful-openapi/v2"
+	"github.com/emicklei/go-restful/v3"
 	"github.com/go-openapi/spec"
 	_ "github.com/lib/pq"
 
@@ -70,7 +70,7 @@ func main() {
 	restV1Container.Add(restV1Svc.RestfulWebService())
 
 	// Setup API specification handler
-	restV1Container.Add(restfulspec.NewOpenAPIService(restfulspec.Config{
+	restV1Container.Add(restfulopenapi.NewOpenAPIService(restfulopenapi.Config{
 		WebServices:                   restV1Container.RegisteredWebServices(),
 		APIPath:                       restV1DocsPath,
 		PostBuildSwaggerObjectHandler: enrichSwaggerObject}))

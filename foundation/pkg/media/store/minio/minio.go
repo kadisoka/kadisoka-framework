@@ -1,10 +1,12 @@
 package minio
 
 import (
+	"context"
 	"io"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	mediastore "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/store"
@@ -54,9 +56,11 @@ func NewService(
 		return nil, errors.ArgMsg("config", "access key required")
 	}
 
+	var creds = credentials.NewStatic(conf.AccessKeyID, conf.SecretAccessKey, "", credentials.SignatureDefault)
+
 	// Initialize minio client object.
 	minioClient, err := minio.New(
-		conf.Endpoint, conf.AccessKeyID, conf.SecretAccessKey, conf.UseSSL)
+		conf.Endpoint, &minio.Options{Creds: creds, Secure: false})
 	if err != nil {
 		return nil, errors.Wrap("minio client instantiation", err)
 	}
@@ -64,11 +68,12 @@ func NewService(
 	// Make a new bucket called mymusic.
 	bucketName := conf.BucketName
 	location := conf.Region
+	ctx := context.Background()
 
-	err = minioClient.MakeBucket(bucketName, location)
+	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
 	if err != nil {
 		// Check to see if we already own this bucket (which happens if you run this twice)
-		exists, errBucketExists := minioClient.BucketExists(bucketName)
+		exists, errBucketExists := minioClient.BucketExists(ctx, bucketName)
 		if errBucketExists != nil || !exists {
 			return nil, errors.Wrap("bucket creation", err)
 		}
@@ -88,10 +93,12 @@ type Service struct {
 var _ mediastore.Service = &Service{}
 
 func (svc *Service) PutObject(
-	targetKey string, contentSource io.Reader,
+	ctx context.Context,
+	targetKey string,
+	contentSource io.Reader,
 ) (finalURL string, err error) {
 	_, err = svc.minioClient.
-		PutObject(svc.bucketName, targetKey, contentSource, -1,
+		PutObject(ctx, svc.bucketName, targetKey, contentSource, -1,
 			minio.PutObjectOptions{})
 	if err != nil {
 		return "", errors.Wrap("upload", err)

@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/emicklei/go-restful"
-	restfulspec "github.com/emicklei/go-restful-openapi"
+	restfulopenapi "github.com/emicklei/go-restful-openapi/v2"
+	"github.com/emicklei/go-restful/v3"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
@@ -34,7 +34,7 @@ func (restSvc *RESTService) RestfulWebService() *restful.WebService {
 
 	restWS.Route(restWS.
 		GET("/auth").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSvc.getAuth).
 		Doc("Obtain access token using parameters obtained from a OAuth 2.0 authorization code flow").
 		Param(restWS.
@@ -51,7 +51,7 @@ func (restSvc *RESTService) RestfulWebService() *restful.WebService {
 
 	restWS.Route(restWS.
 		GET("/hello").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSvc.getHello).
 		Doc("Hello").
 		Param(restWS.

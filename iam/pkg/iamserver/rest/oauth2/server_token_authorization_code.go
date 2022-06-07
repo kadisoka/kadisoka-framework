@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azfl/errors"
-	"github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful/v3"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"

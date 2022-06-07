@@ -3,8 +3,8 @@ package oauth2
 import (
 	"net/http"
 
-	"github.com/emicklei/go-restful"
-	restfulspec "github.com/emicklei/go-restful-openapi"
+	restfulopenapi "github.com/emicklei/go-restful-openapi/v2"
+	"github.com/emicklei/go-restful/v3"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
@@ -67,7 +67,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 
 	restWS.Route(restWS.
 		GET("/authorize").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSrv.getAuthorize).
 		Doc("OAuth 2.0 authorization endpoint").
 		Notes(
@@ -93,7 +93,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 
 	restWS.Route(restWS.
 		POST("/authorize").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSrv.postAuthorize).
 		Doc("Authorization endpoint").
 		Notes(
@@ -121,20 +121,26 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 			FormParameter(
 				"state", "An opaque value used by the client to "+
 					"maintain state between the request and callback.")).
-		Returns(http.StatusOK, "Success", iam.OAuth2AuthorizePostResponse{}))
+		Returns(
+			http.StatusOK,
+			"Success",
+			iam.OAuth2AuthorizePostResponse{}))
 
 	restWS.Route(restWS.
 		GET("/jwks").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSrv.getJWKS).
 		Doc("JSON Web Key Set endpoint").
 		Notes("The JSON Web Key Set endpoint provides public keys needed "+
 			"to verify JWT (JSON Web Token) tokens issued by this service.").
-		Returns(http.StatusOK, "OK. See https://tools.ietf.org/html/rfc7517 for the data structure", nil))
+		Returns(
+			http.StatusOK,
+			"OK. See https://tools.ietf.org/html/rfc7517 for the data structure",
+			jwksResponseKeySet{}))
 
 	restWS.Route(restWS.
 		POST("/token").
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSrv.postToken).
 		Doc("OAuth token endpoint").
 		Notes(
@@ -145,11 +151,13 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"(since an access token is issued directly). RFC 6749 § 3.2.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBasicOAuth2ClientCredentials.String()).
+				"Authorization",
+				sec.AuthorizationBasicOAuth2ClientCredentials.String()).
 			Required(true)).
 		Param(restWS.
 			FormParameter(
-				"grant_type", "Supported grant types: `password`, "+
+				"grant_type",
+				"Supported grant types: `password`, "+
 					"`authorization_code`, `client_credentials`").
 			Required(true)).
 		Param(restWS.
@@ -166,4 +174,15 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Returns(http.StatusUnauthorized, "Client authorization check failure", oauth2.ErrorResponse{}))
 
 	return restWS
+}
+
+// Note that these structs are not represententing the actual structure
+// of JWK Key and JWK Key Set as the structure is dynamic. For the actual
+// structure, refer to the RFC standards.
+type jwksResponseKeySet struct {
+	Keys []jwksResponseKey `json:"keys"`
+}
+
+type jwksResponseKey struct {
+	KeyType string `json:"kty"` // The only required member
 }

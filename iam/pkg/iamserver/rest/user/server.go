@@ -3,8 +3,8 @@ package user
 import (
 	"net/http"
 
-	"github.com/emicklei/go-restful"
-	restfulspec "github.com/emicklei/go-restful-openapi"
+	restfulopenapi "github.com/emicklei/go-restful-openapi/v2"
+	"github.com/emicklei/go-restful/v3"
 
 	oidc "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/openid/connect"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
@@ -57,7 +57,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	restWS.Route(restWS.
 		GET("/{user-id}").
 		To(restSrv.getUser).
-		Metadata(restfulspec.KeyOpenAPITags, hidden).
+		Metadata(restfulopenapi.KeyOpenAPITags, hidden).
 		Doc("Retrieve basic profile of current user").
 		Produces(restful.MIME_JSON, "application/x-protobuf").
 		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
@@ -70,7 +70,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	restWS.Route(restWS.
 		PUT("/me/password").
 		To(restSrv.putUserPassword).
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Set password for registered users").
 		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
@@ -83,7 +83,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	restWS.Route(restWS.
 		PUT("/{user-id}/email_address").
 		To(restSrv.putUserEmailAddress).
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Set a new login email address for the current user").
 		Notes("The email address needs to be verified before it's set as user's login "+
 			"email address.").
@@ -101,7 +101,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	restWS.Route(restWS.
 		POST("/me/email_address/verification_confirmation").
 		To(restSrv.postUserEmailAddressVerificationConfirmation).
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Confirm email address verification").
 		Reads(UserEmailAddressVerificationConfirmationPostRequest{}).
 		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
@@ -112,7 +112,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	restWS.Route(restWS.
 		PUT("/me/phone_number").
 		To(restSrv.putUserPhoneNumber).
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Set a new login phone number for the current user").
 		Notes("The phone number needs to be verified before it's set as user's login "+
 			"phone number.").
@@ -133,7 +133,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	restWS.Route(restWS.
 		POST("/me/phone_number/verification_confirmation").
 		To(restSrv.postUserPhoneNumberVerificationConfirmation).
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Confirm phone number verification").
 		Reads(UserPhoneNumberVerificationConfirmationPostRequest{}).
 		Param(restWS.
@@ -148,7 +148,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		PUT("/me/profile_image").
 		Consumes("multipart/form-data").
 		To(restSrv.putUserProfileImage).
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Update user profile image").
 		Param(restWS.
 			HeaderParameter(
@@ -168,7 +168,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	restWS.Route(restWS.
 		GET("/me/openidconnect-userinfo").
 		To(restSrv.getUserOpenIDConnectUserInfo).
-		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Retrieve Claims about the authenticated End-User").
 		Notes("The UserInfo Endpoint is an OAuth 2.0 Protected "+
 			"Resource that returns Claims about the authenticated "+
