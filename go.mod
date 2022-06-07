@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/alloyzeus/go-azfl v0.0.0-20220604221734-760d7095026e
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.44.27
+	github.com/aws/aws-sdk-go v1.44.28
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/emicklei/go-restful v2.15.0+incompatible
@@ -23,11 +23,11 @@ require (
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
-	github.com/rez-go/stev v0.0.0-20220526094618-e1d57a1b739e
+	github.com/rez-go/stev v0.0.0-20220607035830-a584f4607939
 	github.com/richardlehane/crock32 v1.0.1
 	github.com/rs/zerolog v1.26.1
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/thoas/stats v0.0.0-20190407194641-965cb2de1678
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
@@ -60,7 +60,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd // indirect
-	golang.org/x/net v0.0.0-20220531201128-c960675eff93 // indirect
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	google.golang.org/genproto v0.0.0-20220602131408-e326c6e8e9c8 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect

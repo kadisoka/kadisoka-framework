@@ -35,6 +35,17 @@ type ServerConfig struct {
 	V1 *ServerV1Config `env:"V1"`
 }
 
+// Normalized returns a normalized copy
+func (serverCfg ServerConfig) Normalized() ServerConfig {
+	out := serverCfg
+	out.ServePath = strings.TrimSuffix(out.ServePath, "/")
+	return out
+}
+
+func (serverCfg ServerConfig) APISpecServePath() string {
+	return serverCfg.ServePath + "/apidocs.json"
+}
+
 type ServerV1Config struct {
 	ServePath string `env:"SERVE_PATH"`
 }
@@ -93,61 +104,45 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	srv.serveMux.ServeHTTP(w, r)
 }
 
+func (srv *Server) handleHealthCheck(w http.ResponseWriter, _ *http.Request) {
+	if !srv.IsHealthy() {
+		log.Error().Msg("Service is not healthy")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write([]byte("OK"))
+}
+
 func NewServer(
 	appApp app.App,
 	config ServerConfig,
 	iamServerCore *iamserver.Core,
-	webUIURLs *iam.WebUIURLs, //TODO: add this to server core or add to ServerConfig
+	webUIURLs *iam.WebUIURLs, //TODO: add this to config (not sure if it's server core or ServerConfig)
 ) (*Server, error) {
 	if webUIURLs == nil || webUIURLs.SignIn == "" {
 		return nil, errors.Msg("requires valid web UI config")
 	}
 
-	config.ServePath = strings.TrimSuffix(config.ServePath, "/")
+	config = config.Normalized()
+
 	servePath := config.ServePath
-	apiSpecPath := servePath + "/apidocs.json"
+	apiSpecServePath := config.APISpecServePath()
 
 	serveMux := http.NewServeMux()
-	container := restful.NewContainer()
-	container.ServeMux = serveMux
-	container.EnableContentEncoding(true)
-	container.ServiceErrorHandler(
-		func(
-			err restful.ServiceError,
-			req *restful.Request,
-			resp *restful.Response,
-		) {
-			logReq(req.Request).
-				Warn().Int("status_code", err.Code).Str("err_msg", err.Message).
-				Msg("Routing error")
-			resp.WriteErrorString(err.Code, err.Message)
-		})
-	// We need CORS for our webclients
-	rest.SetUpCORSFilterByEnv(container, "CORS_", nil) //TODO: from config
+	restfulContainer, err := setUpRestfulContainer(config, serveMux, iamServerCore, servePath, webUIURLs)
+	if err != nil {
+		return nil, errors.Wrap("REST API container set up", err)
+	}
 
-	var v1ServePath string
-	if config.V1 != nil {
-		v1ServePath = config.V1.ServePath
+	restfulSpecConfig, err := setUpRestfulSpecConfig(appApp.AppInfo(), apiSpecServePath, restfulContainer)
+	if err != nil {
+		return nil, errors.Wrap("REST API OpenAPI spec config set up", err)
 	}
-	if v1ServePath == "" {
-		v1ServePath = servePath + "/v1"
-	}
-	initRESTV1Services(v1ServePath, container, iamServerCore, webUIURLs.SignIn)
 
-	secDefs := spec.SecurityDefinitions{
-		sec.AuthorizationBasicOAuth2ClientCredentials.String(): spec.BasicAuth(),
-		sec.AuthorizationBearerAccessToken.String():            spec.APIKeyAuth("Authorization", "header"),
-	}
 	// Setup API specification handler
-	container.Add(restfulspec.NewOpenAPIService(restfulspec.Config{
-		WebServices: container.RegisteredWebServices(),
-		APIPath:     apiSpecPath,
-		PostBuildSwaggerObjectHandler: func(swaggerSpec *spec.Swagger) {
-			processSwaggerSpec(appApp.AppInfo().BuildInfo, swaggerSpec, secDefs)
-		},
-	}))
+	restfulContainer.Add(restfulspec.NewOpenAPIService(*restfulSpecConfig))
 
-	log.Info().Msgf("REST API spec at %s", apiSpecPath)
+	log.Info().Msgf("REST API spec at %s", apiSpecServePath)
 	if config.SwaggerUIAssetsDir != "" {
 		// The trailing slash here is important.
 		apiDocsUIPath := servePath + "/apidocs/"
@@ -164,16 +159,35 @@ func NewServer(
 
 	// Health check is used by load balancer and/or orchestrator
 	serveMux.HandleFunc(
-		"/healthz", func(w http.ResponseWriter, _ *http.Request) {
-			if !srv.IsHealthy() {
-				log.Error().Msg("Service is not healthy")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write([]byte("OK"))
-		})
+		"/healthz", srv.handleHealthCheck)
 
 	return srv, nil
+}
+
+func GenerateOpenAPISpec(
+	appApp app.App,
+	config ServerConfig,
+	iamServerCore *iamserver.Core,
+	webUIURLs *iam.WebUIURLs, //TODO: add this to config (not sure if it's server core or ServerConfig)
+) (*spec.Swagger, error) {
+	config = config.Normalized()
+
+	servePath := config.ServePath
+	apiSpecServePath := config.APISpecServePath()
+
+	restfulContainer, err := setUpRestfulContainer(config, nil, iamServerCore, servePath, webUIURLs)
+	if err != nil {
+		return nil, errors.Wrap("REST API container set up", err)
+	}
+
+	restfulSpecConfig, err := setUpRestfulSpecConfig(appApp.AppInfo(), apiSpecServePath, restfulContainer)
+	if err != nil {
+		return nil, errors.Wrap("REST API OpenAPI spec config set up", err)
+	}
+
+	spec := restfulspec.BuildSwagger(*restfulSpecConfig)
+
+	return spec, nil
 }
 
 func initRESTV1Services(
@@ -219,7 +233,6 @@ func processSwaggerSpec(
 		rev = rev[:7]
 	}
 	swaggerSpec.Info = &spec.Info{
-		//TODO: use details from service info
 		InfoProps: spec.InfoProps{
 			Title:       serviceInfo.Name,
 			Description: serviceInfo.Description,
@@ -233,6 +246,67 @@ func processSwaggerSpec(
 			swaggerSpec.Paths.Paths[k], secDefs)
 	}
 	swaggerSpec.SecurityDefinitions = secDefs
+}
+
+func setUpRestfulSpecConfig(
+	appInfo app.Info,
+	apiSpecServePath string,
+	restfulContainer *restful.Container,
+) (*restfulspec.Config, error) {
+	return &restfulspec.Config{
+		WebServices: restfulContainer.RegisteredWebServices(),
+		APIPath:     apiSpecServePath,
+		PostBuildSwaggerObjectHandler: func(swaggerSpec *spec.Swagger) {
+			processSwaggerSpec(appInfo.BuildInfo, swaggerSpec, securityDefinitionsDefault())
+		},
+	}, nil
+}
+
+func securityDefinitionsDefault() spec.SecurityDefinitions {
+	return _securityDefinitionsDefault
+}
+
+var _securityDefinitionsDefault = spec.SecurityDefinitions{
+	sec.AuthorizationBasicOAuth2ClientCredentials.String(): spec.BasicAuth(),
+	sec.AuthorizationBearerAccessToken.String():            spec.APIKeyAuth("Authorization", "header"),
+}
+
+func setUpRestfulContainer(
+	config ServerConfig,
+	serveMux *http.ServeMux,
+	iamServerCore *iamserver.Core,
+	servePath string,
+	webUIURLs *iam.WebUIURLs,
+) (*restful.Container, error) {
+	container := restful.NewContainer()
+	container.ServeMux = serveMux
+	container.EnableContentEncoding(true)
+	container.ServiceErrorHandler(
+		func(
+			err restful.ServiceError,
+			req *restful.Request,
+			resp *restful.Response,
+		) {
+			logReq(req.Request).
+				Warn().Int("status_code", err.Code).Str("err_msg", err.Message).
+				Msg("Routing error")
+			resp.WriteErrorString(err.Code, err.Message)
+		})
+
+	// We need CORS for our webclients
+	rest.SetUpCORSFilterByEnv(container, "CORS_", nil) //TODO: from config
+
+	var v1ServePath string
+	if config.V1 != nil {
+		v1ServePath = config.V1.ServePath
+	}
+	if v1ServePath == "" {
+		v1ServePath = servePath + "/v1"
+	}
+
+	initRESTV1Services(v1ServePath, container, iamServerCore, webUIURLs.SignIn)
+
+	return container, nil
 }
 
 func processOpenAPIPath(
