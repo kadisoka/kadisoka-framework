@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 
-	errors "github.com/alloyzeus/go-azfl/azfl/errors"
+	errors "github.com/alloyzeus/go-azfl/errors"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )

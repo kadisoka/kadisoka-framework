@@ -5,7 +5,7 @@ package app
 import (
 	"sync"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 )
 
 // App abstracts the application itself. There should be only one instance

@@ -1,7 +1,7 @@
 package errors
 
 import (
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 )
 
 type Error interface {

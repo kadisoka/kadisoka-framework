@@ -3,9 +3,9 @@ package iam
 import (
 	"time"
 
-	azcore "github.com/alloyzeus/go-azfl/azfl"
-	"github.com/alloyzeus/go-azfl/azfl/errors"
-	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
+	"github.com/alloyzeus/go-azfl/azcore"
+	"github.com/alloyzeus/go-azfl/errors"
+	dataerrs "github.com/alloyzeus/go-azfl/errors/data"
 	"github.com/square/go-jose/v3/jwt"
 )
 

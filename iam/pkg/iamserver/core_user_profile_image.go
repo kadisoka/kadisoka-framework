@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/jmoiron/sqlx"
 	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 

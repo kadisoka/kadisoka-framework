@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"strings"
 
-	azfl "github.com/alloyzeus/go-azfl/azfl"
-	"github.com/alloyzeus/go-azfl/azfl/errors"
-	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
+	"github.com/alloyzeus/go-azfl/azcore"
+	"github.com/alloyzeus/go-azfl/errors"
+	dataerrs "github.com/alloyzeus/go-azfl/errors/data"
 )
 
 type Address struct {
@@ -15,7 +15,7 @@ type Address struct {
 	rawInput   string
 }
 
-var _ azfl.ValueObject = Address{}
+var _ azcore.ValueObject = Address{}
 
 func AddressFromString(str string) (Address, error) {
 	parts := strings.SplitN(str, "@", 2)

@@ -21,4 +21,7 @@ type GRPCOpInputContext struct {
 	OpInputContext
 }
 
-var _ grpc.OpInputContext = &GRPCOpInputContext{}
+var _ grpc.OpInputContext[
+	SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
+	UserIDNum, UserRefKey, Actor, Authorization,
+] = &GRPCOpInputContext{}

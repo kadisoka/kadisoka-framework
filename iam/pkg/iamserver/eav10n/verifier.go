@@ -11,7 +11,7 @@ import (
 	texttpl "text/template"
 	"time"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 
-	errors "github.com/alloyzeus/go-azfl/azfl/errors"
+	errors "github.com/alloyzeus/go-azfl/errors"
 	goqu "github.com/doug-martin/goqu/v9"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/jmoiron/sqlx"

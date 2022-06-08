@@ -66,7 +66,7 @@ func (restSrv *Server) postToken(req *restful.Request, resp *restful.Response) {
 		return
 	default:
 		logReq(req.Request).
-			Warn().Msgf("Unsupported grant_type: %v", grantType)
+			Warn().Msgf("Unsupported grant_type: %v", grantTypeArgVal)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnsupportedGrantType)
 		return

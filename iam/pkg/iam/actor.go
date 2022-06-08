@@ -1,6 +1,6 @@
 package iam
 
-import azcore "github.com/alloyzeus/go-azfl/azfl"
+import "github.com/alloyzeus/go-azfl/azcore"
 
 // Actor provides information about who or what performed an action.
 //

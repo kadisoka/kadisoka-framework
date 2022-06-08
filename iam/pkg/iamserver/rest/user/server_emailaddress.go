@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/emicklei/go-restful/v3"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"

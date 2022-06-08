@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	goqu "github.com/doug-martin/goqu/v9"
 	"golang.org/x/text/language"
 
@@ -101,7 +101,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := input.Context.OpOriginInfo().AcceptLanguage
+	userPreferredLanguages := input.Context.ServiceMethodCallOriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.pnVerifier.
 		StartVerification(callCtx, phoneNumber,
@@ -198,7 +198,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := callCtx.OpOriginInfo().AcceptLanguage
+	userPreferredLanguages := callCtx.ServiceMethodCallOriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.eaVerifier.
 		StartVerification(callCtx, emailAddress,
@@ -497,7 +497,7 @@ func (core *Core) registerTerminalInsecure(
 	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
 	ctxTime := callCtx.OpInputMetadata().ReceiveTime
-	originInfo := callCtx.OpOriginInfo()
+	originInfo := callCtx.ServiceMethodCallOriginInfo()
 
 	//var verificationID int64
 	var termSecret string

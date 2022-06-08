@@ -1,7 +1,7 @@
 package iam
 
 import (
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 )
 
 func ReqFieldErr(fieldName string, err error) error {

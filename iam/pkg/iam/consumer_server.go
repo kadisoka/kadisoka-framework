@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
-	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
+	"github.com/alloyzeus/go-azfl/azcore"
+	"github.com/alloyzeus/go-azfl/errors"
+	dataerrs "github.com/alloyzeus/go-azfl/errors/data"
 	"github.com/square/go-jose/v3/jwt"
 	"github.com/tomasen/realip"
 	"golang.org/x/text/language"
@@ -279,7 +280,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 		}
 	}
 
-	originInfo := api.OpOriginInfo{
+	originInfo := azcore.ServiceMethodCallOriginInfo{
 		Address:           remoteAddr,
 		AcceptLanguage:    originAcceptLanguages,
 		EnvironmentString: originEnvString,
@@ -376,7 +377,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 		}
 	}
 
-	originInfo := api.OpOriginInfo{
+	originInfo := azcore.ServiceMethodCallOriginInfo{
 		Address:           remoteAddr,
 		EnvironmentString: remoteEnvString,
 		AcceptLanguage:    acceptLanguages,

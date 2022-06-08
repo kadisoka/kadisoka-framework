@@ -3,8 +3,8 @@ package errors
 import (
 	"net/http"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
-	accesserrs "github.com/alloyzeus/go-azfl/azfl/errors/access"
+	"github.com/alloyzeus/go-azfl/errors"
+	accesserrs "github.com/alloyzeus/go-azfl/errors/access"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 )

@@ -3,7 +3,7 @@ package upbaseserver
 import (
 	"net/http"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 
 	oidc "github.com/kadisoka/kadisoka-framework/foundation/pkg/api/openid/connect"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"

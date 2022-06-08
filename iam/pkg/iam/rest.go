@@ -18,10 +18,14 @@ type RESTServiceClient interface {
 
 type RESTOpInputContext struct {
 	OpInputContext
+
 	Request *http.Request
 }
 
-var _ rest.OpInputContext = &RESTOpInputContext{}
+var _ rest.OpInputContext[
+	SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
+	UserIDNum, UserRefKey, Actor, Authorization,
+] = &RESTOpInputContext{}
 
 func (reqCtx *RESTOpInputContext) HTTPRequest() *http.Request {
 	if reqCtx != nil {

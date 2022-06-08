@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	pbtypes "github.com/gogo/protobuf/types"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 	"google.golang.org/grpc"

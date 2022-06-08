@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	azfl "github.com/alloyzeus/go-azfl/azfl"
+	"github.com/alloyzeus/go-azfl/azcore"
 	"github.com/nyaruka/phonenumbers"
 )
 
@@ -16,7 +16,7 @@ type PhoneNumber struct {
 	isValid        bool
 }
 
-var _ azfl.ValueObject = PhoneNumber{}
+var _ azcore.ValueObject = PhoneNumber{}
 
 func NewPhoneNumber(countryCode int32, nationalNumber int64) PhoneNumber {
 	return PhoneNumber{countryCode: countryCode, nationalNumber: nationalNumber}

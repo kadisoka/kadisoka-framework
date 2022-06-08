@@ -3,7 +3,7 @@ package pnv10n
 import (
 	"time"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/rez-go/stev"
 )
 

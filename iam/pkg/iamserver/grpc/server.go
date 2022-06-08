@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"google.golang.org/grpc"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"

@@ -3,7 +3,7 @@ package iam
 import (
 	"testing"
 
-	"github.com/alloyzeus/go-azfl/azfl/azid"
+	"github.com/alloyzeus/go-azfl/azid"
 	"github.com/stretchr/testify/assert"
 )
 

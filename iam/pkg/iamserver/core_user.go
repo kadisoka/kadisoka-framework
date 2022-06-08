@@ -1,7 +1,7 @@
 package iamserver
 
 import (
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"

@@ -14,7 +14,7 @@ import (
 	"sync"
 	textt "text/template"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/cespare/xxhash"
 	"github.com/oxtoacart/bpool"
 

@@ -40,7 +40,7 @@ func (logger Logger) WithContext(
 
 	logCtx := logger.With()
 	logCtx = logCtx.
-		Str("method", ctx.OpName())
+		Str("method", ctx.MethodName())
 
 	hasAuth := false
 
@@ -53,7 +53,7 @@ func (logger Logger) WithContext(
 	}
 
 	if !hasAuth {
-		originInfo := ctx.OpOriginInfo()
+		originInfo := ctx.ServiceMethodCallOriginInfo()
 		logCtx = logCtx.
 			Str("origin_addr", originInfo.Address)
 		if originEnv := originInfo.EnvironmentString; originEnv != "" {

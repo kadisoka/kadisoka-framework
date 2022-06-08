@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
 	imagesrv "github.com/kadisoka/kadisoka-framework/foundation/pkg/media/image/server"

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	goqu "github.com/doug-martin/goqu/v9"
 	"github.com/lib/pq"
 

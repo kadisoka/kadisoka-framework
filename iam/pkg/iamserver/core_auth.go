@@ -3,7 +3,7 @@ package iamserver
 import (
 	"time"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/lib/pq"
 	"github.com/square/go-jose/v3/jwt"

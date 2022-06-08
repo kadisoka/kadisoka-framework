@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/rez-go/crock32"
 	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 	"golang.org/x/crypto/blake2b"

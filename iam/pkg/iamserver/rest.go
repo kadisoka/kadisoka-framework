@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
-	dataerrs "github.com/alloyzeus/go-azfl/azfl/errors/data"
+	"github.com/alloyzeus/go-azfl/errors"
+	dataerrs "github.com/alloyzeus/go-azfl/errors/data"
 
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )

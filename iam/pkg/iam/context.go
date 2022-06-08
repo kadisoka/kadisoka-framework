@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	accesserrs "github.com/alloyzeus/go-azfl/azfl/errors/access"
+	"github.com/alloyzeus/go-azfl/azcore"
+	accesserrs "github.com/alloyzeus/go-azfl/errors/access"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 )
@@ -33,7 +34,10 @@ func NewEmptyOpInputContext(ctx context.Context) OpInputContext {
 
 // OpInputContext provides call-scoped information.
 type OpInputContext interface {
-	api.OpInputContext
+	api.OpInputContext[
+		SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
+		UserIDNum, UserRefKey, Actor, Authorization]
+
 	Authorization() Authorization
 	IsUserContext() bool
 }
@@ -41,7 +45,7 @@ type OpInputContext interface {
 func newOpInputContext(
 	ctx context.Context,
 	ctxAuth *Authorization,
-	originInfo api.OpOriginInfo,
+	originInfo azcore.ServiceMethodCallOriginInfo,
 	requestID *api.OpID,
 ) OpInputContext {
 	if ctxAuth == nil {
@@ -60,7 +64,19 @@ type callContext struct {
 	context.Context
 	authorization *Authorization
 	requestInfo   api.OpInputMetadata
-	originInfo    api.OpOriginInfo
+	originInfo    azcore.ServiceMethodCallOriginInfo
+}
+
+func (callContext) AZContext()                       {}
+func (callContext) AZServiceContext()                {}
+func (callContext) AZServiceMethodContext()          {}
+func (callContext) AZServiceMethodCallContext()      {}
+func (callContext) AZServiceMethodCallInputContext() {}
+func (ctx callContext) ServiceMethodCallOriginInfo() azcore.ServiceMethodCallOriginInfo {
+	return ctx.originInfo
+}
+func (ctx callContext) Session() Authorization {
+	return *ctx.authorization
 }
 
 func (ctx callContext) Authorization() Authorization {
@@ -76,11 +92,9 @@ func (ctx *callContext) IsUserContext() bool {
 		ctx.authorization.IsUserSubject()
 }
 
-func (ctx *callContext) OpName() string { return "" }
+func (ctx *callContext) MethodName() string { return "" }
 
 func (ctx *callContext) OpInputMetadata() api.OpInputMetadata { return ctx.requestInfo }
-
-func (ctx *callContext) OpOriginInfo() api.OpOriginInfo { return ctx.originInfo }
 
 type OpOutputContext struct {
 	Err     error

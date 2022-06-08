@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alloyzeus/go-azfl/azfl/errors"
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/rez-go/stev"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"
