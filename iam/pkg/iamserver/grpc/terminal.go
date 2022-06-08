@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"time"
 
 	"github.com/alloyzeus/go-azfl/errors"
 	pbtypes "github.com/gogo/protobuf/types"
@@ -200,9 +199,8 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		}
 	}
 
-	issueTime := time.Now().UTC()
 	tokenString, err := authServer.iamServerCore.
-		GenerateAccessTokenJWT(reqCtx, termRef, userRef, issueTime)
+		GenerateAccessTokenJWT(reqCtx, termRef, userRef)
 	if err != nil {
 		panic(err)
 	}

@@ -4,7 +4,6 @@ package oauth2
 
 import (
 	"strings"
-	"time"
 
 	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/emicklei/go-restful/v3"
@@ -170,20 +169,12 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		return
 	}
 
-	issueTime := time.Now().UTC()
-
-	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, termRef, userRef, issueTime)
-	if err != nil {
-		panic(err)
-	}
-
-	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(reqCtx, termRef, terminalSecret, issueTime)
+	accessToken, refreshToken, err := restSrv.serverCore.
+		GenerateTokenSetJWT(reqCtx, termRef, userRef, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msg("GenerateRefreshTokenJWT")
+			Msg("GenerateTokenSetJWT")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return

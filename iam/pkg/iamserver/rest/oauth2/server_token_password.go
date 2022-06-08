@@ -4,7 +4,6 @@ package oauth2
 
 import (
 	"strings"
-	"time"
 
 	"github.com/emicklei/go-restful/v3"
 
@@ -62,6 +61,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 	}
 	password := req.Request.FormValue("password")
 
+	//TODO: move this to core
 	// Username with scheme. The format is '<scheme>:<scheme-specific-identifier>'
 	if names := strings.SplitN(username, ":", 2); len(names) == 2 {
 		switch names[0] {
@@ -70,6 +70,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 				reqCtx, resp, reqApp, names[1], password)
 			return
 		default:
+			//TODO: we should have a list of kind of identifier users can
+			// use and then we try to detect the type of identifier.
 			logReq(req.Request).
 				Warn().Str("username", username).
 				Msg("Unrecognized identifier scheme")
@@ -155,16 +157,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 		return
 	}
 
-	issueTime := time.Now().UTC()
-
-	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, termRef, userRef, issueTime)
-	if err != nil {
-		panic(err)
-	}
-
-	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(reqCtx, termRef, terminalSecret, issueTime)
+	accessToken, refreshToken, err := restSrv.serverCore.
+		GenerateTokenSetJWT(reqCtx, termRef, userRef, terminalSecret)
 	if err != nil {
 		panic(err)
 	}

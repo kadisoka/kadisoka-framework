@@ -3,8 +3,6 @@
 package oauth2
 
 import (
-	"time"
-
 	"github.com/emicklei/go-restful/v3"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
 
@@ -83,26 +81,13 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 
 	termRef := regOutput.Data.TerminalRef
 	termSecret := regOutput.Data.TerminalSecret
-	issueTime := time.Now().UTC()
 
-	accessToken, err := restSrv.serverCore.
-		GenerateAccessTokenJWT(reqCtx, termRef, ctxAuth.UserRef(), issueTime)
+	accessToken, refreshToken, err := restSrv.serverCore.
+		GenerateTokenSetJWT(reqCtx, termRef, ctxAuth.UserRef(), termSecret)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msg("GenerateAccessTokenJWT")
-		oauth2.RespondTo(resp).ErrorCode(
-			oauth2.ErrorServerError)
-		return
-	}
-
-	//TODO: properly get the secret
-	refreshToken, err := restSrv.serverCore.
-		GenerateRefreshTokenJWT(reqCtx, termRef, termSecret, issueTime)
-	if err != nil {
-		logCtx(reqCtx).
-			Error().Err(err).
-			Msg("GenerateRefreshTokenJWT")
+			Msg("GenerateTokenSetJWT")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
 		return
