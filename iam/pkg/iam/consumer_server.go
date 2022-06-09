@@ -291,31 +291,28 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 		return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil), err
 	}
 
-	var opID *api.OpID
+	var idempotencyKey *api.IdempotencyKey
 	md, ok := grpcmd.FromIncomingContext(grpcCallCtx)
 	if !ok {
 		return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil), nil
 	}
 
 	//TODO: idempotency key https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-01
-	opIDStrs := md.Get("op-id")
-	if len(opIDStrs) == 0 {
-		opIDStrs = md.Get("request-id")
-		if len(opIDStrs) == 0 {
-			opIDStrs = md.Get("x-request-id")
-		}
+	idempotencyKeyStrs := md.Get("idempotency-key")
+	if len(idempotencyKeyStrs) == 0 {
+		idempotencyKeyStrs = md.Get("op-id")
 	}
-	if len(opIDStrs) > 0 {
-		opIDStr := opIDStrs[0]
-		i, err := api.OpIDFromString(opIDStr)
+	if len(idempotencyKeyStrs) > 0 {
+		keyStr := idempotencyKeyStrs[0]
+		i, err := api.IdempotencyKeyFromString(keyStr)
 		if err != nil {
 			return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil),
-				ReqFieldErr("Request-ID", err)
+				ReqFieldErr("Idempotency-Key", err)
 		}
-		opID = &i
+		idempotencyKey = &i
 	}
 
-	return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, opID), err
+	return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, idempotencyKey), err
 }
 
 func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
@@ -385,21 +382,18 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	}
 
 	// Get from query too?
-	var opID *api.OpID
-	opIDStr := req.Header.Get("Op-ID")
-	if opIDStr == "" {
-		opIDStr = req.Header.Get("Request-ID")
-		if opIDStr == "" {
-			opIDStr = req.Header.Get("X-Request-ID")
-		}
+	var idempotencyKey *api.IdempotencyKey
+	idempotencyKeyStr := req.Header.Get("Idempotency-Key")
+	if idempotencyKeyStr == "" {
+		idempotencyKeyStr = req.Header.Get("Op-ID")
 	}
-	if opIDStr != "" {
-		i, err := api.OpIDFromString(opIDStr)
+	if idempotencyKeyStr != "" {
+		i, err := api.IdempotencyKeyFromString(idempotencyKeyStr)
 		if err != nil {
 			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
-				ReqFieldErr("Request-ID", err)
+				ReqFieldErr("Idempotency-Key", err)
 		}
-		opID = &i
+		idempotencyKey = &i
 	}
 
 	authorization := strings.TrimSpace(req.Header.Get("Authorization"))
@@ -428,5 +422,5 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 		ctxAuth = newEmptyAuthorization()
 	}
 
-	return newOpInputContext(ctx, ctxAuth, originInfo, opID), nil
+	return newOpInputContext(ctx, ctxAuth, originInfo, idempotencyKey), nil
 }

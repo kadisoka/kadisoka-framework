@@ -18,9 +18,10 @@ type OpInputContext[
 		TerminalIDNumT, TerminalRefKeyT,
 		UserIDNumT, UserRefKeyT,
 		SessionSubjectT],
+	IdempotencyKeyT azcore.ServiceMethodIdempotencyKey,
 ] interface {
 	api.OpInputContext[
 		SessionIDNumT, SessionRefKeyT,
 		TerminalIDNumT, TerminalRefKeyT,
-		UserIDNumT, UserRefKeyT, SessionSubjectT, SessionT]
+		UserIDNumT, UserRefKeyT, SessionSubjectT, SessionT, IdempotencyKeyT]
 }

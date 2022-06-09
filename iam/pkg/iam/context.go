@@ -36,7 +36,7 @@ func NewEmptyOpInputContext(ctx context.Context) CallInputContext {
 type CallInputContext interface {
 	api.OpInputContext[
 		SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
-		UserIDNum, UserRefKey, Actor, Authorization]
+		UserIDNum, UserRefKey, Actor, Authorization, api.IdempotencyKey]
 
 	Authorization() Authorization
 	IsUserContext() bool
@@ -46,14 +46,14 @@ func newOpInputContext(
 	ctx context.Context,
 	ctxAuth *Authorization,
 	originInfo azcore.ServiceMethodCallOriginInfo,
-	requestID *api.OpID,
+	idempotencyKey *api.IdempotencyKey,
 ) CallInputContext {
 	if ctxAuth == nil {
 		panic("ctxAuth must not be nil")
 	}
 	return &callContext{ctx, ctxAuth, api.OpInputMetadata{
-		ID:          requestID,
-		ReceiveTime: time.Now().UTC(),
+		IdempotencyKey: idempotencyKey,
+		ReceiveTime:    time.Now().UTC(),
 	}, originInfo,
 	}
 }
@@ -72,11 +72,15 @@ func (callContext) AZServiceContext()                {}
 func (callContext) AZServiceMethodContext()          {}
 func (callContext) AZServiceMethodCallContext()      {}
 func (callContext) AZServiceMethodCallInputContext() {}
-func (ctx callContext) ServiceMethodCallOriginInfo() azcore.ServiceMethodCallOriginInfo {
+
+func (ctx callContext) OriginInfo() azcore.ServiceMethodCallOriginInfo {
 	return ctx.originInfo
 }
 func (ctx callContext) Session() Authorization {
-	return *ctx.authorization
+	if authz := ctx.authorization; authz != nil {
+		return *authz
+	}
+	return *newEmptyAuthorization()
 }
 
 func (ctx callContext) Authorization() Authorization {
@@ -95,6 +99,13 @@ func (ctx *callContext) IsUserContext() bool {
 func (ctx *callContext) MethodName() string { return "" }
 
 func (ctx *callContext) ResourceID() string { return "" }
+
+func (ctx *callContext) IdempotencyKey() api.IdempotencyKey {
+	if key := ctx.requestInfo.IdempotencyKey; key != nil {
+		return *key
+	}
+	return api.IdempotencyKeyZero()
+}
 
 func (ctx *callContext) OpInputMetadata() api.OpInputMetadata { return ctx.requestInfo }
 

@@ -54,7 +54,7 @@ func (logger Logger) WithContext(
 	}
 
 	if !hasAuth {
-		originInfo := ctx.ServiceMethodCallOriginInfo()
+		originInfo := ctx.OriginInfo()
 		logCtx = logCtx.
 			Str("origin_addr", originInfo.Address)
 		if originEnv := originInfo.EnvironmentString; originEnv != "" {
@@ -62,9 +62,9 @@ func (logger Logger) WithContext(
 		}
 	}
 
-	if reqID := ctx.OpInputMetadata().ID; reqID != nil {
+	if idempotencyKey := ctx.OpInputMetadata().IdempotencyKey; idempotencyKey != nil {
 		logCtx = logCtx.
-			Str("op_id", reqID.String())
+			Str("idempotency_key", idempotencyKey.String())
 	}
 
 	l := logCtx.Logger()

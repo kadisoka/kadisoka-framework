@@ -1,54 +1,63 @@
 package api
 
 import (
-	"strconv"
+	"bytes"
 	"time"
 
 	"github.com/alloyzeus/go-azfl/azcore"
 	dataerrs "github.com/alloyzeus/go-azfl/errors/data"
+	"github.com/google/uuid"
 )
 
 type OpInfo interface {
 }
 
-// A OpID in our implementation is used as idempotency token.
+// A IdempotencyKey in our implementation is used as idempotency token.
 //
 // A good explanation of idempotency token can be viewed here:
 // https://www.youtube.com/watch?v=IP-rGJKSZ3s
 //
 // Check the RFC https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-01
-type OpID int32
+type IdempotencyKey uuid.UUID
 
-var _ azcore.ServiceMethodOpID = OpIDZero
+var _ azcore.ServiceMethodIdempotencyKey = _IdempotencyKeyZero
 
-const OpIDZero = OpID(0)
+var _IdempotencyKeyZero = IdempotencyKey(uuid.Nil)
 
-func OpIDFromString(opIDStr string) (OpID, error) {
-	u, err := strconv.ParseInt(opIDStr, 10, 32)
+func IdempotencyKeyZero() IdempotencyKey { return IdempotencyKey(uuid.Nil) }
+
+func IdempotencyKeyFromString(idempotencyKeyStr string) (IdempotencyKey, error) {
+	u, err := uuid.Parse(idempotencyKeyStr)
 	if err != nil {
-		return OpIDZero, dataerrs.Malformed(err)
+		return IdempotencyKeyZero(), dataerrs.Malformed(err)
 	}
-	i := OpID(u)
-	if isOpIDSound(i) {
-		return OpIDZero, dataerrs.ErrMalformed
+	i := IdempotencyKey(u)
+	if isIdempotencyStaticallyValid(i) {
+		return IdempotencyKeyZero(), dataerrs.ErrMalformed
 	}
 	return i, nil
 }
 
-func isOpIDSound(opID OpID) bool {
-	return opID > 0
+func isIdempotencyStaticallyValid(idempotencyKey IdempotencyKey) bool {
+	//TODO: more checks?
+	asUUID := uuid.UUID(idempotencyKey)
+	return !bytes.Equal(idempotencyKey[:], uuid.Nil[:]) &&
+		asUUID.Version() == uuid.Version(4) &&
+		asUUID.Variant() == uuid.RFC4122
 }
 
-func (opID OpID) String() string { return strconv.FormatInt(int64(opID), 10) }
+func (idempotencyKey IdempotencyKey) String() string { return uuid.UUID(idempotencyKey).String() }
 
-func (OpID) AZServiceMethodOpID()              {}
-func (opID OpID) Equal(other interface{}) bool { return opID.Equals(other) }
-func (opID OpID) Equals(other interface{}) bool {
-	if x, ok := other.(OpID); ok {
-		return x == opID
+func (IdempotencyKey) AZServiceMethodIdempotencyKey() {}
+func (idempotencyKey IdempotencyKey) Equal(other interface{}) bool {
+	return idempotencyKey.Equals(other)
+}
+func (idempotencyKey IdempotencyKey) Equals(other interface{}) bool {
+	if x, ok := other.(IdempotencyKey); ok {
+		return bytes.Equal(idempotencyKey[:], x[:])
 	}
-	if x, _ := other.(*OpID); x != nil {
-		return *x == opID
+	if x, _ := other.(*IdempotencyKey); x != nil {
+		return bytes.Equal(idempotencyKey[:], (*x)[:])
 	}
 	return false
 }
@@ -69,19 +78,20 @@ type OpInputContext[
 		TerminalIDNumT, TerminalRefKeyT,
 		UserIDNumT, UserRefKeyT,
 		SessionSubjectT],
+	IdempotencyKeyT azcore.ServiceMethodIdempotencyKey,
 ] interface {
 	azcore.ServiceMethodCallInputContext[
 		SessionIDNumT, SessionRefKeyT,
 		TerminalIDNumT, TerminalRefKeyT,
-		UserIDNumT, UserRefKeyT, SessionSubjectT, SessionT]
+		UserIDNumT, UserRefKeyT, SessionSubjectT, SessionT, IdempotencyKeyT]
 
 	// OpInputMetadata returns some details about the request.
 	OpInputMetadata() OpInputMetadata
 }
 
 type OpInputMetadata struct {
-	// ID returns the idempotency token for mutating operation.
-	ID *OpID
+	// IdempotencyKey returns the idempotency token for mutating operation.
+	IdempotencyKey *IdempotencyKey
 
 	// ReceiveTime returns the time when request was accepted by
 	// the handler.

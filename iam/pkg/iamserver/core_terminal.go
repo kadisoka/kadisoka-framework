@@ -102,7 +102,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := input.Context.ServiceMethodCallOriginInfo().AcceptLanguage
+	userPreferredLanguages := input.Context.OriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.pnVerifier.
 		StartVerification(callCtx, phoneNumber,
@@ -199,7 +199,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		ownerUserRef = newUserRef
 	}
 
-	userPreferredLanguages := callCtx.ServiceMethodCallOriginInfo().AcceptLanguage
+	userPreferredLanguages := callCtx.OriginInfo().AcceptLanguage
 
 	verificationID, verificationCodeExpiryTime, err := core.eaVerifier.
 		StartVerification(callCtx, emailAddress,
@@ -507,7 +507,7 @@ func (core *Core) registerTerminalInsecure(
 	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
 	ctxTime := callCtx.OpInputMetadata().ReceiveTime
-	originInfo := callCtx.ServiceMethodCallOriginInfo()
+	originInfo := callCtx.OriginInfo()
 
 	//var verificationID int64
 	var termSecret string
