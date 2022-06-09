@@ -12,6 +12,7 @@ type userPasswordPutRequest struct {
 	OldPassword string `json:"old_password,omitempty"`
 }
 
+//TODO:SEC: harded
 func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Response) {
 	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
 	if err != nil {

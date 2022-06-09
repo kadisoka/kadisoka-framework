@@ -1,153 +1,104 @@
 package iamserver
 
 import (
+	"strings"
 	"time"
 
 	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/lib/pq"
-	"github.com/square/go-jose/v3/jwt"
 
-	apperrs "github.com/kadisoka/kadisoka-framework/foundation/pkg/app/errors"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/email"
+	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
-func (core *Core) GenerateTokenSetJWT(
+//TODO:SEC: harden
+func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
 	callCtx iam.OpInputContext,
-	terminalRef iam.TerminalRefKey,
-	userRef iam.UserRefKey,
-	terminalSecret string,
-) (accessToken string, refreshToken string, err error) {
-	if callCtx == nil {
-		return "", "", errors.ArgMsg("callCtx", "missing")
+	reqApp *iam.Application,
+	terminalDisplayName string,
+	identifier string,
+	password string,
+) (terminalRef iam.TerminalRefKey, terminalSecret string, userRef iam.UserRefKey, err error) {
+	//TODO: check context
+
+	identifier = strings.TrimSpace(identifier)
+
+	// Username with scheme. The format is '<scheme>:<scheme-specific-identifier>'
+	if names := strings.SplitN(identifier, ":", 2); len(names) == 2 {
+		switch names[0] {
+		case "terminal":
+			panic("TODO")
+		default:
+		}
 	}
 
-	jwtKeyChain := core.JWTKeyChain()
-	if jwtKeyChain == nil {
-		return "", "", apperrs.NewConfigurationMsg("JWT key chain is not configured")
+	var userIDNum iam.UserIDNum
+
+	//TODO: create a method `isAuthenticationByEmailAddressAllowed`
+	if emailAddress, err := email.AddressFromString(identifier); err == nil {
+		//TODO: by email
+		ownerUserIDNum, err := core.getUserIDNumByKeyEmailAddressInsecure(emailAddress)
+		if err != nil {
+			logCtx(callCtx).Error().Err(err).
+				Msg("getUserIDNumByKeyEmailAddressInsecure")
+		} else {
+			userIDNum = ownerUserIDNum
+		}
 	}
-	signer, err := jwtKeyChain.GetSigner()
+
+	if userIDNum.IsNotStaticallyValid() {
+		if phoneNumber, err := telephony.PhoneNumberFromString(identifier); err == nil {
+			//TODO: by phone number
+			ownerUserIDNum, err := core.getUserIDNumByKeyPhoneNumberInsecure(phoneNumber)
+			if err != nil {
+				logCtx(callCtx).Error().Err(err).
+					Msg("getUserIDNumByKeyPhoneNumberInsecure")
+			} else {
+				userIDNum = ownerUserIDNum
+			}
+		}
+	}
+
+	//TODO: last, check if it matches ourr specification of usernames
+
+	if userIDNum.IsNotStaticallyValid() {
+		// No errors
+		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(), nil
+	}
+
+	userRef = iam.NewUserRefKey(userIDNum)
+
+	passwordMatch, err := core.MatchUserPassword(userRef, password)
 	if err != nil {
-		return "", "", errors.Wrap("signer", err)
-	}
-	if signer == nil {
-		return "", "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
+		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(),
+			errors.Wrap("matching user password", err)
 	}
 
-	sessionRef, issueTime, expiry, err := core.
-		issueSession(callCtx, terminalRef, userRef)
-	if err != nil {
-		return "", "", err
+	if !passwordMatch {
+		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(), nil
 	}
 
-	accessTokenClaims := &iam.AccessTokenClaims{
-		Claims: jwt.Claims{
-			ID:       sessionRef.AZIDText(),
-			IssuedAt: jwt.NewNumericDate(issueTime),
-			Issuer:   core.RealmName(),
-			Expiry:   jwt.NewNumericDate(expiry),
-			Subject:  userRef.AZIDText(),
-		},
-		AuthorizedParty: terminalRef.Application().AZIDText(),
-		TerminalID:      terminalRef.AZIDText(),
+	var appRef iam.ApplicationRefKey
+	if reqApp != nil {
+		appRef = reqApp.RefKey
+	}
+	regOutput := core.RegisterTerminal(TerminalRegistrationInput{
+		Context:        callCtx,
+		ApplicationRef: appRef,
+		Data: TerminalRegistrationInputData{
+			UserRef:          userRef,
+			DisplayName:      terminalDisplayName,
+			VerificationType: iam.TerminalVerificationResourceTypeOAuthPassword,
+			VerificationID:   0, //TODO: request ID or such
+		}})
+	if err = regOutput.Context.Err; err != nil {
+		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(),
+			errors.Wrap("RegisterTerminal", err)
 	}
 
-	accessToken, err = jwt.Signed(signer).Claims(accessTokenClaims).CompactSerialize()
-	if err != nil {
-		return "", "", errors.Wrap("access token signing", err)
-	}
-
-	tokenClaims := &iam.RefreshTokenClaims{
-		NotBefore:      issueTime.Unix(),
-		ExpiresAt:      issueTime.Add(iam.RefreshTokenTTLDefault).Unix(),
-		TerminalID:     terminalRef.AZIDText(),
-		TerminalSecret: terminalSecret,
-	}
-
-	refreshToken, err = jwt.Signed(signer).Claims(tokenClaims).CompactSerialize()
-	if err != nil {
-		return "", "", errors.Wrap("refresh token signing", err)
-	}
-
-	return
-}
-
-func (core *Core) GenerateAccessTokenJWT(
-	callCtx iam.OpInputContext,
-	terminalRef iam.TerminalRefKey,
-	userRef iam.UserRefKey,
-) (tokenString string, err error) {
-	if callCtx == nil {
-		return "", errors.ArgMsg("callCtx", "missing")
-	}
-
-	jwtKeyChain := core.JWTKeyChain()
-	if jwtKeyChain == nil {
-		return "", apperrs.NewConfigurationMsg("JWT key chain is not configured")
-	}
-	signer, err := jwtKeyChain.GetSigner()
-	if err != nil {
-		return "", errors.Wrap("signer", err)
-	}
-	if signer == nil {
-		return "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
-	}
-
-	sessionRef, issueTime, expiry, err := core.
-		issueSession(callCtx, terminalRef, userRef)
-	if err != nil {
-		return "", err
-	}
-
-	tokenClaims := &iam.AccessTokenClaims{
-		Claims: jwt.Claims{
-			ID:       sessionRef.AZIDText(),
-			IssuedAt: jwt.NewNumericDate(issueTime),
-			Issuer:   core.RealmName(),
-			Expiry:   jwt.NewNumericDate(expiry),
-			Subject:  userRef.AZIDText(),
-		},
-		AuthorizedParty: terminalRef.Application().AZIDText(),
-		TerminalID:      terminalRef.AZIDText(),
-	}
-
-	tokenString, err = jwt.Signed(signer).Claims(tokenClaims).CompactSerialize()
-	if err != nil {
-		return "", errors.Wrap("signing", err)
-	}
-	return
-}
-
-func (core *Core) GenerateRefreshTokenJWT(
-	callCtx iam.OpInputContext,
-	terminalRef iam.TerminalRefKey,
-	terminalSecret string,
-	issueTime time.Time,
-) (tokenString string, err error) {
-	jwtKeyChain := core.JWTKeyChain()
-	if jwtKeyChain == nil {
-		return "", apperrs.NewConfigurationMsg("JWT key chain is not configured")
-	}
-	signer, err := jwtKeyChain.GetSigner()
-	if err != nil {
-		return "", errors.Wrap("signer", err)
-	}
-	if signer == nil {
-		return "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
-	}
-
-	tokenClaims := &iam.RefreshTokenClaims{
-		NotBefore:      issueTime.Unix(),
-		ExpiresAt:      issueTime.Add(iam.RefreshTokenTTLDefault).Unix(),
-		TerminalID:     terminalRef.AZIDText(),
-		TerminalSecret: terminalSecret,
-	}
-
-	tokenString, err = jwt.Signed(signer).Claims(tokenClaims).CompactSerialize()
-	if err != nil {
-		return "", errors.Wrap("signing", err)
-	}
-	return
+	return regOutput.Data.TerminalRef, regOutput.Data.TerminalSecret, userRef, nil
 }
 
 func (core *Core) issueSession(

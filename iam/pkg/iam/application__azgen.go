@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"strings"
 
-	azfl "github.com/alloyzeus/go-azfl/azcore"
+	azcore "github.com/alloyzeus/go-azfl/azcore"
 	azid "github.com/alloyzeus/go-azfl/azid"
 	errors "github.com/alloyzeus/go-azfl/errors"
 )
@@ -14,7 +14,7 @@ import (
 // is compatible with the azfl package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // azfl package needs to be updated.
-var _ = azfl.AZCorePackageIsVersion1
+var _ = azcore.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
@@ -35,7 +35,7 @@ type ApplicationIDNum int32
 // there's a bug in the generator.
 var _ azid.IDNumMethods = ApplicationIDNumZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationIDNumZeroVar
-var _ azfl.EntityIDNumMethods = ApplicationIDNumZero
+var _ azcore.EntityIDNumMethods = ApplicationIDNumZero
 
 // ApplicationIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of ApplicationIDNum.
@@ -79,7 +79,7 @@ func (idNum ApplicationIDNum) PrimitiveValue() int32 {
 func (ApplicationIDNum) AZIDNum() {}
 
 // AZEntityIDNum is required for conformance
-// with azfl.EntityIDNum.
+// with azcore.EntityIDNum.
 func (ApplicationIDNum) AZEntityIDNum() {}
 
 // IsZero is required as ApplicationIDNum is a value-object.
@@ -325,7 +325,7 @@ var _ azid.RefKey[ApplicationIDNum] = _ApplicationRefKeyZero
 var _ azid.BinUnmarshalable = &_ApplicationRefKeyZeroVar
 var _ azid.BinFieldUnmarshalable = &_ApplicationRefKeyZeroVar
 var _ azid.TextUnmarshalable = &_ApplicationRefKeyZeroVar
-var _ azfl.EntityRefKey[ApplicationIDNum] = _ApplicationRefKeyZero
+var _ azcore.EntityRefKey[ApplicationIDNum] = _ApplicationRefKeyZero
 
 const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDNumZero)
 
@@ -341,7 +341,7 @@ func ApplicationRefKeyZero() ApplicationRefKey {
 func (ApplicationRefKey) AZRefKey() {}
 
 // AZEntityRefKey is required for conformance
-// with azfl.EntityRefKey.
+// with azcore.EntityRefKey.
 func (ApplicationRefKey) AZEntityRefKey() {}
 
 // IDNum returns the scoped identifier of the entity.
@@ -381,7 +381,7 @@ func (refKey ApplicationRefKey) IsNotStaticallyValid() bool {
 	return !refKey.IsStaticallyValid()
 }
 
-// Equals is required for conformance with azfl.EntityRefKey.
+// Equals is required for conformance with azcore.EntityRefKey.
 func (refKey ApplicationRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(ApplicationRefKey); ok {
 		return x == refKey
@@ -392,7 +392,7 @@ func (refKey ApplicationRefKey) Equals(other interface{}) bool {
 	return false
 }
 
-// Equal is required for conformance with azfl.EntityRefKey.
+// Equal is required for conformance with azcore.EntityRefKey.
 func (refKey ApplicationRefKey) Equal(other interface{}) bool {
 	return refKey.Equals(other)
 }
@@ -433,7 +433,7 @@ func ApplicationRefKeyFromAZIDBin(b []byte) (refKey ApplicationRefKey, readLen i
 }
 
 // UnmarshalAZIDBin is required for conformance
-// with azfl.BinFieldUnmarshalable.
+// with azcore.BinFieldUnmarshalable.
 func (refKey *ApplicationRefKey) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
 	i, readLen, err := ApplicationRefKeyFromAZIDBin(b)
 	if err == nil {
@@ -457,7 +457,7 @@ func ApplicationRefKeyFromAZIDBinField(
 }
 
 // UnmarshalAZIDBinField is required for conformance
-// with azfl.BinFieldUnmarshalable.
+// with azcore.BinFieldUnmarshalable.
 func (refKey *ApplicationRefKey) UnmarshalAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {

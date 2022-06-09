@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
+	"fmt"
 	"strings"
 
 	"github.com/alloyzeus/go-azfl/errors"
@@ -170,7 +171,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 
 	if ownerUserRef.IsStaticallyValid() {
 		// Check if it's fully claimed (already verified)
-		ownerUserIDNum, err := core.getUserIDNumByKeyEmailAddress(emailAddress)
+		ownerUserIDNum, err := core.getUserIDNumByKeyEmailAddressInsecure(emailAddress)
 		if err != nil {
 			panic(err)
 		}
@@ -190,7 +191,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 			panic(err)
 		}
 		_, err = core.
-			setUserKeyEmailAddress(
+			setUserKeyEmailAddressInsecure(
 				callCtx, newUserRef, emailAddress)
 		if err != nil {
 			panic(err)
@@ -302,7 +303,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 			if !updated {
 				// Let's check if the email address is associated to other user
 				existingOwnerUserIDNum, err := core.
-					getUserIDNumByKeyEmailAddress(*emailAddress)
+					getUserIDNumByKeyEmailAddressInsecure(*emailAddress)
 				if err != nil {
 					panic(err)
 				}
@@ -348,7 +349,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 			if !updated {
 				// Let's check if the phone number is associated to other user
 				existingOwnerUserIDNum, err := core.
-					getUserIDNumByKeyPhoneNumber(*phoneNumber)
+					getUserIDNumByKeyPhoneNumberInsecure(*phoneNumber)
 				if err != nil {
 					panic(err)
 				}
@@ -464,26 +465,35 @@ func (core *Core) RegisterTerminal(
 ) TerminalRegistrationOutput {
 	if input.ApplicationRef.IsNotStaticallyValid() {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
-			Err: errors.Arg("input", nil, errors.Ent("ApplicationRef", nil))}}
+			Err: errors.ArgMsg("input", "application ID check", errors.Ent("ApplicationRef", nil))}}
 	}
 
 	// Allow zero or a valid user ref.
 	if !input.Data.UserRef.IsZero() && input.Data.UserRef.IsNotStaticallyValid() {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
-			Err: errors.Arg("input", nil, errors.Ent("Data.UserRef", nil))}}
+			Err: errors.ArgMsg("input", "user ID check", errors.Ent("Data.UserRef", nil))}}
 	}
 
-	clientInfo, err := core.ApplicationByRefKey(input.ApplicationRef)
+	appInfo, err := core.ApplicationByRefKey(input.ApplicationRef)
 	if err != nil {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
 			Err: errors.Wrap("ApplicationByRefKey", err)}}
 	}
-	if clientInfo == nil {
+	if appInfo == nil {
 		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
-			Err: errors.Arg("input", nil, errors.EntMsg("ApplicationRef", "reference invalid"))}}
+			Err: errors.ArgMsg("input", "application check",
+				errors.EntMsg("ApplicationRef", "reference invalid"))}}
 	}
 
-	//TODO:
+	if (input.Data.UserRef.IsStaticallyValid() && !input.ApplicationRef.IDNum().IsUserAgent()) ||
+		(input.Data.UserRef.IsNotStaticallyValid() && input.ApplicationRef.IDNum().IsUserAgent()) {
+		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+			Err: errors.ArgMsg("input", "user and application combination invalid",
+				errors.EntMsg("Data.UserRef", fmt.Sprintf("statically valid: %v", input.Data.UserRef.IsStaticallyValid())),
+				errors.EntMsg("ApplicationRef", fmt.Sprintf("user agent: %v", input.ApplicationRef.AZIDNum().IsUserAgent())))}}
+	}
+
+	//TODO:SEC:
 	// - check verification type against client type
 	// - check user ref validity against verification type and client type
 	// - assert platform type againts client data
@@ -501,7 +511,9 @@ func (core *Core) registerTerminalInsecure(
 
 	//var verificationID int64
 	var termSecret string
-	generateSecret := input.Data.VerificationType == iam.TerminalVerificationResourceTypeOAuthClientCredentials
+	generateSecret :=
+		input.Data.VerificationType == iam.TerminalVerificationResourceTypeOAuthClientCredentials ||
+			input.Data.VerificationType == iam.TerminalVerificationResourceTypeOAuthPassword
 	if generateSecret {
 		termSecret = core.generateTerminalSecret()
 		input.Data.VerificationTime = &ctxTime

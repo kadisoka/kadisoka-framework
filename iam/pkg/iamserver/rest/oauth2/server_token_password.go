@@ -5,6 +5,7 @@ package oauth2
 import (
 	"strings"
 
+	"github.com/alloyzeus/go-azfl/errors"
 	"github.com/emicklei/go-restful/v3"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/oauth2"
@@ -26,10 +27,10 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	if reqApp != nil && !reqApp.RefKey.IDNum().IsService() {
+	if reqApp == nil {
 		logReq(req.Request).
 			Warn().Str("applicationID", reqApp.RefKey.AZIDText()).
-			Msg("Application is not authorized to use grant type password")
+			Msg("Application authentication is required")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
 		return
@@ -69,19 +70,59 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 			restSrv.handleTokenRequestByPasswordGrantWithTerminalCreds(
 				reqCtx, resp, reqApp, names[1], password)
 			return
-		default:
-			//TODO: we should have a list of kind of identifier users can
-			// use and then we try to detect the type of identifier.
-			logReq(req.Request).
-				Warn().Str("username", username).
-				Msg("Unrecognized identifier scheme")
 		}
 	}
 
-	logReq(req.Request).
-		Warn().Msg("Password grant with no scheme.")
-	oauth2.RespondTo(resp).ErrorCode(
-		oauth2.ErrorInvalidGrant)
+	termRef, termSecret, userRef, err := restSrv.serverCore.
+		AuthorizeTerminalByUserIdentifierAndPassword(reqCtx, reqApp, "", username, password)
+	if err != nil {
+		if _, ok := err.(errors.CallError); ok {
+			logReq(req.Request).
+				Warn().Err(err).
+				Msg("AuthorizeTerminalByUserIdentifierAndPassword")
+			//TODO: be more accurate about the error
+			oauth2.RespondTo(resp).ErrorCode(
+				oauth2.ErrorInvalidGrant)
+			return
+		}
+		logReq(req.Request).
+			Error().Err(err).
+			Msg("AuthorizeTerminalByUserIdentifierAndPassword")
+		oauth2.RespondTo(resp).ErrorCode(
+			oauth2.ErrorServerError)
+		return
+	}
+
+	if userRef.IsNotStaticallyValid() {
+		logReq(req.Request).
+			Warn().Str("username", username).
+			Msg("Authentication failed")
+		return
+	}
+
+	accessToken, refreshToken, err := restSrv.serverCore.
+		GenerateTokenSetJWT(reqCtx, termRef, ctxAuth.UserRef(), termSecret)
+	if err != nil {
+		logCtx(reqCtx).
+			Error().Err(err).
+			Msg("GenerateTokenSetJWT")
+		oauth2.RespondTo(resp).ErrorCode(
+			oauth2.ErrorServerError)
+		return
+	}
+
+	oauth2.RespondTo(resp).TokenCustom(
+		&iam.OAuth2TokenResponse{
+			TokenResponse: oauth2.TokenResponse{
+				AccessToken:  accessToken,
+				TokenType:    oauth2.TokenTypeBearer,
+				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
+				RefreshToken: refreshToken,
+			},
+			UserID:         userRef.AZIDText(),
+			TerminalID:     termRef.AZIDText(),
+			TerminalSecret: termSecret,
+		})
 }
 
 func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(

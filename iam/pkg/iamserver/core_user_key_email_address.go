@@ -59,7 +59,7 @@ func (core *Core) getUserKeyEmailAddressInsecure(
 }
 
 // The ID of the user which provided email address is their verified primary.
-func (core *Core) getUserIDNumByKeyEmailAddress(
+func (core *Core) getUserIDNumByKeyEmailAddressInsecure(
 	emailAddress email.Address,
 ) (ownerUserIDNum iam.UserIDNum, err error) {
 	sqlString, _, _ := goqu.
@@ -138,9 +138,9 @@ func (core *Core) SetUserKeyEmailAddress(
 	}
 
 	existingOwnerUserIDNum, err := core.
-		getUserIDNumByKeyEmailAddress(emailAddress)
+		getUserIDNumByKeyEmailAddressInsecure(emailAddress)
 	if err != nil {
-		return 0, nil, errors.Wrap("getUserIDNumByKeyEmailAddress", err)
+		return 0, nil, errors.Wrap("getUserIDNumByKeyEmailAddressInsecure", err)
 	}
 	if existingOwnerUserIDNum.IsStaticallyValid() {
 		if existingOwnerUserIDNum != ctxAuth.UserIDNum() {
@@ -149,7 +149,7 @@ func (core *Core) SetUserKeyEmailAddress(
 		return 0, nil, nil
 	}
 
-	alreadyVerified, err := core.setUserKeyEmailAddress(
+	alreadyVerified, err := core.setUserKeyEmailAddressInsecure(
 		callCtx, ctxAuth.UserRef(), emailAddress)
 	if err != nil {
 		panic(err)
@@ -177,7 +177,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	return
 }
 
-func (core *Core) setUserKeyEmailAddress(
+func (core *Core) setUserKeyEmailAddressInsecure(
 	callCtx iam.OpInputContext,
 	userRef iam.UserRefKey,
 	emailAddress email.Address,

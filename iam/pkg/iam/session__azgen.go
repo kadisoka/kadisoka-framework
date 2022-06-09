@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"strings"
 
-	azfl "github.com/alloyzeus/go-azfl/azcore"
+	azcore "github.com/alloyzeus/go-azfl/azcore"
 	azid "github.com/alloyzeus/go-azfl/azid"
 	errors "github.com/alloyzeus/go-azfl/errors"
 )
@@ -14,7 +14,7 @@ import (
 // is compatible with the azfl package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // azfl package needs to be updated.
-var _ = azfl.AZCorePackageIsVersion1
+var _ = azcore.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
@@ -45,8 +45,8 @@ type SessionIDNum int32
 // there's a bug in the generator.
 var _ azid.IDNumMethods = SessionIDNumZero
 var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
-var _ azfl.AdjunctEntityIDNumMethods = SessionIDNumZero
-var _ azfl.SessionIDNumMethods = SessionIDNumZero
+var _ azcore.AdjunctEntityIDNumMethods = SessionIDNumZero
+var _ azcore.SessionIDNumMethods = SessionIDNumZero
 
 // SessionIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of SessionIDNum.
@@ -89,11 +89,11 @@ func (idNum SessionIDNum) PrimitiveValue() int32 {
 func (SessionIDNum) AZIDNum() {}
 
 // AZAdjunctEntityIDNum is required
-// for conformance with azfl.AdjunctEntityIDNum.
+// for conformance with azcore.AdjunctEntityIDNum.
 func (SessionIDNum) AZAdjunctEntityIDNum() {}
 
 // AZSessionIDNum is required for conformance
-// with azfl.SessionIDNum.
+// with azcore.SessionIDNum.
 func (SessionIDNum) AZSessionIDNum() {}
 
 // IsZero is required as SessionIDNum is a value-object.
@@ -198,8 +198,8 @@ func NewSessionRefKey(
 var _ azid.RefKey[SessionIDNum] = _SessionRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_SessionRefKeyZero
 var _ azid.TextUnmarshalable = &_SessionRefKeyZero
-var _ azfl.AdjunctEntityRefKey[SessionIDNum] = _SessionRefKeyZero
-var _ azfl.SessionRefKey[SessionIDNum] = _SessionRefKeyZero
+var _ azcore.AdjunctEntityRefKey[SessionIDNum] = _SessionRefKeyZero
+var _ azcore.SessionRefKey[SessionIDNum] = _SessionRefKeyZero
 
 var _SessionRefKeyZero = SessionRefKey{
 	terminal: TerminalRefKeyZero(),
@@ -216,7 +216,7 @@ func SessionRefKeyZero() SessionRefKey {
 func (SessionRefKey) AZRefKey() {}
 
 // AZAdjunctEntityRefKey is required
-// by azfl.AdjunctEntityRefKey interface.
+// by azcore.AdjunctEntityRefKey interface.
 func (SessionRefKey) AZAdjunctEntityRefKey() {}
 
 // IDNum returns the scoped identifier of the entity.
@@ -240,7 +240,7 @@ func (refKey SessionRefKey) AZIDNum() SessionIDNum {
 }
 
 // SessionIDNum is required for conformance
-// with azfl.SessionRefKey.
+// with azcore.SessionRefKey.
 func (refKey SessionRefKey) SessionIDNum() SessionIDNum {
 	return refKey.idNum
 }
@@ -264,7 +264,7 @@ func (refKey SessionRefKey) IsNotStaticallyValid() bool {
 	return !refKey.IsStaticallyValid()
 }
 
-// Equals is required for conformance with azfl.AdjunctEntityRefKey.
+// Equals is required for conformance with azcore.AdjunctEntityRefKey.
 func (refKey SessionRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(SessionRefKey); ok {
 		return refKey.terminal.EqualsTerminalRefKey(x.terminal) &&
@@ -277,7 +277,7 @@ func (refKey SessionRefKey) Equals(other interface{}) bool {
 	return false
 }
 
-// Equal is required for conformance with azfl.AdjunctEntityRefKey.
+// Equal is required for conformance with azcore.AdjunctEntityRefKey.
 func (refKey SessionRefKey) Equal(other interface{}) bool {
 	return refKey.Equals(other)
 }
@@ -396,7 +396,7 @@ func SessionRefKeyFromAZIDBinField(
 }
 
 // UnmarshalAZIDBinField is required for conformance
-// with azfl.BinFieldUnmarshalable.
+// with azcore.BinFieldUnmarshalable.
 func (refKey *SessionRefKey) UnmarshalAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {

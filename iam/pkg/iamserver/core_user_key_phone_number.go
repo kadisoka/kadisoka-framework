@@ -59,7 +59,7 @@ func (core *Core) getUserKeyPhoneNumberInsecure(
 }
 
 // The ID of the user which provided phone number is their verified primary.
-func (core *Core) getUserIDNumByKeyPhoneNumber(
+func (core *Core) getUserIDNumByKeyPhoneNumberInsecure(
 	phoneNumber telephony.PhoneNumber,
 ) (ownerUserIDNum iam.UserIDNum, err error) {
 	sqlString, _, _ := goqu.
@@ -140,9 +140,9 @@ func (core *Core) SetUserKeyPhoneNumber(
 	//TODO: prone to race condition. solution: simply call
 	// setUserKeyPhoneNumber and translate the error.
 	existingOwnerUserIDNum, err := core.
-		getUserIDNumByKeyPhoneNumber(phoneNumber)
+		getUserIDNumByKeyPhoneNumberInsecure(phoneNumber)
 	if err != nil {
-		return 0, nil, errors.Wrap("getUserIDNumByKeyPhoneNumber", err)
+		return 0, nil, errors.Wrap("getUserIDNumByKeyPhoneNumberInsecure", err)
 	}
 	if existingOwnerUserIDNum.IsStaticallyValid() {
 		if existingOwnerUserIDNum != ctxAuth.UserIDNum() {

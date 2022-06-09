@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"strings"
 
-	azfl "github.com/alloyzeus/go-azfl/azcore"
+	azcore "github.com/alloyzeus/go-azfl/azcore"
 	azid "github.com/alloyzeus/go-azfl/azid"
 	errors "github.com/alloyzeus/go-azfl/errors"
 )
@@ -14,7 +14,7 @@ import (
 // is compatible with the azfl package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // azfl package needs to be updated.
-var _ = azfl.AZCorePackageIsVersion1
+var _ = azcore.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
@@ -50,8 +50,8 @@ type TerminalIDNum int64
 // there's a bug in the generator.
 var _ azid.IDNumMethods = TerminalIDNumZero
 var _ azid.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
-var _ azfl.AdjunctEntityIDNumMethods = TerminalIDNumZero
-var _ azfl.TerminalIDNumMethods = TerminalIDNumZero
+var _ azcore.AdjunctEntityIDNumMethods = TerminalIDNumZero
+var _ azcore.TerminalIDNumMethods = TerminalIDNumZero
 
 // TerminalIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of TerminalIDNum.
@@ -94,11 +94,11 @@ func (idNum TerminalIDNum) PrimitiveValue() int64 {
 func (TerminalIDNum) AZIDNum() {}
 
 // AZAdjunctEntityIDNum is required
-// for conformance with azfl.AdjunctEntityIDNum.
+// for conformance with azcore.AdjunctEntityIDNum.
 func (TerminalIDNum) AZAdjunctEntityIDNum() {}
 
 // AZTerminalIDNum is required for conformance
-// with azfl.TerminalIDNum.
+// with azcore.TerminalIDNum.
 func (TerminalIDNum) AZTerminalIDNum() {}
 
 // IsZero is required as TerminalIDNum is a value-object.
@@ -206,8 +206,8 @@ func NewTerminalRefKey(
 var _ azid.RefKey[TerminalIDNum] = _TerminalRefKeyZero
 var _ azid.BinFieldUnmarshalable = &_TerminalRefKeyZero
 var _ azid.TextUnmarshalable = &_TerminalRefKeyZero
-var _ azfl.AdjunctEntityRefKey[TerminalIDNum] = _TerminalRefKeyZero
-var _ azfl.TerminalRefKey[TerminalIDNum] = _TerminalRefKeyZero
+var _ azcore.AdjunctEntityRefKey[TerminalIDNum] = _TerminalRefKeyZero
+var _ azcore.TerminalRefKey[TerminalIDNum] = _TerminalRefKeyZero
 
 var _TerminalRefKeyZero = TerminalRefKey{
 	application: ApplicationRefKeyZero(),
@@ -225,7 +225,7 @@ func TerminalRefKeyZero() TerminalRefKey {
 func (TerminalRefKey) AZRefKey() {}
 
 // AZAdjunctEntityRefKey is required
-// by azfl.AdjunctEntityRefKey interface.
+// by azcore.AdjunctEntityRefKey interface.
 func (TerminalRefKey) AZAdjunctEntityRefKey() {}
 
 // IDNum returns the scoped identifier of the entity.
@@ -249,7 +249,7 @@ func (refKey TerminalRefKey) AZIDNum() TerminalIDNum {
 }
 
 // TerminalIDNum is required for conformance
-// with azfl.TerminalRefKey.
+// with azcore.TerminalRefKey.
 func (refKey TerminalRefKey) TerminalIDNum() TerminalIDNum {
 	return refKey.idNum
 }
@@ -275,7 +275,7 @@ func (refKey TerminalRefKey) IsNotStaticallyValid() bool {
 	return !refKey.IsStaticallyValid()
 }
 
-// Equals is required for conformance with azfl.AdjunctEntityRefKey.
+// Equals is required for conformance with azcore.AdjunctEntityRefKey.
 func (refKey TerminalRefKey) Equals(other interface{}) bool {
 	if x, ok := other.(TerminalRefKey); ok {
 		return refKey.application.EqualsApplicationRefKey(x.application) &&
@@ -290,7 +290,7 @@ func (refKey TerminalRefKey) Equals(other interface{}) bool {
 	return false
 }
 
-// Equal is required for conformance with azfl.AdjunctEntityRefKey.
+// Equal is required for conformance with azcore.AdjunctEntityRefKey.
 func (refKey TerminalRefKey) Equal(other interface{}) bool {
 	return refKey.Equals(other)
 }
@@ -429,7 +429,7 @@ func TerminalRefKeyFromAZIDBinField(
 }
 
 // UnmarshalAZIDBinField is required for conformance
-// with azfl.BinFieldUnmarshalable.
+// with azcore.BinFieldUnmarshalable.
 func (refKey *TerminalRefKey) UnmarshalAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {

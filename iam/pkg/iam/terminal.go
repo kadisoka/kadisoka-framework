@@ -20,6 +20,7 @@ const (
 
 	TerminalVerificationResourceTypeOAuthAuthorizationCode = "oauth2-authorization-code"
 	TerminalVerificationResourceTypeOAuthClientCredentials = "oauth2-client-credentials"
+	TerminalVerificationResourceTypeOAuthPassword          = "oauth2-password"
 )
 
 var (
