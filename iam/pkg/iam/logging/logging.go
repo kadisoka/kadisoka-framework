@@ -40,7 +40,8 @@ func (logger Logger) WithContext(
 
 	logCtx := logger.With()
 	logCtx = logCtx.
-		Str("method", ctx.MethodName())
+		Str("method", ctx.MethodName()).
+		Str("res_id", ctx.ResourceID())
 
 	hasAuth := false
 

@@ -38,10 +38,12 @@ func (reqCtx *RESTOpInputContext) MethodName() string {
 	if reqCtx == nil || reqCtx.Request == nil {
 		return ""
 	}
-	req := reqCtx.Request
-	var urlStr string
-	if req.URL != nil {
-		urlStr = req.URL.String()
+	return reqCtx.Request.Method
+}
+
+func (reqCtx *RESTOpInputContext) ResourceID() string {
+	if reqCtx == nil || reqCtx.Request == nil {
+		return ""
 	}
-	return req.Method + " " + urlStr
+	return reqCtx.Request.URL.String()
 }

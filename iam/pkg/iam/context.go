@@ -94,6 +94,8 @@ func (ctx *callContext) IsUserContext() bool {
 
 func (ctx *callContext) MethodName() string { return "" }
 
+func (ctx *callContext) ResourceID() string { return "" }
+
 func (ctx *callContext) OpInputMetadata() api.OpInputMetadata { return ctx.requestInfo }
 
 type OpOutputContext struct {
