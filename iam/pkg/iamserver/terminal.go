@@ -13,7 +13,7 @@ import (
 //TODO: some data should be taken from the context instead of
 // provided in here.
 type TerminalRegistrationInput struct {
-	Context        iam.OpInputContext
+	Context        iam.CallInputContext
 	ApplicationRef iam.ApplicationRefKey //TODO: get from context
 	Data           TerminalRegistrationInputData
 }
@@ -29,7 +29,7 @@ type TerminalRegistrationInputData struct {
 }
 
 type TerminalRegistrationOutput struct {
-	Context iam.OpOutputContext
+	Context iam.CallOutputContext
 	Data    TerminalRegistrationOutputData
 }
 
@@ -40,7 +40,7 @@ type TerminalRegistrationOutputData struct {
 
 //TODO: use generics when it's available
 type TerminalAuthorizationByEmailAddressStartInput struct {
-	Context        iam.OpInputContext
+	Context        iam.CallInputContext
 	ApplicationRef iam.ApplicationRefKey //TODO: should be from Context.Authorization
 	Data           TerminalAuthorizationByEmailAddressStartInputData
 }
@@ -54,7 +54,7 @@ type TerminalAuthorizationByEmailAddressStartInputData struct {
 
 //TODO: use generics when it's available
 type TerminalAuthorizationByPhoneNumberStartInput struct {
-	Context        iam.OpInputContext
+	Context        iam.CallInputContext
 	ApplicationRef iam.ApplicationRefKey //TODO: should be from Context.Authorization
 	Data           TerminalAuthorizationByPhoneNumberStartInputData
 }
@@ -71,7 +71,7 @@ type TerminalAuthorizationStartInputBaseData struct {
 }
 
 type TerminalAuthorizationStartOutput struct {
-	Context iam.OpOutputContext
+	Context iam.CallOutputContext
 	Data    TerminalAuthorizationStartOutputData
 }
 

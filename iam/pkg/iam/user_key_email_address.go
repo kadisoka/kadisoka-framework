@@ -6,7 +6,7 @@ import "github.com/kadisoka/kadisoka-framework/volib/pkg/email"
 
 type UserKeyEmailAddressService interface {
 	GetUserKeyEmailAddress(
-		callCtx OpInputContext,
+		callCtx CallInputContext,
 		userRef UserRefKey,
 	) (*email.Address, error)
 }

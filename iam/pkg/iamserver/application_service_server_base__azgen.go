@@ -21,7 +21,7 @@ const applicationDBTableName = "application_dt"
 type ApplicationServiceServerBase struct {
 	db *sqlx.DB
 
-	deletionTxHook func(iam.OpInputContext, *sqlx.Tx) error
+	deletionTxHook func(iam.CallInputContext, *sqlx.Tx) error
 
 	registeredApplicationIDNumCache *lru.ARCCache
 	deletedApplicationIDNumCache    *lru.ARCCache
@@ -62,7 +62,7 @@ func (srv *ApplicationServiceServerBase) IsApplicationRefKeyRegistered(refKey ia
 // If it's required only to determine the existence of the ID,
 // IsApplicationRefKeyRegistered is generally more efficient.
 func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	//TODO: access control
@@ -70,7 +70,7 @@ func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
 }
 
 func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoInsecure(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	idRegistered := false
@@ -164,7 +164,7 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 }
 
 func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	input iam.ApplicationInstanceCreationInput,
 ) (refKey iam.ApplicationRefKey, initialState iam.ApplicationInstanceInfo, err error) {
 	//TODO: access control
@@ -176,7 +176,7 @@ func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
 }
 
 func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 ) (iam.ApplicationRefKey, error) {
 	ctxAuth := opInputCtx.Authorization()
 
@@ -231,7 +231,7 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 }
 
 func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
@@ -245,7 +245,7 @@ func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
 }
 
 func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {

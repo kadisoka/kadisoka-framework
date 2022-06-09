@@ -61,7 +61,7 @@ func (restSrv *Server) putUserEmailAddress(
 }
 
 func (restSrv *Server) handleSetEmailAddress(
-	reqCtx *iam.RESTOpInputContext,
+	reqCtx *iam.RESTCallInputContext,
 	req *restful.Request,
 	resp *restful.Response,
 	emailAddress email.Address,

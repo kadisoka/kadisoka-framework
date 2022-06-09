@@ -126,7 +126,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 }
 
 func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
-	reqCtx *iam.RESTOpInputContext,
+	reqCtx *iam.RESTCallInputContext,
 	resp *restful.Response,
 	reqApp *iam.Application,
 	terminalRefStr string,

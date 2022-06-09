@@ -40,7 +40,7 @@ type Server struct {
 	eTagResponder *rest.ETagResponder
 }
 
-func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTOpInputContext, error) {
+func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTCallInputContext, error) {
 	return restSrv.serverCore.RESTOpInputContext(req)
 }
 

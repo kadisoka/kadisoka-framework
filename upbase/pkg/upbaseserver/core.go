@@ -18,11 +18,11 @@ func (srvCore *Core) RESTOpInputContext(
 	req *http.Request,
 ) (*upbase.RESTOpInputContext, error) {
 	iamReqCtx, err := srvCore.iamSvc.RESTOpInputContext(req)
-	return &upbase.RESTOpInputContext{RESTOpInputContext: *iamReqCtx}, err
+	return &upbase.RESTOpInputContext{RESTCallInputContext: *iamReqCtx}, err
 }
 
 func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*oidc.StandardClaims, error) {
 	if callCtx == nil {
@@ -49,7 +49,7 @@ func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
 }
 
 func (srvCore *Core) getUserOpenIDConnectStandardClaimsInsecure(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*oidc.StandardClaims, error) {
 	return nil, errors.ErrUnimplemented

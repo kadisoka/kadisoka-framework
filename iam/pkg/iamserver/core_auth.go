@@ -15,7 +15,7 @@ import (
 
 //TODO:SEC: harden
 func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	reqApp *iam.Application,
 	terminalDisplayName string,
 	identifier string,
@@ -102,7 +102,7 @@ func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
 }
 
 func (core *Core) issueSession(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	terminalRef iam.TerminalRefKey,
 	userRef iam.UserRefKey,
 ) (

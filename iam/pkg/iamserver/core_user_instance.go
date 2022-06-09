@@ -7,7 +7,7 @@ import (
 )
 
 func (core *Core) contextUserOrNewInstance(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 ) (userRef iam.UserRefKey, newInstance bool, err error) {
 	if callCtx == nil {
 		return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx", "missing")

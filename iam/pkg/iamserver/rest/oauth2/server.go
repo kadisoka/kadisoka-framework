@@ -51,7 +51,7 @@ func (restSrv *Server) jwtKeyChain() *iam.JWTKeyChain {
 	return restSrv.serverCore.JWTKeyChain()
 }
 
-func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTOpInputContext, error) {
+func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTCallInputContext, error) {
 	return restSrv.serverCore.RESTOpInputContext(req)
 }
 

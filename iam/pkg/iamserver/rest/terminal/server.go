@@ -44,7 +44,7 @@ type Server struct {
 	basePath   string
 }
 
-func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTOpInputContext, error) {
+func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTCallInputContext, error) {
 	return restSrv.serverCore.RESTOpInputContext(req)
 }
 
@@ -319,7 +319,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 // terminal register using phone number
 func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	resp *restful.Response,
-	reqCtx *iam.RESTOpInputContext,
+	reqCtx *iam.RESTCallInputContext,
 	authApp *iam.Application,
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
@@ -391,7 +391,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 // terminal registration using email address
 func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	resp *restful.Response,
-	reqCtx *iam.RESTOpInputContext,
+	reqCtx *iam.RESTCallInputContext,
 	authApp *iam.Application,
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {

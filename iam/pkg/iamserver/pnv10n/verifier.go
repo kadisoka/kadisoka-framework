@@ -120,7 +120,7 @@ type Verifier struct {
 
 //TODO(exa): make the operations atomic
 func (verifier *Verifier) StartVerification(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	phoneNumber telephony.PhoneNumber,
 	codeTTL time.Duration,
 	userPreferredLanguages []language.Tag,
@@ -196,7 +196,7 @@ func (verifier *Verifier) StartVerification(
 }
 
 func (verifier *Verifier) ConfirmVerification(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	verificationID int64, code string,
 ) error {
 	if callCtx == nil {

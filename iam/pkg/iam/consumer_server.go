@@ -125,7 +125,7 @@ type ConsumerGRPCServer interface {
 	// gRPC call context.
 	GRPCOpInputContext(
 		grpcContext context.Context,
-	) (*GRPCOpInputContext, error)
+	) (*GRPCCallInputContext, error)
 }
 
 // ConsumerRESTServer is an interface which contains utilities for
@@ -133,7 +133,7 @@ type ConsumerGRPCServer interface {
 type ConsumerRESTServer interface {
 	// RESTOpInputContext returns a RESTOpInputContext instance for the request.
 	// This function will always return an instance even if there's an error.
-	RESTOpInputContext(*http.Request) (*RESTOpInputContext, error)
+	RESTOpInputContext(*http.Request) (*RESTCallInputContext, error)
 }
 
 type consumerServerCore struct {
@@ -249,17 +249,17 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 
 func (consumerSrv *consumerServerBaseCore) GRPCOpInputContext(
 	grpcCallCtx context.Context,
-) (*GRPCOpInputContext, error) {
+) (*GRPCCallInputContext, error) {
 	callCtx, err := consumerSrv.callContextFromGRPCContext(grpcCallCtx)
 	if callCtx == nil {
 		callCtx = NewEmptyOpInputContext(grpcCallCtx)
 	}
-	return &GRPCOpInputContext{callCtx}, err
+	return &GRPCCallInputContext{callCtx}, err
 }
 
 func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 	grpcCallCtx context.Context,
-) (OpInputContext, error) {
+) (CallInputContext, error) {
 	var remoteAddr string
 	if peer, _ := grpcpeer.FromContext(grpcCallCtx); peer != nil {
 		remoteAddr = peer.Addr.String() //TODO: attempt to resolve if it's proxied
@@ -347,17 +347,17 @@ func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
 // RESTOpInputContext creates a call context which represents an HTTP request.
 func (consumerSrv *consumerServerBaseCore) RESTOpInputContext(
 	req *http.Request,
-) (*RESTOpInputContext, error) {
+) (*RESTCallInputContext, error) {
 	callCtx, err := consumerSrv.callContextFromHTTPRequest(req)
 	if callCtx == nil {
 		callCtx = NewEmptyOpInputContext(req.Context())
 	}
-	return &RESTOpInputContext{callCtx, req}, err
+	return &RESTCallInputContext{callCtx, req}, err
 }
 
 func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	req *http.Request,
-) (OpInputContext, error) {
+) (CallInputContext, error) {
 	ctx := req.Context()
 	ctxAuth := newEmptyAuthorization()
 

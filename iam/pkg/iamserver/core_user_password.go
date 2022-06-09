@@ -42,7 +42,7 @@ var argon2PasswordHashingParamsDefault = argon2PasswordHashingParams{
 const userPasswordDBTableName = "user_password_dt"
 
 func (core *Core) SetUserPassword(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 	clearTextPassword string,
 ) error {

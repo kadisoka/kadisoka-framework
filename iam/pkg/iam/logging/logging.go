@@ -29,7 +29,7 @@ type Logger struct {
 // Call this method only at the logging points. It's not recommended to
 // keep the returned logger around.
 func (logger Logger) WithContext(
-	ctx iam.OpInputContext,
+	ctx iam.CallInputContext,
 ) *foundationlog.Logger {
 	// Implementation notes: don't panic
 

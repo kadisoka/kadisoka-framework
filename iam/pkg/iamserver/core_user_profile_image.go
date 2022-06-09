@@ -19,7 +19,7 @@ type ProfileImageFile interface {
 }
 
 func (core *Core) SetUserProfileImageURL(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 	profileImageURL string,
 ) error {
@@ -66,7 +66,7 @@ func (core *Core) SetUserProfileImageURL(
 }
 
 func (core *Core) SetUserProfileImageByFile(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 	imageFile ProfileImageFile,
 ) (imageURL string, err error) {

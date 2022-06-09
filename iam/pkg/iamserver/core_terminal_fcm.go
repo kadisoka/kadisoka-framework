@@ -13,7 +13,7 @@ var _ iam.TerminalFCMRegistrationTokenService = &Core{}
 const terminalFCMRegistrationTokenDBTableName = "terminal_fcm_registration_token_dt"
 
 func (core *Core) DisposeTerminalFCMRegistrationToken(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	terminalRef iam.TerminalRefKey,
 	token string,
 ) error {
@@ -69,7 +69,7 @@ func (core *Core) ListTerminalFCMRegistrationTokensByUser(
 }
 
 func (core *Core) SetTerminalFCMRegistrationToken(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	terminalRef iam.TerminalRefKey, userRef iam.UserRefKey,
 	token string,
 ) error {

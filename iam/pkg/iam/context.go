@@ -22,7 +22,7 @@ var (
 	ErrAccessNotAllowed    = accesserrs.Msg("actor is not allowed to access target resource")
 )
 
-func NewEmptyOpInputContext(ctx context.Context) OpInputContext {
+func NewEmptyOpInputContext(ctx context.Context) CallInputContext {
 	return &callContext{
 		Context:       ctx,
 		authorization: newEmptyAuthorization(),
@@ -32,8 +32,8 @@ func NewEmptyOpInputContext(ctx context.Context) OpInputContext {
 	}
 }
 
-// OpInputContext provides call-scoped information.
-type OpInputContext interface {
+// CallInputContext provides call-scoped information.
+type CallInputContext interface {
 	api.OpInputContext[
 		SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
 		UserIDNum, UserRefKey, Actor, Authorization]
@@ -47,7 +47,7 @@ func newOpInputContext(
 	ctxAuth *Authorization,
 	originInfo azcore.ServiceMethodCallOriginInfo,
 	requestID *api.OpID,
-) OpInputContext {
+) CallInputContext {
 	if ctxAuth == nil {
 		panic("ctxAuth must not be nil")
 	}
@@ -58,7 +58,7 @@ func newOpInputContext(
 	}
 }
 
-var _ OpInputContext = &callContext{}
+var _ CallInputContext = &callContext{}
 
 type callContext struct {
 	context.Context
@@ -98,7 +98,7 @@ func (ctx *callContext) ResourceID() string { return "" }
 
 func (ctx *callContext) OpInputMetadata() api.OpInputMetadata { return ctx.requestInfo }
 
-type OpOutputContext struct {
+type CallOutputContext struct {
 	Err     error
 	Mutated bool
 }

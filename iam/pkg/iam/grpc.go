@@ -17,11 +17,11 @@ type GRPCServiceClient interface {
 	) context.Context
 }
 
-type GRPCOpInputContext struct {
-	OpInputContext
+type GRPCCallInputContext struct {
+	CallInputContext
 }
 
 var _ grpc.OpInputContext[
 	SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
 	UserIDNum, UserRefKey, Actor, Authorization,
-] = &GRPCOpInputContext{}
+] = &GRPCCallInputContext{}

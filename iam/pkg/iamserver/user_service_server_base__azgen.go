@@ -21,7 +21,7 @@ const userDBTableName = "user_dt"
 type UserServiceServerBase struct {
 	db *sqlx.DB
 
-	deletionTxHook func(iam.OpInputContext, *sqlx.Tx) error
+	deletionTxHook func(iam.CallInputContext, *sqlx.Tx) error
 
 	registeredUserIDNumCache *lru.ARCCache
 	deletedUserIDNumCache    *lru.ARCCache
@@ -62,7 +62,7 @@ func (srv *UserServiceServerBase) IsUserRefKeyRegistered(refKey iam.UserRefKey) 
 // If it's required only to determine the existence of the ID,
 // IsUserRefKeyRegistered is generally more efficient.
 func (srv *UserServiceServerBase) GetUserInstanceInfo(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	//TODO: access control
@@ -70,7 +70,7 @@ func (srv *UserServiceServerBase) GetUserInstanceInfo(
 }
 
 func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	idRegistered := false
@@ -164,7 +164,7 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 }
 
 func (srv *UserServiceServerBase) CreateUserInstanceInternal(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	input iam.UserInstanceCreationInput,
 ) (refKey iam.UserRefKey, initialState iam.UserInstanceInfo, err error) {
 	//TODO: access control
@@ -176,7 +176,7 @@ func (srv *UserServiceServerBase) CreateUserInstanceInternal(
 }
 
 func (srv *UserServiceServerBase) createUserInstanceInsecure(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 ) (iam.UserRefKey, error) {
 	ctxAuth := opInputCtx.Authorization()
 
@@ -231,7 +231,7 @@ func (srv *UserServiceServerBase) createUserInstanceInsecure(
 }
 
 func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
@@ -249,7 +249,7 @@ func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
 }
 
 func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
-	opInputCtx iam.OpInputContext,
+	opInputCtx iam.CallInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {

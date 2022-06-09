@@ -16,8 +16,8 @@ type RESTServiceClient interface {
 	) http.Header
 }
 
-type RESTOpInputContext struct {
-	OpInputContext
+type RESTCallInputContext struct {
+	CallInputContext
 
 	Request *http.Request
 }
@@ -25,23 +25,23 @@ type RESTOpInputContext struct {
 var _ rest.OpInputContext[
 	SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
 	UserIDNum, UserRefKey, Actor, Authorization,
-] = &RESTOpInputContext{}
+] = &RESTCallInputContext{}
 
-func (reqCtx *RESTOpInputContext) HTTPRequest() *http.Request {
+func (reqCtx *RESTCallInputContext) HTTPRequest() *http.Request {
 	if reqCtx != nil {
 		return reqCtx.Request
 	}
 	return nil
 }
 
-func (reqCtx *RESTOpInputContext) MethodName() string {
+func (reqCtx *RESTCallInputContext) MethodName() string {
 	if reqCtx == nil || reqCtx.Request == nil {
 		return ""
 	}
 	return reqCtx.Request.Method
 }
 
-func (reqCtx *RESTOpInputContext) ResourceID() string {
+func (reqCtx *RESTCallInputContext) ResourceID() string {
 	if reqCtx == nil || reqCtx.Request == nil {
 		return ""
 	}

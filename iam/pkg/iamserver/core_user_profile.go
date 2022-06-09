@@ -16,7 +16,7 @@ const userProfileDisplayNameDBTableName = "user_display_name_dt"
 const userProfileImageKeyDBTableName = "user_profile_image_key_dt"
 
 func (core *Core) GetUserBaseProfile(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*iam.UserBaseProfileData, error) {
 	if callCtx == nil {
@@ -32,7 +32,7 @@ func (core *Core) GetUserBaseProfile(
 // access control; for the end-point for public-facing APIs,
 // use GetUserBaseProfile.
 func (core *Core) getUserBaseProfileInsecure(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*iam.UserBaseProfileData, error) {
 	var user iam.UserBaseProfileData
@@ -79,7 +79,7 @@ func (core *Core) getUserBaseProfileInsecure(
 }
 
 func (core *Core) GetUserInfoV1(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*iampb.UserInfoData, error) {
 	//TODO: access control
@@ -88,7 +88,7 @@ func (core *Core) GetUserInfoV1(
 }
 
 func (core *Core) getUserInfoV1Insecure(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*iampb.UserInfoData, error) {
 	userBaseProfile, err := core.

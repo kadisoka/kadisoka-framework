@@ -351,7 +351,7 @@ func (svcClient *serviceClientCore) AuthorizedOutgoingHTTPRequestHeader(
 }
 
 func (svcClient *serviceClientCore) GetUserInstanceInfo(
-	callCtx OpInputContext,
+	callCtx CallInputContext,
 	userRef UserRefKey,
 ) (*UserInstanceInfo, error) {
 	return svcClient.userInstanceInfoSvc.

@@ -19,7 +19,7 @@ var _ iam.UserKeyEmailAddressService = &Core{}
 const userKeyEmailAddressDBTableName = `user_key_email_address_dt`
 
 func (core *Core) GetUserKeyEmailAddress(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*email.Address, error) {
 	//TODO: access control
@@ -27,7 +27,7 @@ func (core *Core) GetUserKeyEmailAddress(
 }
 
 func (core *Core) getUserKeyEmailAddressInsecure(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 ) (*email.Address, error) {
 	var rawInput string
@@ -123,7 +123,7 @@ func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 }
 
 func (core *Core) SetUserKeyEmailAddress(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 	emailAddress email.Address,
 	verificationMethods []eav10n.VerificationMethod,
@@ -178,7 +178,7 @@ func (core *Core) SetUserKeyEmailAddress(
 }
 
 func (core *Core) setUserKeyEmailAddressInsecure(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	userRef iam.UserRefKey,
 	emailAddress email.Address,
 ) (alreadyVerified bool, err error) {
@@ -230,7 +230,7 @@ func (core *Core) setUserKeyEmailAddressInsecure(
 }
 
 func (core *Core) ConfirmUserEmailAddressVerification(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	verificationID int64,
 	code string,
 ) (stateChanged bool, err error) {

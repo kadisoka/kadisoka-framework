@@ -9,7 +9,7 @@ import (
 
 type TerminalService interface {
 	GetTerminalInfo(
-		callCtx OpInputContext,
+		callCtx CallInputContext,
 		terminalIDNum TerminalIDNum,
 	) (*TerminalInfo, error)
 }
@@ -43,7 +43,7 @@ type TerminalFCMRegistrationTokenService interface {
 		ownerUserRef UserRefKey,
 	) (tokens map[TerminalRefKey]string, err error)
 	DisposeTerminalFCMRegistrationToken(
-		callCtx OpInputContext,
+		callCtx CallInputContext,
 		terminalRef TerminalRefKey,
 		token string,
 	) error

@@ -62,14 +62,14 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 	ctxAuth := callCtx.Authorization()
 	if ctxAuth.IsStaticallyValid() && !ctxAuth.IsUserSubject() {
 		return TerminalAuthorizationStartOutput{
-			Context: iam.OpOutputContext{
+			Context: iam.CallOutputContext{
 				Err: iam.ErrAuthorizationInvalid}}
 	}
 
 	phoneNumber := input.Data.PhoneNumber
 	if !phoneNumber.IsSound() && !core.isTestPhoneNumber(phoneNumber) {
 		return TerminalAuthorizationStartOutput{
-			Context: iam.OpOutputContext{
+			Context: iam.CallOutputContext{
 				Err: errors.Arg("phoneNumber", nil)}}
 	}
 
@@ -85,7 +85,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 		// is associated to the authenticated user.
 		if ctxAuth.IsUserSubject() && !ctxAuth.IsUser(ownerUserRef) {
 			return TerminalAuthorizationStartOutput{
-				Context: iam.OpOutputContext{
+				Context: iam.CallOutputContext{
 					Err: errors.ArgMsg("phoneNumber", "conflict")}}
 		}
 	} else {
@@ -111,11 +111,11 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 		switch err.(type) {
 		case pnv10n.InvalidPhoneNumberError:
 			return TerminalAuthorizationStartOutput{
-				Context: iam.OpOutputContext{
+				Context: iam.CallOutputContext{
 					Err: errors.Arg("phoneNumber", err)}}
 		}
 		return TerminalAuthorizationStartOutput{
-			Context: iam.OpOutputContext{
+			Context: iam.CallOutputContext{
 				Err: errors.Wrap("pnVerifier.StartVerification", err)}}
 	}
 
@@ -133,7 +133,7 @@ func (core *Core) StartTerminalAuthorizationByPhoneNumber(
 	}
 
 	return TerminalAuthorizationStartOutput{
-		Context: iam.OpOutputContext{
+		Context: iam.CallOutputContext{
 			Mutated: true,
 		},
 		Data: TerminalAuthorizationStartOutputData{
@@ -151,14 +151,14 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 	ctxAuth := callCtx.Authorization()
 	if ctxAuth.IsStaticallyValid() && !ctxAuth.IsUserSubject() {
 		return TerminalAuthorizationStartOutput{
-			Context: iam.OpOutputContext{
+			Context: iam.CallOutputContext{
 				Err: iam.ErrAuthorizationInvalid}}
 	}
 
 	emailAddress := input.Data.EmailAddress
 	if !emailAddress.IsSound() && !core.isTestEmailAddress(emailAddress) {
 		return TerminalAuthorizationStartOutput{
-			Context: iam.OpOutputContext{
+			Context: iam.CallOutputContext{
 				Err: errors.Arg("emailAddress", nil)}}
 	}
 
@@ -182,7 +182,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		// is associated to the authenticated user.
 		if ctxAuth.IsUserSubject() && !ctxAuth.IsUser(ownerUserRef) {
 			return TerminalAuthorizationStartOutput{
-				Context: iam.OpOutputContext{
+				Context: iam.CallOutputContext{
 					Err: errors.ArgMsg("emailAddress", "conflict")}}
 		}
 	} else {
@@ -208,11 +208,11 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 		switch err.(type) {
 		case eav10n.InvalidEmailAddressError:
 			return TerminalAuthorizationStartOutput{
-				Context: iam.OpOutputContext{
+				Context: iam.CallOutputContext{
 					Err: errors.Arg("emailAddress", err)}}
 		}
 		return TerminalAuthorizationStartOutput{
-			Context: iam.OpOutputContext{
+			Context: iam.CallOutputContext{
 				Err: errors.Wrap("eaVerifier.StartVerification", err)}}
 	}
 
@@ -230,7 +230,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 	}
 
 	return TerminalAuthorizationStartOutput{
-		Context: iam.OpOutputContext{
+		Context: iam.CallOutputContext{
 			Mutated: true,
 		},
 		Data: TerminalAuthorizationStartOutputData{
@@ -245,7 +245,7 @@ func (core *Core) StartTerminalAuthorizationByEmailAddress(
 // terminal by providing the verificationCode which was delivered through
 // selected channel when the authorization was created.
 func (core *Core) ConfirmTerminalAuthorization(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	terminalRef iam.TerminalRefKey,
 	verificationCode string,
 ) (terminalSecret string, userRef iam.UserRefKey, err error) {
@@ -409,7 +409,7 @@ func (core *Core) getTerminalRaw(idNum iam.TerminalIDNum) (*terminalDBRawModel, 
 }
 
 func (core *Core) GetTerminalInfo(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	terminalRefKey iam.TerminalRefKey,
 ) (*iam.TerminalInfo, error) {
 	if callCtx == nil {
@@ -464,30 +464,30 @@ func (core *Core) RegisterTerminal(
 	input TerminalRegistrationInput,
 ) TerminalRegistrationOutput {
 	if input.ApplicationRef.IsNotStaticallyValid() {
-		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+		return TerminalRegistrationOutput{Context: iam.CallOutputContext{
 			Err: errors.ArgMsg("input", "application ID check", errors.Ent("ApplicationRef", nil))}}
 	}
 
 	// Allow zero or a valid user ref.
 	if !input.Data.UserRef.IsZero() && input.Data.UserRef.IsNotStaticallyValid() {
-		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+		return TerminalRegistrationOutput{Context: iam.CallOutputContext{
 			Err: errors.ArgMsg("input", "user ID check", errors.Ent("Data.UserRef", nil))}}
 	}
 
 	appInfo, err := core.ApplicationByRefKey(input.ApplicationRef)
 	if err != nil {
-		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+		return TerminalRegistrationOutput{Context: iam.CallOutputContext{
 			Err: errors.Wrap("ApplicationByRefKey", err)}}
 	}
 	if appInfo == nil {
-		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+		return TerminalRegistrationOutput{Context: iam.CallOutputContext{
 			Err: errors.ArgMsg("input", "application check",
 				errors.EntMsg("ApplicationRef", "reference invalid"))}}
 	}
 
 	if (input.Data.UserRef.IsStaticallyValid() && !input.ApplicationRef.IDNum().IsUserAgent()) ||
 		(input.Data.UserRef.IsNotStaticallyValid() && input.ApplicationRef.IDNum().IsUserAgent()) {
-		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+		return TerminalRegistrationOutput{Context: iam.CallOutputContext{
 			Err: errors.ArgMsg("input", "user and application combination invalid",
 				errors.EntMsg("Data.UserRef", fmt.Sprintf("statically valid: %v", input.Data.UserRef.IsStaticallyValid())),
 				errors.EntMsg("ApplicationRef", fmt.Sprintf("user agent: %v", input.ApplicationRef.AZIDNum().IsUserAgent())))}}
@@ -530,7 +530,7 @@ func (core *Core) registerTerminalInsecure(
 	//TODO: if id conflict, generate another id and retry
 	termID, err := GenerateTerminalIDNum(0)
 	if err != nil {
-		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+		return TerminalRegistrationOutput{Context: iam.CallOutputContext{
 			Err: errors.Wrap("ID generation", err)}}
 	}
 
@@ -557,7 +557,7 @@ func (core *Core) registerTerminalInsecure(
 
 	_, err = core.db.Exec(sqlString)
 	if err != nil {
-		return TerminalRegistrationOutput{Context: iam.OpOutputContext{
+		return TerminalRegistrationOutput{Context: iam.CallOutputContext{
 			Err: errors.Wrap("data insert", err)}}
 	}
 
@@ -574,7 +574,7 @@ func (core *Core) registerTerminalInsecure(
 }
 
 func (core *Core) DeleteTerminal(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	termRefToDelete iam.TerminalRefKey,
 ) (stateChanged bool, err error) {
 	ctxAuth := callCtx.Authorization()
@@ -621,7 +621,7 @@ func (core *Core) DeleteTerminal(
 
 //TODO: error if the terminal is deleted?
 func (core *Core) setTerminalVerified(
-	callCtx iam.OpInputContext,
+	callCtx iam.CallInputContext,
 	terminalIDNum iam.TerminalIDNum,
 	disallowReplay bool,
 ) (secret string, err error) {

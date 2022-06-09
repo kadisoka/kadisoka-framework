@@ -124,7 +124,7 @@ func NewCoreByConfig(
 		db:                       iamDB,
 		registeredUserIDNumCache: registeredUserIDNumCache,
 		deletedUserIDNumCache:    deletedUserIDNumCache,
-		deletionTxHook: func(callCtx iam.OpInputContext, dbTx *sqlx.Tx) error {
+		deletionTxHook: func(callCtx iam.CallInputContext, dbTx *sqlx.Tx) error {
 			ctxAuth := callCtx.Authorization()
 			var txErr error
 
