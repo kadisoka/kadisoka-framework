@@ -52,6 +52,18 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		panic(err)
 	}
 
+	app, err := authServer.iamServerCore.
+		AuthenticatedApplication(appID, reqProto.ClientCredentials.ClientSecret)
+	if err != nil {
+		panic(err)
+	}
+
+	if app == nil {
+		logCtx(reqCtx).
+			Warn().Msgf("Client authentication failed")
+		return nil, grpcstatus.Error(grpccodes.Unauthenticated, "")
+	}
+
 	phoneNumber, err := telephony.PhoneNumberFromString(reqProto.PhoneNumber)
 	if err != nil {
 		logCtx(reqCtx).
@@ -60,20 +72,18 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
-	authStartOutput := authServer.iamServerCore.
+	authStartOutCtx, authStartOutData := authServer.iamServerCore.
 		StartTerminalAuthorizationByPhoneNumber(
-			iamserver.TerminalAuthorizationByPhoneNumberStartInput{
-				Context:       reqCtx,
-				ApplicationID: appID,
-				Data: iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
-					PhoneNumber:         phoneNumber,
-					VerificationMethods: nil,
-					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
-						DisplayName: reqProto.TerminalInfo.DisplayName,
-					},
+			reqCtx,
+			iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
+				PhoneNumber:         phoneNumber,
+				VerificationMethods: nil,
+				TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
+					ApplicationID: appID,
+					DisplayName:   reqProto.TerminalInfo.DisplayName,
 				},
 			})
-	if err = authStartOutput.Context.Err; err != nil {
+	if err = authStartOutCtx.Err; err != nil {
 		switch err.(type) {
 		case errors.CallError:
 			logCtx(reqCtx).
@@ -90,14 +100,14 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 	}
 
 	var codeExpiryProto *pbtypes.Timestamp
-	if codeExpiry := authStartOutput.Data.VerificationCodeExpiryTime; codeExpiry != nil {
+	if codeExpiry := authStartOutData.VerificationCodeExpiryTime; codeExpiry != nil {
 		codeExpiryProto, err = pbtypes.TimestampProto(*codeExpiry)
 		if err != nil {
 			panic(err)
 		}
 	}
 	resp := iampb.InitiateUserTerminalAuthorizationByPhoneNumberResponse{
-		TerminalId:                 authStartOutput.Data.TerminalID.AZIDText(),
+		TerminalId:                 authStartOutData.TerminalID.AZIDText(),
 		VerificationCodeExpiryTime: codeExpiryProto,
 	}
 	return &resp, nil

@@ -1,7 +1,6 @@
 package iamserver
 
 import (
-	"crypto/subtle"
 	"encoding/base64"
 	"net/http"
 	"strings"
@@ -39,7 +38,7 @@ func RESTServiceServerWith(iamServerCore *Core) *RESTServiceServerBase {
 // will be a valid client and err will be nil.
 func (svcBase *RESTServiceServerBase) RequestApplication(
 	req *http.Request,
-) (client *iam.Application, err error) {
+) (app *iam.Application, err error) {
 	authorizationHeader := req.Header.Get(iam.AuthorizationMetadataKey)
 	if authorizationHeader == "" {
 		return nil, nil
@@ -63,6 +62,7 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 	if creds[0] == "" {
 		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.EntMsg("username", "empty"))
 	}
+
 	appID, err := iam.ApplicationIDFromAZIDText(creds[0])
 	if err != nil {
 		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.Ent("username", dataerrs.Malformed(err)))
@@ -71,16 +71,13 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.Ent("username", nil))
 	}
 
-	client, err = svcBase.ApplicationByID(appID)
+	app, err = svcBase.AuthenticatedApplication(appID, creds[1])
 	if err != nil {
 		return nil, errors.Wrap("client look up", err)
 	}
-	if client == nil {
+	if app == nil {
 		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.EntMsg("username", "reference invalid"))
 	}
-	if len(creds) == 0 || subtle.ConstantTimeCompare([]byte(creds[1]), []byte(client.Data.Secret)) != 1 {
-		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.EntMsg("password", "mismatch"))
-	}
 
-	return client, nil
+	return app, nil
 }

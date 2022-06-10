@@ -10,16 +10,11 @@ import (
 	"github.com/kadisoka/kadisoka-framework/volib/pkg/telephony"
 )
 
-//TODO: some data should be taken from the context instead of
-// provided in here.
-type TerminalRegistrationInput struct {
-	Context       iam.CallInputContext
-	ApplicationID iam.ApplicationID //TODO: get from context
-	Data          TerminalRegistrationInputData
-}
-
 type TerminalRegistrationInputData struct {
-	UserID iam.UserID
+	// ApplicationID is the ID of the authenticated application that
+	// the new terminal will be associated to.
+	ApplicationID iam.ApplicationID
+	UserID        iam.UserID
 
 	DisplayName string
 
@@ -28,21 +23,9 @@ type TerminalRegistrationInputData struct {
 	VerificationTime *time.Time
 }
 
-type TerminalRegistrationOutput struct {
-	Context iam.CallOutputContext
-	Data    TerminalRegistrationOutputData
-}
-
 type TerminalRegistrationOutputData struct {
 	TerminalID     iam.TerminalID
 	TerminalSecret string
-}
-
-//TODO: use generics when it's available
-type TerminalAuthorizationByEmailAddressStartInput struct {
-	Context       iam.CallInputContext
-	ApplicationID iam.ApplicationID //TODO: should be from Context.Authorization
-	Data          TerminalAuthorizationByEmailAddressStartInputData
 }
 
 type TerminalAuthorizationByEmailAddressStartInputData struct {
@@ -50,13 +33,6 @@ type TerminalAuthorizationByEmailAddressStartInputData struct {
 	VerificationMethods []eav10n.VerificationMethod
 
 	TerminalAuthorizationStartInputBaseData
-}
-
-//TODO: use generics when it's available
-type TerminalAuthorizationByPhoneNumberStartInput struct {
-	Context       iam.CallInputContext
-	ApplicationID iam.ApplicationID //TODO: should be from Context.Authorization
-	Data          TerminalAuthorizationByPhoneNumberStartInputData
 }
 
 type TerminalAuthorizationByPhoneNumberStartInputData struct {
@@ -67,12 +43,11 @@ type TerminalAuthorizationByPhoneNumberStartInputData struct {
 }
 
 type TerminalAuthorizationStartInputBaseData struct {
-	DisplayName string
-}
+	// ApplicationID is the ID of the authenticated application that
+	// the new terminal will be associated to.
+	ApplicationID iam.ApplicationID
 
-type TerminalAuthorizationStartOutput struct {
-	Context iam.CallOutputContext
-	Data    TerminalAuthorizationStartOutputData
+	DisplayName string
 }
 
 type TerminalAuthorizationStartOutputData struct {

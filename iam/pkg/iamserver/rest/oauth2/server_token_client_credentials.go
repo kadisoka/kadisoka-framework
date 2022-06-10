@@ -25,8 +25,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 				Warn().Msg("No authorized client")
 		}
 		// RFC 6749 § 5.2
-		oauth2.RespondTo(resp).ErrInvalidClientBasicAuthorization(
-			restSrv.serverCore.RealmName(), "")
+		oauth2.RespondTo(resp).
+			ErrInvalidClientBasicAuthorization(restSrv.serverCore.RealmName(), "")
 		return
 	}
 
@@ -34,8 +34,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	if appIDNum := reqApp.ID.IDNum(); !appIDNum.IsService() && !appIDNum.IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
 			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqApp.ID)
-		oauth2.RespondTo(resp).ErrorCode(
-			oauth2.ErrorUnauthorizedClient)
+		oauth2.RespondTo(resp).
+			ErrorCode(oauth2.ErrorUnauthorizedClient)
 		return
 	}
 
@@ -44,8 +44,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		logCtx(reqCtx).
 			Warn().Err(err).
 			Msg("Unable to read authorization")
-		oauth2.RespondTo(resp).ErrorCode(
-			oauth2.ErrorServerError)
+		oauth2.RespondTo(resp).
+			ErrorCode(oauth2.ErrorServerError)
 		return
 	}
 
@@ -53,34 +53,33 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	if ctxAuth.IsStaticallyValid() {
 		logCtx(reqCtx).
 			Warn().Msg("Authorization context must not be valid")
-		oauth2.RespondTo(resp).ErrorCode(
-			oauth2.ErrorServerError)
+		oauth2.RespondTo(resp).
+			ErrorCode(oauth2.ErrorServerError)
 		return
 	}
 
 	termDisplayName := ""
 
-	regOutput := restSrv.serverCore.
-		RegisterTerminal(iamserver.TerminalRegistrationInput{
-			Context:       reqCtx,
-			ApplicationID: reqApp.ID,
-			Data: iamserver.TerminalRegistrationInputData{
+	regOutCtx, regOutData := restSrv.serverCore.
+		RegisterTerminal(reqCtx,
+			iamserver.TerminalRegistrationInputData{
+				ApplicationID:    reqApp.ID,
 				UserID:           ctxAuth.UserID(),
 				DisplayName:      termDisplayName,
 				VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
 				VerificationID:   0,
-			}})
-	if regOutput.Context.Err != nil {
+			})
+	if err := regOutCtx.Err; err != nil {
 		logCtx(reqCtx).
-			Error().Err(regOutput.Context.Err).
+			Error().Err(err).
 			Msg("RegisterTerminal")
-		oauth2.RespondTo(resp).ErrorCode(
-			oauth2.ErrorServerError)
+		oauth2.RespondTo(resp).
+			ErrorCode(oauth2.ErrorServerError)
 		return
 	}
 
-	termID := regOutput.Data.TerminalID
-	termSecret := regOutput.Data.TerminalSecret
+	termID := regOutData.TerminalID
+	termSecret := regOutData.TerminalSecret
 
 	accessToken, refreshToken, err := restSrv.serverCore.
 		GenerateTokenSetJWT(reqCtx, termID, ctxAuth.UserID(), termSecret)
@@ -88,21 +87,23 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		logCtx(reqCtx).
 			Error().Err(err).
 			Msg("GenerateTokenSetJWT")
-		oauth2.RespondTo(resp).ErrorCode(
-			oauth2.ErrorServerError)
+		oauth2.RespondTo(resp).
+			ErrorCode(oauth2.ErrorServerError)
 		return
 	}
 
-	oauth2.RespondTo(resp).TokenCustom(
-		&iam.OAuth2TokenResponse{
-			TokenResponse: oauth2.TokenResponse{
-				AccessToken:  accessToken,
-				TokenType:    oauth2.TokenTypeBearer,
-				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
-				RefreshToken: refreshToken,
-			},
-			UserID:         ctxAuth.UserID().AZIDText(),
-			TerminalID:     termID.AZIDText(),
-			TerminalSecret: termSecret,
-		})
+	oauth2.
+		RespondTo(resp).
+		TokenCustom(
+			&iam.OAuth2TokenResponse{
+				TokenResponse: oauth2.TokenResponse{
+					AccessToken:  accessToken,
+					TokenType:    oauth2.TokenTypeBearer,
+					ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
+					RefreshToken: refreshToken,
+				},
+				UserID:         ctxAuth.UserID().AZIDText(),
+				TerminalID:     termID.AZIDText(),
+				TerminalSecret: termSecret,
+			})
 }

@@ -91,8 +91,9 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	client, err := restSrv.serverCore.ApplicationByID(appID)
-	if err != nil || client == nil {
+
+	app, err := restSrv.serverCore.ApplicationByID(appID)
+	if err != nil || app == nil {
 		logReq(r).
 			Warn().Err(err).
 			Msg("client_id does not refer a valid client")
@@ -103,7 +104,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	if val.RedirectURI != "" && !client.Data.HasOAuth2RedirectURI(val.RedirectURI) {
+	if val.RedirectURI != "" && !app.Data.HasOAuth2RedirectURI(val.RedirectURI) {
 		logReq(r).
 			Warn().Msgf("redirect_uri unrecognized %v", val.RedirectURI)
 		cbURL := val.RedirectURI + "?" + oauth2.MustQueryString(oauth2.ErrorResponse{
@@ -176,7 +177,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		return
 	}
 
-	client, err := restSrv.serverCore.ApplicationByID(appID)
+	app, err := restSrv.serverCore.ApplicationByID(appID)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).Str("client_id", appID.AZIDText()).
@@ -185,7 +186,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 			http.StatusInternalServerError)
 		return
 	}
-	if client == nil {
+	if app == nil {
 		logCtx(reqCtx).
 			Warn().Str("client_id", appID.AZIDText()).
 			Msg("Not found")
@@ -203,17 +204,17 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 
 	redirectURIStr, _ := req.BodyParameter("redirect_uri")
-	if redirectURIStr != "" && !client.Data.HasOAuth2RedirectURI(redirectURIStr) {
+	if redirectURIStr != "" && !app.Data.HasOAuth2RedirectURI(redirectURIStr) {
 		logCtx(reqCtx).
 			Warn().Msgf("Redirect URI mismatch for client %v. Got %v , expecting %v .",
-			appID, redirectURIStr, client.Data.OAuth2RedirectURI)
+			appID, redirectURIStr, app.Data.OAuth2RedirectURI)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
 	}
 
 	if redirectURIStr == "" {
-		redirectURIStr = client.Data.OAuth2RedirectURI[0]
+		redirectURIStr = app.Data.OAuth2RedirectURI[0]
 	}
 	redirectURI, err := url.Parse(redirectURIStr)
 	if err != nil {
@@ -224,21 +225,20 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	termDisplayName := ""
 	var termID iam.TerminalID
 
-	regOutput := restSrv.serverCore.
-		RegisterTerminal(iamserver.TerminalRegistrationInput{
-			Context:       reqCtx,
-			ApplicationID: appID,
-			Data: iamserver.TerminalRegistrationInputData{
+	regOutCtx, regOutData := restSrv.serverCore.
+		RegisterTerminal(reqCtx,
+			iamserver.TerminalRegistrationInputData{
+				ApplicationID:    appID,
 				UserID:           ctxAuth.UserID(),
 				DisplayName:      termDisplayName,
 				VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
 				VerificationID:   0,
-			}})
-	if regOutput.Context.Err != nil {
-		panic(regOutput.Context.Err)
+			})
+	if err := regOutCtx.Err; err != nil {
+		panic(err)
 	}
 
-	termID = regOutput.Data.TerminalID
+	termID = regOutData.TerminalID
 
 	redirectURI.RawQuery = oauth2.MustQueryString(oauth2.AuthorizationResponse{
 		Code:  termID.AZIDText(),

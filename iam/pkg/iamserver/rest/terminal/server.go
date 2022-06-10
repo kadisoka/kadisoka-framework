@@ -351,20 +351,18 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 		}
 	}
 
-	authStartOutput := restSrv.serverCore.
+	authStartOutCtx, authStartOutData := restSrv.serverCore.
 		StartTerminalAuthorizationByPhoneNumber(
-			iamserver.TerminalAuthorizationByPhoneNumberStartInput{
-				Context:       reqCtx,
-				ApplicationID: authApp.ID,
-				Data: iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
-					PhoneNumber:         phoneNumber,
-					VerificationMethods: verificationMethods,
-					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
-						DisplayName: terminalRegisterReq.DisplayName,
-					},
+			reqCtx,
+			iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
+				PhoneNumber:         phoneNumber,
+				VerificationMethods: verificationMethods,
+				TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
+					ApplicationID: authApp.ID,
+					DisplayName:   terminalRegisterReq.DisplayName,
 				},
 			})
-	if err = authStartOutput.Context.Err; err != nil {
+	if err = authStartOutCtx.Err; err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
@@ -383,8 +381,8 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: authStartOutput.Data.TerminalID.AZIDText(),
-			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
+			TerminalID: authStartOutData.TerminalID.AZIDText(),
+			CodeExpiry: authStartOutData.VerificationCodeExpiryTime,
 		})
 }
 
@@ -431,20 +429,18 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 		}
 	}
 
-	authStartOutput := restSrv.serverCore.
+	authStartOutCtx, authStartOutData := restSrv.serverCore.
 		StartTerminalAuthorizationByEmailAddress(
-			iamserver.TerminalAuthorizationByEmailAddressStartInput{
-				Context:       reqCtx,
-				ApplicationID: authApp.ID,
-				Data: iamserver.TerminalAuthorizationByEmailAddressStartInputData{
-					EmailAddress:        emailAddress,
-					VerificationMethods: verificationMethods,
-					TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
-						DisplayName: terminalRegisterReq.DisplayName,
-					},
+			reqCtx,
+			iamserver.TerminalAuthorizationByEmailAddressStartInputData{
+				EmailAddress:        emailAddress,
+				VerificationMethods: verificationMethods,
+				TerminalAuthorizationStartInputBaseData: iamserver.TerminalAuthorizationStartInputBaseData{
+					ApplicationID: authApp.ID,
+					DisplayName:   terminalRegisterReq.DisplayName,
 				},
 			})
-	if err = authStartOutput.Context.Err; err != nil {
+	if err = authStartOutCtx.Err; err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
@@ -463,8 +459,8 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: authStartOutput.Data.TerminalID.AZIDText(),
-			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
+			TerminalID: authStartOutData.TerminalID.AZIDText(),
+			CodeExpiry: authStartOutData.VerificationCodeExpiryTime,
 		})
 }
 

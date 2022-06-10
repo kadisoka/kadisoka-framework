@@ -84,21 +84,20 @@ func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
 	if reqApp != nil {
 		appID = reqApp.ID
 	}
-	regOutput := core.RegisterTerminal(TerminalRegistrationInput{
-		Context:       inputCtx,
-		ApplicationID: appID,
-		Data: TerminalRegistrationInputData{
-			UserID:           userID,
-			DisplayName:      terminalDisplayName,
-			VerificationType: iam.TerminalVerificationResourceTypeOAuthPassword,
-			VerificationID:   0, //TODO: request ID or such
-		}})
-	if err = regOutput.Context.Err; err != nil {
+
+	regOutCtx, regOutData := core.RegisterTerminal(inputCtx, TerminalRegistrationInputData{
+		ApplicationID:    appID,
+		UserID:           userID,
+		DisplayName:      terminalDisplayName,
+		VerificationType: iam.TerminalVerificationResourceTypeOAuthPassword,
+		VerificationID:   0, //TODO: request ID or such
+	})
+	if err = regOutCtx.Err; err != nil {
 		return iam.TerminalIDZero(), "", iam.UserIDZero(),
 			errors.Wrap("RegisterTerminal", err)
 	}
 
-	return regOutput.Data.TerminalID, regOutput.Data.TerminalSecret, userID, nil
+	return regOutData.TerminalID, regOutData.TerminalSecret, userID, nil
 }
 
 func (core *Core) issueSession(
