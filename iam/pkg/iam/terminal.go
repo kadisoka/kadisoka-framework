@@ -9,7 +9,7 @@ import (
 
 type TerminalService interface {
 	GetTerminalInfo(
-		callCtx CallInputContext,
+		inputCtx CallInputContext,
 		terminalIDNum TerminalIDNum,
 	) (*TerminalInfo, error)
 }
@@ -40,11 +40,11 @@ type TerminalInfo struct {
 //TODO: this does not belong to C2S service, but only in S2S service
 type TerminalFCMRegistrationTokenService interface {
 	ListTerminalFCMRegistrationTokensByUser(
-		ownerUserRef UserRefKey,
-	) (tokens map[TerminalRefKey]string, err error)
+		ownerUserID UserID,
+	) (tokens map[TerminalID]string, err error)
 	DisposeTerminalFCMRegistrationToken(
-		callCtx CallInputContext,
-		terminalRef TerminalRefKey,
+		inputCtx CallInputContext,
+		terminalID TerminalID,
 		token string,
 	) error
 }

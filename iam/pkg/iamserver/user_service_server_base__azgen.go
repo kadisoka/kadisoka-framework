@@ -30,12 +30,12 @@ type UserServiceServerBase struct {
 // Interface conformance assertions.
 var (
 	_ iam.UserService                 = &UserServiceServerBase{}
-	_ iam.UserRefKeyService           = &UserServiceServerBase{}
+	_ iam.UserIDService               = &UserServiceServerBase{}
 	_ iam.UserInstanceServiceInternal = &UserServiceServerBase{}
 )
 
-func (srv *UserServiceServerBase) IsUserRefKeyRegistered(refKey iam.UserRefKey) bool {
-	idNum := refKey.IDNum()
+func (srv *UserServiceServerBase) IsUserIDRegistered(id iam.UserID) bool {
+	idNum := id.IDNum()
 
 	// Look up for the ID num in the cache.
 	if _, idRegistered := srv.registeredUserIDNumCache.Get(idNum); idRegistered {
@@ -60,18 +60,18 @@ func (srv *UserServiceServerBase) IsUserRefKeyRegistered(refKey iam.UserRefKey) 
 // has been deleted.
 //
 // If it's required only to determine the existence of the ID,
-// IsUserRefKeyRegistered is generally more efficient.
+// IsUserIDRegistered is generally more efficient.
 func (srv *UserServiceServerBase) GetUserInstanceInfo(
 	inputCtx iam.CallInputContext,
-	refKey iam.UserRefKey,
+	id iam.UserID,
 ) (*iam.UserInstanceInfo, error) {
 	//TODO: access control
-	return srv.getUserInstanceInfoInsecure(inputCtx, refKey)
+	return srv.getUserInstanceInfoInsecure(inputCtx, id)
 }
 
 func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
 	inputCtx iam.CallInputContext,
-	refKey iam.UserRefKey,
+	id iam.UserID,
 ) (*iam.UserInstanceInfo, error) {
 	idRegistered := false
 	idRegisteredCacheHit := false
@@ -79,13 +79,13 @@ func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
 	instDeletionCacheHit := false
 
 	// Look up for the ID num in the cache.
-	if _, idRegistered = srv.registeredUserIDNumCache.Get(refKey); idRegistered {
+	if _, idRegistered = srv.registeredUserIDNumCache.Get(id); idRegistered {
 		// ID num is positively registered.
 		idRegisteredCacheHit = true
 	}
 
 	// Look up in the deletion cache
-	if _, instDeleted = srv.deletedUserIDNumCache.Get(refKey); instDeleted {
+	if _, instDeleted = srv.deletedUserIDNumCache.Get(id); instDeleted {
 		// Instance is positively deleted
 		instDeletionCacheHit = true
 	}
@@ -106,16 +106,16 @@ func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
 
 	var err error
 	idRegistered, instDeleted, err = srv.
-		getUserInstanceStateByIDNum(refKey.IDNum())
+		getUserInstanceStateByIDNum(id.IDNum())
 	if err != nil {
 		return nil, err
 	}
 
 	if !idRegisteredCacheHit && idRegistered {
-		srv.registeredUserIDNumCache.Add(refKey, nil)
+		srv.registeredUserIDNumCache.Add(id, nil)
 	}
 	if !instDeletionCacheHit && instDeleted {
-		srv.deletedUserIDNumCache.Add(refKey, nil)
+		srv.deletedUserIDNumCache.Add(id, nil)
 	}
 
 	if !idRegistered {
@@ -166,18 +166,18 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 func (srv *UserServiceServerBase) CreateUserInstanceInternal(
 	inputCtx iam.CallInputContext,
 	input iam.UserInstanceCreationInput,
-) (refKey iam.UserRefKey, initialState iam.UserInstanceInfo, err error) {
+) (id iam.UserID, initialState iam.UserInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createUserInstanceInsecure(inputCtx)
+	id, err = srv.createUserInstanceInsecure(inputCtx)
 
 	//TODO: revision number
-	return refKey, iam.UserInstanceInfo{RevisionNumber: -1}, err
+	return id, iam.UserInstanceInfo{RevisionNumber: -1}, err
 }
 
 func (srv *UserServiceServerBase) createUserInstanceInsecure(
 	inputCtx iam.CallInputContext,
-) (iam.UserRefKey, error) {
+) (iam.UserID, error) {
 	ctxAuth := inputCtx.Authorization()
 
 	const attemptNumMax = 5
@@ -217,22 +217,22 @@ func (srv *UserServiceServerBase) createUserInstanceInsecure(
 			pqErr.Code == "23505" &&
 			pqErr.Constraint == userDBTableName+"_pkey" {
 			if attemptNum >= attemptNumMax {
-				return iam.UserRefKeyZero(), errors.Wrap("insert max attempts", err)
+				return iam.UserIDZero(), errors.Wrap("insert max attempts", err)
 			}
 			continue
 		}
 
-		return iam.UserRefKeyZero(), errors.Wrap("insert", err)
+		return iam.UserIDZero(), errors.Wrap("insert", err)
 	}
 
 	//TODO: update caches, emit an event
 
-	return iam.NewUserRefKey(newInstanceIDNum), nil
+	return iam.NewUserID(newInstanceIDNum), nil
 }
 
 func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
 	inputCtx iam.CallInputContext,
-	toDelete iam.UserRefKey,
+	toDelete iam.UserID,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
 	if inputCtx == nil {
@@ -250,7 +250,7 @@ func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
 
 func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 	inputCtx iam.CallInputContext,
-	toDelete iam.UserRefKey,
+	toDelete iam.UserID,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
 	ctxAuth := inputCtx.Authorization()

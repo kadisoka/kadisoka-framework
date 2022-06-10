@@ -169,25 +169,25 @@ const (
 
 //endregion
 
-//region RefKey
+//region ID
 
-// SessionRefKey is used to identify
+// SessionID is used to identify
 // an instance of adjunct entity Session system-wide.
-type SessionRefKey struct {
-	terminal TerminalRefKey
+type SessionID struct {
+	terminal TerminalID
 	idNum    SessionIDNum
 }
 
 // The total number of fields in the struct.
-const _SessionRefKeyFieldCount = 1 + 1
+const _SessionIDFieldCount = 1 + 1
 
-// NewSessionRefKey returns a new instance
-// of SessionRefKey with the provided attribute values.
-func NewSessionRefKey(
-	terminal TerminalRefKey,
+// NewSessionID returns a new instance
+// of SessionID with the provided attribute values.
+func NewSessionID(
+	terminal TerminalID,
 	idNum SessionIDNum,
-) SessionRefKey {
-	return SessionRefKey{
+) SessionID {
+	return SessionID{
 		terminal: terminal,
 		idNum:    idNum,
 	}
@@ -195,142 +195,142 @@ func NewSessionRefKey(
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.RefKey[SessionIDNum] = _SessionRefKeyZero
-var _ azid.BinFieldUnmarshalable = &_SessionRefKeyZero
-var _ azid.TextUnmarshalable = &_SessionRefKeyZero
-var _ azcore.AdjunctEntityRefKey[SessionIDNum] = _SessionRefKeyZero
-var _ azcore.SessionRefKey[SessionIDNum] = _SessionRefKeyZero
+var _ azid.ID[SessionIDNum] = _SessionIDZero
+var _ azid.BinFieldUnmarshalable = &_SessionIDZero
+var _ azid.TextUnmarshalable = &_SessionIDZero
+var _ azcore.AdjunctEntityID[SessionIDNum] = _SessionIDZero
+var _ azcore.SessionID[SessionIDNum] = _SessionIDZero
 
-var _SessionRefKeyZero = SessionRefKey{
-	terminal: TerminalRefKeyZero(),
+var _SessionIDZero = SessionID{
+	terminal: TerminalIDZero(),
 	idNum:    SessionIDNumZero,
 }
 
-// SessionRefKeyZero returns
-// a zero-valued instance of SessionRefKey.
-func SessionRefKeyZero() SessionRefKey {
-	return _SessionRefKeyZero
+// SessionIDZero returns
+// a zero-valued instance of SessionID.
+func SessionIDZero() SessionID {
+	return _SessionIDZero
 }
 
-// AZRefKey is required by azid.RefKey interface.
-func (SessionRefKey) AZRefKey() {}
+// AZID is required by azid.ID interface.
+func (SessionID) AZID() {}
 
-// AZAdjunctEntityRefKey is required
-// by azcore.AdjunctEntityRefKey interface.
-func (SessionRefKey) AZAdjunctEntityRefKey() {}
+// AZAdjunctEntityID is required
+// by azcore.AdjunctEntityID interface.
+func (SessionID) AZAdjunctEntityID() {}
 
 // IDNum returns the scoped identifier of the entity.
-func (refKey SessionRefKey) IDNum() SessionIDNum {
-	return refKey.idNum
+func (id SessionID) IDNum() SessionIDNum {
+	return id.idNum
 }
 
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
-func (refKey SessionRefKey) IDNumPtr() *SessionIDNum {
-	if refKey.IsNotStaticallyValid() {
+func (id SessionID) IDNumPtr() *SessionIDNum {
+	if id.IsNotStaticallyValid() {
 		return nil
 	}
-	i := refKey.IDNum()
+	i := id.IDNum()
 	return &i
 }
 
-// AZIDNum is required for conformance with azid.RefKey.
-func (refKey SessionRefKey) AZIDNum() SessionIDNum {
-	return refKey.idNum
+// AZIDNum is required for conformance with azid.ID.
+func (id SessionID) AZIDNum() SessionIDNum {
+	return id.idNum
 }
 
 // SessionIDNum is required for conformance
-// with azcore.SessionRefKey.
-func (refKey SessionRefKey) SessionIDNum() SessionIDNum {
-	return refKey.idNum
+// with azcore.SessionID.
+func (id SessionID) SessionIDNum() SessionIDNum {
+	return id.idNum
 }
 
-// IsZero is required as SessionRefKey is a value-object.
-func (refKey SessionRefKey) IsZero() bool {
-	return refKey.terminal.IsZero() &&
-		refKey.idNum == SessionIDNumZero
+// IsZero is required as SessionID is a value-object.
+func (id SessionID) IsZero() bool {
+	return id.terminal.IsZero() &&
+		id.idNum == SessionIDNumZero
 }
 
 // IsStaticallyValid returns true if this instance is valid as an isolated value
-// of SessionRefKey.
+// of SessionID.
 // It doesn't tell whether it refers to a valid instance of Session.
-func (refKey SessionRefKey) IsStaticallyValid() bool {
-	return refKey.terminal.IsStaticallyValid() &&
-		refKey.idNum.IsStaticallyValid()
+func (id SessionID) IsStaticallyValid() bool {
+	return id.terminal.IsStaticallyValid() &&
+		id.idNum.IsStaticallyValid()
 }
 
 // IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
-func (refKey SessionRefKey) IsNotStaticallyValid() bool {
-	return !refKey.IsStaticallyValid()
+func (id SessionID) IsNotStaticallyValid() bool {
+	return !id.IsStaticallyValid()
 }
 
-// Equals is required for conformance with azcore.AdjunctEntityRefKey.
-func (refKey SessionRefKey) Equals(other interface{}) bool {
-	if x, ok := other.(SessionRefKey); ok {
-		return refKey.terminal.EqualsTerminalRefKey(x.terminal) &&
-			refKey.idNum == x.idNum
+// Equals is required for conformance with azcore.AdjunctEntityID.
+func (id SessionID) Equals(other interface{}) bool {
+	if x, ok := other.(SessionID); ok {
+		return id.terminal.EqualsTerminalID(x.terminal) &&
+			id.idNum == x.idNum
 	}
-	if x, _ := other.(*SessionRefKey); x != nil {
-		return refKey.terminal.EqualsTerminalRefKey(x.terminal) &&
-			refKey.idNum == x.idNum
+	if x, _ := other.(*SessionID); x != nil {
+		return id.terminal.EqualsTerminalID(x.terminal) &&
+			id.idNum == x.idNum
 	}
 	return false
 }
 
-// Equal is required for conformance with azcore.AdjunctEntityRefKey.
-func (refKey SessionRefKey) Equal(other interface{}) bool {
-	return refKey.Equals(other)
+// Equal is required for conformance with azcore.AdjunctEntityID.
+func (id SessionID) Equal(other interface{}) bool {
+	return id.Equals(other)
 }
 
-// EqualsSessionRefKey returns true
-// if the other value has the same attributes as refKey.
-func (refKey SessionRefKey) EqualsSessionRefKey(
-	other SessionRefKey,
+// EqualsSessionID returns true
+// if the other value has the same attributes as id.
+func (id SessionID) EqualsSessionID(
+	other SessionID,
 ) bool {
-	return refKey.terminal.EqualsTerminalRefKey(other.terminal) &&
-		refKey.idNum == other.idNum
+	return id.terminal.EqualsTerminalID(other.terminal) &&
+		id.idNum == other.idNum
 }
 
 // AZIDBin is required for conformance
-// with azid.RefKey.
-func (refKey SessionRefKey) AZIDBin() []byte {
-	data, typ := refKey.AZIDBinField()
+// with azid.ID.
+func (id SessionID) AZIDBin() []byte {
+	data, typ := id.AZIDBinField()
 	out := []byte{typ.Byte()}
 	return append(out, data...)
 }
 
-// SessionRefKeyFromAZIDBin creates a new instance of
-// SessionRefKey from its azid-bin form.
-func SessionRefKeyFromAZIDBin(
+// SessionIDFromAZIDBin creates a new instance of
+// SessionID from its azid-bin form.
+func SessionIDFromAZIDBin(
 	b []byte,
-) (refKey SessionRefKey, readLen int, err error) {
+) (id SessionID, readLen int, err error) {
 	typ, err := azid.BinDataTypeFromByte(b[0])
 	if err != nil {
-		return SessionRefKeyZero(), 0,
+		return SessionIDZero(), 0,
 			errors.ArgWrap("", "type parsing", err)
 	}
 	if typ != azid.BinDataTypeArray {
-		return SessionRefKeyZero(), 0,
+		return SessionIDZero(), 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
 
-	refKey, readLen, err = SessionRefKeyFromAZIDBinField(b[1:], typ)
-	return refKey, readLen + 1, err
+	id, readLen, err = SessionIDFromAZIDBinField(b[1:], typ)
+	return id, readLen + 1, err
 }
 
 // AZIDBinField is required for conformance
-// with azid.RefKey.
-func (refKey SessionRefKey) AZIDBinField() ([]byte, azid.BinDataType) {
+// with azid.ID.
+func (id SessionID) AZIDBinField() ([]byte, azid.BinDataType) {
 	var typesBytes []byte
 	var dataBytes []byte
 	var fieldBytes []byte
 	var fieldType azid.BinDataType
 
-	fieldBytes, fieldType = refKey.terminal.AZIDBinField()
+	fieldBytes, fieldType = id.terminal.AZIDBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
-	fieldBytes, fieldType = refKey.idNum.AZIDBinField()
+	fieldBytes, fieldType = id.idNum.AZIDBinField()
 	typesBytes = append(typesBytes, fieldType.Byte())
 	dataBytes = append(dataBytes, fieldBytes...)
 
@@ -340,19 +340,19 @@ func (refKey SessionRefKey) AZIDBinField() ([]byte, azid.BinDataType) {
 	return out, azid.BinDataTypeArray
 }
 
-// SessionRefKeyFromAZIDBinField creates SessionRefKey from
+// SessionIDFromAZIDBinField creates SessionID from
 // its azid-bin field form.
-func SessionRefKeyFromAZIDBinField(
+func SessionIDFromAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
-) (refKey SessionRefKey, readLen int, err error) {
+) (id SessionID, readLen int, err error) {
 	if typeHint != azid.BinDataTypeArray {
-		return SessionRefKeyZero(), 0,
+		return SessionIDZero(), 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
 
 	arrayLen := int(b[0])
-	if arrayLen != _SessionRefKeyFieldCount {
-		return SessionRefKeyZero(), 0,
+	if arrayLen != _SessionIDFieldCount {
+		return SessionIDZero(), 0,
 			errors.Arg("", errors.EntMsg("field count", "mismatch"))
 	}
 
@@ -363,163 +363,163 @@ func SessionRefKeyFromAZIDBinField(
 
 	fieldType, err = azid.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
-		return SessionRefKeyZero(), 0,
+		return SessionIDZero(), 0,
 			errors.ArgWrap("", "terminal ref-key type parsing", err)
 	}
 	typeCursor++
-	terminalRefKey, readLen, err := TerminalRefKeyFromAZIDBinField(
+	terminalID, readLen, err := TerminalIDFromAZIDBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
-		return SessionRefKeyZero(), 0,
+		return SessionIDZero(), 0,
 			errors.ArgWrap("", "terminal ref-key data parsing", err)
 	}
 	dataCursor += readLen
 
 	fieldType, err = azid.BinDataTypeFromByte(b[typeCursor])
 	if err != nil {
-		return SessionRefKeyZero(), 0,
+		return SessionIDZero(), 0,
 			errors.ArgWrap("", "id-num type parsing", err)
 	}
 	typeCursor++
 	idNum, readLen, err := SessionIDNumFromAZIDBinField(
 		b[dataCursor:], fieldType)
 	if err != nil {
-		return SessionRefKeyZero(), 0,
+		return SessionIDZero(), 0,
 			errors.ArgWrap("", "id-num data parsing", err)
 	}
 	dataCursor += readLen
 
-	return SessionRefKey{
-		terminal: terminalRefKey,
+	return SessionID{
+		terminal: terminalID,
 		idNum:    idNum,
 	}, dataCursor, nil
 }
 
 // UnmarshalAZIDBinField is required for conformance
 // with azcore.BinFieldUnmarshalable.
-func (refKey *SessionRefKey) UnmarshalAZIDBinField(
+func (id *SessionID) UnmarshalAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := SessionRefKeyFromAZIDBinField(b, typeHint)
+	i, readLen, err := SessionIDFromAZIDBinField(b, typeHint)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return readLen, err
 }
 
-const _SessionRefKeyAZIDTextPrefix = "KSe0"
+const _SessionIDAZIDTextPrefix = "KSe0"
 
 // AZIDText is required for conformance
-// with azid.RefKey.
-func (refKey SessionRefKey) AZIDText() string {
-	if !refKey.IsStaticallyValid() {
+// with azid.ID.
+func (id SessionID) AZIDText() string {
+	if !id.IsStaticallyValid() {
 		return ""
 	}
 
-	return _SessionRefKeyAZIDTextPrefix +
-		azid.TextEncode(refKey.AZIDBin())
+	return _SessionIDAZIDTextPrefix +
+		azid.TextEncode(id.AZIDBin())
 }
 
-// SessionRefKeyFromAZIDText creates a new instance of
-// SessionRefKey from its azid-text form.
-func SessionRefKeyFromAZIDText(s string) (SessionRefKey, error) {
+// SessionIDFromAZIDText creates a new instance of
+// SessionID from its azid-text form.
+func SessionIDFromAZIDText(s string) (SessionID, error) {
 	if s == "" {
-		return SessionRefKeyZero(), nil
+		return SessionIDZero(), nil
 	}
-	if !strings.HasPrefix(s, _SessionRefKeyAZIDTextPrefix) {
-		return SessionRefKeyZero(),
+	if !strings.HasPrefix(s, _SessionIDAZIDTextPrefix) {
+		return SessionIDZero(),
 			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
 	}
-	s = strings.TrimPrefix(s, _SessionRefKeyAZIDTextPrefix)
+	s = strings.TrimPrefix(s, _SessionIDAZIDTextPrefix)
 	b, err := azid.TextDecode(s)
 	if err != nil {
-		return SessionRefKeyZero(),
+		return SessionIDZero(),
 			errors.ArgWrap("", "data parsing", err)
 	}
-	refKey, _, err := SessionRefKeyFromAZIDBin(b)
+	id, _, err := SessionIDFromAZIDBin(b)
 	if err != nil {
-		return SessionRefKeyZero(),
+		return SessionIDZero(),
 			errors.ArgWrap("", "data decoding", err)
 	}
-	return refKey, nil
+	return id, nil
 }
 
 // UnmarshalAZIDText is required for conformance
 // with azid.TextUnmarshalable.
-func (refKey *SessionRefKey) UnmarshalAZIDText(s string) error {
-	r, err := SessionRefKeyFromAZIDText(s)
+func (id *SessionID) UnmarshalAZIDText(s string) error {
+	r, err := SessionIDFromAZIDText(s)
 	if err == nil {
-		*refKey = r
+		*id = r
 	}
 	return err
 }
 
 // MarshalText is for compatibility with Go's encoding.TextMarshaler
-func (refKey SessionRefKey) MarshalText() ([]byte, error) {
-	return []byte(refKey.AZIDText()), nil
+func (id SessionID) MarshalText() ([]byte, error) {
+	return []byte(id.AZIDText()), nil
 }
 
 // UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
-func (refKey *SessionRefKey) UnmarshalText(b []byte) error {
-	r, err := SessionRefKeyFromAZIDText(string(b))
+func (id *SessionID) UnmarshalText(b []byte) error {
+	r, err := SessionIDFromAZIDText(string(b))
 	if err == nil {
-		*refKey = r
+		*id = r
 	}
 	return err
 }
 
 // MarshalJSON makes this type JSON-marshalable.
-func (refKey SessionRefKey) MarshalJSON() ([]byte, error) {
+func (id SessionID) MarshalJSON() ([]byte, error) {
 	// We assume that there are no symbols in azid-text
-	return []byte("\"" + refKey.AZIDText() + "\""), nil
+	return []byte("\"" + id.AZIDText() + "\""), nil
 }
 
 // UnmarshalJSON parses a JSON value.
-func (refKey *SessionRefKey) UnmarshalJSON(b []byte) error {
+func (id *SessionID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
 	if s == "" {
-		*refKey = SessionRefKeyZero()
+		*id = SessionIDZero()
 		return nil
 	}
-	i, err := SessionRefKeyFromAZIDText(s)
+	i, err := SessionIDFromAZIDText(s)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return err
 }
 
 // Terminal returns instance's Terminal value.
-func (refKey SessionRefKey) Terminal() TerminalRefKey {
-	return refKey.terminal
+func (id SessionID) Terminal() TerminalID {
+	return id.terminal
 }
 
 // TerminalPtr returns a pointer to a copy of
-// TerminalRefKey if it's considered valid.
-func (refKey SessionRefKey) TerminalPtr() *TerminalRefKey {
-	if refKey.terminal.IsStaticallyValid() {
-		rk := refKey.terminal
+// TerminalID if it's considered valid.
+func (id SessionID) TerminalPtr() *TerminalID {
+	if id.terminal.IsStaticallyValid() {
+		rk := id.terminal
 		return &rk
 	}
 	return nil
 }
 
 // WithTerminal returns a copy
-// of SessionRefKey
+// of SessionID
 // with its terminal attribute set to the provided value.
-func (refKey SessionRefKey) WithTerminal(
-	terminal TerminalRefKey,
-) SessionRefKey {
-	return SessionRefKey{
+func (id SessionID) WithTerminal(
+	terminal TerminalID,
+) SessionID {
+	return SessionID{
 		terminal: terminal,
-		idNum:    refKey.idNum,
+		idNum:    id.idNum,
 	}
 }
 
-// SessionRefKeyError defines an interface for all
-// SessionRefKey-related errors.
-type SessionRefKeyError interface {
+// SessionIDError defines an interface for all
+// SessionID-related errors.
+type SessionIDError interface {
 	error
-	SessionRefKeyError()
+	SessionIDError()
 }
 
 //endregion

@@ -33,10 +33,10 @@ func NewTerminalAuthorizationServiceServer(
 
 //TODO: verification methods
 func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthorizationByPhoneNumber(
-	callCtx context.Context,
+	inputCtx context.Context,
 	reqProto *iampb.InitiateUserTerminalAuthorizationByPhoneNumberRequest,
 ) (*iampb.InitiateUserTerminalAuthorizationByPhoneNumberResponse, error) {
-	reqCtx, err := authServer.iamServerCore.GRPCCallInputContext(callCtx)
+	reqCtx, err := authServer.iamServerCore.GRPCCallInputContext(inputCtx)
 	if err != nil {
 		panic(err) //TODO: translate and return the error
 	}
@@ -47,7 +47,7 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		return nil, grpcstatus.Error(grpccodes.Unauthenticated, "")
 	}
 
-	appRef, err := iam.ApplicationRefKeyFromAZIDText(reqProto.ClientCredentials.ClientId)
+	appID, err := iam.ApplicationIDFromAZIDText(reqProto.ClientCredentials.ClientId)
 	if err != nil {
 		panic(err)
 	}
@@ -63,8 +63,8 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 	authStartOutput := authServer.iamServerCore.
 		StartTerminalAuthorizationByPhoneNumber(
 			iamserver.TerminalAuthorizationByPhoneNumberStartInput{
-				Context:        reqCtx,
-				ApplicationRef: appRef,
+				Context:       reqCtx,
+				ApplicationID: appID,
 				Data: iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
 					PhoneNumber:         phoneNumber,
 					VerificationMethods: nil,
@@ -97,16 +97,16 @@ func (authServer *TerminalAuthorizationServiceServer) InitiateUserTerminalAuthor
 		}
 	}
 	resp := iampb.InitiateUserTerminalAuthorizationByPhoneNumberResponse{
-		TerminalId:                 authStartOutput.Data.TerminalRef.AZIDText(),
+		TerminalId:                 authStartOutput.Data.TerminalID.AZIDText(),
 		VerificationCodeExpiryTime: codeExpiryProto,
 	}
 	return &resp, nil
 }
 
 func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorization(
-	callCtx context.Context, reqProto *iampb.ConfirmTerminalAuthorizationRequest,
+	inputCtx context.Context, reqProto *iampb.ConfirmTerminalAuthorizationRequest,
 ) (*iampb.ConfirmTerminalAuthorizationResponse, error) {
-	reqCtx, err := authServer.iamServerCore.GRPCCallInputContext(callCtx)
+	reqCtx, err := authServer.iamServerCore.GRPCCallInputContext(inputCtx)
 	if err != nil {
 		panic(err) //TODO: translate and return the error
 	}
@@ -117,7 +117,7 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 		return nil, grpcstatus.Error(grpccodes.Unauthenticated, "")
 	}
 
-	termRef, err := iam.TerminalRefKeyFromAZIDText(reqProto.TerminalId)
+	termID, err := iam.TerminalIDFromAZIDText(reqProto.TerminalId)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -127,7 +127,7 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 
 	termSecret, _, err := authServer.iamServerCore.
 		ConfirmTerminalAuthorization(
-			reqCtx, termRef, reqProto.VerificationCode)
+			reqCtx, termID, reqProto.VerificationCode)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -141,9 +141,9 @@ func (authServer *TerminalAuthorizationServiceServer) ConfirmTerminalAuthorizati
 }
 
 func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTerminalCredentials(
-	callCtx context.Context, reqProto *iampb.GenerateAccessTokenByTerminalCredentialsRequest,
+	inputCtx context.Context, reqProto *iampb.GenerateAccessTokenByTerminalCredentialsRequest,
 ) (*iampb.GenerateAccessTokenByTerminalCredentialsResponse, error) {
-	reqCtx, err := authServer.iamServerCore.GRPCCallInputContext(callCtx)
+	reqCtx, err := authServer.iamServerCore.GRPCCallInputContext(inputCtx)
 	if err != nil {
 		panic(err) //TODO: translate and return the error
 	}
@@ -154,7 +154,7 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		return nil, grpcstatus.Error(grpccodes.Unauthenticated, "")
 	}
 
-	termRef, err := iam.TerminalRefKeyFromAZIDText(reqProto.TerminalId)
+	termID, err := iam.TerminalIDFromAZIDText(reqProto.TerminalId)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).Str("terminal", reqProto.TerminalId).
@@ -162,26 +162,26 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
-	authOK, userRef, err := authServer.iamServerCore.
-		AuthenticateTerminal(termRef, reqProto.TerminalSecret)
+	authOK, userID, err := authServer.iamServerCore.
+		AuthenticateTerminal(termID, reqProto.TerminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Str("terminal", termRef.AZIDText()).
+			Warn().Err(err).Str("terminal", termID.AZIDText()).
 			Msg("Terminal authentication")
 		return nil, grpcerrs.Error(err)
 	}
 	if !authOK {
 		logCtx(reqCtx).
-			Warn().Str("terminal", termRef.AZIDText()).Msg("Terminal authentication")
+			Warn().Str("terminal", termID.AZIDText()).Msg("Terminal authentication")
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 	}
 
-	if userRef.IsStaticallyValid() {
+	if userID.IsStaticallyValid() {
 		userInstInfo, err := authServer.iamServerCore.UserService.
-			GetUserInstanceInfo(reqCtx, userRef)
+			GetUserInstanceInfo(reqCtx, userID)
 		if err != nil {
 			logCtx(reqCtx).
-				Warn().Err(err).Str("terminal", termRef.AZIDText()).
+				Warn().Err(err).Str("terminal", termID.AZIDText()).
 				Msg("Terminal user account state")
 			return nil, grpcerrs.Error(err)
 		}
@@ -193,14 +193,14 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 				status = "deleted"
 			}
 			logCtx(reqCtx).
-				Warn().Str("terminal", termRef.AZIDText()).Str("user", userRef.AZIDText()).
+				Warn().Str("terminal", termID.AZIDText()).Str("user", userID.AZIDText()).
 				Msg("Terminal user account " + status)
 			return nil, grpcstatus.Error(grpccodes.InvalidArgument, "")
 		}
 	}
 
 	tokenString, err := authServer.iamServerCore.
-		GenerateAccessTokenJWT(reqCtx, termRef, userRef)
+		GenerateAccessTokenJWT(reqCtx, termID, userID)
 	if err != nil {
 		panic(err)
 	}
@@ -208,7 +208,7 @@ func (authServer *TerminalAuthorizationServiceServer) GenerateAccessTokenByTermi
 	return &iampb.GenerateAccessTokenByTerminalCredentialsResponse{
 		AccessToken: tokenString,
 		AuthorizationData: &iampb.AuthorizationData{
-			SubjectUserId: userRef.AZIDText(),
+			SubjectUserId: userID.AZIDText(),
 		},
 	}, nil
 }

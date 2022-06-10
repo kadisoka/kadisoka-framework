@@ -205,8 +205,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	requestedUserRefStr := req.PathParameter("user-id")
-	if requestedUserRefStr == "" {
+	requestedUserIDStr := req.PathParameter("user-id")
+	if requestedUserIDStr == "" {
 		logCtx(reqCtx).
 			Warn().Msg("Invalid parameter value path.user-id: empty")
 		rest.RespondTo(resp).EmptyError(
@@ -214,8 +214,8 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	var requestedUserRef iam.UserRefKey
-	if requestedUserRefStr == "me" {
+	var requestedUserID iam.UserID
+	if requestedUserIDStr == "me" {
 		if !reqCtx.IsUserContext() {
 			logCtx(reqCtx).
 				Warn().Msg("Invalid request: 'me' can only be used with user access token")
@@ -223,9 +223,9 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 				http.StatusBadRequest)
 			return
 		}
-		requestedUserRef = ctxAuth.UserRef()
+		requestedUserID = ctxAuth.UserID()
 	} else {
-		requestedUserRef, err = iam.UserRefKeyFromAZIDText(requestedUserRefStr)
+		requestedUserID, err = iam.UserIDFromAZIDText(requestedUserIDStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).Msg("Invalid parameter value path.user-id")
@@ -237,7 +237,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 
 	if acceptType := req.Request.Header.Get("Accept"); acceptType == "application/x-protobuf" {
 		userInfo, err := restSrv.serverCore.
-			GetUserInfoV1(reqCtx, requestedUserRef)
+			GetUserInfoV1(reqCtx, requestedUserID)
 		if err != nil {
 			panic(err)
 		}
@@ -246,7 +246,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	}
 
 	userBaseProfile, err := restSrv.serverCore.
-		GetUserBaseProfile(reqCtx, requestedUserRef)
+		GetUserBaseProfile(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
@@ -256,10 +256,10 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	restUserProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile, requestedUserRef)
+	restUserProfile := iam.UserJSONV1FromBaseProfile(userBaseProfile, requestedUserID)
 
 	userPhoneNumber, err := restSrv.serverCore.
-		GetUserKeyPhoneNumber(reqCtx, requestedUserRef)
+		GetUserKeyPhoneNumber(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
@@ -275,7 +275,7 @@ func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
 	//TODO(exa): should get display email address instead of primary
 	// email address for this use case.
 	userEmailAddress, err := restSrv.serverCore.
-		GetUserKeyEmailAddress(reqCtx, requestedUserRef)
+		GetUserKeyEmailAddress(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).

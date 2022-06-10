@@ -19,18 +19,18 @@ type ProfileImageFile interface {
 }
 
 func (core *Core) SetUserProfileImageURL(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 	profileImageURL string,
 ) error {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 	// Change this if we want to allow service client to update a user's profile
 	// (we'll need a better access control for service clients)
 	if !ctxAuth.IsUserSubject() {
 		return iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !ctxAuth.IsUser(userRef) {
+	if !ctxAuth.IsUser(userID) {
 		return iam.ErrOperationNotAllowed
 	}
 	if profileImageURL != "" && !core.isUserProfileImageURLAllowed(profileImageURL) {
@@ -44,7 +44,7 @@ func (core *Core) SetUserProfileImageURL(
 			`UPDATE `+userProfileImageKeyDBTableName+` `+
 				"SET _md_ts = $1, _md_uid = $2, _md_tid = $3 "+
 				"WHERE user_id = $2 AND _md_ts IS NULL",
-			callCtx.CallInputMetadata().ReceiveTime,
+			inputCtx.CallInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue())
 		if txErr != nil {
@@ -66,8 +66,8 @@ func (core *Core) SetUserProfileImageURL(
 }
 
 func (core *Core) SetUserProfileImageByFile(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 	imageFile ProfileImageFile,
 ) (imageURL string, err error) {
 	//TODO: configurable
@@ -96,7 +96,7 @@ func (core *Core) SetUserProfileImageByFile(
 
 	imageKey, err := core.mediaStore.
 		Upload(
-			callCtx,
+			inputCtx,
 			path.Join(bucketSubPath, filename),
 			imageFile,
 			mediaType)
@@ -104,7 +104,7 @@ func (core *Core) SetUserProfileImageByFile(
 		return "", errors.Wrap("file store", err)
 	}
 
-	err = core.SetUserProfileImageURL(callCtx, userRef, imageKey)
+	err = core.SetUserProfileImageURL(inputCtx, userID, imageKey)
 	if err != nil {
 		return "", errors.Wrap("user profile image URL update", err)
 	}

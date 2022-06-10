@@ -21,16 +21,16 @@ var _ iam.UserKeyPhoneNumberService = &Core{}
 const userKeyPhoneNumberDBTableName = `user_key_phone_number_dt`
 
 func (core *Core) GetUserKeyPhoneNumber(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*telephony.PhoneNumber, error) {
 	//TODO: access control
-	return core.getUserKeyPhoneNumberInsecure(callCtx, userRef)
+	return core.getUserKeyPhoneNumberInsecure(inputCtx, userID)
 }
 
 func (core *Core) getUserKeyPhoneNumberInsecure(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*telephony.PhoneNumber, error) {
 	var countryCode int32
 	var nationalNumber int64
@@ -39,7 +39,7 @@ func (core *Core) getUserKeyPhoneNumberInsecure(
 		From(userKeyPhoneNumberDBTableName).
 		Select("country_code", "national_number").
 		Where(
-			goqu.C("user_id").Eq(userRef.IDNum().PrimitiveValue()),
+			goqu.C("user_id").Eq(userID.IDNum().PrimitiveValue()),
 			goqu.C("_md_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
@@ -87,9 +87,9 @@ func (core *Core) getUserIDNumByKeyPhoneNumberInsecure(
 
 // The ID of the user which provided phone number is their identifier,
 // verified or not.
-func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
+func (core *Core) getUserIDByKeyPhoneNumberAllowUnverifiedInsecure(
 	phoneNumber telephony.PhoneNumber,
-) (ownerUserRef iam.UserRefKey, alreadyVerified bool, err error) {
+) (ownerUserID iam.UserID, alreadyVerified bool, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyPhoneNumberDBTableName).
 		Select(
@@ -114,26 +114,26 @@ func (core *Core) getUserRefByKeyPhoneNumberAllowUnverified(
 		Scan(&ownerUserIDNum, &alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return iam.UserRefKeyZero(), false, nil
+			return iam.UserIDZero(), false, nil
 		}
-		return iam.UserRefKeyZero(), false, err
+		return iam.UserIDZero(), false, err
 	}
 
-	return iam.NewUserRefKey(ownerUserIDNum), alreadyVerified, nil
+	return iam.NewUserID(ownerUserIDNum), alreadyVerified, nil
 }
 
 func (core *Core) SetUserKeyPhoneNumber(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 	phoneNumber telephony.PhoneNumber,
 	verificationMethods []pnv10n.VerificationMethod,
 ) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 	if !ctxAuth.IsUserSubject() {
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !ctxAuth.IsUser(userRef) {
+	if !ctxAuth.IsUser(userID) {
 		return 0, nil, iam.ErrOperationNotAllowed
 	}
 
@@ -152,7 +152,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	}
 
 	alreadyVerified, err := core.setUserKeyPhoneNumber(
-		callCtx, ctxAuth.UserRef(), phoneNumber)
+		inputCtx, ctxAuth.UserID(), phoneNumber)
 	if err != nil {
 		return 0, nil, errors.Wrap("setUserKeyPhoneNumber", err)
 	}
@@ -166,7 +166,7 @@ func (core *Core) SetUserKeyPhoneNumber(
 	}
 
 	verificationID, verificationCodeExpiry, err = core.pnVerifier.
-		StartVerification(callCtx, phoneNumber,
+		StartVerification(inputCtx, phoneNumber,
 			0, userLanguages, nil)
 	if err != nil {
 		switch err.(type) {
@@ -180,12 +180,12 @@ func (core *Core) SetUserKeyPhoneNumber(
 }
 
 func (core *Core) setUserKeyPhoneNumber(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 	phoneNumber telephony.PhoneNumber,
 ) (alreadyVerified bool, err error) {
-	ctxTime := callCtx.CallInputMetadata().ReceiveTime
-	ctxAuth := callCtx.Authorization()
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
+	ctxAuth := inputCtx.Authorization()
 
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userKeyPhoneNumberDBTableName+` (`+
@@ -196,7 +196,7 @@ func (core *Core) setUserKeyPhoneNumber(
 			`) `+
 			`ON CONFLICT (user_id, country_code, national_number) WHERE _md_ts IS NULL `+
 			`DO NOTHING`,
-		userRef.IDNum().PrimitiveValue(),
+		userID.IDNum().PrimitiveValue(),
 		phoneNumber.CountryCode(),
 		phoneNumber.NationalNumber(),
 		phoneNumber.RawInput(),
@@ -219,7 +219,7 @@ func (core *Core) setUserKeyPhoneNumber(
 		`SELECT CASE WHEN verification_ts IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userKeyPhoneNumberDBTableName+` `+
 			`WHERE user_id = $1 AND country_code = $2 AND national_number = $3`,
-		userRef.IDNum().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
+		userID.IDNum().PrimitiveValue(), phoneNumber.CountryCode(), phoneNumber.NationalNumber()).
 		Scan(&alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -232,13 +232,13 @@ func (core *Core) setUserKeyPhoneNumber(
 }
 
 func (core *Core) ConfirmUserPhoneNumberVerification(
-	callCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	verificationID int64,
 	code string,
 ) (stateChanged bool, err error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 	err = core.pnVerifier.ConfirmVerification(
-		callCtx, verificationID, code)
+		inputCtx, verificationID, code)
 	if err != nil {
 		switch err {
 		case pnv10n.ErrVerificationCodeMismatch:
@@ -256,7 +256,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		panic(err)
 	}
 
-	ctxTime := callCtx.CallInputMetadata().ReceiveTime
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 	stateChanged, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
 			ctxAuth.UserIDNum(), *phoneNumber,

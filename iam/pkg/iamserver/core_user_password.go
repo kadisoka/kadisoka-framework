@@ -42,16 +42,16 @@ var argon2PasswordHashingParamsDefault = argon2PasswordHashingParams{
 const userPasswordDBTableName = "user_password_dt"
 
 func (core *Core) SetUserPassword(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 	clearTextPassword string,
 ) error {
-	ctxAuth := callCtx.Authorization()
-	if !ctxAuth.IsUser(userRef) {
+	ctxAuth := inputCtx.Authorization()
+	if !ctxAuth.IsUser(userID) {
 		return iam.ErrOperationNotAllowed
 	}
 
-	ctxTime := callCtx.CallInputMetadata().ReceiveTime
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 
 	passwordHash, err := core.hashPassword(clearTextPassword)
 	if err != nil {
@@ -64,7 +64,7 @@ func (core *Core) SetUserPassword(
 				`_md_ts = $1, _md_uid = $2, _md_tid = $3 `+
 				`WHERE user_id = $4 AND _md_ts IS NULL`,
 			ctxTime, ctxAuth.UserIDNum().PrimitiveValue(), ctxAuth.TerminalIDNum().PrimitiveValue(),
-			userRef.IDNum().PrimitiveValue())
+			userID.IDNum().PrimitiveValue())
 		if txErr != nil {
 			return txErr
 		}
@@ -72,17 +72,17 @@ func (core *Core) SetUserPassword(
 			`INSERT INTO `+userPasswordDBTableName+` `+
 				`(user_id, password, _mc_ts, _mc_uid, _mc_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
-			userRef.IDNum().PrimitiveValue(), passwordHash,
+			userID.IDNum().PrimitiveValue(), passwordHash,
 			ctxTime, ctxAuth.UserIDNum().PrimitiveValue(), ctxAuth.TerminalIDNum().PrimitiveValue())
 		return txErr
 	})
 }
 
 func (core *Core) MatchUserPassword(
-	userRef iam.UserRefKey,
+	userID iam.UserID,
 	clearTextPassword string,
 ) (ok bool, err error) {
-	passwordHash, err := core.getUserPasswordHash(userRef.IDNum())
+	passwordHash, err := core.getUserPasswordHash(userID.IDNum())
 	if err != nil {
 		return false, err
 	}

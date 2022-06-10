@@ -130,18 +130,18 @@ type Verifier struct {
 
 //TODO(exa): make the operations atomic
 func (verifier *Verifier) StartVerification(
-	callCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	emailAddress email.Address,
 	codeTTL time.Duration,
 	userPreferredLanguages []language.Tag,
 	preferredVerificationMethods []VerificationMethod,
 ) (idNum int64, codeExpiry *time.Time, err error) {
-	if callCtx == nil {
-		return 0, nil, errors.ArgMsg("callCtx", "missing")
+	if inputCtx == nil {
+		return 0, nil, errors.ArgMsg("inputCtx", "missing")
 	}
 
-	ctxAuth := callCtx.Authorization()
-	ctxTime := callCtx.CallInputMetadata().ReceiveTime
+	ctxAuth := inputCtx.Authorization()
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 
 	var prevAttempts int16
 	var prevVerificationID int64
@@ -216,15 +216,15 @@ func (verifier *Verifier) generateVerificationCode() string {
 }
 
 func (verifier *Verifier) ConfirmVerification(
-	callCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	verificationID int64, code string,
 ) error {
-	if callCtx == nil {
-		return errors.ArgMsg("callCtx", "missing")
+	if inputCtx == nil {
+		return errors.ArgMsg("inputCtx", "missing")
 	}
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 
-	ctxTime := callCtx.CallInputMetadata().ReceiveTime
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 	var dbData verificationDBModel
 
 	err := verifier.db.QueryRowx(

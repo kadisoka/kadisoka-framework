@@ -13,13 +13,13 @@ import (
 //TODO: some data should be taken from the context instead of
 // provided in here.
 type TerminalRegistrationInput struct {
-	Context        iam.CallInputContext
-	ApplicationRef iam.ApplicationRefKey //TODO: get from context
-	Data           TerminalRegistrationInputData
+	Context       iam.CallInputContext
+	ApplicationID iam.ApplicationID //TODO: get from context
+	Data          TerminalRegistrationInputData
 }
 
 type TerminalRegistrationInputData struct {
-	UserRef iam.UserRefKey
+	UserID iam.UserID
 
 	DisplayName string
 
@@ -34,15 +34,15 @@ type TerminalRegistrationOutput struct {
 }
 
 type TerminalRegistrationOutputData struct {
-	TerminalRef    iam.TerminalRefKey
+	TerminalID     iam.TerminalID
 	TerminalSecret string
 }
 
 //TODO: use generics when it's available
 type TerminalAuthorizationByEmailAddressStartInput struct {
-	Context        iam.CallInputContext
-	ApplicationRef iam.ApplicationRefKey //TODO: should be from Context.Authorization
-	Data           TerminalAuthorizationByEmailAddressStartInputData
+	Context       iam.CallInputContext
+	ApplicationID iam.ApplicationID //TODO: should be from Context.Authorization
+	Data          TerminalAuthorizationByEmailAddressStartInputData
 }
 
 type TerminalAuthorizationByEmailAddressStartInputData struct {
@@ -54,9 +54,9 @@ type TerminalAuthorizationByEmailAddressStartInputData struct {
 
 //TODO: use generics when it's available
 type TerminalAuthorizationByPhoneNumberStartInput struct {
-	Context        iam.CallInputContext
-	ApplicationRef iam.ApplicationRefKey //TODO: should be from Context.Authorization
-	Data           TerminalAuthorizationByPhoneNumberStartInputData
+	Context       iam.CallInputContext
+	ApplicationID iam.ApplicationID //TODO: should be from Context.Authorization
+	Data          TerminalAuthorizationByPhoneNumberStartInputData
 }
 
 type TerminalAuthorizationByPhoneNumberStartInputData struct {
@@ -76,7 +76,7 @@ type TerminalAuthorizationStartOutput struct {
 }
 
 type TerminalAuthorizationStartOutputData struct {
-	TerminalRef                iam.TerminalRefKey
+	TerminalID                 iam.TerminalID
 	VerificationID             int64
 	VerificationCodeExpiryTime *time.Time
 }

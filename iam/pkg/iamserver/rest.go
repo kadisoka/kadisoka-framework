@@ -63,15 +63,15 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 	if creds[0] == "" {
 		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("username", "empty"))
 	}
-	appRef, err := iam.ApplicationRefKeyFromAZIDText(creds[0])
+	appID, err := iam.ApplicationIDFromAZIDText(creds[0])
 	if err != nil {
 		return nil, iam.ReqFieldErr("Authorization", errors.Ent("username", dataerrs.Malformed(err)))
 	}
-	if appRef.IsNotStaticallyValid() {
+	if appID.IsNotStaticallyValid() {
 		return nil, iam.ReqFieldErr("Authorization", errors.Ent("username", nil))
 	}
 
-	client, err = svcBase.ApplicationByRefKey(appRef)
+	client, err = svcBase.ApplicationByID(appID)
 	if err != nil {
 		return nil, errors.Wrap("client look up", err)
 	}

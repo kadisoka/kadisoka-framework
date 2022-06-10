@@ -1,5 +1,9 @@
 package iam
 
+import (
+	"github.com/alloyzeus/go-azfl/azcore"
+)
+
 type ApplicationData struct {
 	DisplayName       string
 	Secret            string
@@ -7,6 +11,8 @@ type ApplicationData struct {
 	RequiredScopes    []string
 	OAuth2RedirectURI []string
 }
+
+var _ azcore.EntityData = ApplicationData{}
 
 func (cl ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
 	if cl.OAuth2RedirectURI == nil {
@@ -20,11 +26,8 @@ func (cl ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
 	return false
 }
 
-type Application struct {
-	RefKey ApplicationRefKey
-	Data   ApplicationData
-}
+type Application azcore.EntityEnvelope[ApplicationIDNum, ApplicationID, ApplicationData]
 
 type ApplicationDataProvider interface {
-	GetApplication(refKey ApplicationRefKey) (*Application, error)
+	GetApplication(id ApplicationID) (*Application, error)
 }

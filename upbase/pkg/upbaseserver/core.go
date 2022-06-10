@@ -22,20 +22,20 @@ func (srvCore *Core) RESTCallInputContext(
 }
 
 func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*oidc.StandardClaims, error) {
-	if callCtx == nil {
+	if inputCtx == nil {
 		return nil, iam.ErrCallInputContextMissing
 	}
 
-	ctxAuth := callCtx.Authorization()
-	if !ctxAuth.IsUser(userRef) {
+	ctxAuth := inputCtx.Authorization()
+	if !ctxAuth.IsUser(userID) {
 		return nil, iam.ErrOperationNotAllowed
 	}
 	//TODO(exa): ensure that the context user has the privilege
 
-	userInstInfo, err := srvCore.iamSvc.GetUserInstanceInfo(callCtx, userRef)
+	userInstInfo, err := srvCore.iamSvc.GetUserInstanceInfo(inputCtx, userID)
 	if err != nil {
 		//TODO: translate error
 		return nil, errors.Wrap("GetUserInstanceInfo", err)
@@ -45,12 +45,12 @@ func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
 		return nil, nil
 	}
 
-	return srvCore.getUserOpenIDConnectStandardClaimsInsecure(callCtx, userRef)
+	return srvCore.getUserOpenIDConnectStandardClaimsInsecure(inputCtx, userID)
 }
 
 func (srvCore *Core) getUserOpenIDConnectStandardClaimsInsecure(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*oidc.StandardClaims, error) {
 	return nil, errors.ErrUnimplemented
 
@@ -99,7 +99,7 @@ func (srvCore *Core) getUserOpenIDConnectStandardClaimsInsecure(
 	// }
 
 	// userInfo := oidc.StandardClaims{
-	// 	Sub:                 userRef.AZIDText(),
+	// 	Sub:                 userID.AZIDText(),
 	// 	Name:                userBaseProfile.DisplayName,
 	// 	Email:               emailAddressStr,
 	// 	EmailVerified:       emailAddressVerified,

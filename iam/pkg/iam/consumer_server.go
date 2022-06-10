@@ -204,20 +204,20 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	if claims.ID == "" {
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("jti", "empty"))
 	}
-	sessionRef, err := SessionRefKeyFromAZIDText(claims.ID)
+	sessionID, err := SessionIDFromAZIDText(claims.ID)
 	if err != nil {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("jti", dataerrs.Malformed(err)))
 	}
 	//TODO(exa): check if the authorization instance id has been revoked
 
-	var userRef UserRefKey
+	var userID UserID
 	if claims.Subject != "" {
-		userRef, err = UserRefKeyFromAZIDText(claims.Subject)
+		userID, err = UserIDFromAZIDText(claims.Subject)
 		if err != nil {
 			return emptyAuthCtx, errors.Arg("", errors.EntMsg("sub", "malformed"))
 		}
 		instInfo, err := consumerSrv.userInstanceInfoService.
-			GetUserInstanceInfo(nil, userRef)
+			GetUserInstanceInfo(nil, userID)
 		if err != nil {
 			return emptyAuthCtx, errors.Wrap("account state query", err)
 		}
@@ -229,20 +229,20 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 		}
 	}
 
-	var terminalRef TerminalRefKey
+	var terminalID TerminalID
 	if claims.TerminalID == "" {
 		return emptyAuthCtx, errors.Arg("", errors.EntMsg("terminal_id", "empty"))
 	}
-	terminalRef, err = TerminalRefKeyFromAZIDText(claims.TerminalID)
+	terminalID, err = TerminalIDFromAZIDText(claims.TerminalID)
 	if err != nil {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("terminal_id", dataerrs.Malformed(err)))
 	}
-	if terminalRef.IsNotStaticallyValid() {
+	if terminalID.IsNotStaticallyValid() {
 		return emptyAuthCtx, errors.Arg("", errors.Ent("terminal_id", dataerrs.ErrMalformed))
 	}
 
 	return &Authorization{
-		Session:  sessionRef,
+		Session:  sessionID,
 		rawToken: jwtStr,
 	}, nil
 }

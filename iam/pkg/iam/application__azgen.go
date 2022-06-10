@@ -305,264 +305,264 @@ type ApplicationIDNumError interface {
 
 //endregion
 
-//region RefKey
+//region ID
 
-// ApplicationRefKey is used to identify
+// ApplicationID is used to identify
 // an instance of entity Application system-wide.
-type ApplicationRefKey ApplicationIDNum
+type ApplicationID ApplicationIDNum
 
-// NewApplicationRefKey returns a new instance
-// of ApplicationRefKey with the provided attribute values.
-func NewApplicationRefKey(
+// NewApplicationID returns a new instance
+// of ApplicationID with the provided attribute values.
+func NewApplicationID(
 	idNum ApplicationIDNum,
-) ApplicationRefKey {
-	return ApplicationRefKey(idNum)
+) ApplicationID {
+	return ApplicationID(idNum)
 }
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.RefKey[ApplicationIDNum] = _ApplicationRefKeyZero
-var _ azid.BinUnmarshalable = &_ApplicationRefKeyZeroVar
-var _ azid.BinFieldUnmarshalable = &_ApplicationRefKeyZeroVar
-var _ azid.TextUnmarshalable = &_ApplicationRefKeyZeroVar
-var _ azcore.EntityRefKey[ApplicationIDNum] = _ApplicationRefKeyZero
+var _ azid.ID[ApplicationIDNum] = _ApplicationIDZero
+var _ azid.BinUnmarshalable = &_ApplicationIDZeroVar
+var _ azid.BinFieldUnmarshalable = &_ApplicationIDZeroVar
+var _ azid.TextUnmarshalable = &_ApplicationIDZeroVar
+var _ azcore.EntityID[ApplicationIDNum] = _ApplicationIDZero
 
-const _ApplicationRefKeyZero = ApplicationRefKey(ApplicationIDNumZero)
+const _ApplicationIDZero = ApplicationID(ApplicationIDNumZero)
 
-var _ApplicationRefKeyZeroVar = _ApplicationRefKeyZero
+var _ApplicationIDZeroVar = _ApplicationIDZero
 
-// ApplicationRefKeyZero returns
-// a zero-valued instance of ApplicationRefKey.
-func ApplicationRefKeyZero() ApplicationRefKey {
-	return _ApplicationRefKeyZero
+// ApplicationIDZero returns
+// a zero-valued instance of ApplicationID.
+func ApplicationIDZero() ApplicationID {
+	return _ApplicationIDZero
 }
 
-// AZRefKey is required for conformance with azid.RefKey.
-func (ApplicationRefKey) AZRefKey() {}
+// AZID is required for conformance with azid.ID.
+func (ApplicationID) AZID() {}
 
-// AZEntityRefKey is required for conformance
-// with azcore.EntityRefKey.
-func (ApplicationRefKey) AZEntityRefKey() {}
+// AZEntityID is required for conformance
+// with azcore.EntityID.
+func (ApplicationID) AZEntityID() {}
 
 // IDNum returns the scoped identifier of the entity.
-func (refKey ApplicationRefKey) IDNum() ApplicationIDNum {
-	return ApplicationIDNum(refKey)
+func (id ApplicationID) IDNum() ApplicationIDNum {
+	return ApplicationIDNum(id)
 }
 
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
-func (refKey ApplicationRefKey) IDNumPtr() *ApplicationIDNum {
-	if refKey.IsNotStaticallyValid() {
+func (id ApplicationID) IDNumPtr() *ApplicationIDNum {
+	if id.IsNotStaticallyValid() {
 		return nil
 	}
-	i := refKey.IDNum()
+	i := id.IDNum()
 	return &i
 }
 
-// AZIDNum is required for conformance with azid.RefKey.
-func (refKey ApplicationRefKey) AZIDNum() ApplicationIDNum {
-	return ApplicationIDNum(refKey)
+// AZIDNum is required for conformance with azid.ID.
+func (id ApplicationID) AZIDNum() ApplicationIDNum {
+	return ApplicationIDNum(id)
 }
 
-// IsZero is required as ApplicationRefKey is a value-object.
-func (refKey ApplicationRefKey) IsZero() bool {
-	return ApplicationIDNum(refKey) == ApplicationIDNumZero
+// IsZero is required as ApplicationID is a value-object.
+func (id ApplicationID) IsZero() bool {
+	return ApplicationIDNum(id) == ApplicationIDNumZero
 }
 
 // IsStaticallyValid returns true if this instance is valid as an isolated value
-// of ApplicationRefKey.
+// of ApplicationID.
 // It doesn't tell whether it refers to a valid instance of Application.
-func (refKey ApplicationRefKey) IsStaticallyValid() bool {
-	return ApplicationIDNum(refKey).IsStaticallyValid()
+func (id ApplicationID) IsStaticallyValid() bool {
+	return ApplicationIDNum(id).IsStaticallyValid()
 }
 
 // IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
-func (refKey ApplicationRefKey) IsNotStaticallyValid() bool {
-	return !refKey.IsStaticallyValid()
+func (id ApplicationID) IsNotStaticallyValid() bool {
+	return !id.IsStaticallyValid()
 }
 
-// Equals is required for conformance with azcore.EntityRefKey.
-func (refKey ApplicationRefKey) Equals(other interface{}) bool {
-	if x, ok := other.(ApplicationRefKey); ok {
-		return x == refKey
+// Equals is required for conformance with azcore.EntityID.
+func (id ApplicationID) Equals(other interface{}) bool {
+	if x, ok := other.(ApplicationID); ok {
+		return x == id
 	}
-	if x, _ := other.(*ApplicationRefKey); x != nil {
-		return *x == refKey
+	if x, _ := other.(*ApplicationID); x != nil {
+		return *x == id
 	}
 	return false
 }
 
-// Equal is required for conformance with azcore.EntityRefKey.
-func (refKey ApplicationRefKey) Equal(other interface{}) bool {
-	return refKey.Equals(other)
+// Equal is required for conformance with azcore.EntityID.
+func (id ApplicationID) Equal(other interface{}) bool {
+	return id.Equals(other)
 }
 
-// EqualsApplicationRefKey returs true
-// if the other value has the same attributes as refKey.
-func (refKey ApplicationRefKey) EqualsApplicationRefKey(
-	other ApplicationRefKey,
+// EqualsApplicationID returs true
+// if the other value has the same attributes as id.
+func (id ApplicationID) EqualsApplicationID(
+	other ApplicationID,
 ) bool {
-	return other == refKey
+	return other == id
 }
 
-func (refKey ApplicationRefKey) AZIDBin() []byte {
+func (id ApplicationID) AZIDBin() []byte {
 	b := make([]byte, 4+1)
 	b[0] = azid.BinDataTypeInt32.Byte()
-	binary.BigEndian.PutUint32(b[1:], uint32(refKey))
+	binary.BigEndian.PutUint32(b[1:], uint32(id))
 	return b
 }
 
-func ApplicationRefKeyFromAZIDBin(b []byte) (refKey ApplicationRefKey, readLen int, err error) {
+func ApplicationIDFromAZIDBin(b []byte) (id ApplicationID, readLen int, err error) {
 	typ, err := azid.BinDataTypeFromByte(b[0])
 	if err != nil {
-		return _ApplicationRefKeyZero, 0,
+		return _ApplicationIDZero, 0,
 			errors.ArgWrap("", "type parsing", err)
 	}
 	if typ != azid.BinDataTypeInt32 {
-		return _ApplicationRefKeyZero, 0,
+		return _ApplicationIDZero, 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
 
-	i, readLen, err := ApplicationRefKeyFromAZIDBinField(b[1:], typ)
+	i, readLen, err := ApplicationIDFromAZIDBinField(b[1:], typ)
 	if err != nil {
-		return _ApplicationRefKeyZero, 0,
+		return _ApplicationIDZero, 0,
 			errors.ArgWrap("", "id-num data parsing", err)
 	}
 
-	return ApplicationRefKey(i), 1 + readLen, nil
+	return ApplicationID(i), 1 + readLen, nil
 }
 
 // UnmarshalAZIDBin is required for conformance
 // with azcore.BinFieldUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
-	i, readLen, err := ApplicationRefKeyFromAZIDBin(b)
+func (id *ApplicationID) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
+	i, readLen, err := ApplicationIDFromAZIDBin(b)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return readLen, err
 }
 
-func (refKey ApplicationRefKey) AZIDBinField() ([]byte, azid.BinDataType) {
-	return ApplicationIDNum(refKey).AZIDBinField()
+func (id ApplicationID) AZIDBinField() ([]byte, azid.BinDataType) {
+	return ApplicationIDNum(id).AZIDBinField()
 }
 
-func ApplicationRefKeyFromAZIDBinField(
+func ApplicationIDFromAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
-) (refKey ApplicationRefKey, readLen int, err error) {
+) (id ApplicationID, readLen int, err error) {
 	idNum, n, err := ApplicationIDNumFromAZIDBinField(b, typeHint)
 	if err != nil {
-		return _ApplicationRefKeyZero, n, err
+		return _ApplicationIDZero, n, err
 	}
-	return ApplicationRefKey(idNum), n, nil
+	return ApplicationID(idNum), n, nil
 }
 
 // UnmarshalAZIDBinField is required for conformance
 // with azcore.BinFieldUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZIDBinField(
+func (id *ApplicationID) UnmarshalAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := ApplicationRefKeyFromAZIDBinField(b, typeHint)
+	i, readLen, err := ApplicationIDFromAZIDBinField(b, typeHint)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return readLen, err
 }
 
-const _ApplicationRefKeyAZIDTextPrefix = "KAp0"
+const _ApplicationIDAZIDTextPrefix = "KAp0"
 
 // AZIDText is required for conformance
-// with azid.RefKey.
-func (refKey ApplicationRefKey) AZIDText() string {
-	if !refKey.IsStaticallyValid() {
+// with azid.ID.
+func (id ApplicationID) AZIDText() string {
+	if !id.IsStaticallyValid() {
 		return ""
 	}
 
-	return _ApplicationRefKeyAZIDTextPrefix +
-		azid.TextEncode(refKey.AZIDBin())
+	return _ApplicationIDAZIDTextPrefix +
+		azid.TextEncode(id.AZIDBin())
 }
 
-// ApplicationRefKeyFromAZIDText creates a new instance of
-// ApplicationRefKey from its azid-text form.
-func ApplicationRefKeyFromAZIDText(s string) (ApplicationRefKey, error) {
+// ApplicationIDFromAZIDText creates a new instance of
+// ApplicationID from its azid-text form.
+func ApplicationIDFromAZIDText(s string) (ApplicationID, error) {
 	if s == "" {
-		return ApplicationRefKeyZero(), nil
+		return ApplicationIDZero(), nil
 	}
-	if !strings.HasPrefix(s, _ApplicationRefKeyAZIDTextPrefix) {
-		return ApplicationRefKeyZero(),
+	if !strings.HasPrefix(s, _ApplicationIDAZIDTextPrefix) {
+		return ApplicationIDZero(),
 			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
 	}
-	s = strings.TrimPrefix(s, _ApplicationRefKeyAZIDTextPrefix)
+	s = strings.TrimPrefix(s, _ApplicationIDAZIDTextPrefix)
 	b, err := azid.TextDecode(s)
 	if err != nil {
-		return ApplicationRefKeyZero(),
+		return ApplicationIDZero(),
 			errors.ArgWrap("", "data parsing", err)
 	}
-	refKey, _, err := ApplicationRefKeyFromAZIDBin(b)
+	id, _, err := ApplicationIDFromAZIDBin(b)
 	if err != nil {
-		return ApplicationRefKeyZero(),
+		return ApplicationIDZero(),
 			errors.ArgWrap("", "data decoding", err)
 	}
-	return refKey, nil
+	return id, nil
 }
 
 // UnmarshalAZIDText is required for conformance
 // with azid.TextUnmarshalable.
-func (refKey *ApplicationRefKey) UnmarshalAZIDText(s string) error {
-	r, err := ApplicationRefKeyFromAZIDText(s)
+func (id *ApplicationID) UnmarshalAZIDText(s string) error {
+	r, err := ApplicationIDFromAZIDText(s)
 	if err == nil {
-		*refKey = r
+		*id = r
 	}
 	return err
 }
 
 // MarshalText is for compatibility with Go's encoding.TextMarshaler
-func (refKey ApplicationRefKey) MarshalText() ([]byte, error) {
-	return []byte(refKey.AZIDText()), nil
+func (id ApplicationID) MarshalText() ([]byte, error) {
+	return []byte(id.AZIDText()), nil
 }
 
 // UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
-func (refKey *ApplicationRefKey) UnmarshalText(b []byte) error {
-	r, err := ApplicationRefKeyFromAZIDText(string(b))
+func (id *ApplicationID) UnmarshalText(b []byte) error {
+	r, err := ApplicationIDFromAZIDText(string(b))
 	if err == nil {
-		*refKey = r
+		*id = r
 	}
 	return err
 }
 
 // MarshalJSON makes this type JSON-marshalable.
-func (refKey ApplicationRefKey) MarshalJSON() ([]byte, error) {
+func (id ApplicationID) MarshalJSON() ([]byte, error) {
 	// We assume that there are no symbols in azid-text
-	return []byte("\"" + refKey.AZIDText() + "\""), nil
+	return []byte("\"" + id.AZIDText() + "\""), nil
 }
 
 // UnmarshalJSON parses a JSON value.
-func (refKey *ApplicationRefKey) UnmarshalJSON(b []byte) error {
+func (id *ApplicationID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
 	if s == "" {
-		*refKey = ApplicationRefKeyZero()
+		*id = ApplicationIDZero()
 		return nil
 	}
-	i, err := ApplicationRefKeyFromAZIDText(s)
+	i, err := ApplicationIDFromAZIDText(s)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return err
 }
 
-// ApplicationRefKeyService abstracts
-// ApplicationRefKey-related services.
-type ApplicationRefKeyService interface {
-	// IsApplicationRefKey is to check if the ref-key is
+// ApplicationIDService abstracts
+// ApplicationID-related services.
+type ApplicationIDService interface {
+	// IsApplicationID is to check if the ref-key is
 	// trully registered to system. It does not check whether the instance
 	// is active or not.
-	IsApplicationRefKeyRegistered(refKey ApplicationRefKey) bool
+	IsApplicationIDRegistered(id ApplicationID) bool
 }
 
-// ApplicationRefKeyError defines an interface for all
-// ApplicationRefKey-related errors.
-type ApplicationRefKeyError interface {
+// ApplicationIDError defines an interface for all
+// ApplicationID-related errors.
+type ApplicationIDError interface {
 	error
-	ApplicationRefKeyError()
+	ApplicationIDError()
 }
 
 //endregion
@@ -581,11 +581,11 @@ type ApplicationInstanceInfoService interface {
 	// GetApplicationInstanceInfo checks if the provided
 	// ref-key is valid and whether the instance is deleted.
 	//
-	// This method returns nil if the refKey is not referencing to any valid
+	// This method returns nil if the id is not referencing to any valid
 	// instance.
 	GetApplicationInstanceInfo(
 		inputCtx CallInputContext,
-		refKey ApplicationRefKey,
+		id ApplicationID,
 	) (*ApplicationInstanceInfo, error)
 }
 
@@ -636,7 +636,7 @@ type ApplicationInstanceServiceInternal interface {
 	CreateApplicationInstanceInternal(
 		inputCtx CallInputContext,
 		input ApplicationInstanceCreationInput,
-	) (refKey ApplicationRefKey, initialState ApplicationInstanceInfo, err error)
+	) (id ApplicationID, initialState ApplicationInstanceInfo, err error)
 
 	// DeleteApplicationInstanceInternal deletes an instance of
 	// Application entity based identfied by refOfInstToDel.
@@ -645,7 +645,7 @@ type ApplicationInstanceServiceInternal interface {
 	// it will have the value of false of subsequent calls to this method.
 	DeleteApplicationInstanceInternal(
 		inputCtx CallInputContext,
-		refOfInstToDel ApplicationRefKey,
+		refOfInstToDel ApplicationID,
 		input ApplicationInstanceDeletionInput,
 	) (instanceMutated bool, currentState ApplicationInstanceInfo, err error)
 }

@@ -3,30 +3,32 @@ package iam
 import "github.com/alloyzeus/go-azfl/azcore"
 
 // Actor provides information about who or what performed an action.
-//
-//TODO: assuming actor
 type Actor struct {
-	// UserRef is the RefKey of the user who performed the action. This might
-	// be empty if the action was performed by non-user-representing agent.
-	UserRef UserRefKey
-	// TerminalRef is the RefKey of the terminal where the action was
+	// terminalID is the ID of the terminal where the action was
 	// initiated from.
-	TerminalRef TerminalRefKey
+	terminalID TerminalID
+	// userID is the ID of the user who performed the action. This might
+	// be empty if the action was performed by non-user-representing agent.
+	userID UserID
+}
+
+func NewActor(terminalID TerminalID, userID UserID) Actor {
+	return Actor{userID: userID, terminalID: terminalID}
 }
 
 var _ azcore.SessionSubject[
-	TerminalIDNum, TerminalRefKey, UserIDNum, UserRefKey] = Actor{}
+	TerminalIDNum, TerminalID, UserIDNum, UserID] = Actor{}
 
 // AZSubject is required by azcore.Subject
 func (Actor) AZSessionSubject() {}
 
 // IsRepresentingAUser is required by azcore.Subject
 func (actor Actor) IsRepresentingAUser() bool {
-	return actor.UserRef.IsStaticallyValid()
+	return actor.userID.IsStaticallyValid()
 }
 
-// TerminalRefKey is required by azcore.Subject
-func (actor Actor) TerminalRefKey() TerminalRefKey { return actor.TerminalRef }
+// TerminalID is required by azcore.Subject
+func (actor Actor) TerminalID() TerminalID { return actor.terminalID }
 
-// UserRefKey is required by azcore.Subject
-func (actor Actor) UserRefKey() UserRefKey { return actor.UserRef }
+// UserID is required by azcore.Subject
+func (actor Actor) UserID() UserID { return actor.userID }

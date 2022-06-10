@@ -29,7 +29,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 
 	if reqApp == nil {
 		logReq(req.Request).
-			Warn().Str("applicationID", reqApp.RefKey.AZIDText()).
+			Warn().Str("applicationID", reqApp.ID.AZIDText()).
 			Msg("Application authentication is required")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
@@ -73,7 +73,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		}
 	}
 
-	termRef, termSecret, userRef, err := restSrv.serverCore.
+	termID, termSecret, userID, err := restSrv.serverCore.
 		AuthorizeTerminalByUserIdentifierAndPassword(reqCtx, reqApp, "", username, password)
 	if err != nil {
 		if _, ok := err.(errors.CallError); ok {
@@ -93,7 +93,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 		return
 	}
 
-	if userRef.IsNotStaticallyValid() {
+	if userID.IsNotStaticallyValid() {
 		logReq(req.Request).
 			Warn().Str("username", username).
 			Msg("Authentication failed")
@@ -101,7 +101,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 	}
 
 	accessToken, refreshToken, err := restSrv.serverCore.
-		GenerateTokenSetJWT(reqCtx, termRef, ctxAuth.UserRef(), termSecret)
+		GenerateTokenSetJWT(reqCtx, termID, ctxAuth.UserID(), termSecret)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
@@ -119,8 +119,8 @@ func (restSrv *Server) handleTokenRequestByPasswordGrant(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         userRef.AZIDText(),
-			TerminalID:     termRef.AZIDText(),
+			UserID:         userID.AZIDText(),
+			TerminalID:     termID.AZIDText(),
 			TerminalSecret: termSecret,
 		})
 }
@@ -129,52 +129,52 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	reqCtx *iam.RESTCallInputContext,
 	resp *restful.Response,
 	reqApp *iam.Application,
-	terminalRefStr string,
+	terminalIDStr string,
 	terminalSecret string,
 ) {
-	termRef, err := iam.TerminalRefKeyFromAZIDText(terminalRefStr)
+	termID, err := iam.TerminalIDFromAZIDText(terminalIDStr)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Str("terminalRefStr", terminalRefStr).
-			Msg("Unable to parse username as TerminalRefKey")
+			Warn().Err(err).Str("terminalIDStr", terminalIDStr).
+			Msg("Unable to parse username as TerminalID")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
 	}
 
-	if termRef.IsNotStaticallyValid() {
+	if termID.IsNotStaticallyValid() {
 		logCtx(reqCtx).
-			Warn().Str("terminalRefStr", terminalRefStr).Str("terminalRef", termRef.AZIDText()).
+			Warn().Str("terminalIDStr", terminalIDStr).Str("terminalID", termID.AZIDText()).
 			Msg("Terminal ref is invalid")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
 	}
 
-	appRef := termRef.Application()
-	if !appRef.IDNum().IsService() {
+	appID := termID.Application()
+	if !appID.IDNum().IsService() {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZIDText()).
+			Warn().Str("terminalID", termID.AZIDText()).
 			Msg("Application is not allowed to use grant type")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
 		return
 	}
 
-	if !appRef.EqualsApplicationRefKey(reqApp.RefKey) {
+	if !appID.EqualsApplicationID(reqApp.ID) {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZIDText()).Str("applicationRef", appRef.AZIDText()).
+			Warn().Str("terminalID", termID.AZIDText()).Str("applicationRef", appID.AZIDText()).
 			Msg("Terminal credentials are that of other application")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
 	}
 
-	authOK, userRef, err := restSrv.serverCore.
-		AuthenticateTerminal(termRef, terminalSecret)
+	authOK, userID, err := restSrv.serverCore.
+		AuthenticateTerminal(termID, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Err(err).Str("terminalRef", termRef.AZIDText()).
+			Error().Err(err).Str("terminalID", termID.AZIDText()).
 			Msg("AuthenticateTerminal")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
@@ -182,16 +182,16 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	}
 	if !authOK {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZIDText()).
+			Warn().Str("terminalID", termID.AZIDText()).
 			Msg("Terminal authentication failed")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidGrant)
 		return
 	}
 
-	if userRef.IsStaticallyValid() {
+	if userID.IsStaticallyValid() {
 		logCtx(reqCtx).
-			Warn().Str("terminalRef", termRef.AZIDText()).Str("userRef", userRef.AZIDText()).
+			Warn().Str("terminalID", termID.AZIDText()).Str("userID", userID.AZIDText()).
 			Msg("Terminal must not be associated to any user")
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorServerError)
@@ -199,7 +199,7 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 	}
 
 	accessToken, refreshToken, err := restSrv.serverCore.
-		GenerateTokenSetJWT(reqCtx, termRef, userRef, terminalSecret)
+		GenerateTokenSetJWT(reqCtx, termID, userID, terminalSecret)
 	if err != nil {
 		panic(err)
 	}
@@ -212,6 +212,6 @@ func (restSrv *Server) handleTokenRequestByPasswordGrantWithTerminalCreds(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID: userRef.AZIDText(),
+			UserID: userID.AZIDText(),
 		})
 }

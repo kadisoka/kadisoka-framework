@@ -43,7 +43,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	}
 
 	matched, err := restSrv.serverCore.
-		MatchUserPassword(ctxAuth.UserRef(), reqBody.OldPassword)
+		MatchUserPassword(ctxAuth.UserID(), reqBody.OldPassword)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("Passwords matching")
@@ -70,7 +70,7 @@ func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Respo
 	}
 
 	err = restSrv.serverCore.
-		SetUserPassword(reqCtx, ctxAuth.UserRef(), password)
+		SetUserPassword(reqCtx, ctxAuth.UserID(), password)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).

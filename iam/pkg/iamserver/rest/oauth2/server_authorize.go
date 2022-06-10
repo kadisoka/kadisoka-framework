@@ -68,7 +68,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		return
 	}
 
-	appRef, err := iam.ApplicationRefKeyFromAZIDText(val.ClientID)
+	appID, err := iam.ApplicationIDFromAZIDText(val.ClientID)
 	if err != nil {
 		logReq(r).
 			Warn().Err(err).
@@ -80,7 +80,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	if appRef.IsNotStaticallyValid() {
+	if appID.IsNotStaticallyValid() {
 		logReq(r).
 			Warn().Err(err).
 			Msg("client_id is invalid")
@@ -91,7 +91,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	client, err := restSrv.serverCore.ApplicationByRefKey(appRef)
+	client, err := restSrv.serverCore.ApplicationByID(appID)
 	if err != nil || client == nil {
 		logReq(r).
 			Warn().Err(err).
@@ -154,11 +154,11 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		return
 	}
 
-	appRefArgVal, _ := req.BodyParameter("client_id")
-	appRef, err := iam.ApplicationRefKeyFromAZIDText(appRefArgVal)
+	appIDArgVal, _ := req.BodyParameter("client_id")
+	appID, err := iam.ApplicationIDFromAZIDText(appIDArgVal)
 	if err != nil {
 		logCtx(reqCtx).
-			Warn().Err(err).Str("form.client_id", appRefArgVal).
+			Warn().Err(err).Str("form.client_id", appIDArgVal).
 			Msg("Malformed")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
@@ -176,26 +176,26 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		return
 	}
 
-	client, err := restSrv.serverCore.ApplicationByRefKey(appRef)
+	client, err := restSrv.serverCore.ApplicationByID(appID)
 	if err != nil {
 		logCtx(reqCtx).
-			Error().Err(err).Str("client_id", appRef.AZIDText()).
-			Msg("ApplicationByRefKey")
+			Error().Err(err).Str("client_id", appID.AZIDText()).
+			Msg("ApplicationByID")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
 	}
 	if client == nil {
 		logCtx(reqCtx).
-			Warn().Str("client_id", appRef.AZIDText()).
+			Warn().Str("client_id", appID.AZIDText()).
 			Msg("Not found")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
 	}
-	if !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
+	if !appID.IDNum().IsUserAgentAuthorizationConfidential() {
 		logCtx(reqCtx).
-			Warn().Str("client_id", appRef.AZIDText()).
+			Warn().Str("client_id", appID.AZIDText()).
 			Msg("Requires ua-confidential client type")
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
@@ -206,7 +206,7 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	if redirectURIStr != "" && !client.Data.HasOAuth2RedirectURI(redirectURIStr) {
 		logCtx(reqCtx).
 			Warn().Msgf("Redirect URI mismatch for client %v. Got %v , expecting %v .",
-			appRef, redirectURIStr, client.Data.OAuth2RedirectURI)
+			appID, redirectURIStr, client.Data.OAuth2RedirectURI)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
@@ -222,14 +222,14 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 
 	state, _ := req.BodyParameter("state")
 	termDisplayName := ""
-	var termRef iam.TerminalRefKey
+	var termID iam.TerminalID
 
 	regOutput := restSrv.serverCore.
 		RegisterTerminal(iamserver.TerminalRegistrationInput{
-			Context:        reqCtx,
-			ApplicationRef: appRef,
+			Context:       reqCtx,
+			ApplicationID: appID,
 			Data: iamserver.TerminalRegistrationInputData{
-				UserRef:          ctxAuth.UserRef(),
+				UserID:           ctxAuth.UserID(),
 				DisplayName:      termDisplayName,
 				VerificationType: iam.TerminalVerificationResourceTypeOAuthAuthorizationCode,
 				VerificationID:   0,
@@ -238,10 +238,10 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 		panic(regOutput.Context.Err)
 	}
 
-	termRef = regOutput.Data.TerminalRef
+	termID = regOutput.Data.TerminalID
 
 	redirectURI.RawQuery = oauth2.MustQueryString(oauth2.AuthorizationResponse{
-		Code:  termRef.AZIDText(),
+		Code:  termID.AZIDText(),
 		State: state,
 	})
 

@@ -19,16 +19,16 @@ var _ iam.UserKeyEmailAddressService = &Core{}
 const userKeyEmailAddressDBTableName = `user_key_email_address_dt`
 
 func (core *Core) GetUserKeyEmailAddress(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*email.Address, error) {
 	//TODO: access control
-	return core.getUserKeyEmailAddressInsecure(callCtx, userRef)
+	return core.getUserKeyEmailAddressInsecure(inputCtx, userID)
 }
 
 func (core *Core) getUserKeyEmailAddressInsecure(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*email.Address, error) {
 	var rawInput string
 
@@ -36,7 +36,7 @@ func (core *Core) getUserKeyEmailAddressInsecure(
 		From(userKeyEmailAddressDBTableName).
 		Select("raw_input").
 		Where(
-			goqu.C("user_id").Eq(userRef.IDNum().PrimitiveValue()),
+			goqu.C("user_id").Eq(userID.IDNum().PrimitiveValue()),
 			goqu.C("_md_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
@@ -87,9 +87,9 @@ func (core *Core) getUserIDNumByKeyEmailAddressInsecure(
 
 // The ID of the user which provided email address is their identifier,
 // verified or not.
-func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
+func (core *Core) getUserIDByKeyEmailAddressAllowUnverifiedInsecure(
 	emailAddress email.Address,
-) (ownerUserRef iam.UserRefKey, alreadyVerified bool, err error) {
+) (ownerUserID iam.UserID, alreadyVerified bool, err error) {
 	sqlString, _, _ := goqu.
 		From(userKeyEmailAddressDBTableName).
 		Select(
@@ -114,26 +114,26 @@ func (core *Core) getUserRefByKeyEmailAddressAllowUnverified(
 		Scan(&ownerUserIDNum, &alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return iam.UserRefKeyZero(), false, nil
+			return iam.UserIDZero(), false, nil
 		}
-		return iam.UserRefKeyZero(), false, err
+		return iam.UserIDZero(), false, err
 	}
 
-	return iam.NewUserRefKey(ownerUserIDNum), alreadyVerified, nil
+	return iam.NewUserID(ownerUserIDNum), alreadyVerified, nil
 }
 
 func (core *Core) SetUserKeyEmailAddress(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 	emailAddress email.Address,
 	verificationMethods []eav10n.VerificationMethod,
 ) (verificationID int64, verificationCodeExpiry *time.Time, err error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 	if !ctxAuth.IsUserSubject() {
 		return 0, nil, iam.ErrUserContextRequired
 	}
 	// Don't allow changing other user's for now
-	if !ctxAuth.IsUser(userRef) {
+	if !ctxAuth.IsUser(userID) {
 		return 0, nil, iam.ErrOperationNotAllowed
 	}
 
@@ -150,7 +150,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	}
 
 	alreadyVerified, err := core.setUserKeyEmailAddressInsecure(
-		callCtx, ctxAuth.UserRef(), emailAddress)
+		inputCtx, ctxAuth.UserID(), emailAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +164,7 @@ func (core *Core) SetUserKeyEmailAddress(
 	}
 
 	verificationID, verificationCodeExpiry, err = core.eaVerifier.
-		StartVerification(callCtx, emailAddress,
+		StartVerification(inputCtx, emailAddress,
 			0, userLanguages, verificationMethods)
 	if err != nil {
 		switch err.(type) {
@@ -178,12 +178,12 @@ func (core *Core) SetUserKeyEmailAddress(
 }
 
 func (core *Core) setUserKeyEmailAddressInsecure(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 	emailAddress email.Address,
 ) (alreadyVerified bool, err error) {
-	ctxTime := callCtx.CallInputMetadata().ReceiveTime
-	ctxAuth := callCtx.Authorization()
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
+	ctxAuth := inputCtx.Authorization()
 
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userKeyEmailAddressDBTableName+` (`+
@@ -194,7 +194,7 @@ func (core *Core) setUserKeyEmailAddressInsecure(
 			`) `+
 			`ON CONFLICT (user_id, domain_part, local_part) WHERE _md_ts IS NULL `+
 			`DO NOTHING`,
-		userRef.IDNum().PrimitiveValue(),
+		userID.IDNum().PrimitiveValue(),
 		emailAddress.DomainPart(),
 		emailAddress.LocalPart(),
 		emailAddress.RawInput(),
@@ -217,7 +217,7 @@ func (core *Core) setUserKeyEmailAddressInsecure(
 		`SELECT CASE WHEN verification_ts IS NULL THEN false ELSE true END AS verified `+
 			`FROM `+userKeyEmailAddressDBTableName+` `+
 			`WHERE user_id = $1 AND domain_part = $2 AND local_part = $3`,
-		userRef.IDNum().PrimitiveValue(), emailAddress.DomainPart(), emailAddress.LocalPart()).
+		userID.IDNum().PrimitiveValue(), emailAddress.DomainPart(), emailAddress.LocalPart()).
 		Scan(&alreadyVerified)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -230,13 +230,13 @@ func (core *Core) setUserKeyEmailAddressInsecure(
 }
 
 func (core *Core) ConfirmUserEmailAddressVerification(
-	callCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	verificationID int64,
 	code string,
 ) (stateChanged bool, err error) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 	err = core.eaVerifier.ConfirmVerification(
-		callCtx, verificationID, code)
+		inputCtx, verificationID, code)
 	if err != nil {
 		switch err {
 		case eav10n.ErrVerificationCodeMismatch:
@@ -254,7 +254,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 		panic(err)
 	}
 
-	ctxTime := callCtx.CallInputMetadata().ReceiveTime
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 	stateChanged, err = core.
 		ensureUserEmailAddressVerifiedFlag(
 			ctxAuth.UserIDNum(), *emailAddress,

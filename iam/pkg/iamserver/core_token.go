@@ -11,13 +11,13 @@ import (
 )
 
 func (core *Core) GenerateTokenSetJWT(
-	callCtx iam.CallInputContext,
-	terminalRef iam.TerminalRefKey,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	terminalID iam.TerminalID,
+	userID iam.UserID,
 	terminalSecret string,
 ) (accessToken string, refreshToken string, err error) {
-	if callCtx == nil {
-		return "", "", errors.ArgMsg("callCtx", "missing")
+	if inputCtx == nil {
+		return "", "", errors.ArgMsg("inputCtx", "missing")
 	}
 
 	jwtKeyChain := core.JWTKeyChain()
@@ -32,22 +32,22 @@ func (core *Core) GenerateTokenSetJWT(
 		return "", "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
 	}
 
-	sessionRef, issueTime, expiry, err := core.
-		issueSession(callCtx, terminalRef, userRef)
+	sessionID, issueTime, expiry, err := core.
+		issueSession(inputCtx, terminalID, userID)
 	if err != nil {
 		return "", "", err
 	}
 
 	accessTokenClaims := &iam.AccessTokenClaims{
 		Claims: jwt.Claims{
-			ID:       sessionRef.AZIDText(),
+			ID:       sessionID.AZIDText(),
 			IssuedAt: jwt.NewNumericDate(issueTime),
 			Issuer:   core.RealmName(),
 			Expiry:   jwt.NewNumericDate(expiry),
-			Subject:  userRef.AZIDText(),
+			Subject:  userID.AZIDText(),
 		},
-		AuthorizedParty: terminalRef.Application().AZIDText(),
-		TerminalID:      terminalRef.AZIDText(),
+		AuthorizedParty: terminalID.Application().AZIDText(),
+		TerminalID:      terminalID.AZIDText(),
 	}
 
 	accessToken, err = jwt.Signed(signer).Claims(accessTokenClaims).
@@ -59,7 +59,7 @@ func (core *Core) GenerateTokenSetJWT(
 	tokenClaims := &iam.RefreshTokenClaims{
 		NotBefore:      issueTime.Unix(),
 		ExpiresAt:      issueTime.Add(iam.RefreshTokenTTLDefault).Unix(),
-		TerminalID:     terminalRef.AZIDText(),
+		TerminalID:     terminalID.AZIDText(),
 		TerminalSecret: terminalSecret,
 	}
 
@@ -73,12 +73,12 @@ func (core *Core) GenerateTokenSetJWT(
 }
 
 func (core *Core) GenerateAccessTokenJWT(
-	callCtx iam.CallInputContext,
-	terminalRef iam.TerminalRefKey,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	terminalID iam.TerminalID,
+	userID iam.UserID,
 ) (tokenString string, err error) {
-	if callCtx == nil {
-		return "", errors.ArgMsg("callCtx", "missing")
+	if inputCtx == nil {
+		return "", errors.ArgMsg("inputCtx", "missing")
 	}
 
 	jwtKeyChain := core.JWTKeyChain()
@@ -93,22 +93,22 @@ func (core *Core) GenerateAccessTokenJWT(
 		return "", apperrs.NewConfigurationMsg("JWT key chain does not have any signing key")
 	}
 
-	sessionRef, issueTime, expiry, err := core.
-		issueSession(callCtx, terminalRef, userRef)
+	sessionID, issueTime, expiry, err := core.
+		issueSession(inputCtx, terminalID, userID)
 	if err != nil {
 		return "", err
 	}
 
 	tokenClaims := &iam.AccessTokenClaims{
 		Claims: jwt.Claims{
-			ID:       sessionRef.AZIDText(),
+			ID:       sessionID.AZIDText(),
 			IssuedAt: jwt.NewNumericDate(issueTime),
 			Issuer:   core.RealmName(),
 			Expiry:   jwt.NewNumericDate(expiry),
-			Subject:  userRef.AZIDText(),
+			Subject:  userID.AZIDText(),
 		},
-		AuthorizedParty: terminalRef.Application().AZIDText(),
-		TerminalID:      terminalRef.AZIDText(),
+		AuthorizedParty: terminalID.Application().AZIDText(),
+		TerminalID:      terminalID.AZIDText(),
 	}
 
 	tokenString, err = jwt.Signed(signer).Claims(tokenClaims).
@@ -120,8 +120,8 @@ func (core *Core) GenerateAccessTokenJWT(
 }
 
 func (core *Core) GenerateRefreshTokenJWT(
-	callCtx iam.CallInputContext,
-	terminalRef iam.TerminalRefKey,
+	inputCtx iam.CallInputContext,
+	terminalID iam.TerminalID,
 	terminalSecret string,
 	issueTime time.Time,
 ) (tokenString string, err error) {
@@ -140,7 +140,7 @@ func (core *Core) GenerateRefreshTokenJWT(
 	tokenClaims := &iam.RefreshTokenClaims{
 		NotBefore:      issueTime.Unix(),
 		ExpiresAt:      issueTime.Add(iam.RefreshTokenTTLDefault).Unix(),
-		TerminalID:     terminalRef.AZIDText(),
+		TerminalID:     terminalID.AZIDText(),
 		TerminalSecret: terminalSecret,
 	}
 

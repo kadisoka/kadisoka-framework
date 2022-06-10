@@ -23,6 +23,6 @@ type GRPCCallInputContext struct {
 }
 
 var _ grpc.CallInputContext[
-	SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
-	UserIDNum, UserRefKey, Actor, Authorization, api.IdempotencyKey,
+	SessionIDNum, SessionID, TerminalIDNum, TerminalID,
+	UserIDNum, UserID, Actor, Authorization, api.IdempotencyKey,
 ] = &GRPCCallInputContext{}

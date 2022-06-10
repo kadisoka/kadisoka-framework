@@ -76,8 +76,8 @@ func (restSrv *Server) handleSetEmailAddress(
 		return
 	}
 
-	if targetUserRefStr := req.PathParameter("user-id"); targetUserRefStr != "" && targetUserRefStr != "me" {
-		targetUserRef, err := iam.UserRefKeyFromAZIDText(targetUserRefStr)
+	if targetUserIDStr := req.PathParameter("user-id"); targetUserIDStr != "" && targetUserIDStr != "me" {
+		targetUserID, err := iam.UserIDFromAZIDText(targetUserIDStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).
@@ -86,7 +86,7 @@ func (restSrv *Server) handleSetEmailAddress(
 				http.StatusBadRequest)
 			return
 		}
-		if !ctxAuth.IsUser(targetUserRef) {
+		if !ctxAuth.IsUser(targetUserID) {
 			logCtx(reqCtx).
 				Warn().Err(err).
 				Msg("Setting other user's email address is not allowed")
@@ -98,7 +98,7 @@ func (restSrv *Server) handleSetEmailAddress(
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
 		SetUserKeyEmailAddress(
-			reqCtx, ctxAuth.UserRef(), emailAddress, verificationMethods)
+			reqCtx, ctxAuth.UserID(), emailAddress, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).

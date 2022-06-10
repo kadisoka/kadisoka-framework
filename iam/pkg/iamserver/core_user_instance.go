@@ -7,24 +7,24 @@ import (
 )
 
 func (core *Core) contextUserOrNewInstance(
-	callCtx iam.CallInputContext,
-) (userRef iam.UserRefKey, newInstance bool, err error) {
-	if callCtx == nil {
-		return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx", "missing")
+	inputCtx iam.CallInputContext,
+) (userID iam.UserID, newInstance bool, err error) {
+	if inputCtx == nil {
+		return iam.UserIDZero(), false, errors.ArgMsg("inputCtx", "missing")
 	}
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 	if ctxAuth.IsUserSubject() {
-		userRef = ctxAuth.UserRef()
-		if !core.UserService.IsUserRefKeyRegistered(userRef) {
-			return iam.UserRefKeyZero(), false, errors.ArgMsg("callCtx.Authorization", "invalid")
+		userID = ctxAuth.UserID()
+		if !core.UserService.IsUserIDRegistered(userID) {
+			return iam.UserIDZero(), false, errors.ArgMsg("inputCtx.Authorization", "invalid")
 		}
-		return userRef, false, nil
+		return userID, false, nil
 	}
 
-	userRef, err = core.UserService.createUserInstanceInsecure(callCtx)
+	userID, err = core.UserService.createUserInstanceInsecure(inputCtx)
 	if err != nil {
-		return iam.UserRefKeyZero(), false, err
+		return iam.UserIDZero(), false, err
 	}
 
-	return userRef, true, nil
+	return userID, true, nil
 }

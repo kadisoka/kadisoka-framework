@@ -16,15 +16,15 @@ func main() {
 		os.Exit(-1)
 	}
 	firstParty := os.Args[1] == "true"
-	clientID := GenerateApplicationRefKey(firstParty, os.Args[2])
+	clientID := GenerateApplicationID(firstParty, os.Args[2])
 	clientSecret := genSecret(16)
 	fmt.Fprintf(os.Stdout, "%s\n%s\n", clientID.AZIDText(), clientSecret)
 }
 
-// GenerateApplicationRefKey generates a new ApplicationRefKey. Note that this function is
-// not consulting any database. To ensure that the generated ApplicationRefKey is
+// GenerateApplicationID generates a new ApplicationID. Note that this function is
+// not consulting any database. To ensure that the generated ApplicationID is
 // unique, check the client database.
-func GenerateApplicationRefKey(firstParty bool, clientTyp string) iam.ApplicationRefKey {
+func GenerateApplicationID(firstParty bool, clientTyp string) iam.ApplicationID {
 	var typeInfo uint32
 	if firstParty {
 		typeInfo = iam.ApplicationIDNumFirstPartyBits
@@ -44,7 +44,7 @@ func GenerateApplicationRefKey(firstParty bool, clientTyp string) iam.Applicatio
 	if err != nil {
 		panic(err)
 	}
-	return iam.NewApplicationRefKey(appIDNum)
+	return iam.NewApplicationID(appIDNum)
 }
 
 func genSecret(len int) string {

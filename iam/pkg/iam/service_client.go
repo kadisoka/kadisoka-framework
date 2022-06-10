@@ -48,9 +48,9 @@ type ServiceClient interface {
 	// will connect to.
 	ServerBaseURL() string
 
-	// TerminalRef returns the terminal ref-key of the client instance after
-	// successful authentication with IAM server.
-	TerminalRef() TerminalRefKey
+	// TerminalID returns the terminal ref-key of the client instance after
+	// successful authentication with the IAM server.
+	TerminalID() TerminalID
 
 	GRPCServiceClient
 	RESTServiceClient
@@ -66,7 +66,7 @@ type ServiceClientAuth interface {
 	// IAM service server.
 	AuthenticateServiceClient(
 		serviceInstanceID string,
-	) (terminalRef TerminalRefKey, err error)
+	) (terminalID TerminalID, err error)
 
 	// AccessTokenByAuthorizationCodeGrant obtains access token by providing
 	// authorization code returned from a 3-legged authorization flow
@@ -130,7 +130,7 @@ func NewServiceClient(
 
 type serviceClientCore struct {
 	serviceClientConfig *ServiceClientConfig
-	terminalRef         TerminalRefKey
+	terminalID          TerminalID
 	clientAccessToken   string
 
 	//HACK: implement in this struct rather than forwarding it
@@ -146,44 +146,44 @@ func (svcClient *serviceClientCore) ServerBaseURL() string {
 	return ""
 }
 
-func (svcClient *serviceClientCore) TerminalRef() TerminalRefKey { return svcClient.terminalRef }
+func (svcClient *serviceClientCore) TerminalID() TerminalID { return svcClient.terminalID }
 
 func (svcClient *serviceClientCore) AuthenticateServiceClient(
 	serviceInstanceID string,
-) (terminalRef TerminalRefKey, err error) {
+) (terminalID TerminalID, err error) {
 	if svcClient.serviceClientConfig == nil {
-		return TerminalRefKeyZero(), errors.New("oauth client is not configured")
+		return TerminalIDZero(), errors.New("oauth client is not configured")
 	}
 	baseURL := svcClient.ServerBaseURL()
 	if !strings.HasPrefix(baseURL, "http") {
-		return TerminalRefKeyZero(), errors.New("iam server base URL is not configured")
+		return TerminalIDZero(), errors.New("iam server base URL is not configured")
 	}
 
 	if serviceInstanceID == "" {
-		return TerminalRefKeyZero(), errors.ArgMsg("serviceInstanceID", "empty")
+		return TerminalIDZero(), errors.ArgMsg("serviceInstanceID", "empty")
 	}
 
-	terminalRef, accessToken, err := svcClient.
+	terminalID, accessToken, err := svcClient.
 		obtainAccessTokenByClientCredentials(serviceInstanceID)
 	if err != nil {
 		panic(err)
 	}
 
-	svcClient.terminalRef = terminalRef
+	svcClient.terminalID = terminalID
 	svcClient.clientAccessToken = accessToken
 
-	return svcClient.terminalRef, nil
+	return svcClient.terminalID, nil
 }
 
 func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 	serviceInstanceID string,
-) (terminalRef TerminalRefKey, accessToken string, err error) {
+) (terminalID TerminalID, accessToken string, err error) {
 	if svcClient.serviceClientConfig == nil || svcClient.serviceClientConfig.Credentials.ClientID == "" {
-		return TerminalRefKeyZero(), "", errors.New("oauth client is not configured")
+		return TerminalIDZero(), "", errors.New("oauth client is not configured")
 	}
 	baseURL := svcClient.ServerBaseURL()
 	if !strings.HasPrefix(baseURL, "http") {
-		return TerminalRefKeyZero(), "", errors.New("iam server base URL is not configured")
+		return TerminalIDZero(), "", errors.New("iam server base URL is not configured")
 	}
 	tokenEndpointURL := baseURL + serverOAuth2TokenRelPath
 
@@ -191,7 +191,7 @@ func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 		GrantType: oauth2.GrantTypeClientCredentials,
 	})
 	if err != nil {
-		return TerminalRefKeyZero(), "", errors.Wrap("outgoing request encoding", err)
+		return TerminalIDZero(), "", errors.Wrap("outgoing request encoding", err)
 	}
 
 	req, err := http.NewRequest(
@@ -199,7 +199,7 @@ func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 		tokenEndpointURL,
 		bytes.NewBuffer([]byte(payloadStr)))
 	if err != nil {
-		return TerminalRefKeyZero(), "", err
+		return TerminalIDZero(), "", err
 	}
 
 	req.SetBasicAuth(
@@ -214,7 +214,7 @@ func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return TerminalRefKeyZero(), "", err
+		return TerminalIDZero(), "", err
 	}
 	defer resp.Body.Close()
 
@@ -226,12 +226,12 @@ func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 	err = json.NewDecoder(resp.Body).
 		Decode(&tokenResp)
 	if err != nil {
-		return TerminalRefKeyZero(), "", err
+		return TerminalIDZero(), "", err
 	}
 
-	terminalRef, err = TerminalRefKeyFromAZIDText(tokenResp.TerminalID)
+	terminalID, err = TerminalIDFromAZIDText(tokenResp.TerminalID)
 	if err != nil {
-		return TerminalRefKeyZero(), "", errors.Wrap("TerminalRefKeyFromAZIDText", err)
+		return TerminalIDZero(), "", errors.Wrap("TerminalIDFromAZIDText", err)
 	}
 
 	//TODO: to handle expiration, we'll need to store the value of 'ExpiresIn'
@@ -239,7 +239,7 @@ func (svcClient *serviceClientCore) obtainAccessTokenByClientCredentials(
 	// [1] https://tools.ietf.org/html/rfc6749#section-4.2.2
 	// [2] https://tools.ietf.org/html/rfc7519#section-4.1.4
 
-	return terminalRef, tokenResp.AccessToken, nil
+	return terminalID, tokenResp.AccessToken, nil
 }
 
 func (svcClient *serviceClientCore) getClientAccessToken() string {
@@ -351,9 +351,9 @@ func (svcClient *serviceClientCore) AuthorizedOutgoingHTTPRequestHeader(
 }
 
 func (svcClient *serviceClientCore) GetUserInstanceInfo(
-	callCtx CallInputContext,
-	userRef UserRefKey,
+	inputCtx CallInputContext,
+	userID UserID,
 ) (*UserInstanceInfo, error) {
 	return svcClient.userInstanceInfoSvc.
-		GetUserInstanceInfo(callCtx, userRef)
+		GetUserInstanceInfo(inputCtx, userID)
 }

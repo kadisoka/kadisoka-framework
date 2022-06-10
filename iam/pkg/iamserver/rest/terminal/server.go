@@ -232,11 +232,11 @@ func (restSrv *Server) deleteTerminal(
 		return
 	}
 
-	var termRef iam.TerminalRefKey
+	var termID iam.TerminalID
 	if termIDStr == "self" {
-		termRef = ctxAuth.TerminalRef()
+		termID = ctxAuth.TerminalID()
 	} else {
-		termRef, err = iam.TerminalRefKeyFromAZIDText(termIDStr)
+		termID, err = iam.TerminalIDFromAZIDText(termIDStr)
 		if err != nil {
 			logCtx(reqCtx).
 				Warn().Err(err).
@@ -247,19 +247,19 @@ func (restSrv *Server) deleteTerminal(
 		}
 	}
 
-	_, err = restSrv.serverCore.DeleteTerminal(reqCtx, termRef)
+	_, err = restSrv.serverCore.DeleteTerminal(reqCtx, termID)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).
 				Warn().Err(err).
-				Msgf("DeleteTerminal %v", termRef)
+				Msgf("DeleteTerminal %v", termID)
 			rest.RespondTo(resp).EmptyError(
 				http.StatusBadRequest)
 			return
 		}
 		logCtx(reqCtx).
 			Error().Err(err).
-			Msgf("DeleteTerminal %v", termRef)
+			Msgf("DeleteTerminal %v", termID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusInternalServerError)
 		return
@@ -307,7 +307,7 @@ func (restSrv *Server) putTerminalFCMRegistrationToken(
 
 	err = restSrv.serverCore.
 		SetTerminalFCMRegistrationToken(
-			reqCtx, ctxAuth.TerminalRef(), ctxAuth.UserRef(),
+			reqCtx, ctxAuth.TerminalID(), ctxAuth.UserID(),
 			fcmRegTokenReq.Token)
 	if err != nil {
 		panic(err)
@@ -324,10 +324,10 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
 	// Only for non-confidential user-agents
-	if appRef := authApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
+	if appID := authApp.ID; !appID.IDNum().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is not allowed to use this verification resource type",
-			authApp.RefKey)
+			authApp.ID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -354,8 +354,8 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 	authStartOutput := restSrv.serverCore.
 		StartTerminalAuthorizationByPhoneNumber(
 			iamserver.TerminalAuthorizationByPhoneNumberStartInput{
-				Context:        reqCtx,
-				ApplicationRef: authApp.RefKey,
+				Context:       reqCtx,
+				ApplicationID: authApp.ID,
 				Data: iamserver.TerminalAuthorizationByPhoneNumberStartInputData{
 					PhoneNumber:         phoneNumber,
 					VerificationMethods: verificationMethods,
@@ -383,7 +383,7 @@ func (restSrv *Server) handleTerminalRegisterByPhoneNumber(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: authStartOutput.Data.TerminalRef.AZIDText(),
+			TerminalID: authStartOutput.Data.TerminalID.AZIDText(),
 			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
 		})
 }
@@ -395,10 +395,10 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	authApp *iam.Application,
 	terminalRegisterReq iam.TerminalRegistrationRequestJSONV1,
 ) {
-	if appRef := authApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
+	if appID := authApp.ID; !appID.IDNum().IsUserAgentAuthorizationPublic() {
 		logCtx(reqCtx).
 			Warn().Msgf("Client %v is not allowed to use this verification resource type",
-			authApp.RefKey)
+			authApp.ID)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusForbidden)
 		return
@@ -434,8 +434,8 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 	authStartOutput := restSrv.serverCore.
 		StartTerminalAuthorizationByEmailAddress(
 			iamserver.TerminalAuthorizationByEmailAddressStartInput{
-				Context:        reqCtx,
-				ApplicationRef: authApp.RefKey,
+				Context:       reqCtx,
+				ApplicationID: authApp.ID,
 				Data: iamserver.TerminalAuthorizationByEmailAddressStartInputData{
 					EmailAddress:        emailAddress,
 					VerificationMethods: verificationMethods,
@@ -463,7 +463,7 @@ func (restSrv *Server) handleTerminalRegisterByEmailAddress(
 
 	rest.RespondTo(resp).Success(
 		&iam.TerminalRegistrationResponseJSONV1{
-			TerminalID: authStartOutput.Data.TerminalRef.AZIDText(),
+			TerminalID: authStartOutput.Data.TerminalID.AZIDText(),
 			CodeExpiry: authStartOutput.Data.VerificationCodeExpiryTime,
 		})
 }

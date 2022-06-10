@@ -72,7 +72,7 @@ func (restSrv *Server) putUserPhoneNumber(
 
 	verificationID, codeExpiry, err := restSrv.serverCore.
 		SetUserKeyPhoneNumber(
-			reqCtx, ctxAuth.UserRef(), phoneNumber, verificationMethods)
+			reqCtx, ctxAuth.UserID(), phoneNumber, verificationMethods)
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).

@@ -6,12 +6,12 @@ import (
 
 type UserProfileService interface {
 	GetUserInfoV1(
-		callCtx CallInputContext,
-		userRef UserRefKey,
+		inputCtx CallInputContext,
+		userID UserID,
 	) (*iampb.UserInfoData, error)
 	GetUserBaseProfile(
-		callCtx CallInputContext,
-		userRef UserRefKey,
+		inputCtx CallInputContext,
+		userID UserID,
 	) (*UserBaseProfileData, error)
 }
 
@@ -29,7 +29,7 @@ func (aggregateData UserBaseProfileData) IsDeleted() bool {
 // JSONV1 models
 
 type UserJSONV1 struct {
-	ID           UserRefKey              `json:"id"`
+	ID           UserID                  `json:"id"`
 	InstanceInfo *UserInstanceInfoJSONV1 `json:"instance_info"`
 	Data         UserDataJSONV1          `json:"data"`
 }
@@ -54,13 +54,13 @@ func UserDataJSONV1FromBaseProfile(model *UserBaseProfileData) *UserDataJSONV1 {
 	}
 }
 
-func UserJSONV1FromBaseProfile(model *UserBaseProfileData, refKey UserRefKey) *UserJSONV1 {
+func UserJSONV1FromBaseProfile(model *UserBaseProfileData, id UserID) *UserJSONV1 {
 	if model == nil {
 		return nil
 	}
 	data := UserDataJSONV1FromBaseProfile(model)
 	result := UserJSONV1{
-		ID: refKey,
+		ID: id,
 	}
 	if data != nil {
 		result.Data = *data

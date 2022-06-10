@@ -197,271 +197,271 @@ type UserIDNumError interface {
 
 //endregion
 
-//region RefKey
+//region ID
 
-// UserRefKey is used to identify
+// UserID is used to identify
 // an instance of entity User system-wide.
-type UserRefKey UserIDNum
+type UserID UserIDNum
 
-// NewUserRefKey returns a new instance
-// of UserRefKey with the provided attribute values.
-func NewUserRefKey(
+// NewUserID returns a new instance
+// of UserID with the provided attribute values.
+func NewUserID(
 	idNum UserIDNum,
-) UserRefKey {
-	return UserRefKey(idNum)
+) UserID {
+	return UserID(idNum)
 }
 
 // To ensure that it conforms the interfaces. If any of these is failing,
 // there's a bug in the generator.
-var _ azid.RefKey[UserIDNum] = _UserRefKeyZero
-var _ azid.BinUnmarshalable = &_UserRefKeyZeroVar
-var _ azid.BinFieldUnmarshalable = &_UserRefKeyZeroVar
-var _ azid.TextUnmarshalable = &_UserRefKeyZeroVar
-var _ azcore.EntityRefKey[UserIDNum] = _UserRefKeyZero
-var _ azcore.UserRefKey[UserIDNum] = _UserRefKeyZero
+var _ azid.ID[UserIDNum] = _UserIDZero
+var _ azid.BinUnmarshalable = &_UserIDZeroVar
+var _ azid.BinFieldUnmarshalable = &_UserIDZeroVar
+var _ azid.TextUnmarshalable = &_UserIDZeroVar
+var _ azcore.EntityID[UserIDNum] = _UserIDZero
+var _ azcore.UserID[UserIDNum] = _UserIDZero
 
-const _UserRefKeyZero = UserRefKey(UserIDNumZero)
+const _UserIDZero = UserID(UserIDNumZero)
 
-var _UserRefKeyZeroVar = _UserRefKeyZero
+var _UserIDZeroVar = _UserIDZero
 
-// UserRefKeyZero returns
-// a zero-valued instance of UserRefKey.
-func UserRefKeyZero() UserRefKey {
-	return _UserRefKeyZero
+// UserIDZero returns
+// a zero-valued instance of UserID.
+func UserIDZero() UserID {
+	return _UserIDZero
 }
 
-// AZRefKey is required for conformance with azid.RefKey.
-func (UserRefKey) AZRefKey() {}
+// AZID is required for conformance with azid.ID.
+func (UserID) AZID() {}
 
-// AZEntityRefKey is required for conformance
-// with azcore.EntityRefKey.
-func (UserRefKey) AZEntityRefKey() {}
+// AZEntityID is required for conformance
+// with azcore.EntityID.
+func (UserID) AZEntityID() {}
 
 // IDNum returns the scoped identifier of the entity.
-func (refKey UserRefKey) IDNum() UserIDNum {
-	return UserIDNum(refKey)
+func (id UserID) IDNum() UserIDNum {
+	return UserIDNum(id)
 }
 
 // IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
 // otherwise it returns nil.
-func (refKey UserRefKey) IDNumPtr() *UserIDNum {
-	if refKey.IsNotStaticallyValid() {
+func (id UserID) IDNumPtr() *UserIDNum {
+	if id.IsNotStaticallyValid() {
 		return nil
 	}
-	i := refKey.IDNum()
+	i := id.IDNum()
 	return &i
 }
 
-// AZIDNum is required for conformance with azid.RefKey.
-func (refKey UserRefKey) AZIDNum() UserIDNum {
-	return UserIDNum(refKey)
+// AZIDNum is required for conformance with azid.ID.
+func (id UserID) AZIDNum() UserIDNum {
+	return UserIDNum(id)
 }
 
 // UserIDNum is required for conformance
-// with azcore.UserRefKey.
-func (refKey UserRefKey) UserIDNum() UserIDNum {
-	return UserIDNum(refKey)
+// with azcore.UserID.
+func (id UserID) UserIDNum() UserIDNum {
+	return UserIDNum(id)
 }
 
-// IsZero is required as UserRefKey is a value-object.
-func (refKey UserRefKey) IsZero() bool {
-	return UserIDNum(refKey) == UserIDNumZero
+// IsZero is required as UserID is a value-object.
+func (id UserID) IsZero() bool {
+	return UserIDNum(id) == UserIDNumZero
 }
 
 // IsStaticallyValid returns true if this instance is valid as an isolated value
-// of UserRefKey.
+// of UserID.
 // It doesn't tell whether it refers to a valid instance of User.
-func (refKey UserRefKey) IsStaticallyValid() bool {
-	return UserIDNum(refKey).IsStaticallyValid()
+func (id UserID) IsStaticallyValid() bool {
+	return UserIDNum(id).IsStaticallyValid()
 }
 
 // IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
-func (refKey UserRefKey) IsNotStaticallyValid() bool {
-	return !refKey.IsStaticallyValid()
+func (id UserID) IsNotStaticallyValid() bool {
+	return !id.IsStaticallyValid()
 }
 
-// Equals is required for conformance with azcore.EntityRefKey.
-func (refKey UserRefKey) Equals(other interface{}) bool {
-	if x, ok := other.(UserRefKey); ok {
-		return x == refKey
+// Equals is required for conformance with azcore.EntityID.
+func (id UserID) Equals(other interface{}) bool {
+	if x, ok := other.(UserID); ok {
+		return x == id
 	}
-	if x, _ := other.(*UserRefKey); x != nil {
-		return *x == refKey
+	if x, _ := other.(*UserID); x != nil {
+		return *x == id
 	}
 	return false
 }
 
-// Equal is required for conformance with azcore.EntityRefKey.
-func (refKey UserRefKey) Equal(other interface{}) bool {
-	return refKey.Equals(other)
+// Equal is required for conformance with azcore.EntityID.
+func (id UserID) Equal(other interface{}) bool {
+	return id.Equals(other)
 }
 
-// EqualsUserRefKey returs true
-// if the other value has the same attributes as refKey.
-func (refKey UserRefKey) EqualsUserRefKey(
-	other UserRefKey,
+// EqualsUserID returs true
+// if the other value has the same attributes as id.
+func (id UserID) EqualsUserID(
+	other UserID,
 ) bool {
-	return other == refKey
+	return other == id
 }
 
-func (refKey UserRefKey) AZIDBin() []byte {
+func (id UserID) AZIDBin() []byte {
 	b := make([]byte, 8+1)
 	b[0] = azid.BinDataTypeInt64.Byte()
-	binary.BigEndian.PutUint64(b[1:], uint64(refKey))
+	binary.BigEndian.PutUint64(b[1:], uint64(id))
 	return b
 }
 
-func UserRefKeyFromAZIDBin(b []byte) (refKey UserRefKey, readLen int, err error) {
+func UserIDFromAZIDBin(b []byte) (id UserID, readLen int, err error) {
 	typ, err := azid.BinDataTypeFromByte(b[0])
 	if err != nil {
-		return _UserRefKeyZero, 0,
+		return _UserIDZero, 0,
 			errors.ArgWrap("", "type parsing", err)
 	}
 	if typ != azid.BinDataTypeInt64 {
-		return _UserRefKeyZero, 0,
+		return _UserIDZero, 0,
 			errors.Arg("", errors.EntMsg("type", "unsupported"))
 	}
 
-	i, readLen, err := UserRefKeyFromAZIDBinField(b[1:], typ)
+	i, readLen, err := UserIDFromAZIDBinField(b[1:], typ)
 	if err != nil {
-		return _UserRefKeyZero, 0,
+		return _UserIDZero, 0,
 			errors.ArgWrap("", "id-num data parsing", err)
 	}
 
-	return UserRefKey(i), 1 + readLen, nil
+	return UserID(i), 1 + readLen, nil
 }
 
 // UnmarshalAZIDBin is required for conformance
 // with azcore.BinFieldUnmarshalable.
-func (refKey *UserRefKey) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
-	i, readLen, err := UserRefKeyFromAZIDBin(b)
+func (id *UserID) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
+	i, readLen, err := UserIDFromAZIDBin(b)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return readLen, err
 }
 
-func (refKey UserRefKey) AZIDBinField() ([]byte, azid.BinDataType) {
-	return UserIDNum(refKey).AZIDBinField()
+func (id UserID) AZIDBinField() ([]byte, azid.BinDataType) {
+	return UserIDNum(id).AZIDBinField()
 }
 
-func UserRefKeyFromAZIDBinField(
+func UserIDFromAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
-) (refKey UserRefKey, readLen int, err error) {
+) (id UserID, readLen int, err error) {
 	idNum, n, err := UserIDNumFromAZIDBinField(b, typeHint)
 	if err != nil {
-		return _UserRefKeyZero, n, err
+		return _UserIDZero, n, err
 	}
-	return UserRefKey(idNum), n, nil
+	return UserID(idNum), n, nil
 }
 
 // UnmarshalAZIDBinField is required for conformance
 // with azcore.BinFieldUnmarshalable.
-func (refKey *UserRefKey) UnmarshalAZIDBinField(
+func (id *UserID) UnmarshalAZIDBinField(
 	b []byte, typeHint azid.BinDataType,
 ) (readLen int, err error) {
-	i, readLen, err := UserRefKeyFromAZIDBinField(b, typeHint)
+	i, readLen, err := UserIDFromAZIDBinField(b, typeHint)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return readLen, err
 }
 
-const _UserRefKeyAZIDTextPrefix = "KUs0"
+const _UserIDAZIDTextPrefix = "KUs0"
 
 // AZIDText is required for conformance
-// with azid.RefKey.
-func (refKey UserRefKey) AZIDText() string {
-	if !refKey.IsStaticallyValid() {
+// with azid.ID.
+func (id UserID) AZIDText() string {
+	if !id.IsStaticallyValid() {
 		return ""
 	}
 
-	return _UserRefKeyAZIDTextPrefix +
-		azid.TextEncode(refKey.AZIDBin())
+	return _UserIDAZIDTextPrefix +
+		azid.TextEncode(id.AZIDBin())
 }
 
-// UserRefKeyFromAZIDText creates a new instance of
-// UserRefKey from its azid-text form.
-func UserRefKeyFromAZIDText(s string) (UserRefKey, error) {
+// UserIDFromAZIDText creates a new instance of
+// UserID from its azid-text form.
+func UserIDFromAZIDText(s string) (UserID, error) {
 	if s == "" {
-		return UserRefKeyZero(), nil
+		return UserIDZero(), nil
 	}
-	if !strings.HasPrefix(s, _UserRefKeyAZIDTextPrefix) {
-		return UserRefKeyZero(),
+	if !strings.HasPrefix(s, _UserIDAZIDTextPrefix) {
+		return UserIDZero(),
 			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
 	}
-	s = strings.TrimPrefix(s, _UserRefKeyAZIDTextPrefix)
+	s = strings.TrimPrefix(s, _UserIDAZIDTextPrefix)
 	b, err := azid.TextDecode(s)
 	if err != nil {
-		return UserRefKeyZero(),
+		return UserIDZero(),
 			errors.ArgWrap("", "data parsing", err)
 	}
-	refKey, _, err := UserRefKeyFromAZIDBin(b)
+	id, _, err := UserIDFromAZIDBin(b)
 	if err != nil {
-		return UserRefKeyZero(),
+		return UserIDZero(),
 			errors.ArgWrap("", "data decoding", err)
 	}
-	return refKey, nil
+	return id, nil
 }
 
 // UnmarshalAZIDText is required for conformance
 // with azid.TextUnmarshalable.
-func (refKey *UserRefKey) UnmarshalAZIDText(s string) error {
-	r, err := UserRefKeyFromAZIDText(s)
+func (id *UserID) UnmarshalAZIDText(s string) error {
+	r, err := UserIDFromAZIDText(s)
 	if err == nil {
-		*refKey = r
+		*id = r
 	}
 	return err
 }
 
 // MarshalText is for compatibility with Go's encoding.TextMarshaler
-func (refKey UserRefKey) MarshalText() ([]byte, error) {
-	return []byte(refKey.AZIDText()), nil
+func (id UserID) MarshalText() ([]byte, error) {
+	return []byte(id.AZIDText()), nil
 }
 
 // UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
-func (refKey *UserRefKey) UnmarshalText(b []byte) error {
-	r, err := UserRefKeyFromAZIDText(string(b))
+func (id *UserID) UnmarshalText(b []byte) error {
+	r, err := UserIDFromAZIDText(string(b))
 	if err == nil {
-		*refKey = r
+		*id = r
 	}
 	return err
 }
 
 // MarshalJSON makes this type JSON-marshalable.
-func (refKey UserRefKey) MarshalJSON() ([]byte, error) {
+func (id UserID) MarshalJSON() ([]byte, error) {
 	// We assume that there are no symbols in azid-text
-	return []byte("\"" + refKey.AZIDText() + "\""), nil
+	return []byte("\"" + id.AZIDText() + "\""), nil
 }
 
 // UnmarshalJSON parses a JSON value.
-func (refKey *UserRefKey) UnmarshalJSON(b []byte) error {
+func (id *UserID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
 	if s == "" {
-		*refKey = UserRefKeyZero()
+		*id = UserIDZero()
 		return nil
 	}
-	i, err := UserRefKeyFromAZIDText(s)
+	i, err := UserIDFromAZIDText(s)
 	if err == nil {
-		*refKey = i
+		*id = i
 	}
 	return err
 }
 
-// UserRefKeyService abstracts
-// UserRefKey-related services.
-type UserRefKeyService interface {
-	// IsUserRefKey is to check if the ref-key is
+// UserIDService abstracts
+// UserID-related services.
+type UserIDService interface {
+	// IsUserID is to check if the ref-key is
 	// trully registered to system. It does not check whether the instance
 	// is active or not.
-	IsUserRefKeyRegistered(refKey UserRefKey) bool
+	IsUserIDRegistered(id UserID) bool
 }
 
-// UserRefKeyError defines an interface for all
-// UserRefKey-related errors.
-type UserRefKeyError interface {
+// UserIDError defines an interface for all
+// UserID-related errors.
+type UserIDError interface {
 	error
-	UserRefKeyError()
+	UserIDError()
 }
 
 //endregion
@@ -480,11 +480,11 @@ type UserInstanceInfoService interface {
 	// GetUserInstanceInfo checks if the provided
 	// ref-key is valid and whether the instance is deleted.
 	//
-	// This method returns nil if the refKey is not referencing to any valid
+	// This method returns nil if the id is not referencing to any valid
 	// instance.
 	GetUserInstanceInfo(
 		inputCtx CallInputContext,
-		refKey UserRefKey,
+		id UserID,
 	) (*UserInstanceInfo, error)
 }
 
@@ -536,7 +536,7 @@ type UserInstanceServiceInternal interface {
 	CreateUserInstanceInternal(
 		inputCtx CallInputContext,
 		input UserInstanceCreationInput,
-	) (refKey UserRefKey, initialState UserInstanceInfo, err error)
+	) (id UserID, initialState UserInstanceInfo, err error)
 
 	// DeleteUserInstanceInternal deletes an instance of
 	// User entity based identfied by refOfInstToDel.
@@ -545,7 +545,7 @@ type UserInstanceServiceInternal interface {
 	// it will have the value of false of subsequent calls to this method.
 	DeleteUserInstanceInternal(
 		inputCtx CallInputContext,
-		refOfInstToDel UserRefKey,
+		refOfInstToDel UserID,
 		input UserInstanceDeletionInput,
 	) (instanceMutated bool, currentState UserInstanceInfo, err error)
 }

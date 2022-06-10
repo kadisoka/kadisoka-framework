@@ -30,12 +30,12 @@ type ApplicationServiceServerBase struct {
 // Interface conformance assertions.
 var (
 	_ iam.ApplicationService                 = &ApplicationServiceServerBase{}
-	_ iam.ApplicationRefKeyService           = &ApplicationServiceServerBase{}
+	_ iam.ApplicationIDService               = &ApplicationServiceServerBase{}
 	_ iam.ApplicationInstanceServiceInternal = &ApplicationServiceServerBase{}
 )
 
-func (srv *ApplicationServiceServerBase) IsApplicationRefKeyRegistered(refKey iam.ApplicationRefKey) bool {
-	idNum := refKey.IDNum()
+func (srv *ApplicationServiceServerBase) IsApplicationIDRegistered(id iam.ApplicationID) bool {
+	idNum := id.IDNum()
 
 	// Look up for the ID num in the cache.
 	if _, idRegistered := srv.registeredApplicationIDNumCache.Get(idNum); idRegistered {
@@ -60,18 +60,18 @@ func (srv *ApplicationServiceServerBase) IsApplicationRefKeyRegistered(refKey ia
 // has been deleted.
 //
 // If it's required only to determine the existence of the ID,
-// IsApplicationRefKeyRegistered is generally more efficient.
+// IsApplicationIDRegistered is generally more efficient.
 func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
 	inputCtx iam.CallInputContext,
-	refKey iam.ApplicationRefKey,
+	id iam.ApplicationID,
 ) (*iam.ApplicationInstanceInfo, error) {
 	//TODO: access control
-	return srv.getApplicationInstanceInfoInsecure(inputCtx, refKey)
+	return srv.getApplicationInstanceInfoInsecure(inputCtx, id)
 }
 
 func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoInsecure(
 	inputCtx iam.CallInputContext,
-	refKey iam.ApplicationRefKey,
+	id iam.ApplicationID,
 ) (*iam.ApplicationInstanceInfo, error) {
 	idRegistered := false
 	idRegisteredCacheHit := false
@@ -79,13 +79,13 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoInsecure(
 	instDeletionCacheHit := false
 
 	// Look up for the ID num in the cache.
-	if _, idRegistered = srv.registeredApplicationIDNumCache.Get(refKey); idRegistered {
+	if _, idRegistered = srv.registeredApplicationIDNumCache.Get(id); idRegistered {
 		// ID num is positively registered.
 		idRegisteredCacheHit = true
 	}
 
 	// Look up in the deletion cache
-	if _, instDeleted = srv.deletedApplicationIDNumCache.Get(refKey); instDeleted {
+	if _, instDeleted = srv.deletedApplicationIDNumCache.Get(id); instDeleted {
 		// Instance is positively deleted
 		instDeletionCacheHit = true
 	}
@@ -106,16 +106,16 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoInsecure(
 
 	var err error
 	idRegistered, instDeleted, err = srv.
-		getApplicationInstanceStateByIDNum(refKey.IDNum())
+		getApplicationInstanceStateByIDNum(id.IDNum())
 	if err != nil {
 		return nil, err
 	}
 
 	if !idRegisteredCacheHit && idRegistered {
-		srv.registeredApplicationIDNumCache.Add(refKey, nil)
+		srv.registeredApplicationIDNumCache.Add(id, nil)
 	}
 	if !instDeletionCacheHit && instDeleted {
-		srv.deletedApplicationIDNumCache.Add(refKey, nil)
+		srv.deletedApplicationIDNumCache.Add(id, nil)
 	}
 
 	if !idRegistered {
@@ -166,18 +166,18 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
 	inputCtx iam.CallInputContext,
 	input iam.ApplicationInstanceCreationInput,
-) (refKey iam.ApplicationRefKey, initialState iam.ApplicationInstanceInfo, err error) {
+) (id iam.ApplicationID, initialState iam.ApplicationInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createApplicationInstanceInsecure(inputCtx)
+	id, err = srv.createApplicationInstanceInsecure(inputCtx)
 
 	//TODO: revision number
-	return refKey, iam.ApplicationInstanceInfo{RevisionNumber: -1}, err
+	return id, iam.ApplicationInstanceInfo{RevisionNumber: -1}, err
 }
 
 func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 	inputCtx iam.CallInputContext,
-) (iam.ApplicationRefKey, error) {
+) (iam.ApplicationID, error) {
 	ctxAuth := inputCtx.Authorization()
 
 	const attemptNumMax = 5
@@ -217,22 +217,22 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 			pqErr.Code == "23505" &&
 			pqErr.Constraint == applicationDBTableName+"_pkey" {
 			if attemptNum >= attemptNumMax {
-				return iam.ApplicationRefKeyZero(), errors.Wrap("insert max attempts", err)
+				return iam.ApplicationIDZero(), errors.Wrap("insert max attempts", err)
 			}
 			continue
 		}
 
-		return iam.ApplicationRefKeyZero(), errors.Wrap("insert", err)
+		return iam.ApplicationIDZero(), errors.Wrap("insert", err)
 	}
 
 	//TODO: update caches, emit an event
 
-	return iam.NewApplicationRefKey(newInstanceIDNum), nil
+	return iam.NewApplicationID(newInstanceIDNum), nil
 }
 
 func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
 	inputCtx iam.CallInputContext,
-	toDelete iam.ApplicationRefKey,
+	toDelete iam.ApplicationID,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
 	if inputCtx == nil {
@@ -246,7 +246,7 @@ func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
 
 func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 	inputCtx iam.CallInputContext,
-	toDelete iam.ApplicationRefKey,
+	toDelete iam.ApplicationID,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
 	ctxAuth := inputCtx.Authorization()

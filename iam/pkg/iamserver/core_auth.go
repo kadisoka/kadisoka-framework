@@ -15,12 +15,12 @@ import (
 
 //TODO:SEC: harden
 func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
-	callCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	reqApp *iam.Application,
 	terminalDisplayName string,
 	identifier string,
 	password string,
-) (terminalRef iam.TerminalRefKey, terminalSecret string, userRef iam.UserRefKey, err error) {
+) (terminalID iam.TerminalID, terminalSecret string, userID iam.UserID, err error) {
 	//TODO: check context
 
 	identifier = strings.TrimSpace(identifier)
@@ -41,7 +41,7 @@ func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
 		//TODO: by email
 		ownerUserIDNum, err := core.getUserIDNumByKeyEmailAddressInsecure(emailAddress)
 		if err != nil {
-			logCtx(callCtx).Error().Err(err).
+			logCtx(inputCtx).Error().Err(err).
 				Msg("getUserIDNumByKeyEmailAddressInsecure")
 		} else {
 			userIDNum = ownerUserIDNum
@@ -53,7 +53,7 @@ func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
 			//TODO: by phone number
 			ownerUserIDNum, err := core.getUserIDNumByKeyPhoneNumberInsecure(phoneNumber)
 			if err != nil {
-				logCtx(callCtx).Error().Err(err).
+				logCtx(inputCtx).Error().Err(err).
 					Msg("getUserIDNumByKeyPhoneNumberInsecure")
 			} else {
 				userIDNum = ownerUserIDNum
@@ -65,53 +65,53 @@ func (core *Core) AuthorizeTerminalByUserIdentifierAndPassword(
 
 	if userIDNum.IsNotStaticallyValid() {
 		// No errors
-		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(), nil
+		return iam.TerminalIDZero(), "", iam.UserIDZero(), nil
 	}
 
-	userRef = iam.NewUserRefKey(userIDNum)
+	userID = iam.NewUserID(userIDNum)
 
-	passwordMatch, err := core.MatchUserPassword(userRef, password)
+	passwordMatch, err := core.MatchUserPassword(userID, password)
 	if err != nil {
-		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(),
+		return iam.TerminalIDZero(), "", iam.UserIDZero(),
 			errors.Wrap("matching user password", err)
 	}
 
 	if !passwordMatch {
-		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(), nil
+		return iam.TerminalIDZero(), "", iam.UserIDZero(), nil
 	}
 
-	var appRef iam.ApplicationRefKey
+	var appID iam.ApplicationID
 	if reqApp != nil {
-		appRef = reqApp.RefKey
+		appID = reqApp.ID
 	}
 	regOutput := core.RegisterTerminal(TerminalRegistrationInput{
-		Context:        callCtx,
-		ApplicationRef: appRef,
+		Context:       inputCtx,
+		ApplicationID: appID,
 		Data: TerminalRegistrationInputData{
-			UserRef:          userRef,
+			UserID:           userID,
 			DisplayName:      terminalDisplayName,
 			VerificationType: iam.TerminalVerificationResourceTypeOAuthPassword,
 			VerificationID:   0, //TODO: request ID or such
 		}})
 	if err = regOutput.Context.Err; err != nil {
-		return iam.TerminalRefKeyZero(), "", iam.UserRefKeyZero(),
+		return iam.TerminalIDZero(), "", iam.UserIDZero(),
 			errors.Wrap("RegisterTerminal", err)
 	}
 
-	return regOutput.Data.TerminalRef, regOutput.Data.TerminalSecret, userRef, nil
+	return regOutput.Data.TerminalID, regOutput.Data.TerminalSecret, userID, nil
 }
 
 func (core *Core) issueSession(
-	callCtx iam.CallInputContext,
-	terminalRef iam.TerminalRefKey,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	terminalID iam.TerminalID,
+	userID iam.UserID,
 ) (
-	sessionRef iam.SessionRefKey,
+	sessionID iam.SessionID,
 	issueTime time.Time,
 	expiry time.Time,
 	err error,
 ) {
-	ctxAuth := callCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 
 	const attemptNumMax = 5
 
@@ -125,13 +125,13 @@ func (core *Core) issueSession(
 		sessionExpiry = sessionStartTime.Add(iam.AccessTokenTTLDefault)
 		sessionIDNum, err = GenerateSessionIDNum(0)
 		if err != nil {
-			return iam.SessionRefKeyZero(), timeZero, timeZero, err
+			return iam.SessionIDZero(), timeZero, timeZero, err
 		}
 		sqlString, _, _ := goqu.
 			Insert(sessionDBTableName).
 			Rows(
 				goqu.Record{
-					"terminal_id": terminalRef.IDNum().PrimitiveValue(),
+					"terminal_id": terminalID.IDNum().PrimitiveValue(),
 					"id_num":      sessionIDNum.PrimitiveValue(),
 					"expiry":      sessionExpiry,
 					"_mc_ts":      sessionStartTime,
@@ -151,16 +151,16 @@ func (core *Core) issueSession(
 			pqErr.Code == "23505" &&
 			pqErr.Constraint == sessionDBTableName+"_pkey" {
 			if attemptNum >= attemptNumMax {
-				return iam.SessionRefKeyZero(), timeZero, timeZero,
+				return iam.SessionIDZero(), timeZero, timeZero,
 					errors.Wrap("insert max attempts", err)
 			}
 			continue
 		}
 
-		return iam.SessionRefKeyZero(), timeZero, timeZero,
+		return iam.SessionIDZero(), timeZero, timeZero,
 			errors.Wrap("insert", err)
 	}
 
-	return iam.NewSessionRefKey(terminalRef, sessionIDNum),
+	return iam.NewSessionID(terminalID, sessionIDNum),
 		sessionStartTime, sessionExpiry, nil
 }

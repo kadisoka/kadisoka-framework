@@ -28,7 +28,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	ctxAuth := reqCtx.Authorization()
 
 	userInfo, err := restSrv.serverCore.
-		GetUserOpenIDConnectStandardClaims(reqCtx, ctxAuth.UserRef())
+		GetUserOpenIDConnectStandardClaims(reqCtx, ctxAuth.UserID())
 	if err != nil {
 		if errors.IsCallError(err) {
 			logCtx(reqCtx).

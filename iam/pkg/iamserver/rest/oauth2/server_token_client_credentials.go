@@ -31,9 +31,9 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 	}
 
 	// To use this grant type, the client must be able to secure its credentials.
-	if appIDNum := reqApp.RefKey.IDNum(); !appIDNum.IsService() && !appIDNum.IsUserAgentAuthorizationConfidential() {
+	if appIDNum := reqApp.ID.IDNum(); !appIDNum.IsService() && !appIDNum.IsUserAgentAuthorizationConfidential() {
 		logReq(req.Request).
-			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqApp.RefKey)
+			Warn().Msgf("Client %v is not allowed to use grant type 'client_credentials'", reqApp.ID)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorUnauthorizedClient)
 		return
@@ -62,10 +62,10 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 
 	regOutput := restSrv.serverCore.
 		RegisterTerminal(iamserver.TerminalRegistrationInput{
-			Context:        reqCtx,
-			ApplicationRef: reqApp.RefKey,
+			Context:       reqCtx,
+			ApplicationID: reqApp.ID,
 			Data: iamserver.TerminalRegistrationInputData{
-				UserRef:          ctxAuth.UserRef(),
+				UserID:           ctxAuth.UserID(),
 				DisplayName:      termDisplayName,
 				VerificationType: iam.TerminalVerificationResourceTypeOAuthClientCredentials,
 				VerificationID:   0,
@@ -79,11 +79,11 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		return
 	}
 
-	termRef := regOutput.Data.TerminalRef
+	termID := regOutput.Data.TerminalID
 	termSecret := regOutput.Data.TerminalSecret
 
 	accessToken, refreshToken, err := restSrv.serverCore.
-		GenerateTokenSetJWT(reqCtx, termRef, ctxAuth.UserRef(), termSecret)
+		GenerateTokenSetJWT(reqCtx, termID, ctxAuth.UserID(), termSecret)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
@@ -101,8 +101,8 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         ctxAuth.UserRef().AZIDText(),
-			TerminalID:     termRef.AZIDText(),
+			UserID:         ctxAuth.UserID().AZIDText(),
+			TerminalID:     termID.AZIDText(),
 			TerminalSecret: termSecret,
 		})
 }

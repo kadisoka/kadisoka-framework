@@ -64,23 +64,23 @@ func (idempotencyKey IdempotencyKey) Equals(other interface{}) bool {
 // header).
 //TODO: proxied context.
 type CallInputContext[
-	SessionIDNumT azcore.SessionIDNum, SessionRefKeyT azcore.SessionRefKey[SessionIDNumT],
-	TerminalIDNumT azcore.TerminalIDNum, TerminalRefKeyT azcore.TerminalRefKey[TerminalIDNumT],
-	UserIDNumT azcore.UserIDNum, UserRefKeyT azcore.UserRefKey[UserIDNumT],
+	SessionIDNumT azcore.SessionIDNum, SessionIDT azcore.SessionID[SessionIDNumT],
+	TerminalIDNumT azcore.TerminalIDNum, TerminalIDT azcore.TerminalID[TerminalIDNumT],
+	UserIDNumT azcore.UserIDNum, UserIDT azcore.UserID[UserIDNumT],
 	SessionSubjectT azcore.SessionSubject[
-		TerminalIDNumT, TerminalRefKeyT,
-		UserIDNumT, UserRefKeyT],
+		TerminalIDNumT, TerminalIDT,
+		UserIDNumT, UserIDT],
 	SessionT azcore.Session[
-		SessionIDNumT, SessionRefKeyT,
-		TerminalIDNumT, TerminalRefKeyT,
-		UserIDNumT, UserRefKeyT,
+		SessionIDNumT, SessionIDT,
+		TerminalIDNumT, TerminalIDT,
+		UserIDNumT, UserIDT,
 		SessionSubjectT],
 	IdempotencyKeyT azcore.ServiceMethodIdempotencyKey,
 ] interface {
 	azcore.ServiceMethodCallInputContext[
-		SessionIDNumT, SessionRefKeyT,
-		TerminalIDNumT, TerminalRefKeyT,
-		UserIDNumT, UserRefKeyT, SessionSubjectT, SessionT, IdempotencyKeyT]
+		SessionIDNumT, SessionIDT,
+		TerminalIDNumT, TerminalIDT,
+		UserIDNumT, UserIDT, SessionSubjectT, SessionT, IdempotencyKeyT]
 
 	// CallInputMetadata returns some details about the request.
 	CallInputMetadata() CallInputMetadata

@@ -32,10 +32,10 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 		return
 	}
 
-	requestedUserRef := ctxAuth.UserRef()
+	requestedUserID := ctxAuth.UserID()
 
 	userBaseProfile, err := restSrv.serverCore.
-		GetUserBaseProfile(reqCtx, requestedUserRef)
+		GetUserBaseProfile(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User base profile fetch")
@@ -45,7 +45,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	}
 
 	userPhoneNumber, err := restSrv.serverCore.
-		GetUserKeyPhoneNumber(reqCtx, requestedUserRef)
+		GetUserKeyPhoneNumber(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User phone number fetch")
@@ -63,7 +63,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	//TODO(exa): should get display email address instead of primary
 	// email address for this use case.
 	userEmailAddress, err := restSrv.serverCore.
-		GetUserKeyEmailAddress(reqCtx, requestedUserRef)
+		GetUserKeyEmailAddress(reqCtx, requestedUserID)
 	if err != nil {
 		logCtx(reqCtx).
 			Err(err).Msg("User email address fetch")
@@ -79,7 +79,7 @@ func (restSrv *Server) getUserOpenIDConnectUserInfo(
 	}
 
 	userInfo := oidc.StandardClaims{
-		Sub:                 requestedUserRef.AZIDText(),
+		Sub:                 requestedUserID.AZIDText(),
 		Name:                userBaseProfile.DisplayName,
 		Email:               emailAddressStr,
 		EmailVerified:       emailAddressVerified,

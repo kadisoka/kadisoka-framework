@@ -38,12 +38,12 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		return
 	}
 
-	var termRef iam.TerminalRefKey
+	var termID iam.TerminalID
 	if strings.HasPrefix(authCode, "otp:") {
 		// Only for non-confidential user-agents
-		if appRef := reqApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationPublic() {
+		if appID := reqApp.ID; !appID.IDNum().IsUserAgentAuthorizationPublic() {
 			logReq(req.Request).
-				Warn().Str("client_id", reqApp.RefKey.AZIDText()).
+				Warn().Str("client_id", reqApp.ID.AZIDText()).
 				Msg("Client is not allowed to use grant type 'authorization_code' with OTP")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
@@ -59,9 +59,9 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 				oauth2.ErrorInvalidGrant)
 			return
 		}
-		termRefStr := parts[1]
-		termRef, err = iam.TerminalRefKeyFromAZIDText(termRefStr)
-		if err != nil || termRef.IsNotStaticallyValid() {
+		termIDStr := parts[1]
+		termID, err = iam.TerminalIDFromAZIDText(termIDStr)
+		if err != nil || termID.IsNotStaticallyValid() {
 			logReq(req.Request).
 				Warn().Err(err).Str("code", authCode).
 				Msg("Code malformed")
@@ -72,17 +72,17 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		authCode = parts[2]
 	} else {
 		// Only for confidential user-agents
-		if appRef := reqApp.RefKey; !appRef.IDNum().IsUserAgentAuthorizationConfidential() {
+		if appID := reqApp.ID; !appID.IDNum().IsUserAgentAuthorizationConfidential() {
 			logReq(req.Request).
-				Warn().Str("client_id", reqApp.RefKey.AZIDText()).
+				Warn().Str("client_id", reqApp.ID.AZIDText()).
 				Msg("Client is not allowed to use grant type 'authorization_code'")
 			oauth2.RespondTo(resp).ErrorCode(
 				oauth2.ErrorUnauthorizedClient)
 			return
 		}
 
-		termRef, err = iam.TerminalRefKeyFromAZIDText(authCode)
-		if err != nil || termRef.IsNotStaticallyValid() {
+		termID, err = iam.TerminalIDFromAZIDText(authCode)
+		if err != nil || termID.IsNotStaticallyValid() {
 			logReq(req.Request).
 				Warn().Err(err).Str("code", authCode).
 				Msg("Code malformed")
@@ -122,16 +122,16 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	}
 
 	clientAZIDText := req.Request.FormValue("client_id")
-	if clientAZIDText != "" && clientAZIDText != reqApp.RefKey.AZIDText() {
+	if clientAZIDText != "" && clientAZIDText != reqApp.ID.AZIDText() {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZIDText, reqApp.RefKey)
+			Warn().Msgf("Invalid client_id: %s (wants %s)", clientAZIDText, reqApp.ID)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidClient)
 		return
 	}
 
-	terminalSecret, userRef, err := restSrv.serverCore.
-		ConfirmTerminalAuthorization(reqCtx, termRef, authCode)
+	terminalSecret, userID, err := restSrv.serverCore.
+		ConfirmTerminalAuthorization(reqCtx, termID, authCode)
 	if err != nil {
 		switch err {
 		case iam.ErrTerminalVerificationCodeExpired:
@@ -170,7 +170,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	}
 
 	accessToken, refreshToken, err := restSrv.serverCore.
-		GenerateTokenSetJWT(reqCtx, termRef, userRef, terminalSecret)
+		GenerateTokenSetJWT(reqCtx, termID, userID, terminalSecret)
 	if err != nil {
 		logCtx(reqCtx).
 			Error().Err(err).
@@ -188,7 +188,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 				ExpiresIn:    iam.AccessTokenTTLDefaultInSeconds,
 				RefreshToken: refreshToken,
 			},
-			UserID:         userRef.AZIDText(),
+			UserID:         userID.AZIDText(),
 			TerminalSecret: terminalSecret,
 		})
 }

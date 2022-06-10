@@ -16,15 +16,15 @@ const userProfileDisplayNameDBTableName = "user_display_name_dt"
 const userProfileImageKeyDBTableName = "user_profile_image_key_dt"
 
 func (core *Core) GetUserBaseProfile(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*iam.UserBaseProfileData, error) {
-	if callCtx == nil {
-		return nil, errors.ArgMsg("callCtx", "missing")
+	if inputCtx == nil {
+		return nil, errors.ArgMsg("inputCtx", "missing")
 	}
 	//TODO(exa): ensure that the context user has the privilege
 
-	return core.getUserBaseProfileInsecure(callCtx, userRef)
+	return core.getUserBaseProfileInsecure(inputCtx, userID)
 }
 
 // getUserBaseProfileInsecure is the implementation of GetUserBaseProfile
@@ -32,8 +32,8 @@ func (core *Core) GetUserBaseProfile(
 // access control; for the end-point for public-facing APIs,
 // use GetUserBaseProfile.
 func (core *Core) getUserBaseProfileInsecure(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*iam.UserBaseProfileData, error) {
 	var user iam.UserBaseProfileData
 	var idNum iam.UserIDNum
@@ -52,7 +52,7 @@ func (core *Core) getUserBaseProfileInsecure(
 				`LEFT JOIN `+userProfileImageKeyDBTableName+` upiu ON upiu.user_id = ua.id_num `+
 				`AND upiu._md_ts IS NULL `+
 				`WHERE ua.id_num = $1`,
-			userRef).
+			userID).
 		Scan(&idNum, &deletion.Deleted, &displayName, &profileImageURL)
 	if err != nil {
 		switch err {
@@ -79,20 +79,20 @@ func (core *Core) getUserBaseProfileInsecure(
 }
 
 func (core *Core) GetUserInfoV1(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*iampb.UserInfoData, error) {
 	//TODO: access control
 
-	return core.getUserInfoV1Insecure(callCtx, userRef)
+	return core.getUserInfoV1Insecure(inputCtx, userID)
 }
 
 func (core *Core) getUserInfoV1Insecure(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*iampb.UserInfoData, error) {
 	userBaseProfile, err := core.
-		getUserBaseProfileInsecure(callCtx, userRef)
+		getUserBaseProfileInsecure(inputCtx, userID)
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +115,7 @@ func (core *Core) getUserInfoV1Insecure(
 	}
 
 	contactInfo, err := core.
-		getUserContactInformationInsecure(callCtx, userRef)
+		getUserContactInformationInsecure(inputCtx, userID)
 	if err != nil {
 		panic(err)
 	}

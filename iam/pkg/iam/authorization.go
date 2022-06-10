@@ -32,7 +32,7 @@ type Authorization struct {
 	// holds info about the assuming context.
 	AssumingAuthorization *Authorization `json:"assuming_authorization,omitempty"`
 
-	Session SessionRefKey
+	Session SessionID
 
 	// Scope, expiry time
 
@@ -40,20 +40,20 @@ type Authorization struct {
 }
 
 var _ azcore.Session[
-	SessionIDNum, SessionRefKey,
-	TerminalIDNum, TerminalRefKey,
-	UserIDNum, UserRefKey,
+	SessionIDNum, SessionID,
+	TerminalIDNum, TerminalID,
+	UserIDNum, UserID,
 	Actor,
 ] = Authorization{}
 
-func (authz Authorization) ParentSessionRefKey() SessionRefKey {
+func (authz Authorization) ParentSessionID() SessionID {
 	if authz.AssumingAuthorization != nil {
 		return authz.AssumingAuthorization.Session
 	}
-	return SessionRefKeyZero()
+	return SessionIDZero()
 }
 
-func (authz Authorization) RefKey() SessionRefKey { return authz.Session }
+func (authz Authorization) ID() SessionID { return authz.Session }
 
 func (authz Authorization) Subject() Actor {
 	return authz.Actor()
@@ -74,22 +74,19 @@ func (authz Authorization) IsNotStaticallyValid() bool {
 }
 
 func (authz Authorization) Actor() Actor {
-	return Actor{
-		UserRef:     authz.Session.terminal.user,
-		TerminalRef: authz.Session.terminal,
-	}
+	return NewActor(authz.Session.terminal, authz.Session.terminal.user)
 }
 
-// IsTerminal returns true if the authorized terminal is the same as termRef.
-func (authz Authorization) IsTerminal(termRef TerminalRefKey) bool {
+// IsTerminal returns true if the authorized terminal is the same as terminalID.
+func (authz Authorization) IsTerminal(terminalID TerminalID) bool {
 	ctxTerm := authz.Session.terminal
-	return ctxTerm.IsStaticallyValid() && ctxTerm.EqualsTerminalRefKey(termRef)
+	return ctxTerm.IsStaticallyValid() && ctxTerm.EqualsTerminalID(terminalID)
 }
 
 // IsUser checks if this authorization is represeting a particular user.
-func (authz Authorization) IsUser(userRef UserRefKey) bool {
+func (authz Authorization) IsUser(userID UserID) bool {
 	return authz.ClientApplicationIDNum().IsUserAgent() &&
-		authz.Session.terminal.user.EqualsUserRefKey(userRef)
+		authz.Session.terminal.user.EqualsUserID(userID)
 }
 
 // IsUserSubject is used to determine if this authorization represents a user.
@@ -109,13 +106,13 @@ func (authz Authorization) IsServiceClientContext() bool {
 	return false
 }
 
-func (authz Authorization) UserRef() UserRefKey {
+func (authz Authorization) UserID() UserID {
 	return authz.Session.terminal.user
 }
 
-// UserRefKeyPtr returns a pointer to a new copy of user ref-key. The
+// UserIDPtr returns a pointer to a new copy of user ref-key. The
 // returned value is non-nil when the user ref-key is valid.
-func (authz Authorization) UserRefKeyPtr() *UserRefKey {
+func (authz Authorization) UserIDPtr() *UserID {
 	return authz.Session.terminal.UserPtr()
 }
 
@@ -129,7 +126,7 @@ func (authz Authorization) UserIDNumPtr() *UserIDNum {
 	return authz.Session.terminal.user.IDNumPtr()
 }
 
-func (authz Authorization) TerminalRef() TerminalRefKey {
+func (authz Authorization) TerminalID() TerminalID {
 	return authz.Session.terminal
 }
 

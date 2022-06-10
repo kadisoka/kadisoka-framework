@@ -8,19 +8,19 @@ import (
 )
 
 func (core *Core) GetUserContactInformation(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*iampb.UserContactInfoData, error) {
 	//TODO: access control
-	return core.getUserContactInformationInsecure(callCtx, userRef)
+	return core.getUserContactInformationInsecure(inputCtx, userID)
 }
 
 func (core *Core) getUserContactInformationInsecure(
-	callCtx iam.CallInputContext,
-	userRef iam.UserRefKey,
+	inputCtx iam.CallInputContext,
+	userID iam.UserID,
 ) (*iampb.UserContactInfoData, error) {
 	userPhoneNumber, err := core.
-		GetUserKeyPhoneNumber(callCtx, userRef)
+		GetUserKeyPhoneNumber(inputCtx, userID)
 	if err != nil {
 		return nil, errors.Wrap("get user key phone number", err)
 	}
