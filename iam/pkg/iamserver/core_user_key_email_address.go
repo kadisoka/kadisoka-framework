@@ -182,7 +182,7 @@ func (core *Core) setUserKeyEmailAddressInsecure(
 	userRef iam.UserRefKey,
 	emailAddress email.Address,
 ) (alreadyVerified bool, err error) {
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 	ctxAuth := callCtx.Authorization()
 
 	xres, err := core.db.Exec(
@@ -254,7 +254,7 @@ func (core *Core) ConfirmUserEmailAddressVerification(
 		panic(err)
 	}
 
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 	stateChanged, err = core.
 		ensureUserEmailAddressVerifiedFlag(
 			ctxAuth.UserIDNum(), *emailAddress,

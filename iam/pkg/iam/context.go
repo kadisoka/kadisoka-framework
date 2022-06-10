@@ -14,7 +14,7 @@ var (
 	ErrAuthorizationRequired = accesserrs.Msg("authorization context required")
 	ErrAuthorizationInvalid  = accesserrs.Msg("authorization invalid")
 
-	ErrOperationContextMissing      = accesserrs.Msg("operation context is missing")
+	ErrCallInputContextMissing      = accesserrs.Msg("call input context is missing")
 	ErrUserContextRequired          = accesserrs.Msg("user context required")
 	ErrServiceClientContextRequired = accesserrs.Msg("service client context required")
 
@@ -22,11 +22,11 @@ var (
 	ErrAccessNotAllowed    = accesserrs.Msg("actor is not allowed to access target resource")
 )
 
-func NewEmptyOpInputContext(ctx context.Context) CallInputContext {
+func NewEmptyCallInputContext(ctx context.Context) CallInputContext {
 	return &callContext{
 		Context:       ctx,
 		authorization: newEmptyAuthorization(),
-		requestInfo: api.OpInputMetadata{
+		requestInfo: api.CallInputMetadata{
 			ReceiveTime: time.Now().UTC(),
 		},
 	}
@@ -34,7 +34,7 @@ func NewEmptyOpInputContext(ctx context.Context) CallInputContext {
 
 // CallInputContext provides call-scoped information.
 type CallInputContext interface {
-	api.OpInputContext[
+	api.CallInputContext[
 		SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
 		UserIDNum, UserRefKey, Actor, Authorization, api.IdempotencyKey]
 
@@ -42,7 +42,7 @@ type CallInputContext interface {
 	IsUserContext() bool
 }
 
-func newOpInputContext(
+func newCallInputContext(
 	ctx context.Context,
 	ctxAuth *Authorization,
 	originInfo azcore.ServiceMethodCallOriginInfo,
@@ -51,7 +51,7 @@ func newOpInputContext(
 	if ctxAuth == nil {
 		panic("ctxAuth must not be nil")
 	}
-	return &callContext{ctx, ctxAuth, api.OpInputMetadata{
+	return &callContext{ctx, ctxAuth, api.CallInputMetadata{
 		IdempotencyKey: idempotencyKey,
 		ReceiveTime:    time.Now().UTC(),
 	}, originInfo,
@@ -63,7 +63,7 @@ var _ CallInputContext = &callContext{}
 type callContext struct {
 	context.Context
 	authorization *Authorization
-	requestInfo   api.OpInputMetadata
+	requestInfo   api.CallInputMetadata
 	originInfo    azcore.ServiceMethodCallOriginInfo
 }
 
@@ -107,7 +107,7 @@ func (ctx *callContext) IdempotencyKey() api.IdempotencyKey {
 	return api.IdempotencyKeyZero()
 }
 
-func (ctx *callContext) OpInputMetadata() api.OpInputMetadata { return ctx.requestInfo }
+func (ctx *callContext) CallInputMetadata() api.CallInputMetadata { return ctx.requestInfo }
 
 type CallOutputContext struct {
 	Err     error

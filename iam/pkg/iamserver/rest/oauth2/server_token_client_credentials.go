@@ -39,7 +39,7 @@ func (restSrv *Server) handleTokenRequestByClientCredentials(
 		return
 	}
 
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if err != nil && err != iam.ErrReqFieldAuthorizationTypeUnsupported {
 		logCtx(reqCtx).
 			Warn().Err(err).

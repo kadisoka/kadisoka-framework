@@ -14,7 +14,7 @@ type userPasswordPutRequest struct {
 
 //TODO:SEC: harded
 func (restSrv *Server) putUserPassword(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

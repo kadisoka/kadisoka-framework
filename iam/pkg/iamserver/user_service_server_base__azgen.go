@@ -184,7 +184,7 @@ func (srv *UserServiceServerBase) createUserInstanceInsecure(
 
 	var err error
 	var newInstanceIDNum iam.UserIDNum
-	cTime := opInputCtx.OpInputMetadata().ReceiveTime
+	cTime := opInputCtx.CallInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -254,7 +254,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
 	ctxAuth := opInputCtx.Authorization()
-	ctxTime := opInputCtx.OpInputMetadata().ReceiveTime
+	ctxTime := opInputCtx.CallInputMetadata().ReceiveTime
 
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
 		sqlString, _, _ := goqu.

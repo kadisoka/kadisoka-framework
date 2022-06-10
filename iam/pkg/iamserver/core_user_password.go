@@ -51,7 +51,7 @@ func (core *Core) SetUserPassword(
 		return iam.ErrOperationNotAllowed
 	}
 
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 
 	passwordHash, err := core.hashPassword(clearTextPassword)
 	if err != nil {

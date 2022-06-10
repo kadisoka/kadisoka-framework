@@ -14,11 +14,11 @@ type Core struct {
 	iamSvc iam.ConsumerServer
 }
 
-func (srvCore *Core) RESTOpInputContext(
+func (srvCore *Core) RESTCallInputContext(
 	req *http.Request,
-) (*upbase.RESTOpInputContext, error) {
-	iamReqCtx, err := srvCore.iamSvc.RESTOpInputContext(req)
-	return &upbase.RESTOpInputContext{RESTCallInputContext: *iamReqCtx}, err
+) (*upbase.RESTCallInputContext, error) {
+	iamReqCtx, err := srvCore.iamSvc.RESTCallInputContext(req)
+	return &upbase.RESTCallInputContext{RESTCallInputContext: *iamReqCtx}, err
 }
 
 func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
@@ -26,7 +26,7 @@ func (srvCore *Core) GetUserOpenIDConnectStandardClaims(
 	userRef iam.UserRefKey,
 ) (*oidc.StandardClaims, error) {
 	if callCtx == nil {
-		return nil, iam.ErrOperationContextMissing
+		return nil, iam.ErrCallInputContextMissing
 	}
 
 	ctxAuth := callCtx.Authorization()

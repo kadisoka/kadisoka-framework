@@ -133,7 +133,7 @@ func NewCoreByConfig(
 					`UPDATE `+userKeyPhoneNumberDBTableName+` `+
 						"SET _md_ts = $1, _md_uid = $2, _md_tid = $3 "+
 						"WHERE user_id = $2 AND _md_ts IS NULL",
-					callCtx.OpInputMetadata().ReceiveTime,
+					callCtx.CallInputMetadata().ReceiveTime,
 					ctxAuth.UserIDNum().PrimitiveValue(),
 					ctxAuth.TerminalIDNum().PrimitiveValue())
 			}
@@ -143,7 +143,7 @@ func NewCoreByConfig(
 					`UPDATE `+userProfileImageKeyDBTableName+` `+
 						"SET _md_ts = $1, _md_uid = $2, _md_tid = $3 "+
 						"WHERE user_id = $2 AND _md_ts IS NULL",
-					callCtx.OpInputMetadata().ReceiveTime,
+					callCtx.CallInputMetadata().ReceiveTime,
 					ctxAuth.UserIDNum().PrimitiveValue(),
 					ctxAuth.TerminalIDNum().PrimitiveValue())
 			}

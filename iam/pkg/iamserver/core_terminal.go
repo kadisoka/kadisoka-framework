@@ -253,7 +253,7 @@ func (core *Core) ConfirmTerminalAuthorization(
 	// was requested. Each of the implementation required to implement
 	// limit the number of failed attempts.
 
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 
 	termData, err := core.getTerminalRaw(terminalRef.IDNum())
 	if err != nil {
@@ -506,7 +506,7 @@ func (core *Core) registerTerminalInsecure(
 ) TerminalRegistrationOutput {
 	callCtx := input.Context
 	ctxAuth := callCtx.Authorization()
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 	originInfo := callCtx.OriginInfo()
 
 	//var verificationID int64
@@ -584,7 +584,7 @@ func (core *Core) DeleteTerminal(
 		return false, iam.ErrOperationNotAllowed
 	}
 
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 
 	sqlString, _, _ := goqu.
 		From(terminalDBTableName).
@@ -640,7 +640,7 @@ func (core *Core) setTerminalVerified(
 		Set(
 			goqu.Record{
 				"secret":          termSecret,
-				"verification_ts": callCtx.OpInputMetadata().ReceiveTime,
+				"verification_ts": callCtx.CallInputMetadata().ReceiveTime,
 			}).
 		ToSQL()
 

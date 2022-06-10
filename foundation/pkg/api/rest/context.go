@@ -8,7 +8,7 @@ import (
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 )
 
-type OpInputContext[
+type CallInputContext[
 	SessionIDNumT azcore.SessionIDNum, SessionRefKeyT azcore.SessionRefKey[SessionIDNumT],
 	TerminalIDNumT azcore.TerminalIDNum, TerminalRefKeyT azcore.TerminalRefKey[TerminalIDNumT],
 	UserIDNumT azcore.UserIDNum, UserRefKeyT azcore.UserRefKey[UserIDNumT],
@@ -22,7 +22,7 @@ type OpInputContext[
 		SessionSubjectT],
 	IdempotencyKeyT azcore.ServiceMethodIdempotencyKey,
 ] interface {
-	api.OpInputContext[
+	api.CallInputContext[
 		SessionIDNumT, SessionRefKeyT,
 		TerminalIDNumT, TerminalRefKeyT,
 		UserIDNumT, UserRefKeyT, SessionSubjectT, SessionT, IdempotencyKeyT]

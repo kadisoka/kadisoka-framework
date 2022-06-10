@@ -16,7 +16,7 @@ import (
 func (restSrv *Server) putUserEmailAddress(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -133,7 +133,7 @@ func (restSrv *Server) handleSetEmailAddress(
 func (restSrv *Server) postUserEmailAddressVerificationConfirmation(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if !reqCtx.IsUserContext() {
 		logCtx(reqCtx).
 			Warn().Err(err).

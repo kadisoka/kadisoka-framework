@@ -9,9 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type OpInfo interface {
-}
-
 // A IdempotencyKey in our implementation is used as idempotency token.
 //
 // A good explanation of idempotency token can be viewed here:
@@ -27,18 +24,18 @@ var _IdempotencyKeyZero = IdempotencyKey(uuid.Nil)
 func IdempotencyKeyZero() IdempotencyKey { return IdempotencyKey(uuid.Nil) }
 
 func IdempotencyKeyFromString(idempotencyKeyStr string) (IdempotencyKey, error) {
-	u, err := uuid.Parse(idempotencyKeyStr)
+	raw, err := uuid.Parse(idempotencyKeyStr)
 	if err != nil {
 		return IdempotencyKeyZero(), dataerrs.Malformed(err)
 	}
-	i := IdempotencyKey(u)
-	if isIdempotencyStaticallyValid(i) {
+	key := IdempotencyKey(raw)
+	if key.IsStaticallyValid() {
 		return IdempotencyKeyZero(), dataerrs.ErrMalformed
 	}
-	return i, nil
+	return key, nil
 }
 
-func isIdempotencyStaticallyValid(idempotencyKey IdempotencyKey) bool {
+func (idempotencyKey IdempotencyKey) IsStaticallyValid() bool {
 	//TODO: more checks?
 	asUUID := uuid.UUID(idempotencyKey)
 	return !bytes.Equal(idempotencyKey[:], uuid.Nil[:]) &&
@@ -62,11 +59,11 @@ func (idempotencyKey IdempotencyKey) Equals(other interface{}) bool {
 	return false
 }
 
-// OpInputContext holds information obtained from the request. This information
+// CallInputContext holds information obtained from the request. This information
 // are generally obtained from the request's metadata (e.g., HTTP request
 // header).
 //TODO: proxied context.
-type OpInputContext[
+type CallInputContext[
 	SessionIDNumT azcore.SessionIDNum, SessionRefKeyT azcore.SessionRefKey[SessionIDNumT],
 	TerminalIDNumT azcore.TerminalIDNum, TerminalRefKeyT azcore.TerminalRefKey[TerminalIDNumT],
 	UserIDNumT azcore.UserIDNum, UserRefKeyT azcore.UserRefKey[UserIDNumT],
@@ -85,11 +82,11 @@ type OpInputContext[
 		TerminalIDNumT, TerminalRefKeyT,
 		UserIDNumT, UserRefKeyT, SessionSubjectT, SessionT, IdempotencyKeyT]
 
-	// OpInputMetadata returns some details about the request.
-	OpInputMetadata() OpInputMetadata
+	// CallInputMetadata returns some details about the request.
+	CallInputMetadata() CallInputMetadata
 }
 
-type OpInputMetadata struct {
+type CallInputMetadata struct {
 	// IdempotencyKey returns the idempotency token for mutating operation.
 	IdempotencyKey *IdempotencyKey
 

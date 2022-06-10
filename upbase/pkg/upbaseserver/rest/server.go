@@ -19,6 +19,6 @@ type Server struct {
 	eTagResponder *rest.ETagResponder
 }
 
-func (restSrv *Server) RESTOpInputContext(req *http.Request) (*upbase.RESTOpInputContext, error) {
-	return restSrv.serverCore.RESTOpInputContext(req)
+func (restSrv *Server) RESTCallInputContext(req *http.Request) (*upbase.RESTCallInputContext, error) {
+	return restSrv.serverCore.RESTCallInputContext(req)
 }

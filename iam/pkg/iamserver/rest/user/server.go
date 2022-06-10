@@ -40,8 +40,8 @@ type Server struct {
 	eTagResponder *rest.ETagResponder
 }
 
-func (restSrv *Server) RESTOpInputContext(req *http.Request) (*iam.RESTCallInputContext, error) {
-	return restSrv.serverCore.RESTOpInputContext(req)
+func (restSrv *Server) RESTCallInputContext(req *http.Request) (*iam.RESTCallInputContext, error) {
+	return restSrv.serverCore.RESTCallInputContext(req)
 }
 
 func (restSrv *Server) RestfulWebService() *restful.WebService {
@@ -187,7 +187,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 }
 
 func (restSrv *Server) getUser(req *restful.Request, resp *restful.Response) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).

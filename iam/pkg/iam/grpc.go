@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/grpc"
 )
 
@@ -21,7 +22,7 @@ type GRPCCallInputContext struct {
 	CallInputContext
 }
 
-var _ grpc.OpInputContext[
+var _ grpc.CallInputContext[
 	SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
-	UserIDNum, UserRefKey, Actor, Authorization,
+	UserIDNum, UserRefKey, Actor, Authorization, api.IdempotencyKey,
 ] = &GRPCCallInputContext{}

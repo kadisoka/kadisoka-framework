@@ -2,6 +2,6 @@ package upbase
 
 import "github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 
-type RESTOpInputContext struct {
+type RESTCallInputContext struct {
 	iam.RESTCallInputContext
 }

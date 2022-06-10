@@ -3,6 +3,7 @@ package iam
 import (
 	"net/http"
 
+	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api"
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/api/rest"
 )
 
@@ -22,9 +23,9 @@ type RESTCallInputContext struct {
 	Request *http.Request
 }
 
-var _ rest.OpInputContext[
+var _ rest.CallInputContext[
 	SessionIDNum, SessionRefKey, TerminalIDNum, TerminalRefKey,
-	UserIDNum, UserRefKey, Actor, Authorization,
+	UserIDNum, UserRefKey, Actor, Authorization, api.IdempotencyKey,
 ] = &RESTCallInputContext{}
 
 func (reqCtx *RESTCallInputContext) HTTPRequest() *http.Request {

@@ -93,7 +93,7 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 		authCode = ""
 	}
 
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if err != nil && err != iam.ErrReqFieldAuthorizationTypeUnsupported {
 		logCtx(reqCtx).
 			Warn().Err(err).

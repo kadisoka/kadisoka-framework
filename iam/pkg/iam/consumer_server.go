@@ -121,9 +121,9 @@ type ConsumerServerBase interface {
 // ConsumerGRPCServer is an interface which contains utilities for
 // IAM service clients to handle requests from other clients.
 type ConsumerGRPCServer interface {
-	// GRPCOpInputContext loads authorization context from
+	// GRPCCallInputContext loads authorization context from
 	// gRPC call context.
-	GRPCOpInputContext(
+	GRPCCallInputContext(
 		grpcContext context.Context,
 	) (*GRPCCallInputContext, error)
 }
@@ -131,9 +131,9 @@ type ConsumerGRPCServer interface {
 // ConsumerRESTServer is an interface which contains utilities for
 // IAM service clients to handle requests from other clients.
 type ConsumerRESTServer interface {
-	// RESTOpInputContext returns a RESTOpInputContext instance for the request.
+	// RESTCallInputContext returns a RESTCallInputContext instance for the request.
 	// This function will always return an instance even if there's an error.
-	RESTOpInputContext(*http.Request) (*RESTCallInputContext, error)
+	RESTCallInputContext(*http.Request) (*RESTCallInputContext, error)
 }
 
 type consumerServerCore struct {
@@ -247,12 +247,12 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	}, nil
 }
 
-func (consumerSrv *consumerServerBaseCore) GRPCOpInputContext(
+func (consumerSrv *consumerServerBaseCore) GRPCCallInputContext(
 	grpcCallCtx context.Context,
 ) (*GRPCCallInputContext, error) {
 	callCtx, err := consumerSrv.callContextFromGRPCContext(grpcCallCtx)
 	if callCtx == nil {
-		callCtx = NewEmptyOpInputContext(grpcCallCtx)
+		callCtx = NewEmptyCallInputContext(grpcCallCtx)
 	}
 	return &GRPCCallInputContext{callCtx}, err
 }
@@ -288,13 +288,13 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 
 	ctxAuth, err := consumerSrv.authorizationFromGRPCContext(grpcCallCtx)
 	if err != nil {
-		return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil), err
+		return newCallInputContext(grpcCallCtx, ctxAuth, originInfo, nil), err
 	}
 
 	var idempotencyKey *api.IdempotencyKey
 	md, ok := grpcmd.FromIncomingContext(grpcCallCtx)
 	if !ok {
-		return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil), nil
+		return newCallInputContext(grpcCallCtx, ctxAuth, originInfo, nil), nil
 	}
 
 	//TODO: idempotency key https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header-01
@@ -306,13 +306,13 @@ func (consumerSrv *consumerServerBaseCore) callContextFromGRPCContext(
 		keyStr := idempotencyKeyStrs[0]
 		i, err := api.IdempotencyKeyFromString(keyStr)
 		if err != nil {
-			return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, nil),
+			return newCallInputContext(grpcCallCtx, ctxAuth, originInfo, nil),
 				ReqFieldErr("Idempotency-Key", err)
 		}
 		idempotencyKey = &i
 	}
 
-	return newOpInputContext(grpcCallCtx, ctxAuth, originInfo, idempotencyKey), err
+	return newCallInputContext(grpcCallCtx, ctxAuth, originInfo, idempotencyKey), err
 }
 
 func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
@@ -341,13 +341,13 @@ func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
 	return consumerSrv.AuthorizationFromJWTString(token)
 }
 
-// RESTOpInputContext creates a call context which represents an HTTP request.
-func (consumerSrv *consumerServerBaseCore) RESTOpInputContext(
+// RESTCallInputContext creates a call context which represents an HTTP request.
+func (consumerSrv *consumerServerBaseCore) RESTCallInputContext(
 	req *http.Request,
 ) (*RESTCallInputContext, error) {
 	callCtx, err := consumerSrv.callContextFromHTTPRequest(req)
 	if callCtx == nil {
-		callCtx = NewEmptyOpInputContext(req.Context())
+		callCtx = NewEmptyCallInputContext(req.Context())
 	}
 	return &RESTCallInputContext{callCtx, req}, err
 }
@@ -390,7 +390,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	if idempotencyKeyStr != "" {
 		i, err := api.IdempotencyKeyFromString(idempotencyKeyStr)
 		if err != nil {
-			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
+			return newCallInputContext(ctx, ctxAuth, originInfo, nil),
 				ReqFieldErr("Idempotency-Key", err)
 		}
 		idempotencyKey = &i
@@ -400,11 +400,11 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 	if authorization != "" {
 		authParts := strings.SplitN(authorization, " ", 2)
 		if len(authParts) != 2 {
-			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
+			return newCallInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed
 		}
 		if authParts[0] != "Bearer" {
-			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
+			return newCallInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationTypeUnsupported
 		}
 
@@ -412,7 +412,7 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 		var err error
 		ctxAuth, err = consumerSrv.AuthorizationFromJWTString(jwtStr)
 		if err != nil {
-			return newOpInputContext(ctx, ctxAuth, originInfo, nil),
+			return newCallInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed
 		}
 
@@ -422,5 +422,5 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 		ctxAuth = newEmptyAuthorization()
 	}
 
-	return newOpInputContext(ctx, ctxAuth, originInfo, idempotencyKey), nil
+	return newCallInputContext(ctx, ctxAuth, originInfo, idempotencyKey), nil
 }

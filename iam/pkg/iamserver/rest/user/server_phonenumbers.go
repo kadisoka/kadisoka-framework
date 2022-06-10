@@ -15,7 +15,7 @@ import (
 func (restSrv *Server) putUserPhoneNumber(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if err != nil {
 		logCtx(reqCtx).
 			Warn().Err(err).
@@ -110,7 +110,7 @@ func (restSrv *Server) putUserPhoneNumber(
 func (restSrv *Server) postUserPhoneNumberVerificationConfirmation(
 	req *restful.Request, resp *restful.Response,
 ) {
-	reqCtx, err := restSrv.RESTOpInputContext(req.Request)
+	reqCtx, err := restSrv.RESTCallInputContext(req.Request)
 	if !reqCtx.IsUserContext() {
 		logCtx(reqCtx).
 			Warn().Err(err).

@@ -184,7 +184,7 @@ func (core *Core) setUserKeyPhoneNumber(
 	userRef iam.UserRefKey,
 	phoneNumber telephony.PhoneNumber,
 ) (alreadyVerified bool, err error) {
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 	ctxAuth := callCtx.Authorization()
 
 	xres, err := core.db.Exec(
@@ -256,7 +256,7 @@ func (core *Core) ConfirmUserPhoneNumberVerification(
 		panic(err)
 	}
 
-	ctxTime := callCtx.OpInputMetadata().ReceiveTime
+	ctxTime := callCtx.CallInputMetadata().ReceiveTime
 	stateChanged, err = core.
 		ensureUserPhoneNumberVerifiedFlag(
 			ctxAuth.UserIDNum(), *phoneNumber,

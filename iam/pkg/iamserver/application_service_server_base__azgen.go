@@ -184,7 +184,7 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 
 	var err error
 	var newInstanceIDNum iam.ApplicationIDNum
-	cTime := opInputCtx.OpInputMetadata().ReceiveTime
+	cTime := opInputCtx.CallInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -250,7 +250,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
 	ctxAuth := opInputCtx.Authorization()
-	ctxTime := opInputCtx.OpInputMetadata().ReceiveTime
+	ctxTime := opInputCtx.CallInputMetadata().ReceiveTime
 
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
 		sqlString, _, _ := goqu.

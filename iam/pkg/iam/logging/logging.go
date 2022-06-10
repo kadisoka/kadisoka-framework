@@ -24,7 +24,7 @@ type Logger struct {
 	foundationlog.PkgLogger
 }
 
-// WithContext creates a new logger which bound to a OpInputContext.
+// WithContext creates a new logger which bound to a CallInputContext.
 //
 // Call this method only at the logging points. It's not recommended to
 // keep the returned logger around.
@@ -62,7 +62,7 @@ func (logger Logger) WithContext(
 		}
 	}
 
-	if idempotencyKey := ctx.OpInputMetadata().IdempotencyKey; idempotencyKey != nil {
+	if idempotencyKey := ctx.CallInputMetadata().IdempotencyKey; idempotencyKey != nil {
 		logCtx = logCtx.
 			Str("idempotency_key", idempotencyKey.String())
 	}
