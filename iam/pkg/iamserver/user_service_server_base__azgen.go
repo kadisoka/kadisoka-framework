@@ -62,15 +62,15 @@ func (srv *UserServiceServerBase) IsUserRefKeyRegistered(refKey iam.UserRefKey) 
 // If it's required only to determine the existence of the ID,
 // IsUserRefKeyRegistered is generally more efficient.
 func (srv *UserServiceServerBase) GetUserInstanceInfo(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	//TODO: access control
-	return srv.getUserInstanceInfoInsecure(opInputCtx, refKey)
+	return srv.getUserInstanceInfoInsecure(inputCtx, refKey)
 }
 
 func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	refKey iam.UserRefKey,
 ) (*iam.UserInstanceInfo, error) {
 	idRegistered := false
@@ -164,27 +164,27 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 }
 
 func (srv *UserServiceServerBase) CreateUserInstanceInternal(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	input iam.UserInstanceCreationInput,
 ) (refKey iam.UserRefKey, initialState iam.UserInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createUserInstanceInsecure(opInputCtx)
+	refKey, err = srv.createUserInstanceInsecure(inputCtx)
 
 	//TODO: revision number
 	return refKey, iam.UserInstanceInfo{RevisionNumber: -1}, err
 }
 
 func (srv *UserServiceServerBase) createUserInstanceInsecure(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 ) (iam.UserRefKey, error) {
-	ctxAuth := opInputCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 
 	const attemptNumMax = 5
 
 	var err error
 	var newInstanceIDNum iam.UserIDNum
-	cTime := opInputCtx.CallInputMetadata().ReceiveTime
+	cTime := inputCtx.CallInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -231,30 +231,30 @@ func (srv *UserServiceServerBase) createUserInstanceInsecure(
 }
 
 func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
-	if opInputCtx == nil {
+	if inputCtx == nil {
 		return false, iam.UserInstanceInfoZero(), nil
 	}
-	ctxAuth := opInputCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 	if !ctxAuth.IsUser(toDelete) {
 		return false, iam.UserInstanceInfoZero(), nil //TODO: should be an error
 	}
 
 	//TODO: access control
 
-	return srv.deleteUserInstanceInsecure(opInputCtx, toDelete, input)
+	return srv.deleteUserInstanceInsecure(inputCtx, toDelete, input)
 }
 
 func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	toDelete iam.UserRefKey,
 	input iam.UserInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
-	ctxAuth := opInputCtx.Authorization()
-	ctxTime := opInputCtx.CallInputMetadata().ReceiveTime
+	ctxAuth := inputCtx.Authorization()
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
 		sqlString, _, _ := goqu.
@@ -286,7 +286,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 		instanceMutated = n == 1
 
 		if srv.deletionTxHook != nil {
-			return srv.deletionTxHook(opInputCtx, dbTx)
+			return srv.deletionTxHook(inputCtx, dbTx)
 		}
 
 		return nil
@@ -302,7 +302,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 			DeletionNotes: input.DeletionNotes,
 		}
 	} else {
-		di, err := srv.getUserInstanceInfoInsecure(opInputCtx, toDelete)
+		di, err := srv.getUserInstanceInfoInsecure(inputCtx, toDelete)
 		if err != nil {
 			return false, iam.UserInstanceInfoZero(), err
 		}

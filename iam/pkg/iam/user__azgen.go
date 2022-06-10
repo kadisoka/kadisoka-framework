@@ -483,7 +483,7 @@ type UserInstanceInfoService interface {
 	// This method returns nil if the refKey is not referencing to any valid
 	// instance.
 	GetUserInstanceInfo(
-		opInputCtx CallInputContext,
+		inputCtx CallInputContext,
 		refKey UserRefKey,
 	) (*UserInstanceInfo, error)
 }
@@ -534,7 +534,7 @@ type UserInstanceDeletionInfo struct {
 // available to be called from another part of a process.
 type UserInstanceServiceInternal interface {
 	CreateUserInstanceInternal(
-		opInputCtx CallInputContext,
+		inputCtx CallInputContext,
 		input UserInstanceCreationInput,
 	) (refKey UserRefKey, initialState UserInstanceInfo, err error)
 
@@ -544,7 +544,7 @@ type UserInstanceServiceInternal interface {
 	// true if this particular call resulted the deletion of the instance and
 	// it will have the value of false of subsequent calls to this method.
 	DeleteUserInstanceInternal(
-		opInputCtx CallInputContext,
+		inputCtx CallInputContext,
 		refOfInstToDel UserRefKey,
 		input UserInstanceDeletionInput,
 	) (instanceMutated bool, currentState UserInstanceInfo, err error)

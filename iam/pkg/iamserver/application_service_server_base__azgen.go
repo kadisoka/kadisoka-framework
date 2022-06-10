@@ -62,15 +62,15 @@ func (srv *ApplicationServiceServerBase) IsApplicationRefKeyRegistered(refKey ia
 // If it's required only to determine the existence of the ID,
 // IsApplicationRefKeyRegistered is generally more efficient.
 func (srv *ApplicationServiceServerBase) GetApplicationInstanceInfo(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	//TODO: access control
-	return srv.getApplicationInstanceInfoInsecure(opInputCtx, refKey)
+	return srv.getApplicationInstanceInfoInsecure(inputCtx, refKey)
 }
 
 func (srv *ApplicationServiceServerBase) getApplicationInstanceInfoInsecure(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	refKey iam.ApplicationRefKey,
 ) (*iam.ApplicationInstanceInfo, error) {
 	idRegistered := false
@@ -164,27 +164,27 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 }
 
 func (srv *ApplicationServiceServerBase) CreateApplicationInstanceInternal(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	input iam.ApplicationInstanceCreationInput,
 ) (refKey iam.ApplicationRefKey, initialState iam.ApplicationInstanceInfo, err error) {
 	//TODO: access control
 
-	refKey, err = srv.createApplicationInstanceInsecure(opInputCtx)
+	refKey, err = srv.createApplicationInstanceInsecure(inputCtx)
 
 	//TODO: revision number
 	return refKey, iam.ApplicationInstanceInfo{RevisionNumber: -1}, err
 }
 
 func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 ) (iam.ApplicationRefKey, error) {
-	ctxAuth := opInputCtx.Authorization()
+	ctxAuth := inputCtx.Authorization()
 
 	const attemptNumMax = 5
 
 	var err error
 	var newInstanceIDNum iam.ApplicationIDNum
-	cTime := opInputCtx.CallInputMetadata().ReceiveTime
+	cTime := inputCtx.CallInputMetadata().ReceiveTime
 
 	for attemptNum := 0; ; attemptNum++ {
 		//TODO: obtain embedded fields from the argument which
@@ -231,26 +231,26 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 }
 
 func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
-	if opInputCtx == nil {
+	if inputCtx == nil {
 		return false, iam.ApplicationInstanceInfoZero(), nil
 	}
 
 	//TODO: access control
 
-	return srv.deleteApplicationInstanceInsecure(opInputCtx, toDelete, input)
+	return srv.deleteApplicationInstanceInsecure(inputCtx, toDelete, input)
 }
 
 func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
-	opInputCtx iam.CallInputContext,
+	inputCtx iam.CallInputContext,
 	toDelete iam.ApplicationRefKey,
 	input iam.ApplicationInstanceDeletionInput,
 ) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
-	ctxAuth := opInputCtx.Authorization()
-	ctxTime := opInputCtx.CallInputMetadata().ReceiveTime
+	ctxAuth := inputCtx.Authorization()
+	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 
 	err = doTx(srv.db, func(dbTx *sqlx.Tx) error {
 		sqlString, _, _ := goqu.
@@ -281,7 +281,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 		instanceMutated = n == 1
 
 		if srv.deletionTxHook != nil {
-			return srv.deletionTxHook(opInputCtx, dbTx)
+			return srv.deletionTxHook(inputCtx, dbTx)
 		}
 
 		return nil
@@ -296,7 +296,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 			Deleted: true,
 		}
 	} else {
-		di, err := srv.getApplicationInstanceInfoInsecure(opInputCtx, toDelete)
+		di, err := srv.getApplicationInstanceInfoInsecure(inputCtx, toDelete)
 		if err != nil {
 			return false, iam.ApplicationInstanceInfoZero(), err
 		}
