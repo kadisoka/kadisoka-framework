@@ -340,7 +340,7 @@ func (svcClient *serviceClientCore) AuthorizedOutgoingHTTPRequestHeader(
 	accessToken := svcClient.getClientAccessToken()
 	outHeader := http.Header{}
 	if accessToken != "" {
-		outHeader.Set("Authorization", "Bearer "+accessToken)
+		outHeader.Set(AuthorizationMetadataKey, "Bearer "+accessToken)
 	}
 	if len(baseHeader) > 0 {
 		for k, v := range baseHeader {

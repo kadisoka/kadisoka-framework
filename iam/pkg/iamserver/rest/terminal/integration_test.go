@@ -180,7 +180,7 @@ package terminalservice_test
 
 // 	tokenPutReq, _ := http.NewRequest("PUT", baseURL+"/fcm_registration_token", bytes.NewReader(payloadBytes))
 // 	tokenPutReq.Header.Set("Content-Type", "application/json")
-// 	tokenPutReq.Header.Set("Authorization", "Bearer "+accessToken)
+// 	tokenPutReq.Header.Set(iam.AuthorizationMetadataKey, "Bearer "+accessToken)
 // 	tokenPutResp, err := client.Do(tokenPutReq)
 // 	if err == nil {
 // 		defer tokenPutResp.Body.Close()

@@ -56,7 +56,7 @@ func (restSvc *RESTService) RestfulWebService() *restful.WebService {
 		Doc("Hello").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization",
+				iam.AuthorizationMetadataKey,
 				"Bearer access_token").
 			Required(true)).
 		Returns(http.StatusOK, "OK", &helloGetResponse{}))

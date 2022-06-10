@@ -40,7 +40,7 @@ func RESTServiceServerWith(iamServerCore *Core) *RESTServiceServerBase {
 func (svcBase *RESTServiceServerBase) RequestApplication(
 	req *http.Request,
 ) (client *iam.Application, err error) {
-	authorizationHeader := req.Header.Get("Authorization")
+	authorizationHeader := req.Header.Get(iam.AuthorizationMetadataKey)
 	if authorizationHeader == "" {
 		return nil, nil
 	}
@@ -56,19 +56,19 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 	credsBytes, err := base64.StdEncoding.
 		DecodeString(strings.TrimSpace(authorizationParts[1]))
 	if err != nil {
-		return nil, iam.ReqFieldErr("Authorization", dataerrs.Malformed(err))
+		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, dataerrs.Malformed(err))
 	}
 
 	creds := strings.SplitN(string(credsBytes), ":", 2)
 	if creds[0] == "" {
-		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("username", "empty"))
+		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.EntMsg("username", "empty"))
 	}
 	appID, err := iam.ApplicationIDFromAZIDText(creds[0])
 	if err != nil {
-		return nil, iam.ReqFieldErr("Authorization", errors.Ent("username", dataerrs.Malformed(err)))
+		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.Ent("username", dataerrs.Malformed(err)))
 	}
 	if appID.IsNotStaticallyValid() {
-		return nil, iam.ReqFieldErr("Authorization", errors.Ent("username", nil))
+		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.Ent("username", nil))
 	}
 
 	client, err = svcBase.ApplicationByID(appID)
@@ -76,10 +76,10 @@ func (svcBase *RESTServiceServerBase) RequestApplication(
 		return nil, errors.Wrap("client look up", err)
 	}
 	if client == nil {
-		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("username", "reference invalid"))
+		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.EntMsg("username", "reference invalid"))
 	}
 	if len(creds) == 0 || subtle.ConstantTimeCompare([]byte(creds[1]), []byte(client.Data.Secret)) != 1 {
-		return nil, iam.ReqFieldErr("Authorization", errors.EntMsg("password", "mismatch"))
+		return nil, iam.ReqFieldErr(iam.AuthorizationMetadataKey, errors.EntMsg("password", "mismatch"))
 	}
 
 	return client, nil

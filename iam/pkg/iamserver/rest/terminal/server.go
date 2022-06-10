@@ -73,7 +73,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"might not be associated to a user.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization",
+				iam.AuthorizationMetadataKey,
 				sec.AuthorizationBasicOAuth2ClientCredentials.String()).
 			Required(true)).
 		Reads(iam.TerminalRegistrationRequestJSONV1{}).
@@ -92,7 +92,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"agent application, this equals to logging out from the app.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization",
+				iam.AuthorizationMetadataKey,
 				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Param(restWS.
@@ -116,7 +116,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"token should be associated to only one terminal.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization",
+				iam.AuthorizationMetadataKey,
 				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Reads(terminalFCMRegistrationTokenPutRequest{}).

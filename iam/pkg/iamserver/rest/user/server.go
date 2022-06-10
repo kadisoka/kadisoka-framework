@@ -60,7 +60,10 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Metadata(restfulopenapi.KeyOpenAPITags, hidden).
 		Doc("Retrieve basic profile of current user").
 		Produces(restful.MIME_JSON, "application/x-protobuf").
-		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
+		Param(restWS.
+			HeaderParameter(
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Param(restWS.PathParameter("user-id",
 			"Set to a valid user ID or 'me'.").
@@ -72,7 +75,10 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		To(restSrv.putUserPassword).
 		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Set password for registered users").
-		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
+		Param(restWS.
+			HeaderParameter(
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Reads(userPasswordPutRequest{}).
 		Returns(http.StatusBadRequest, "Request has missing data or contains invalid data", rest.ErrorResponse{}).
@@ -87,7 +93,10 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Doc("Set a new login email address for the current user").
 		Notes("The email address needs to be verified before it's set as user's login "+
 			"email address.").
-		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
+		Param(restWS.
+			HeaderParameter(
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Param(restWS.PathParameter("user-id", "The ID of the user or `me`")).
 		Reads(UserEmailAddressPutRequestJSONV1{}).
@@ -104,7 +113,10 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		Doc("Confirm email address verification").
 		Reads(UserEmailAddressVerificationConfirmationPostRequest{}).
-		Param(restWS.HeaderParameter("Authorization", sec.AuthorizationBearerAccessToken.String()).
+		Param(restWS.
+			HeaderParameter(
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(false)).
 		Returns(http.StatusNoContent,
 			"User login email address successfully set", nil))
@@ -118,7 +130,8 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 			"phone number.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Reads(UserPhoneNumberPutRequest{}).
 		Returns(
@@ -138,7 +151,8 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Reads(UserPhoneNumberVerificationConfirmationPostRequest{}).
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(false)).
 		Returns(
 			http.StatusNoContent,
@@ -152,7 +166,8 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 		Doc("Update user profile image").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Param(restWS.
 			FormParameter(
@@ -179,7 +194,8 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 			"collection of name and value pairs for the Claims.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Returns(http.StatusOK, "OK", oidc.StandardClaims{}))
 

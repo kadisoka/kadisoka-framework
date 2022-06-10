@@ -328,7 +328,7 @@ func (consumerSrv *consumerServerBaseCore) authorizationFromGRPCContext(
 		return emptyAuthCtx, nil
 	}
 	if authorizations[0] == "" {
-		return emptyAuthCtx, ReqFieldErr("Authorization", dataerrs.ErrEmpty)
+		return emptyAuthCtx, ReqFieldErr(AuthorizationMetadataKey, dataerrs.ErrEmpty)
 	}
 	token := authorizations[0]
 	parts := strings.SplitN(token, " ", 2)
@@ -396,24 +396,28 @@ func (consumerSrv *consumerServerBaseCore) callContextFromHTTPRequest(
 		idempotencyKey = &i
 	}
 
-	authorization := strings.TrimSpace(req.Header.Get("Authorization"))
+	authorization := strings.TrimSpace(req.Header.Get(AuthorizationMetadataKey))
 	if authorization != "" {
 		authParts := strings.SplitN(authorization, " ", 2)
 		if len(authParts) != 2 {
 			return newCallInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationMalformed
 		}
-		if authParts[0] != "Bearer" {
+
+		authType := authParts[0]
+		authCreds := authParts[1]
+
+		if authType == "Bearer" {
+			jwtStr := strings.TrimSpace(authCreds)
+			var err error
+			ctxAuth, err = consumerSrv.AuthorizationFromJWTString(jwtStr)
+			if err != nil {
+				return newCallInputContext(ctx, ctxAuth, originInfo, nil),
+					ErrReqFieldAuthorizationMalformed
+			}
+		} else {
 			return newCallInputContext(ctx, ctxAuth, originInfo, nil),
 				ErrReqFieldAuthorizationTypeUnsupported
-		}
-
-		jwtStr := strings.TrimSpace(authParts[1])
-		var err error
-		ctxAuth, err = consumerSrv.AuthorizationFromJWTString(jwtStr)
-		if err != nil {
-			return newCallInputContext(ctx, ctxAuth, originInfo, nil),
-				ErrReqFieldAuthorizationMalformed
 		}
 
 		//TODO: validate ctxAuth

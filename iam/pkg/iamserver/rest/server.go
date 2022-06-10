@@ -269,7 +269,7 @@ func securityDefinitionsDefault() spec.SecurityDefinitions {
 var _securityDefinitionsDefault = spec.SecurityDefinitions{
 	sec.AuthorizationBasicOAuth2ClientCredentials.String(): spec.BasicAuth(),
 	//TODO: change to spec.OAuth2AccessToken (?)
-	sec.AuthorizationBearerAccessToken.String(): spec.APIKeyAuth("Authorization", "header"),
+	sec.AuthorizationBearerAccessToken.String(): spec.APIKeyAuth(iam.AuthorizationMetadataKey, "header"),
 }
 
 func setUpRestfulContainer(
@@ -345,7 +345,7 @@ func processOpenAPIPathOp(
 				if strings.HasPrefix(lowerDesc, k) {
 					if secDef.Type == "basic" {
 						// Basic authorization is always as 'Authorization' in the header
-						if p.Name == "Authorization" && p.In == "header" {
+						if p.Name == iam.AuthorizationMetadataKey && p.In == "header" {
 							op.Security = append(op.Security, map[string][]string{k: {}})
 							isSec = true
 							continue

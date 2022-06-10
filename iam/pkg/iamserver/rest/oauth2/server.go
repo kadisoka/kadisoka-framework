@@ -104,7 +104,8 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"bearer access token as the value of Authorization header.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization", sec.AuthorizationBearerAccessToken.String()).
+				iam.AuthorizationMetadataKey,
+				sec.AuthorizationBearerAccessToken.String()).
 			Required(true)).
 		Param(restWS.
 			FormParameter(
@@ -151,7 +152,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 				"(since an access token is issued directly). RFC 6749 § 3.2.").
 		Param(restWS.
 			HeaderParameter(
-				"Authorization",
+				iam.AuthorizationMetadataKey,
 				sec.AuthorizationBasicOAuth2ClientCredentials.String()).
 			Required(true)).
 		Param(restWS.

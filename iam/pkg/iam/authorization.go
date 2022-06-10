@@ -16,9 +16,9 @@ const (
 )
 
 var (
-	ErrReqFieldAuthorizationMalformed = ReqFieldErr("Authorization", dataerrs.ErrMalformed)
+	ErrReqFieldAuthorizationMalformed = ReqFieldErr(AuthorizationMetadataKey, dataerrs.ErrMalformed)
 
-	ErrReqFieldAuthorizationTypeUnsupported = ReqFieldErr("Authorization", dataerrs.ErrTypeUnsupported)
+	ErrReqFieldAuthorizationTypeUnsupported = ReqFieldErr(AuthorizationMetadataKey, dataerrs.ErrTypeUnsupported)
 
 	ErrAuthorizationCodeAlreadyClaimed = errors.EntMsg("authorization code", "already claimed")
 )
