@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/alloyzeus/go-azfl v0.0.0-20220609143612-1bebbb78389b
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.44.29
+	github.com/aws/aws-sdk-go v1.44.31
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/emicklei/go-restful-openapi/v2 v2.9.0
@@ -14,6 +14,7 @@ require (
 	github.com/go-openapi/spec v0.20.6
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/schema v1.2.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jmoiron/sqlx v1.3.5
@@ -43,7 +44,6 @@ require (
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -68,8 +68,8 @@ require (
 	github.com/stretchr/objx v0.4.0 // indirect
 	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
-	google.golang.org/genproto v0.0.0-20220607223854-30acc4cbd2aa // indirect
+	golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68 // indirect
+	google.golang.org/genproto v0.0.0-20220608133413-ed9918b62aac // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
