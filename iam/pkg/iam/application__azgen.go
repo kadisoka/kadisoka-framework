@@ -36,6 +36,7 @@ type ApplicationIDNum int32
 var _ azid.IDNumMethods = ApplicationIDNumZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationIDNumZeroVar
 var _ azcore.EntityIDNumMethods = ApplicationIDNumZero
+var _ azcore.ValueObjectAssert[ApplicationIDNum] = ApplicationIDNumZero
 
 // ApplicationIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of ApplicationIDNum.
@@ -73,6 +74,9 @@ func ApplicationIDNumFromAZIDBinField(
 func (idNum ApplicationIDNum) PrimitiveValue() int32 {
 	return int32(idNum)
 }
+
+// Clone returns a copy of self.
+func (idNum ApplicationIDNum) Clone() ApplicationIDNum { return idNum }
 
 // AZIDNum is required for conformance
 // with azid.IDNum.
@@ -326,6 +330,7 @@ var _ azid.BinUnmarshalable = &_ApplicationIDZeroVar
 var _ azid.BinFieldUnmarshalable = &_ApplicationIDZeroVar
 var _ azid.TextUnmarshalable = &_ApplicationIDZeroVar
 var _ azcore.EntityID[ApplicationIDNum] = _ApplicationIDZero
+var _ azcore.ValueObjectAssert[ApplicationID] = _ApplicationIDZero
 
 const _ApplicationIDZero = ApplicationID(ApplicationIDNumZero)
 
@@ -336,6 +341,9 @@ var _ApplicationIDZeroVar = _ApplicationIDZero
 func ApplicationIDZero() ApplicationID {
 	return _ApplicationIDZero
 }
+
+// Clone returns a copy of self.
+func (id ApplicationID) Clone() ApplicationID { return id }
 
 // AZID is required for conformance with azid.ID.
 func (ApplicationID) AZID() {}
@@ -592,18 +600,39 @@ type ApplicationInstanceInfoService interface {
 // ApplicationInstanceInfo holds information about
 // an instance of Application.
 type ApplicationInstanceInfo struct {
-	RevisionNumber int32
+	RevisionNumber_ int32
 
-	// Deletion holds information about the deletion of the instance. If
+	// Deletion_ holds information about the deletion of the instance. If
 	// the instance has not been deleted, this field value will be nil.
-	Deletion *ApplicationInstanceDeletionInfo
+	Deletion_ *ApplicationInstanceDeletionInfo
 }
+
+var _ azcore.EntityInstanceInfo[
+	int32, ApplicationInstanceDeletionInfo,
+] = ApplicationInstanceInfo{}
+var _ azcore.ValueObjectAssert[ApplicationInstanceDeletionInfo] = ApplicationInstanceDeletionInfo{}
 
 // ApplicationInstanceInfoZero returns an instance of
 // ApplicationInstanceInfo with attributes set their respective zero
 // value.
 func ApplicationInstanceInfoZero() ApplicationInstanceInfo {
 	return ApplicationInstanceInfo{}
+}
+
+func (instInfo ApplicationInstanceInfo) Clone() ApplicationInstanceInfo {
+	if instInfo.Deletion_ != nil {
+		cp := instInfo
+		delInfo := cp.Deletion_.Clone()
+		cp.Deletion_ = &delInfo
+		return cp
+	}
+	// Already a copy and there's no shared underlying data instance
+	return instInfo
+}
+
+func (instInfo ApplicationInstanceInfo) RevisionNumber() int32 { return instInfo.RevisionNumber_ }
+func (instInfo ApplicationInstanceInfo) Deletion() *ApplicationInstanceDeletionInfo {
+	return instInfo.Deletion_
 }
 
 // IsActive returns true if the instance is considered as active.
@@ -615,7 +644,10 @@ func (instInfo ApplicationInstanceInfo) IsActive() bool {
 
 // IsDeleted returns true if the instance was deleted.
 func (instInfo ApplicationInstanceInfo) IsDeleted() bool {
-	return instInfo.Deletion != nil && instInfo.Deletion.Deleted
+	if delInfo := instInfo.Deletion(); delInfo != nil {
+		return delInfo.Deleted()
+	}
+	return false
 }
 
 //----
@@ -623,8 +655,18 @@ func (instInfo ApplicationInstanceInfo) IsDeleted() bool {
 // ApplicationInstanceDeletionInfo holds information about
 // the deletion of an instance if the instance has been deleted.
 type ApplicationInstanceDeletionInfo struct {
-	Deleted bool
+	Deleted_ bool
 }
+
+var _ azcore.EntityDeletionInfo = ApplicationInstanceDeletionInfo{}
+var _ azcore.ValueObjectAssert[ApplicationInstanceDeletionInfo] = ApplicationInstanceDeletionInfo{}
+
+func (instDelInfo ApplicationInstanceDeletionInfo) Clone() ApplicationInstanceDeletionInfo {
+	// Already a copy and there's no shared underlying data instance
+	return instDelInfo
+}
+
+func (instDelInfo ApplicationInstanceDeletionInfo) Deleted() bool { return instDelInfo.Deleted_ }
 
 //----
 

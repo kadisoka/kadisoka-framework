@@ -46,6 +46,7 @@ type SessionIDNum int32
 var _ azid.IDNumMethods = SessionIDNumZero
 var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
 var _ azcore.AdjunctEntityIDNumMethods = SessionIDNumZero
+var _ azcore.ValueObjectAssert[SessionIDNum] = SessionIDNumZero
 var _ azcore.SessionIDNumMethods = SessionIDNumZero
 
 // SessionIDNumIdentifierBitsMask is used to
@@ -83,6 +84,9 @@ func SessionIDNumFromAZIDBinField(
 func (idNum SessionIDNum) PrimitiveValue() int32 {
 	return int32(idNum)
 }
+
+// Clone returns a copy of self.
+func (idNum SessionIDNum) Clone() SessionIDNum { return idNum }
 
 // AZIDNum is required
 // for conformance with azid.IDNum.
@@ -199,6 +203,7 @@ var _ azid.ID[SessionIDNum] = _SessionIDZero
 var _ azid.BinFieldUnmarshalable = &_SessionIDZero
 var _ azid.TextUnmarshalable = &_SessionIDZero
 var _ azcore.AdjunctEntityID[SessionIDNum] = _SessionIDZero
+var _ azcore.ValueObjectAssert[SessionID] = _SessionIDZero
 var _ azcore.SessionID[SessionIDNum] = _SessionIDZero
 
 var _SessionIDZero = SessionID{
@@ -211,6 +216,9 @@ var _SessionIDZero = SessionID{
 func SessionIDZero() SessionID {
 	return _SessionIDZero
 }
+
+// Clone returns a copy of self.
+func (id SessionID) Clone() SessionID { return id }
 
 // AZID is required by azid.ID interface.
 func (SessionID) AZID() {}

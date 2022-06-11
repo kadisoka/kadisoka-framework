@@ -11,5 +11,8 @@ func (uaStateSvcClient *UserInstanceInfoServiceClientCore) GetUserInstanceInfo(
 	_ CallInputContext,
 	_ UserID,
 ) (*UserInstanceInfo, error) {
-	return &UserInstanceInfo{RevisionNumber: -1, Deletion: nil}, nil
+	return &UserInstanceInfo{
+		RevisionNumber_: -1,
+		Deletion_:       nil,
+	}, nil
 }

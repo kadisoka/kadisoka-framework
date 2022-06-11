@@ -35,6 +35,7 @@ type ApplicationAccessKeyIDNum int64
 var _ azid.IDNumMethods = ApplicationAccessKeyIDNumZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
 var _ azcore.AdjunctEntityIDNumMethods = ApplicationAccessKeyIDNumZero
+var _ azcore.ValueObjectAssert[ApplicationAccessKeyIDNum] = ApplicationAccessKeyIDNumZero
 
 // ApplicationAccessKeyIDNumIdentifierBitsMask is used to
 // extract identifier bits from an instance of ApplicationAccessKeyIDNum.
@@ -71,6 +72,9 @@ func ApplicationAccessKeyIDNumFromAZIDBinField(
 func (idNum ApplicationAccessKeyIDNum) PrimitiveValue() int64 {
 	return int64(idNum)
 }
+
+// Clone returns a copy of self.
+func (idNum ApplicationAccessKeyIDNum) Clone() ApplicationAccessKeyIDNum { return idNum }
 
 // AZIDNum is required
 // for conformance with azid.IDNum.
@@ -183,6 +187,7 @@ var _ azid.ID[ApplicationAccessKeyIDNum] = _ApplicationAccessKeyIDZero
 var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyIDZero
 var _ azid.TextUnmarshalable = &_ApplicationAccessKeyIDZero
 var _ azcore.AdjunctEntityID[ApplicationAccessKeyIDNum] = _ApplicationAccessKeyIDZero
+var _ azcore.ValueObjectAssert[ApplicationAccessKeyID] = _ApplicationAccessKeyIDZero
 
 var _ApplicationAccessKeyIDZero = ApplicationAccessKeyID{
 	application: ApplicationIDZero(),
@@ -194,6 +199,9 @@ var _ApplicationAccessKeyIDZero = ApplicationAccessKeyID{
 func ApplicationAccessKeyIDZero() ApplicationAccessKeyID {
 	return _ApplicationAccessKeyIDZero
 }
+
+// Clone returns a copy of self.
+func (id ApplicationAccessKeyID) Clone() ApplicationAccessKeyID { return id }
 
 // AZID is required by azid.ID interface.
 func (ApplicationAccessKeyID) AZID() {}

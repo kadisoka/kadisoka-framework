@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"github.com/alloyzeus/go-azfl/azcore"
 	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 )
 
@@ -22,8 +23,24 @@ type UserBaseProfileData struct {
 	ProfileImageURL string
 }
 
-func (aggregateData UserBaseProfileData) IsDeleted() bool {
-	return aggregateData.InstanceInfo != nil && aggregateData.InstanceInfo.IsDeleted()
+var _ azcore.EntityAttributes = UserBaseProfileData{}
+var _ azcore.ValueObjectAssert[UserBaseProfileData] = UserBaseProfileData{}
+
+func (profileData UserBaseProfileData) Clone() UserBaseProfileData {
+	if instInfo := profileData.InstanceInfo; instInfo != nil {
+		cp := profileData
+		instInfoCp := instInfo.Clone()
+		cp.InstanceInfo = &instInfoCp
+		return cp
+	}
+	return profileData
+}
+
+func (UserBaseProfileData) AZAttributes()       {}
+func (UserBaseProfileData) AZEntityAttributes() {}
+
+func (profileData UserBaseProfileData) IsDeleted() bool {
+	return profileData.InstanceInfo != nil && profileData.InstanceInfo.IsDeleted()
 }
 
 // JSONV1 models

@@ -41,6 +41,8 @@ func (core *Core) getUserBaseProfileInsecure(
 	var displayName *string
 	var profileImageURL *string
 
+	deleted := deletion.Deleted()
+
 	err := core.db.
 		QueryRow(
 			`SELECT ua.id_num, `+
@@ -53,7 +55,7 @@ func (core *Core) getUserBaseProfileInsecure(
 				`AND upiu._md_ts IS NULL `+
 				`WHERE ua.id_num = $1`,
 			userID).
-		Scan(&idNum, &deletion.Deleted, &displayName, &profileImageURL)
+		Scan(&idNum, &deleted, &displayName, &profileImageURL)
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -63,9 +65,9 @@ func (core *Core) getUserBaseProfileInsecure(
 		}
 	}
 
-	if deletion.Deleted {
+	if deleted {
 		//TODO: populate revision number
-		user.InstanceInfo = &iam.UserInstanceInfo{Deletion: &deletion}
+		user.InstanceInfo = &iam.UserInstanceInfo{Deletion_: &deletion}
 	} else {
 		if displayName != nil {
 			user.DisplayName = *displayName

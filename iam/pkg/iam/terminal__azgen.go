@@ -51,6 +51,7 @@ type TerminalIDNum int64
 var _ azid.IDNumMethods = TerminalIDNumZero
 var _ azid.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
 var _ azcore.AdjunctEntityIDNumMethods = TerminalIDNumZero
+var _ azcore.ValueObjectAssert[TerminalIDNum] = TerminalIDNumZero
 var _ azcore.TerminalIDNumMethods = TerminalIDNumZero
 
 // TerminalIDNumIdentifierBitsMask is used to
@@ -88,6 +89,9 @@ func TerminalIDNumFromAZIDBinField(
 func (idNum TerminalIDNum) PrimitiveValue() int64 {
 	return int64(idNum)
 }
+
+// Clone returns a copy of self.
+func (idNum TerminalIDNum) Clone() TerminalIDNum { return idNum }
 
 // AZIDNum is required
 // for conformance with azid.IDNum.
@@ -207,6 +211,7 @@ var _ azid.ID[TerminalIDNum] = _TerminalIDZero
 var _ azid.BinFieldUnmarshalable = &_TerminalIDZero
 var _ azid.TextUnmarshalable = &_TerminalIDZero
 var _ azcore.AdjunctEntityID[TerminalIDNum] = _TerminalIDZero
+var _ azcore.ValueObjectAssert[TerminalID] = _TerminalIDZero
 var _ azcore.TerminalID[TerminalIDNum] = _TerminalIDZero
 
 var _TerminalIDZero = TerminalID{
@@ -220,6 +225,9 @@ var _TerminalIDZero = TerminalID{
 func TerminalIDZero() TerminalID {
 	return _TerminalIDZero
 }
+
+// Clone returns a copy of self.
+func (id TerminalID) Clone() TerminalID { return id }
 
 // AZID is required by azid.ID interface.
 func (TerminalID) AZID() {}

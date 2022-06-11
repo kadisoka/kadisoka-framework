@@ -55,8 +55,8 @@ func (srv *UserServiceServerBase) IsUserIDRegistered(id iam.UserID) bool {
 	return idRegistered
 }
 
-// GetUserInstanceInfo retrieves the state of an User instance.
-// It includes the existence of the ID, and whether the instance
+// GetUserInstanceInfo retrieves the state of an User
+// instance. It includes the existence of the ID, and whether the instance
 // has been deleted.
 //
 // If it's required only to determine the existence of the ID,
@@ -96,11 +96,12 @@ func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
 		}
 		var deletion *iam.UserInstanceDeletionInfo
 		if instDeleted {
-			deletion = &iam.UserInstanceDeletionInfo{Deleted: true}
+			deletion = &iam.UserInstanceDeletionInfo{
+				Deleted_: true}
 		}
 		//TODO: populate revision number
 		return &iam.UserInstanceInfo{
-			Deletion: deletion,
+			Deletion_: deletion,
 		}, nil
 	}
 
@@ -125,13 +126,14 @@ func (srv *UserServiceServerBase) getUserInstanceInfoInsecure(
 	var deletion *iam.UserInstanceDeletionInfo
 	if instDeleted {
 		//TODO: deletion notes. store the notes as the value in the cache
-		deletion = &iam.UserInstanceDeletionInfo{Deleted: true}
+		deletion = &iam.UserInstanceDeletionInfo{
+			Deleted_: true}
 	}
 
 	//TODO: populate revision number
 	return &iam.UserInstanceInfo{
-		RevisionNumber: -1,
-		Deletion:       deletion,
+		RevisionNumber_: -1,
+		Deletion_:       deletion,
 	}, nil
 }
 
@@ -172,7 +174,9 @@ func (srv *UserServiceServerBase) CreateUserInstanceInternal(
 	id, err = srv.createUserInstanceInsecure(inputCtx)
 
 	//TODO: revision number
-	return id, iam.UserInstanceInfo{RevisionNumber: -1}, err
+	return id, iam.UserInstanceInfo{
+		RevisionNumber_: -1,
+	}, err
 }
 
 func (srv *UserServiceServerBase) createUserInstanceInsecure(
@@ -298,9 +302,8 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 	var deletion *iam.UserInstanceDeletionInfo
 	if instanceMutated {
 		deletion = &iam.UserInstanceDeletionInfo{
-			Deleted:       true,
-			DeletionNotes: input.DeletionNotes,
-		}
+			Deleted_:       true,
+			DeletionNotes_: input.DeletionNotes}
 	} else {
 		di, err := srv.getUserInstanceInfoInsecure(inputCtx, toDelete)
 		if err != nil {
@@ -308,14 +311,13 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 		}
 
 		if di != nil {
-			deletion = di.Deletion
+			deletion = di.Deletion()
 		}
 	}
 
 	currentState = iam.UserInstanceInfo{
-		RevisionNumber: -1, //TODO: get from the DB
-		Deletion:       deletion,
-	}
+		RevisionNumber_: -1, //TODO: get from the DB
+		Deletion_:       deletion}
 
 	//TODO: update caches, emit an event if there's any changes
 

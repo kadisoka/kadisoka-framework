@@ -12,13 +12,33 @@ type ApplicationData struct {
 	OAuth2RedirectURI []string
 }
 
-var _ azcore.EntityData = ApplicationData{}
+var _ azcore.EntityAttributes = ApplicationData{}
+var _ azcore.ValueObjectAssert[ApplicationData] = ApplicationData{}
 
-func (cl ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
-	if cl.OAuth2RedirectURI == nil {
+func (ApplicationData) AZAttributes()       {}
+func (ApplicationData) AZEntityAttributes() {}
+
+func (appData ApplicationData) Clone() ApplicationData {
+	// appData is already a clone. but it's shallow. here we are doing something
+	// extra to copy over some shared underlying instances like slices and maps
+	if src := appData.RequiredScopes; src != nil {
+		dst := make([]string, len(src))
+		copy(dst, src)
+		appData.RequiredScopes = dst
+	}
+	if src := appData.OAuth2RedirectURI; src != nil {
+		dst := make([]string, len(src))
+		copy(dst, src)
+		appData.OAuth2RedirectURI = dst
+	}
+	return appData
+}
+
+func (appData ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
+	if appData.OAuth2RedirectURI == nil {
 		return false
 	}
-	for _, v := range cl.OAuth2RedirectURI {
+	for _, v := range appData.OAuth2RedirectURI {
 		if v == redirectURI {
 			return true
 		}
@@ -26,7 +46,8 @@ func (cl ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
 	return false
 }
 
-type Application azcore.EntityEnvelope[ApplicationIDNum, ApplicationID, ApplicationData]
+type Application azcore.EntityEnvelope[
+	ApplicationIDNum, ApplicationID, ApplicationData]
 
 type ApplicationDataProvider interface {
 	GetApplication(id ApplicationID) (*Application, error)

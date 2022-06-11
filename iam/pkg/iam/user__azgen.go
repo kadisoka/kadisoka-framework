@@ -34,6 +34,7 @@ type UserIDNum int64
 var _ azid.IDNumMethods = UserIDNumZero
 var _ azid.BinFieldUnmarshalable = &_UserIDNumZeroVar
 var _ azcore.EntityIDNumMethods = UserIDNumZero
+var _ azcore.ValueObjectAssert[UserIDNum] = UserIDNumZero
 var _ azcore.UserIDNumMethods = UserIDNumZero
 
 // UserIDNumIdentifierBitsMask is used to
@@ -72,6 +73,9 @@ func UserIDNumFromAZIDBinField(
 func (idNum UserIDNum) PrimitiveValue() int64 {
 	return int64(idNum)
 }
+
+// Clone returns a copy of self.
+func (idNum UserIDNum) Clone() UserIDNum { return idNum }
 
 // AZIDNum is required for conformance
 // with azid.IDNum.
@@ -218,6 +222,7 @@ var _ azid.BinUnmarshalable = &_UserIDZeroVar
 var _ azid.BinFieldUnmarshalable = &_UserIDZeroVar
 var _ azid.TextUnmarshalable = &_UserIDZeroVar
 var _ azcore.EntityID[UserIDNum] = _UserIDZero
+var _ azcore.ValueObjectAssert[UserID] = _UserIDZero
 var _ azcore.UserID[UserIDNum] = _UserIDZero
 
 const _UserIDZero = UserID(UserIDNumZero)
@@ -229,6 +234,9 @@ var _UserIDZeroVar = _UserIDZero
 func UserIDZero() UserID {
 	return _UserIDZero
 }
+
+// Clone returns a copy of self.
+func (id UserID) Clone() UserID { return id }
 
 // AZID is required for conformance with azid.ID.
 func (UserID) AZID() {}
@@ -491,18 +499,39 @@ type UserInstanceInfoService interface {
 // UserInstanceInfo holds information about
 // an instance of User.
 type UserInstanceInfo struct {
-	RevisionNumber int32
+	RevisionNumber_ int32
 
-	// Deletion holds information about the deletion of the instance. If
+	// Deletion_ holds information about the deletion of the instance. If
 	// the instance has not been deleted, this field value will be nil.
-	Deletion *UserInstanceDeletionInfo
+	Deletion_ *UserInstanceDeletionInfo
 }
+
+var _ azcore.EntityInstanceInfo[
+	int32, UserInstanceDeletionInfo,
+] = UserInstanceInfo{}
+var _ azcore.ValueObjectAssert[UserInstanceDeletionInfo] = UserInstanceDeletionInfo{}
 
 // UserInstanceInfoZero returns an instance of
 // UserInstanceInfo with attributes set their respective zero
 // value.
 func UserInstanceInfoZero() UserInstanceInfo {
 	return UserInstanceInfo{}
+}
+
+func (instInfo UserInstanceInfo) Clone() UserInstanceInfo {
+	if instInfo.Deletion_ != nil {
+		cp := instInfo
+		delInfo := cp.Deletion_.Clone()
+		cp.Deletion_ = &delInfo
+		return cp
+	}
+	// Already a copy and there's no shared underlying data instance
+	return instInfo
+}
+
+func (instInfo UserInstanceInfo) RevisionNumber() int32 { return instInfo.RevisionNumber_ }
+func (instInfo UserInstanceInfo) Deletion() *UserInstanceDeletionInfo {
+	return instInfo.Deletion_
 }
 
 // IsActive returns true if the instance is considered as active.
@@ -514,7 +543,10 @@ func (instInfo UserInstanceInfo) IsActive() bool {
 
 // IsDeleted returns true if the instance was deleted.
 func (instInfo UserInstanceInfo) IsDeleted() bool {
-	return instInfo.Deletion != nil && instInfo.Deletion.Deleted
+	if delInfo := instInfo.Deletion(); delInfo != nil {
+		return delInfo.Deleted()
+	}
+	return false
 }
 
 //----
@@ -522,9 +554,20 @@ func (instInfo UserInstanceInfo) IsDeleted() bool {
 // UserInstanceDeletionInfo holds information about
 // the deletion of an instance if the instance has been deleted.
 type UserInstanceDeletionInfo struct {
-	Deleted       bool
-	DeletionNotes string
+	Deleted_       bool
+	DeletionNotes_ string
 }
+
+var _ azcore.EntityDeletionInfo = UserInstanceDeletionInfo{}
+var _ azcore.ValueObjectAssert[UserInstanceDeletionInfo] = UserInstanceDeletionInfo{}
+
+func (instDelInfo UserInstanceDeletionInfo) Clone() UserInstanceDeletionInfo {
+	// Already a copy and there's no shared underlying data instance
+	return instDelInfo
+}
+
+func (instDelInfo UserInstanceDeletionInfo) Deleted() bool         { return instDelInfo.Deleted_ }
+func (instDelInfo UserInstanceDeletionInfo) DeletionNotes() string { return instDelInfo.DeletionNotes_ }
 
 //----
 
