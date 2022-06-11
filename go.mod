@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/alloyzeus/go-azfl v0.0.0-20220611134320-60596f233d22
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.44.31
+	github.com/aws/aws-sdk-go v1.44.32
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/emicklei/go-restful-openapi/v2 v2.9.0
@@ -68,7 +68,7 @@ require (
 	github.com/stretchr/objx v0.4.0 // indirect
 	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
-	golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68 // indirect
+	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d // indirect
 	google.golang.org/genproto v0.0.0-20220608133413-ed9918b62aac // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
