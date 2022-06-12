@@ -38,7 +38,7 @@ package iamtestutils
 // 		"verification_resource_name": phoneNumber,
 // 	})
 
-// 	regResp, err := client.Post(TerminalServiceBaseURL+"/register",
+// 	regResp, err := client.Post(TerminalServiceBaseURL+"/registration",
 // 		"application/json", bytes.NewReader(payloadBytes))
 // 	if err != nil {
 // 		panic(err)

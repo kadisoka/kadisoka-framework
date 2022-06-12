@@ -9,7 +9,23 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const terminalDBTableName = "terminal_dt"
+const (
+	terminalDBTableName           = "terminal_dt"
+	terminalDBTablePrimaryKeyName = terminalDBTableName + "_pkey"
+)
+
+const (
+	terminalDBColMetaCreationTimestamp  = "_mc_ts"
+	terminalDBColMetaCreationTerminalID = "_mc_tid"
+	terminalDBColMetaCreationUserID     = "_mc_uid"
+	terminalDBColMetaDeletionTimestamp  = "_md_ts"
+	terminalDBColMetaDeletionTerminalID = "_md_tid"
+	terminalDBColMetaDeletionUserID     = "_md_uid"
+	terminalDBColIDNum                  = "id_num"
+
+	terminalDBColApplicationID = "application_id"
+	terminalDBColUserID        = "user_id"
+)
 
 // GenerateTerminalIDNum generates a new iam.TerminalIDNum.
 // Note that this function does not consult any database nor registry.
@@ -21,7 +37,9 @@ const terminalDBTableName = "terminal_dt"
 // The embeddedFieldBits argument could be constructed by combining
 // iam.TerminalIDNum*Bits constants. If none are defined,
 // use the value of 0.
-func GenerateTerminalIDNum(embeddedFieldBits uint64) (iam.TerminalIDNum, error) {
+func GenerateTerminalIDNum(
+	embeddedFieldBits uint64,
+) (iam.TerminalIDNum, error) {
 	idBytes := make([]byte, 8)
 	_, err := rand.Read(idBytes)
 	if err != nil {

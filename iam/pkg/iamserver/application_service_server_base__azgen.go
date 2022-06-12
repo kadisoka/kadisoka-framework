@@ -14,7 +14,10 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const applicationDBTableName = "application_dt"
+const (
+	applicationDBTableName           = "application_dt"
+	applicationDBTablePrimaryKeyName = applicationDBTableName + "_pkey"
+)
 
 // ApplicationServiceServerbase is the server-side
 // base implementation of ApplicationService.
@@ -34,7 +37,9 @@ var (
 	_ iam.ApplicationInstanceServiceInternal = &ApplicationServiceServerBase{}
 )
 
-func (srv *ApplicationServiceServerBase) IsApplicationIDRegistered(id iam.ApplicationID) bool {
+func (srv *ApplicationServiceServerBase) IsApplicationIDRegistered(
+	id iam.ApplicationID,
+) bool {
 	idNum := id.IDNum()
 
 	// Look up for the ID num in the cache.
@@ -143,12 +148,12 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 	sqlString, _, _ := goqu.From(applicationDBTableName).
 		Select(
 			goqu.Case().
-				When(goqu.C("_md_ts").IsNull(), false).
+				When(goqu.C(applicationDBColMetaDeletionTimestamp).IsNull(), false).
 				Else(true).
 				As("deleted"),
 		).
 		Where(
-			goqu.C("id_num").Eq(idNum.PrimitiveValue()),
+			goqu.C(applicationDBColIDNum).Eq(idNum.PrimitiveValue()),
 		).
 		ToSQL()
 
@@ -202,10 +207,10 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 			Insert(applicationDBTableName).
 			Rows(
 				goqu.Record{
-					"id_num":  newInstanceIDNum,
-					"_mc_ts":  cTime,
-					"_mc_uid": ctxAuth.UserIDNumPtr(),
-					"_mc_tid": ctxAuth.TerminalIDNumPtr(),
+					applicationDBColIDNum:                  newInstanceIDNum,
+					applicationDBColMetaCreationTimestamp:  cTime,
+					applicationDBColMetaCreationUserID:     ctxAuth.UserIDNumPtr(),
+					applicationDBColMetaCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
 				},
 			).
 			ToSQL()
@@ -219,7 +224,7 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == applicationDBTableName+"_pkey" {
+			pqErr.Constraint == applicationDBTablePrimaryKeyName {
 			if attemptNum >= attemptNumMax {
 				return iam.ApplicationIDZero(), errors.Wrap("insert max attempts", err)
 			}
@@ -260,15 +265,15 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 		sqlString, _, _ := goqu.
 			From(applicationDBTableName).
 			Where(
-				goqu.C("id_num").Eq(ctxAuth.UserIDNum().PrimitiveValue()),
-				goqu.C("_md_ts").IsNull(),
+				goqu.C(applicationDBColIDNum).Eq(ctxAuth.UserIDNum().PrimitiveValue()),
+				goqu.C(applicationDBColMetaDeletionTimestamp).IsNull(),
 			).
 			Update().
 			Set(
 				goqu.Record{
-					"_md_ts":  ctxTime,
-					"_md_tid": ctxAuth.TerminalIDNum().PrimitiveValue(),
-					"_md_uid": ctxAuth.UserIDNum().PrimitiveValue(),
+					applicationDBColMetaDeletionTimestamp:  ctxTime,
+					applicationDBColMetaDeletionTerminalID: ctxAuth.TerminalIDNum().PrimitiveValue(),
+					applicationDBColMetaDeletionUserID:     ctxAuth.UserIDNum().PrimitiveValue(),
 				},
 			).
 			ToSQL()
@@ -323,14 +328,15 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 func (srv *ApplicationServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 	_, err := dbTx.Exec(
 		`CREATE TABLE ` + applicationDBTableName + ` ( ` +
-			`id_num     integer PRIMARY KEY, ` +
-			`_mc_ts     timestamp with time zone NOT NULL DEFAULT now(), ` +
-			`_mc_tid    bigint, ` +
-			`_mc_uid    bigint, ` +
-			`_md_ts     timestamp with time zone, ` +
-			`_md_tid    bigint, ` +
-			`_md_uid    bigint, ` +
-			`CHECK (id_num > 0) ` +
+			applicationDBColIDNum + `  integer, ` +
+			applicationDBColMetaCreationTimestamp + `  timestamp with time zone NOT NULL DEFAULT now(), ` +
+			applicationDBColMetaCreationTerminalID + `  bigint, ` +
+			applicationDBColMetaCreationUserID + `  bigint, ` +
+			applicationDBColMetaDeletionTimestamp + `  timestamp with time zone, ` +
+			applicationDBColMetaDeletionTerminalID + `  bigint, ` +
+			applicationDBColMetaDeletionUserID + `  bigint, ` +
+			`CONSTRAINT ` + applicationDBTablePrimaryKeyName + ` PRIMARY KEY(` + applicationDBColIDNum + `), ` +
+			`CHECK (` + applicationDBColIDNum + ` > 0) ` +
 			`);`,
 	)
 	if err != nil {
@@ -338,6 +344,16 @@ func (srv *ApplicationServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error 
 	}
 	return nil
 }
+
+const (
+	applicationDBColMetaCreationTimestamp  = "_mc_ts"
+	applicationDBColMetaCreationTerminalID = "_mc_tid"
+	applicationDBColMetaCreationUserID     = "_mc_uid"
+	applicationDBColMetaDeletionTimestamp  = "_md_ts"
+	applicationDBColMetaDeletionTerminalID = "_md_tid"
+	applicationDBColMetaDeletionUserID     = "_md_uid"
+	applicationDBColIDNum                  = "id_num"
+)
 
 // GenerateApplicationIDNum generates a new iam.ApplicationIDNum.
 // Note that this function does not consult any database nor registry.
@@ -349,7 +365,9 @@ func (srv *ApplicationServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error 
 // The embeddedFieldBits argument could be constructed by combining
 // iam.ApplicationIDNum*Bits constants. If none are defined,
 // use the value of 0.
-func GenerateApplicationIDNum(embeddedFieldBits uint32) (iam.ApplicationIDNum, error) {
+func GenerateApplicationIDNum(
+	embeddedFieldBits uint32,
+) (iam.ApplicationIDNum, error) {
 	idBytes := make([]byte, 4)
 	_, err := rand.Read(idBytes)
 	if err != nil {

@@ -9,7 +9,22 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const sessionDBTableName = "session_dt"
+const (
+	sessionDBTableName           = "session_dt"
+	sessionDBTablePrimaryKeyName = sessionDBTableName + "_pkey"
+)
+
+const (
+	sessionDBColMetaCreationTimestamp  = "_mc_ts"
+	sessionDBColMetaCreationTerminalID = "_mc_tid"
+	sessionDBColMetaCreationUserID     = "_mc_uid"
+	sessionDBColMetaDeletionTimestamp  = "_md_ts"
+	sessionDBColMetaDeletionTerminalID = "_md_tid"
+	sessionDBColMetaDeletionUserID     = "_md_uid"
+	sessionDBColIDNum                  = "id_num"
+
+	sessionDBColTerminalID = "terminal_id"
+)
 
 // GenerateSessionIDNum generates a new iam.SessionIDNum.
 // Note that this function does not consult any database nor registry.
@@ -21,7 +36,9 @@ const sessionDBTableName = "session_dt"
 // The embeddedFieldBits argument could be constructed by combining
 // iam.SessionIDNum*Bits constants. If none are defined,
 // use the value of 0.
-func GenerateSessionIDNum(embeddedFieldBits uint32) (iam.SessionIDNum, error) {
+func GenerateSessionIDNum(
+	embeddedFieldBits uint32,
+) (iam.SessionIDNum, error) {
 	idBytes := make([]byte, 4)
 	_, err := rand.Read(idBytes)
 	if err != nil {

@@ -130,12 +130,12 @@ func (core *Core) issueSession(
 			Insert(sessionDBTableName).
 			Rows(
 				goqu.Record{
-					"terminal_id": terminalID.IDNum().PrimitiveValue(),
-					"id_num":      sessionIDNum.PrimitiveValue(),
-					"expiry":      sessionExpiry,
-					"_mc_ts":      sessionStartTime,
-					"_mc_tid":     ctxAuth.TerminalIDNumPtr(),
-					"_mc_uid":     ctxAuth.UserIDNumPtr(),
+					sessionDBColTerminalID:             terminalID.IDNum().PrimitiveValue(),
+					sessionDBColIDNum:                  sessionIDNum.PrimitiveValue(),
+					"expiry":                           sessionExpiry,
+					sessionDBColMetaCreationTimestamp:  sessionStartTime,
+					sessionDBColMetaCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
+					sessionDBColMetaCreationUserID:     ctxAuth.UserIDNumPtr(),
 				},
 			).
 			ToSQL()
@@ -148,7 +148,7 @@ func (core *Core) issueSession(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == sessionDBTableName+"_pkey" {
+			pqErr.Constraint == sessionDBTablePrimaryKeyName {
 			if attemptNum >= attemptNumMax {
 				return iam.SessionIDZero(), timeZero, timeZero,
 					errors.Wrap("insert max attempts", err)

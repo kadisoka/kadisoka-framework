@@ -14,7 +14,10 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-const userDBTableName = "user_dt"
+const (
+	userDBTableName           = "user_dt"
+	userDBTablePrimaryKeyName = userDBTableName + "_pkey"
+)
 
 // UserServiceServerbase is the server-side
 // base implementation of UserService.
@@ -34,7 +37,9 @@ var (
 	_ iam.UserInstanceServiceInternal = &UserServiceServerBase{}
 )
 
-func (srv *UserServiceServerBase) IsUserIDRegistered(id iam.UserID) bool {
+func (srv *UserServiceServerBase) IsUserIDRegistered(
+	id iam.UserID,
+) bool {
 	idNum := id.IDNum()
 
 	// Look up for the ID num in the cache.
@@ -143,12 +148,12 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 	sqlString, _, _ := goqu.From(userDBTableName).
 		Select(
 			goqu.Case().
-				When(goqu.C("_md_ts").IsNull(), false).
+				When(goqu.C(userDBColMetaDeletionTimestamp).IsNull(), false).
 				Else(true).
 				As("deleted"),
 		).
 		Where(
-			goqu.C("id_num").Eq(idNum.PrimitiveValue()),
+			goqu.C(userDBColIDNum).Eq(idNum.PrimitiveValue()),
 		).
 		ToSQL()
 
@@ -202,10 +207,10 @@ func (srv *UserServiceServerBase) createUserInstanceInsecure(
 			Insert(userDBTableName).
 			Rows(
 				goqu.Record{
-					"id_num":  newInstanceIDNum,
-					"_mc_ts":  cTime,
-					"_mc_uid": ctxAuth.UserIDNumPtr(),
-					"_mc_tid": ctxAuth.TerminalIDNumPtr(),
+					userDBColIDNum:                  newInstanceIDNum,
+					userDBColMetaCreationTimestamp:  cTime,
+					userDBColMetaCreationUserID:     ctxAuth.UserIDNumPtr(),
+					userDBColMetaCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
 				},
 			).
 			ToSQL()
@@ -219,7 +224,7 @@ func (srv *UserServiceServerBase) createUserInstanceInsecure(
 		pqErr, _ := err.(*pq.Error)
 		if pqErr != nil &&
 			pqErr.Code == "23505" &&
-			pqErr.Constraint == userDBTableName+"_pkey" {
+			pqErr.Constraint == userDBTablePrimaryKeyName {
 			if attemptNum >= attemptNumMax {
 				return iam.UserIDZero(), errors.Wrap("insert max attempts", err)
 			}
@@ -264,16 +269,16 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 		sqlString, _, _ := goqu.
 			From(userDBTableName).
 			Where(
-				goqu.C("id_num").Eq(ctxAuth.UserIDNum().PrimitiveValue()),
-				goqu.C("_md_ts").IsNull(),
+				goqu.C(userDBColIDNum).Eq(ctxAuth.UserIDNum().PrimitiveValue()),
+				goqu.C(userDBColMetaDeletionTimestamp).IsNull(),
 			).
 			Update().
 			Set(
 				goqu.Record{
-					"_md_ts":    ctxTime,
-					"_md_tid":   ctxAuth.TerminalIDNum().PrimitiveValue(),
-					"_md_uid":   ctxAuth.UserIDNum().PrimitiveValue(),
-					"_md_notes": input.DeletionNotes,
+					userDBColMetaDeletionTimestamp:  ctxTime,
+					userDBColMetaDeletionTerminalID: ctxAuth.TerminalIDNum().PrimitiveValue(),
+					userDBColMetaDeletionUserID:     ctxAuth.UserIDNum().PrimitiveValue(),
+					userDBColMetaDeletionNotes:      input.DeletionNotes,
 				},
 			).
 			ToSQL()
@@ -329,15 +334,16 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 func (srv *UserServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 	_, err := dbTx.Exec(
 		`CREATE TABLE ` + userDBTableName + ` ( ` +
-			`id_num     bigint PRIMARY KEY, ` +
-			`_mc_ts     timestamp with time zone NOT NULL DEFAULT now(), ` +
-			`_mc_tid    bigint, ` +
-			`_mc_uid    bigint, ` +
-			`_md_ts     timestamp with time zone, ` +
-			`_md_tid    bigint, ` +
-			`_md_uid    bigint, ` +
-			`_md_notes  jsonb, ` +
-			`CHECK (id_num > 0) ` +
+			userDBColIDNum + `  bigint, ` +
+			userDBColMetaCreationTimestamp + `  timestamp with time zone NOT NULL DEFAULT now(), ` +
+			userDBColMetaCreationTerminalID + `  bigint, ` +
+			userDBColMetaCreationUserID + `  bigint, ` +
+			userDBColMetaDeletionTimestamp + `  timestamp with time zone, ` +
+			userDBColMetaDeletionTerminalID + `  bigint, ` +
+			userDBColMetaDeletionUserID + `  bigint, ` +
+			userDBColMetaDeletionNotes + `  jsonb, ` +
+			`CONSTRAINT ` + userDBTablePrimaryKeyName + ` PRIMARY KEY(` + userDBColIDNum + `), ` +
+			`CHECK (` + userDBColIDNum + ` > 0) ` +
 			`);`,
 	)
 	if err != nil {
@@ -345,6 +351,17 @@ func (srv *UserServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 	}
 	return nil
 }
+
+const (
+	userDBColMetaCreationTimestamp  = "_mc_ts"
+	userDBColMetaCreationTerminalID = "_mc_tid"
+	userDBColMetaCreationUserID     = "_mc_uid"
+	userDBColMetaDeletionTimestamp  = "_md_ts"
+	userDBColMetaDeletionTerminalID = "_md_tid"
+	userDBColMetaDeletionUserID     = "_md_uid"
+	userDBColMetaDeletionNotes      = "_md_notes"
+	userDBColIDNum                  = "id_num"
+)
 
 // GenerateUserIDNum generates a new iam.UserIDNum.
 // Note that this function does not consult any database nor registry.
@@ -356,7 +373,9 @@ func (srv *UserServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 // The embeddedFieldBits argument could be constructed by combining
 // iam.UserIDNum*Bits constants. If none are defined,
 // use the value of 0.
-func GenerateUserIDNum(embeddedFieldBits uint64) (iam.UserIDNum, error) {
+func GenerateUserIDNum(
+	embeddedFieldBits uint64,
+) (iam.UserIDNum, error) {
 	idBytes := make([]byte, 8)
 	_, err := rand.Read(idBytes)
 	if err != nil {

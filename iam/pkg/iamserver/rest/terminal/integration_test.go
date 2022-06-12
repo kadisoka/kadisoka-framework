@@ -40,7 +40,7 @@ package terminalservice_test
 // func TestGetTerminalsRegisterWrongMethod(t *testing.T) {
 // 	client := &http.Client{}
 
-// 	resp, err := client.Get(baseURL + "/register")
+// 	resp, err := client.Get(baseURL + "/registration")
 // 	if err == nil {
 // 		defer resp.Body.Close()
 // 	}
@@ -53,7 +53,7 @@ package terminalservice_test
 // func TestPostTerminalsRegisterEmptyRequest(t *testing.T) {
 // 	client := &http.Client{}
 
-// 	resp, err := client.Post(baseURL+"/register", "", nil)
+// 	resp, err := client.Post(baseURL+"/registration", "", nil)
 // 	if err == nil {
 // 		defer resp.Body.Close()
 // 	}
@@ -66,7 +66,7 @@ package terminalservice_test
 // func TestPostTerminalsRegisterWrongContentType(t *testing.T) {
 // 	client := &http.Client{}
 
-// 	resp, err := client.Post(baseURL+"/register", "application/x-www-form-urlencoded", nil)
+// 	resp, err := client.Post(baseURL+"/registration", "application/x-www-form-urlencoded", nil)
 // 	if err == nil {
 // 		defer resp.Body.Close()
 // 	}
@@ -79,7 +79,7 @@ package terminalservice_test
 // func TestPostTerminalsRegisterEmptyBody(t *testing.T) {
 // 	client := &http.Client{}
 
-// 	resp, err := client.Post(baseURL+"/register", "application/json", nil)
+// 	resp, err := client.Post(baseURL+"/registration", "application/json", nil)
 // 	if err == nil {
 // 		defer resp.Body.Close()
 // 	}
@@ -92,7 +92,7 @@ package terminalservice_test
 // func TestPostTerminalsRegisterEmptyData(t *testing.T) {
 // 	client := &http.Client{}
 
-// 	resp, err := client.Post(baseURL+"/register", "application/json", strings.NewReader("{}"))
+// 	resp, err := client.Post(baseURL+"/registration", "application/json", strings.NewReader("{}"))
 // 	if err == nil {
 // 		defer resp.Body.Close()
 // 	}
@@ -112,7 +112,7 @@ package terminalservice_test
 // 	}
 // 	payloadBytes, _ := json.Marshal(payload)
 
-// 	resp, err := client.Post(baseURL+"/register", "application/json", bytes.NewReader(payloadBytes))
+// 	resp, err := client.Post(baseURL+"/registration", "application/json", bytes.NewReader(payloadBytes))
 // 	if err == nil {
 // 		defer resp.Body.Close()
 // 	}
@@ -139,7 +139,7 @@ package terminalservice_test
 // 		"verification_resource_name": "+15550002",
 // 	})
 
-// 	regResp, err := client.Post(baseURL+"/register", "application/json", bytes.NewReader(payloadBytes))
+// 	regResp, err := client.Post(baseURL+"/registration", "application/json", bytes.NewReader(payloadBytes))
 // 	if err == nil {
 // 		defer regResp.Body.Close()
 // 	}

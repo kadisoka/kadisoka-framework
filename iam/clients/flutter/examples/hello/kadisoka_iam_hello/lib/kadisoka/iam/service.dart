@@ -87,7 +87,7 @@ class IamServiceClientImpl implements IamServiceClient {
     _identifier = userIdentifier;
 
     final resp = await _httpClient.post(
-      Uri.http(serverBaseUrl, 'rest/v1/terminals/register'),
+      Uri.http(serverBaseUrl, 'rest/v1/terminals/registration'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': _httpClientAuthorization,

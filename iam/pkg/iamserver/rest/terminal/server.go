@@ -59,7 +59,7 @@ func (restSrv *Server) RestfulWebService() *restful.WebService {
 	hidden := append([]string{"hidden"}, tags...)
 
 	restWS.Route(restWS.
-		POST("/register").
+		POST("/registration").
 		Metadata(restfulopenapi.KeyOpenAPITags, tags).
 		To(restSrv.postTerminalsRegister).
 		Doc("Terminal registration endpoint").
