@@ -89,7 +89,7 @@ func NewCoreByConfig(
 
 	// NOTE: We should store these data into a database instead of CSV file.
 	clientDataCSVFilename := filepath.Join(secretFilesDir, "clients.csv")
-	applicationDataProvider, err := newClientStaticDataProviderFromCSVFileByName(
+	applicationDataProvider, err := newApplicationStaticDataProviderFromCSVFileByName(
 		clientDataCSVFilename, 1)
 	if err != nil {
 		return nil, errors.Wrap("client data loading", err)

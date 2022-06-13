@@ -3,7 +3,7 @@ module github.com/kadisoka/kadisoka-framework
 go 1.18
 
 require (
-	github.com/alloyzeus/go-azfl v0.0.0-20220611134320-60596f233d22
+	github.com/alloyzeus/go-azfl v0.0.0-20220613021558-b89376f6dd77
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/aws/aws-sdk-go v1.44.32
 	github.com/cespare/xxhash v1.1.0
@@ -48,7 +48,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.6 // indirect
-	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.13 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect

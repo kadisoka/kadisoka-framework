@@ -104,7 +104,7 @@ func (restSrv *Server) getAuthorize(req *restful.Request, resp *restful.Response
 		http.Redirect(w, r, cbURL, http.StatusFound)
 		return
 	}
-	if val.RedirectURI != "" && !app.Data.HasOAuth2RedirectURI(val.RedirectURI) {
+	if val.RedirectURI != "" && !app.Attributes.HasOAuth2RedirectURI(val.RedirectURI) {
 		logReq(r).
 			Warn().Msgf("redirect_uri unrecognized %v", val.RedirectURI)
 		cbURL := val.RedirectURI + "?" + oauth2.MustQueryString(oauth2.ErrorResponse{
@@ -204,17 +204,17 @@ func (restSrv *Server) postAuthorize(req *restful.Request, resp *restful.Respons
 	}
 
 	redirectURIStr, _ := req.BodyParameter("redirect_uri")
-	if redirectURIStr != "" && !app.Data.HasOAuth2RedirectURI(redirectURIStr) {
+	if redirectURIStr != "" && !app.Attributes.HasOAuth2RedirectURI(redirectURIStr) {
 		logCtx(reqCtx).
 			Warn().Msgf("Redirect URI mismatch for client %v. Got %v , expecting %v .",
-			appID, redirectURIStr, app.Data.OAuth2RedirectURI)
+			appID, redirectURIStr, app.Attributes.OAuth2RedirectURI)
 		rest.RespondTo(resp).EmptyError(
 			http.StatusBadRequest)
 		return
 	}
 
 	if redirectURIStr == "" {
-		redirectURIStr = app.Data.OAuth2RedirectURI[0]
+		redirectURIStr = app.Attributes.OAuth2RedirectURI[0]
 	}
 	redirectURI, err := url.Parse(redirectURIStr)
 	if err != nil {

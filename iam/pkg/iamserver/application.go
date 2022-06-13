@@ -9,13 +9,13 @@ import (
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"
 )
 
-type clientStaticDataProvider struct {
-	clients map[iam.ApplicationID]*iam.ApplicationData
+type applicationStaticDataProvider struct {
+	applications map[iam.ApplicationID]*iam.ApplicationData
 }
 
-func newClientStaticDataProviderFromCSVFileByName(
+func newApplicationStaticDataProviderFromCSVFileByName(
 	filename string, skipRows int,
-) (*clientStaticDataProvider, error) {
+) (*applicationStaticDataProvider, error) {
 	csvFile, err := os.Open(filename)
 	if err != nil {
 		//TODO: translate errors
@@ -115,16 +115,16 @@ func newClientStaticDataProviderFromCSVFileByName(
 		}
 	}
 
-	return &clientStaticDataProvider{clList}, nil
+	return &applicationStaticDataProvider{clList}, nil
 }
 
-func (clientStaticDataStore *clientStaticDataProvider) GetApplication(
+func (applicationStaticDataStore *applicationStaticDataProvider) GetApplication(
 	appID iam.ApplicationID,
 ) (*iam.Application, error) {
-	cl := clientStaticDataStore.clients[appID]
+	cl := applicationStaticDataStore.applications[appID]
 	if cl == nil {
 		return nil, nil
 	}
-	app := &iam.Application{ID: appID, Data: *cl}
+	app := &iam.Application{ID: appID, Attributes: *cl}
 	return app, nil
 }

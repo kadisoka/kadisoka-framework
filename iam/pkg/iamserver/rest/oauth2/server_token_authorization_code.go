@@ -113,9 +113,10 @@ func (restSrv *Server) handleTokenRequestByAuthorizationCodeGrant(
 	}
 
 	redirectURI := req.Request.FormValue("redirect_uri")
-	if redirectURI != "" && reqApp.Data.HasOAuth2RedirectURI(redirectURI) {
+	if redirectURI != "" && reqApp.Attributes.HasOAuth2RedirectURI(redirectURI) {
 		logCtx(reqCtx).
-			Warn().Msgf("Invalid redirect_uri: %s (wants %s)", redirectURI, reqApp.Data.OAuth2RedirectURI)
+			Warn().Msgf("Invalid redirect_uri: %s (wants %s)",
+			redirectURI, reqApp.Attributes.OAuth2RedirectURI)
 		oauth2.RespondTo(resp).ErrorCode(
 			oauth2.ErrorInvalidRequest)
 		return

@@ -18,8 +18,15 @@ import (
 	"github.com/square/go-jose/v3"
 )
 
-var thumbprintHasher = crypto.SHA256
-var rsaSigningAlg = jose.RS256
+var (
+	// The algorithm used to generate the thumbprint for a key. The thumbprint
+	// is then to be used to identify the key (key ID).
+	thumbprintHasher = crypto.SHA256
+	// Available for RSA: RS256, RS384, RS512
+	rsaSigningAlg = jose.RS256
+	// Available for EdDSA: EdDSA
+	edDSASigningAlg = jose.EdDSA
+)
 
 func NewJWTKeyChainFromFiles(
 	privateKeyFilenamesToTry []string,
@@ -74,7 +81,7 @@ func (jwtKeyChain JWTKeyChain) GetSigner() (jose.Signer, error) {
 	case *rsa.PrivateKey:
 		alg = rsaSigningAlg
 	case ed25519.PrivateKey:
-		alg = jose.EdDSA
+		alg = edDSASigningAlg
 	default:
 		return nil, errors.Msg("unexpected condition")
 	}
@@ -101,7 +108,9 @@ func (jwtKeyChain JWTKeyChain) GetSignedVerifierKey(keyID string) interface{} {
 	return nil
 }
 
-func (jwtKeyChain *JWTKeyChain) LoadVerifierKeysFromJWKSetByURL(jwksURL string) (int, error) {
+func (jwtKeyChain *JWTKeyChain) LoadVerifierKeysFromJWKSetByURL(
+	jwksURL string,
+) (int, error) {
 	publicKeys, err := loadJSONWebKeySetByURL(jwksURL)
 	if err != nil {
 		return 0, err
@@ -129,7 +138,7 @@ func (jwtKeyChain JWTKeyChain) JWKSet() jose.JSONWebKeySet {
 			algStr = string(rsaSigningAlg)
 			publicKey = &pk.PublicKey
 		case ed25519.PrivateKey:
-			algStr = string(jose.EdDSA)
+			algStr = string(edDSASigningAlg)
 			// pk.PublicKey() doesn't return *ed25519.PublicKey. We pass
 			// the private key instead and let JOSE extract the public key
 			// from it.
@@ -269,7 +278,13 @@ func loadPrivateKeyFromPEMFile(
 
 	var pemBytes []byte
 	if passphrase != "" {
+		// NOTE:SEC: DecryptPEMBlock is deprecated because it's insecure by
+		// design, but we really need it here as we are using it only for
+		// reading existing data.
 		pemBytes, err = x509.DecryptPEMBlock(pemData, []byte(passphrase))
+		if err != nil {
+			return nil, errors.Ent(fileName, errors.Wrap("decrypt failed", err))
+		}
 	} else {
 		pemBytes = pemData.Bytes
 	}

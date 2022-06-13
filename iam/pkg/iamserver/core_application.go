@@ -27,7 +27,7 @@ func (core *Core) AuthenticatedApplication(
 	if app == nil {
 		return nil, nil
 	}
-	if subtle.ConstantTimeCompare([]byte(secret), []byte(app.Data.Secret)) != 1 {
+	if subtle.ConstantTimeCompare([]byte(secret), []byte(app.Attributes.Secret)) != 1 {
 		return nil, errors.ArgMsg("password", "mismatch")
 	}
 

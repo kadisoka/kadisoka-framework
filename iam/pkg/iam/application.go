@@ -19,8 +19,9 @@ func (ApplicationData) AZAttributes()       {}
 func (ApplicationData) AZEntityAttributes() {}
 
 func (appData ApplicationData) Clone() ApplicationData {
-	// appData is already a clone. but it's shallow. here we are doing something
-	// extra to copy over some shared underlying instances like slices and maps
+	// appData is already a clone, but it's shallow. here we are doing
+	// additional operations to copy over values with shared underlying
+	// instances like slices and maps
 	if src := appData.RequiredScopes; src != nil {
 		dst := make([]string, len(src))
 		copy(dst, src)
@@ -46,7 +47,7 @@ func (appData ApplicationData) HasOAuth2RedirectURI(redirectURI string) bool {
 	return false
 }
 
-type Application azcore.EntityEnvelope[
+type Application azcore.KeyedEntityAttributes[
 	ApplicationIDNum, ApplicationID, ApplicationData]
 
 type ApplicationDataProvider interface {
