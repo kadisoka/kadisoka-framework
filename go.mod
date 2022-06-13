@@ -25,7 +25,7 @@ require (
 	github.com/rez-go/crux-apis v0.0.0-20200519131450-aab8ff73963b
 	github.com/rez-go/stev v0.0.0-20220607035830-a584f4607939
 	github.com/richardlehane/crock32 v1.0.1
-	github.com/rs/zerolog v1.26.1
+	github.com/rs/zerolog v1.27.0
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693
 	github.com/stretchr/testify v1.7.2
 	github.com/thoas/stats v0.0.0-20190407194641-965cb2de1678
@@ -48,6 +48,8 @@ require (
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-sqlite3 v1.14.13 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
