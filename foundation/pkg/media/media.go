@@ -3,8 +3,8 @@ package media
 import (
 	"strings"
 
+	mediapb "github.com/alloyzeus/go-azgrpc/azgrpc/media/v1"
 	"github.com/gabriel-vasile/mimetype"
-	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 )
 
 func DetectType(buf []byte) string {

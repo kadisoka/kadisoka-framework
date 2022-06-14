@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/alloyzeus/go-azfl/errors"
+	mediapb "github.com/alloyzeus/go-azgrpc/azgrpc/media/v1"
 	"github.com/jmoiron/sqlx"
-	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/media"
 	"github.com/kadisoka/kadisoka-framework/iam/pkg/iam"

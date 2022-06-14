@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/alloyzeus/go-azfl/errors"
+	iampb "github.com/alloyzeus/go-azgrpc/azgrpc/iam/v1"
 	pbtypes "github.com/gogo/protobuf/types"
-	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
 	"google.golang.org/grpc"
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"

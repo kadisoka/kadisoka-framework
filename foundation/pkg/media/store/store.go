@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/alloyzeus/go-azfl/errors"
+	mediapb "github.com/alloyzeus/go-azgrpc/azgrpc/media/v1"
 	"github.com/rez-go/crock32"
-	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/kadisoka/kadisoka-framework/foundation/pkg/app"

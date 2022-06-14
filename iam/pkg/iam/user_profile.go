@@ -2,7 +2,7 @@ package iam
 
 import (
 	"github.com/alloyzeus/go-azfl/azcore"
-	iampb "github.com/rez-go/crux-apis/crux/iam/v1"
+	iampb "github.com/alloyzeus/go-azgrpc/azgrpc/iam/v1"
 )
 
 type UserProfileService interface {

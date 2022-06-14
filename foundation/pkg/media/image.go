@@ -1,7 +1,7 @@
 package media
 
 import (
-	mediapb "github.com/rez-go/crux-apis/crux/media/v1"
+	mediapb "github.com/alloyzeus/go-azgrpc/azgrpc/media/v1"
 )
 
 //TODO:
