@@ -18,8 +18,10 @@ var _ = azcore.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
-var _ = strings.Compare
+var _ = errors.ErrUnimplemented
+var _ = binary.MaxVarintLen16
 var _ = rand.Reader
+var _ = strings.Compare
 
 // Adjunct-entity Session of Terminal.
 //
@@ -33,145 +35,6 @@ var _ = rand.Reader
 // of Session active at a time for a Terminal.
 //
 // An access token represents a instance of Session.
-
-//region IDNum
-
-// SessionIDNum is a scoped identifier
-// used to identify an instance of adjunct entity Session
-// scoped within its host entity(s).
-type SessionIDNum int32
-
-// To ensure that it conforms the interfaces. If any of these is failing,
-// there's a bug in the generator.
-var _ azid.IDNumMethods = SessionIDNumZero
-var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
-var _ azcore.AdjunctEntityIDNumMethods = SessionIDNumZero
-var _ azcore.ValueObjectAssert[SessionIDNum] = SessionIDNumZero
-var _ azcore.SessionIDNumMethods = SessionIDNumZero
-
-// SessionIDNumIdentifierBitsMask is used to
-// extract identifier bits from an instance of SessionIDNum.
-const SessionIDNumIdentifierBitsMask uint32 = 0b_00000000_11111111_11111111_11111111
-
-// SessionIDNumZero is the zero value for SessionIDNum.
-const SessionIDNumZero = SessionIDNum(0)
-
-// _SessionIDNumZeroVar is used for testing
-// pointer-based interfaces conformance.
-var _SessionIDNumZeroVar = SessionIDNumZero
-
-// SessionIDNumFromPrimitiveValue creates an instance
-// of SessionIDNum from its primitive value.
-func SessionIDNumFromPrimitiveValue(v int32) SessionIDNum {
-	return SessionIDNum(v)
-}
-
-// SessionIDNumFromAZIDBinField creates SessionIDNum from
-// its azid-bin form.
-func SessionIDNumFromAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (idNum SessionIDNum, readLen int, err error) {
-	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt32 {
-		return SessionIDNum(0), 0,
-			errors.ArgMsg("typeHint", "unsupported")
-	}
-	i := binary.BigEndian.Uint32(b)
-	return SessionIDNum(i), 4, nil
-}
-
-// PrimitiveValue returns the value in its primitive type. Prefer to use
-// this method instead of casting directly.
-func (idNum SessionIDNum) PrimitiveValue() int32 {
-	return int32(idNum)
-}
-
-// Clone returns a copy of self.
-func (idNum SessionIDNum) Clone() SessionIDNum { return idNum }
-
-// AZIDNum is required
-// for conformance with azid.IDNum.
-func (SessionIDNum) AZIDNum() {}
-
-// AZAdjunctEntityIDNum is required
-// for conformance with azcore.AdjunctEntityIDNum.
-func (SessionIDNum) AZAdjunctEntityIDNum() {}
-
-// AZSessionIDNum is required for conformance
-// with azcore.SessionIDNum.
-func (SessionIDNum) AZSessionIDNum() {}
-
-// IsZero is required as SessionIDNum is a value-object.
-func (idNum SessionIDNum) IsZero() bool {
-	return idNum == SessionIDNumZero
-}
-
-// IsStaticallyValid returns true if this instance is valid as an isolated value
-// of SessionIDNum. It doesn't tell whether it refers to
-// a valid instance of Session.
-func (idNum SessionIDNum) IsStaticallyValid() bool {
-	return int32(idNum) > 0 &&
-		(uint32(idNum)&SessionIDNumIdentifierBitsMask) != 0
-}
-
-// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
-func (idNum SessionIDNum) IsNotStaticallyValid() bool {
-	return !idNum.IsStaticallyValid()
-}
-
-// Equals is required as SessionIDNum is a value-object.
-//
-// Use EqualsSessionIDNum method if the other value
-// has the same type.
-func (idNum SessionIDNum) Equals(other interface{}) bool {
-	if x, ok := other.(SessionIDNum); ok {
-		return x == idNum
-	}
-	if x, _ := other.(*SessionIDNum); x != nil {
-		return *x == idNum
-	}
-	return false
-}
-
-// Equal is a wrapper for Equals method. It is required for
-// compatibility with github.com/google/go-cmp
-func (idNum SessionIDNum) Equal(other interface{}) bool {
-	return idNum.Equals(other)
-}
-
-// EqualsSessionIDNum determines if the other instance
-// is equal to this instance.
-func (idNum SessionIDNum) EqualsSessionIDNum(
-	other SessionIDNum,
-) bool {
-	return idNum == other
-}
-
-// AZIDBinField is required for conformance
-// with azid.IDNum.
-func (idNum SessionIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, uint32(idNum))
-	return b, azid.BinDataTypeInt32
-}
-
-// UnmarshalAZIDBinField is required for conformance
-// with azid.BinFieldUnmarshalable.
-func (idNum *SessionIDNum) UnmarshalAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (readLen int, err error) {
-	i, readLen, err := SessionIDNumFromAZIDBinField(b, typeHint)
-	if err == nil {
-		*idNum = i
-	}
-	return readLen, err
-}
-
-// Embedded fields
-const (
-	SessionIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000
-)
-
-//endregion
 
 //region ID
 
@@ -529,5 +392,144 @@ type SessionIDError interface {
 	error
 	SessionIDError()
 }
+
+//endregion
+
+//region IDNum
+
+// SessionIDNum is a scoped identifier
+// used to identify an instance of adjunct entity Session
+// scoped within its host entity(s).
+type SessionIDNum int32
+
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
+var _ azid.IDNumMethods = SessionIDNumZero
+var _ azid.BinFieldUnmarshalable = &_SessionIDNumZeroVar
+var _ azcore.AdjunctEntityIDNumMethods = SessionIDNumZero
+var _ azcore.ValueObjectAssert[SessionIDNum] = SessionIDNumZero
+var _ azcore.SessionIDNumMethods = SessionIDNumZero
+
+// SessionIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of SessionIDNum.
+const SessionIDNumIdentifierBitsMask uint32 = 0b_00000000_11111111_11111111_11111111
+
+// SessionIDNumZero is the zero value for SessionIDNum.
+const SessionIDNumZero = SessionIDNum(0)
+
+// _SessionIDNumZeroVar is used for testing
+// pointer-based interfaces conformance.
+var _SessionIDNumZeroVar = SessionIDNumZero
+
+// SessionIDNumFromPrimitiveValue creates an instance
+// of SessionIDNum from its primitive value.
+func SessionIDNumFromPrimitiveValue(v int32) SessionIDNum {
+	return SessionIDNum(v)
+}
+
+// SessionIDNumFromAZIDBinField creates SessionIDNum from
+// its azid-bin form.
+func SessionIDNumFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (idNum SessionIDNum, readLen int, err error) {
+	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt32 {
+		return SessionIDNum(0), 0,
+			errors.ArgMsg("typeHint", "unsupported")
+	}
+	i := binary.BigEndian.Uint32(b)
+	return SessionIDNum(i), 4, nil
+}
+
+// PrimitiveValue returns the value in its primitive type. Prefer to use
+// this method instead of casting directly.
+func (idNum SessionIDNum) PrimitiveValue() int32 {
+	return int32(idNum)
+}
+
+// Clone returns a copy of self.
+func (idNum SessionIDNum) Clone() SessionIDNum { return idNum }
+
+// AZIDNum is required
+// for conformance with azid.IDNum.
+func (SessionIDNum) AZIDNum() {}
+
+// AZAdjunctEntityIDNum is required
+// for conformance with azcore.AdjunctEntityIDNum.
+func (SessionIDNum) AZAdjunctEntityIDNum() {}
+
+// AZSessionIDNum is required for conformance
+// with azcore.SessionIDNum.
+func (SessionIDNum) AZSessionIDNum() {}
+
+// IsZero is required as SessionIDNum is a value-object.
+func (idNum SessionIDNum) IsZero() bool {
+	return idNum == SessionIDNumZero
+}
+
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of SessionIDNum. It doesn't tell whether it refers to
+// a valid instance of Session.
+func (idNum SessionIDNum) IsStaticallyValid() bool {
+	return int32(idNum) > 0 &&
+		(uint32(idNum)&SessionIDNumIdentifierBitsMask) != 0
+}
+
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum SessionIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
+}
+
+// Equals is required as SessionIDNum is a value-object.
+//
+// Use EqualsSessionIDNum method if the other value
+// has the same type.
+func (idNum SessionIDNum) Equals(other interface{}) bool {
+	if x, ok := other.(SessionIDNum); ok {
+		return x == idNum
+	}
+	if x, _ := other.(*SessionIDNum); x != nil {
+		return *x == idNum
+	}
+	return false
+}
+
+// Equal is a wrapper for Equals method. It is required for
+// compatibility with github.com/google/go-cmp
+func (idNum SessionIDNum) Equal(other interface{}) bool {
+	return idNum.Equals(other)
+}
+
+// EqualsSessionIDNum determines if the other instance
+// is equal to this instance.
+func (idNum SessionIDNum) EqualsSessionIDNum(
+	other SessionIDNum,
+) bool {
+	return idNum == other
+}
+
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum SessionIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b, uint32(idNum))
+	return b, azid.BinDataTypeInt32
+}
+
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *SessionIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := SessionIDNumFromAZIDBinField(b, typeHint)
+	if err == nil {
+		*idNum = i
+	}
+	return readLen, err
+}
+
+// Embedded fields
+const (
+	SessionIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000
+)
 
 //endregion

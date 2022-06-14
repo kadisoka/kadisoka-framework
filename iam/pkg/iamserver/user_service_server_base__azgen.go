@@ -243,7 +243,7 @@ func (srv *UserServiceServerBase) DeleteUserInstanceInternal(
 	inputCtx iam.CallInputContext,
 	toDelete iam.UserID,
 	input iam.UserInstanceDeletionInput,
-) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
+) (justDeleted bool, currentState iam.UserInstanceInfo, err error) {
 	if inputCtx == nil {
 		return false, iam.UserInstanceInfoZero(), nil
 	}
@@ -261,7 +261,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 	inputCtx iam.CallInputContext,
 	toDelete iam.UserID,
 	input iam.UserInstanceDeletionInput,
-) (instanceMutated bool, currentState iam.UserInstanceInfo, err error) {
+) (justDeleted bool, currentState iam.UserInstanceInfo, err error) {
 	ctxAuth := inputCtx.Authorization()
 	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 
@@ -292,7 +292,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 		if txErr != nil {
 			return txErr
 		}
-		instanceMutated = n == 1
+		justDeleted = n == 1
 
 		if srv.deletionTxHook != nil {
 			return srv.deletionTxHook(inputCtx, dbTx)
@@ -305,7 +305,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 	}
 
 	var deletion *iam.UserInstanceDeletionInfo
-	if instanceMutated {
+	if justDeleted {
 		deletion = &iam.UserInstanceDeletionInfo{
 			Deleted_:       true,
 			DeletionNotes_: input.DeletionNotes}
@@ -326,7 +326,7 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 
 	//TODO: update caches, emit an event if there's any changes
 
-	return instanceMutated, currentState, nil
+	return justDeleted, currentState, nil
 }
 
 // Designed to perform the migration if required

@@ -18,12 +18,285 @@ var _ = azcore.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
-var _ = strings.Compare
+var _ = errors.ErrUnimplemented
+var _ = binary.MaxVarintLen16
 var _ = rand.Reader
+var _ = strings.Compare
 
 // Entity Application.
 //
-// An Application is an ....
+// An Application is a class of application that is part of or communicates
+// with our realm. It's coming in form of web apps, mobile apps, servers
+// of services from all domains, worker services, etc.
+//
+// An instance of Application that has made successful authentication with
+// the identity service is called Terminal.
+
+//region ID
+
+// ApplicationID is used to identify
+// an instance of entity Application.
+type ApplicationID ApplicationIDNum
+
+// NewApplicationID returns a new instance
+// of ApplicationID with the provided attribute values.
+func NewApplicationID(
+	idNum ApplicationIDNum,
+) ApplicationID {
+	return ApplicationID(idNum)
+}
+
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
+var _ azid.ID[ApplicationIDNum] = _ApplicationIDZero
+var _ azid.BinUnmarshalable = &_ApplicationIDZeroVar
+var _ azid.BinFieldUnmarshalable = &_ApplicationIDZeroVar
+var _ azid.TextUnmarshalable = &_ApplicationIDZeroVar
+var _ azcore.EntityID[ApplicationIDNum] = _ApplicationIDZero
+var _ azcore.ValueObjectAssert[ApplicationID] = _ApplicationIDZero
+
+const _ApplicationIDZero = ApplicationID(ApplicationIDNumZero)
+
+var _ApplicationIDZeroVar = _ApplicationIDZero
+
+// ApplicationIDZero returns
+// a zero-valued instance of ApplicationID.
+func ApplicationIDZero() ApplicationID {
+	return _ApplicationIDZero
+}
+
+// Clone returns a copy of self.
+func (id ApplicationID) Clone() ApplicationID { return id }
+
+// AZID is required for conformance with azid.ID.
+func (ApplicationID) AZID() {}
+
+// AZEntityID is required for conformance
+// with azcore.EntityID.
+func (ApplicationID) AZEntityID() {}
+
+// IDNum returns the scoped identifier of the entity.
+func (id ApplicationID) IDNum() ApplicationIDNum {
+	return ApplicationIDNum(id)
+}
+
+// IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
+// otherwise it returns nil.
+func (id ApplicationID) IDNumPtr() *ApplicationIDNum {
+	if id.IsNotStaticallyValid() {
+		return nil
+	}
+	i := id.IDNum()
+	return &i
+}
+
+// AZIDNum is required for conformance with azid.ID.
+func (id ApplicationID) AZIDNum() ApplicationIDNum {
+	return ApplicationIDNum(id)
+}
+
+// IsZero is required as ApplicationID is a value-object.
+func (id ApplicationID) IsZero() bool {
+	return ApplicationIDNum(id) == ApplicationIDNumZero
+}
+
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of ApplicationID.
+// It doesn't tell whether it refers to a valid instance of Application.
+func (id ApplicationID) IsStaticallyValid() bool {
+	return ApplicationIDNum(id).IsStaticallyValid()
+}
+
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (id ApplicationID) IsNotStaticallyValid() bool {
+	return !id.IsStaticallyValid()
+}
+
+// Equals is required for conformance with azcore.EntityID.
+func (id ApplicationID) Equals(other interface{}) bool {
+	if x, ok := other.(ApplicationID); ok {
+		return x == id
+	}
+	if x, _ := other.(*ApplicationID); x != nil {
+		return *x == id
+	}
+	return false
+}
+
+// Equal is required for conformance with azcore.EntityID.
+func (id ApplicationID) Equal(other interface{}) bool {
+	return id.Equals(other)
+}
+
+// EqualsApplicationID returs true
+// if the other value has the same attributes as id.
+func (id ApplicationID) EqualsApplicationID(
+	other ApplicationID,
+) bool {
+	return other == id
+}
+
+func (id ApplicationID) AZIDBin() []byte {
+	b := make([]byte, 4+1)
+	b[0] = azid.BinDataTypeInt32.Byte()
+	binary.BigEndian.PutUint32(b[1:], uint32(id))
+	return b
+}
+
+func ApplicationIDFromAZIDBin(b []byte) (id ApplicationID, readLen int, err error) {
+	typ, err := azid.BinDataTypeFromByte(b[0])
+	if err != nil {
+		return _ApplicationIDZero, 0,
+			errors.ArgWrap("", "type parsing", err)
+	}
+	if typ != azid.BinDataTypeInt32 {
+		return _ApplicationIDZero, 0,
+			errors.Arg("", errors.EntMsg("type", "unsupported"))
+	}
+
+	i, readLen, err := ApplicationIDFromAZIDBinField(b[1:], typ)
+	if err != nil {
+		return _ApplicationIDZero, 0,
+			errors.ArgWrap("", "id-num data parsing", err)
+	}
+
+	return ApplicationID(i), 1 + readLen, nil
+}
+
+// UnmarshalAZIDBin is required for conformance
+// with azcore.BinFieldUnmarshalable.
+func (id *ApplicationID) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
+	i, readLen, err := ApplicationIDFromAZIDBin(b)
+	if err == nil {
+		*id = i
+	}
+	return readLen, err
+}
+
+func (id ApplicationID) AZIDBinField() ([]byte, azid.BinDataType) {
+	return ApplicationIDNum(id).AZIDBinField()
+}
+
+func ApplicationIDFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (id ApplicationID, readLen int, err error) {
+	idNum, n, err := ApplicationIDNumFromAZIDBinField(b, typeHint)
+	if err != nil {
+		return _ApplicationIDZero, n, err
+	}
+	return ApplicationID(idNum), n, nil
+}
+
+// UnmarshalAZIDBinField is required for conformance
+// with azcore.BinFieldUnmarshalable.
+func (id *ApplicationID) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := ApplicationIDFromAZIDBinField(b, typeHint)
+	if err == nil {
+		*id = i
+	}
+	return readLen, err
+}
+
+const _ApplicationIDAZIDTextPrefix = "KAp0"
+
+// AZIDText is required for conformance
+// with azid.ID.
+func (id ApplicationID) AZIDText() string {
+	if !id.IsStaticallyValid() {
+		return ""
+	}
+
+	return _ApplicationIDAZIDTextPrefix +
+		azid.TextEncode(id.AZIDBin())
+}
+
+// ApplicationIDFromAZIDText creates a new instance of
+// ApplicationID from its azid-text form.
+func ApplicationIDFromAZIDText(s string) (ApplicationID, error) {
+	if s == "" {
+		return ApplicationIDZero(), nil
+	}
+	if !strings.HasPrefix(s, _ApplicationIDAZIDTextPrefix) {
+		return ApplicationIDZero(),
+			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
+	}
+	s = strings.TrimPrefix(s, _ApplicationIDAZIDTextPrefix)
+	b, err := azid.TextDecode(s)
+	if err != nil {
+		return ApplicationIDZero(),
+			errors.ArgWrap("", "data parsing", err)
+	}
+	id, _, err := ApplicationIDFromAZIDBin(b)
+	if err != nil {
+		return ApplicationIDZero(),
+			errors.ArgWrap("", "data decoding", err)
+	}
+	return id, nil
+}
+
+// UnmarshalAZIDText is required for conformance
+// with azid.TextUnmarshalable.
+func (id *ApplicationID) UnmarshalAZIDText(s string) error {
+	r, err := ApplicationIDFromAZIDText(s)
+	if err == nil {
+		*id = r
+	}
+	return err
+}
+
+// MarshalText is for compatibility with Go's encoding.TextMarshaler
+func (id ApplicationID) MarshalText() ([]byte, error) {
+	return []byte(id.AZIDText()), nil
+}
+
+// UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
+func (id *ApplicationID) UnmarshalText(b []byte) error {
+	r, err := ApplicationIDFromAZIDText(string(b))
+	if err == nil {
+		*id = r
+	}
+	return err
+}
+
+// MarshalJSON makes this type JSON-marshalable.
+func (id ApplicationID) MarshalJSON() ([]byte, error) {
+	// We assume that there are no symbols in azid-text
+	return []byte("\"" + id.AZIDText() + "\""), nil
+}
+
+// UnmarshalJSON parses a JSON value.
+func (id *ApplicationID) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	if s == "" {
+		*id = ApplicationIDZero()
+		return nil
+	}
+	i, err := ApplicationIDFromAZIDText(s)
+	if err == nil {
+		*id = i
+	}
+	return err
+}
+
+// ApplicationIDService abstracts
+// ApplicationID-related services.
+type ApplicationIDService interface {
+	// IsApplicationID is to check if the ref-key is
+	// trully registered to system. It does not check whether the instance
+	// is active or not.
+	IsApplicationIDRegistered(id ApplicationID) bool
+}
+
+// ApplicationIDError defines an interface for all
+// ApplicationID-related errors.
+type ApplicationIDError interface {
+	error
+	ApplicationIDError()
+}
+
+//endregion
 
 //region IDNum
 
@@ -309,272 +582,6 @@ type ApplicationIDNumError interface {
 
 //endregion
 
-//region ID
-
-// ApplicationID is used to identify
-// an instance of entity Application system-wide.
-type ApplicationID ApplicationIDNum
-
-// NewApplicationID returns a new instance
-// of ApplicationID with the provided attribute values.
-func NewApplicationID(
-	idNum ApplicationIDNum,
-) ApplicationID {
-	return ApplicationID(idNum)
-}
-
-// To ensure that it conforms the interfaces. If any of these is failing,
-// there's a bug in the generator.
-var _ azid.ID[ApplicationIDNum] = _ApplicationIDZero
-var _ azid.BinUnmarshalable = &_ApplicationIDZeroVar
-var _ azid.BinFieldUnmarshalable = &_ApplicationIDZeroVar
-var _ azid.TextUnmarshalable = &_ApplicationIDZeroVar
-var _ azcore.EntityID[ApplicationIDNum] = _ApplicationIDZero
-var _ azcore.ValueObjectAssert[ApplicationID] = _ApplicationIDZero
-
-const _ApplicationIDZero = ApplicationID(ApplicationIDNumZero)
-
-var _ApplicationIDZeroVar = _ApplicationIDZero
-
-// ApplicationIDZero returns
-// a zero-valued instance of ApplicationID.
-func ApplicationIDZero() ApplicationID {
-	return _ApplicationIDZero
-}
-
-// Clone returns a copy of self.
-func (id ApplicationID) Clone() ApplicationID { return id }
-
-// AZID is required for conformance with azid.ID.
-func (ApplicationID) AZID() {}
-
-// AZEntityID is required for conformance
-// with azcore.EntityID.
-func (ApplicationID) AZEntityID() {}
-
-// IDNum returns the scoped identifier of the entity.
-func (id ApplicationID) IDNum() ApplicationIDNum {
-	return ApplicationIDNum(id)
-}
-
-// IDNumPtr returns a pointer to a copy of the id-num if it's considered valid
-// otherwise it returns nil.
-func (id ApplicationID) IDNumPtr() *ApplicationIDNum {
-	if id.IsNotStaticallyValid() {
-		return nil
-	}
-	i := id.IDNum()
-	return &i
-}
-
-// AZIDNum is required for conformance with azid.ID.
-func (id ApplicationID) AZIDNum() ApplicationIDNum {
-	return ApplicationIDNum(id)
-}
-
-// IsZero is required as ApplicationID is a value-object.
-func (id ApplicationID) IsZero() bool {
-	return ApplicationIDNum(id) == ApplicationIDNumZero
-}
-
-// IsStaticallyValid returns true if this instance is valid as an isolated value
-// of ApplicationID.
-// It doesn't tell whether it refers to a valid instance of Application.
-func (id ApplicationID) IsStaticallyValid() bool {
-	return ApplicationIDNum(id).IsStaticallyValid()
-}
-
-// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
-func (id ApplicationID) IsNotStaticallyValid() bool {
-	return !id.IsStaticallyValid()
-}
-
-// Equals is required for conformance with azcore.EntityID.
-func (id ApplicationID) Equals(other interface{}) bool {
-	if x, ok := other.(ApplicationID); ok {
-		return x == id
-	}
-	if x, _ := other.(*ApplicationID); x != nil {
-		return *x == id
-	}
-	return false
-}
-
-// Equal is required for conformance with azcore.EntityID.
-func (id ApplicationID) Equal(other interface{}) bool {
-	return id.Equals(other)
-}
-
-// EqualsApplicationID returs true
-// if the other value has the same attributes as id.
-func (id ApplicationID) EqualsApplicationID(
-	other ApplicationID,
-) bool {
-	return other == id
-}
-
-func (id ApplicationID) AZIDBin() []byte {
-	b := make([]byte, 4+1)
-	b[0] = azid.BinDataTypeInt32.Byte()
-	binary.BigEndian.PutUint32(b[1:], uint32(id))
-	return b
-}
-
-func ApplicationIDFromAZIDBin(b []byte) (id ApplicationID, readLen int, err error) {
-	typ, err := azid.BinDataTypeFromByte(b[0])
-	if err != nil {
-		return _ApplicationIDZero, 0,
-			errors.ArgWrap("", "type parsing", err)
-	}
-	if typ != azid.BinDataTypeInt32 {
-		return _ApplicationIDZero, 0,
-			errors.Arg("", errors.EntMsg("type", "unsupported"))
-	}
-
-	i, readLen, err := ApplicationIDFromAZIDBinField(b[1:], typ)
-	if err != nil {
-		return _ApplicationIDZero, 0,
-			errors.ArgWrap("", "id-num data parsing", err)
-	}
-
-	return ApplicationID(i), 1 + readLen, nil
-}
-
-// UnmarshalAZIDBin is required for conformance
-// with azcore.BinFieldUnmarshalable.
-func (id *ApplicationID) UnmarshalAZIDBin(b []byte) (readLen int, err error) {
-	i, readLen, err := ApplicationIDFromAZIDBin(b)
-	if err == nil {
-		*id = i
-	}
-	return readLen, err
-}
-
-func (id ApplicationID) AZIDBinField() ([]byte, azid.BinDataType) {
-	return ApplicationIDNum(id).AZIDBinField()
-}
-
-func ApplicationIDFromAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (id ApplicationID, readLen int, err error) {
-	idNum, n, err := ApplicationIDNumFromAZIDBinField(b, typeHint)
-	if err != nil {
-		return _ApplicationIDZero, n, err
-	}
-	return ApplicationID(idNum), n, nil
-}
-
-// UnmarshalAZIDBinField is required for conformance
-// with azcore.BinFieldUnmarshalable.
-func (id *ApplicationID) UnmarshalAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (readLen int, err error) {
-	i, readLen, err := ApplicationIDFromAZIDBinField(b, typeHint)
-	if err == nil {
-		*id = i
-	}
-	return readLen, err
-}
-
-const _ApplicationIDAZIDTextPrefix = "KAp0"
-
-// AZIDText is required for conformance
-// with azid.ID.
-func (id ApplicationID) AZIDText() string {
-	if !id.IsStaticallyValid() {
-		return ""
-	}
-
-	return _ApplicationIDAZIDTextPrefix +
-		azid.TextEncode(id.AZIDBin())
-}
-
-// ApplicationIDFromAZIDText creates a new instance of
-// ApplicationID from its azid-text form.
-func ApplicationIDFromAZIDText(s string) (ApplicationID, error) {
-	if s == "" {
-		return ApplicationIDZero(), nil
-	}
-	if !strings.HasPrefix(s, _ApplicationIDAZIDTextPrefix) {
-		return ApplicationIDZero(),
-			errors.Arg("", errors.EntMsg("prefix", "mismatch"))
-	}
-	s = strings.TrimPrefix(s, _ApplicationIDAZIDTextPrefix)
-	b, err := azid.TextDecode(s)
-	if err != nil {
-		return ApplicationIDZero(),
-			errors.ArgWrap("", "data parsing", err)
-	}
-	id, _, err := ApplicationIDFromAZIDBin(b)
-	if err != nil {
-		return ApplicationIDZero(),
-			errors.ArgWrap("", "data decoding", err)
-	}
-	return id, nil
-}
-
-// UnmarshalAZIDText is required for conformance
-// with azid.TextUnmarshalable.
-func (id *ApplicationID) UnmarshalAZIDText(s string) error {
-	r, err := ApplicationIDFromAZIDText(s)
-	if err == nil {
-		*id = r
-	}
-	return err
-}
-
-// MarshalText is for compatibility with Go's encoding.TextMarshaler
-func (id ApplicationID) MarshalText() ([]byte, error) {
-	return []byte(id.AZIDText()), nil
-}
-
-// UnmarshalText is for conformance with Go's encoding.TextUnmarshaler
-func (id *ApplicationID) UnmarshalText(b []byte) error {
-	r, err := ApplicationIDFromAZIDText(string(b))
-	if err == nil {
-		*id = r
-	}
-	return err
-}
-
-// MarshalJSON makes this type JSON-marshalable.
-func (id ApplicationID) MarshalJSON() ([]byte, error) {
-	// We assume that there are no symbols in azid-text
-	return []byte("\"" + id.AZIDText() + "\""), nil
-}
-
-// UnmarshalJSON parses a JSON value.
-func (id *ApplicationID) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), "\"")
-	if s == "" {
-		*id = ApplicationIDZero()
-		return nil
-	}
-	i, err := ApplicationIDFromAZIDText(s)
-	if err == nil {
-		*id = i
-	}
-	return err
-}
-
-// ApplicationIDService abstracts
-// ApplicationID-related services.
-type ApplicationIDService interface {
-	// IsApplicationID is to check if the ref-key is
-	// trully registered to system. It does not check whether the instance
-	// is active or not.
-	IsApplicationIDRegistered(id ApplicationID) bool
-}
-
-// ApplicationIDError defines an interface for all
-// ApplicationID-related errors.
-type ApplicationIDError interface {
-	error
-	ApplicationIDError()
-}
-
-//endregion
-
 //region Instance
 
 // ApplicationInstanceService is a service which
@@ -681,15 +688,15 @@ type ApplicationInstanceServiceInternal interface {
 	) (id ApplicationID, initialState ApplicationInstanceInfo, err error)
 
 	// DeleteApplicationInstanceInternal deletes an instance of
-	// Application entity based identfied by refOfInstToDel.
-	// The returned instanceMutated will have the value of
+	// Application entity based identfied by idOfInstToDel.
+	// The returned justDeleted will have the value of
 	// true if this particular call resulted the deletion of the instance and
 	// it will have the value of false of subsequent calls to this method.
 	DeleteApplicationInstanceInternal(
 		inputCtx CallInputContext,
-		refOfInstToDel ApplicationID,
+		idOfInstToDel ApplicationID,
 		input ApplicationInstanceDeletionInput,
-	) (instanceMutated bool, currentState ApplicationInstanceInfo, err error)
+	) (justDeleted bool, currentState ApplicationInstanceInfo, err error)
 }
 
 // ApplicationInstanceCreationInput contains data to be passed

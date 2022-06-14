@@ -243,7 +243,7 @@ func (srv *ApplicationServiceServerBase) DeleteApplicationInstanceInternal(
 	inputCtx iam.CallInputContext,
 	toDelete iam.ApplicationID,
 	input iam.ApplicationInstanceDeletionInput,
-) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
+) (justDeleted bool, currentState iam.ApplicationInstanceInfo, err error) {
 	if inputCtx == nil {
 		return false, iam.ApplicationInstanceInfoZero(), nil
 	}
@@ -257,7 +257,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 	inputCtx iam.CallInputContext,
 	toDelete iam.ApplicationID,
 	input iam.ApplicationInstanceDeletionInput,
-) (instanceMutated bool, currentState iam.ApplicationInstanceInfo, err error) {
+) (justDeleted bool, currentState iam.ApplicationInstanceInfo, err error) {
 	ctxAuth := inputCtx.Authorization()
 	ctxTime := inputCtx.CallInputMetadata().ReceiveTime
 
@@ -287,7 +287,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 		if txErr != nil {
 			return txErr
 		}
-		instanceMutated = n == 1
+		justDeleted = n == 1
 
 		if srv.deletionTxHook != nil {
 			return srv.deletionTxHook(inputCtx, dbTx)
@@ -300,7 +300,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 	}
 
 	var deletion *iam.ApplicationInstanceDeletionInfo
-	if instanceMutated {
+	if justDeleted {
 		deletion = &iam.ApplicationInstanceDeletionInfo{
 			Deleted_: true}
 	} else {
@@ -320,7 +320,7 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 
 	//TODO: update caches, emit an event if there's any changes
 
-	return instanceMutated, currentState, nil
+	return justDeleted, currentState, nil
 }
 
 // Designed to perform the migration if required

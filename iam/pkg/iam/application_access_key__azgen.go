@@ -18,144 +18,12 @@ var _ = azcore.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
-var _ = strings.Compare
+var _ = errors.ErrUnimplemented
+var _ = binary.MaxVarintLen16
 var _ = rand.Reader
+var _ = strings.Compare
 
 // Adjunct-entity ApplicationAccessKey of Application.
-
-//region IDNum
-
-// ApplicationAccessKeyIDNum is a scoped identifier
-// used to identify an instance of adjunct entity ApplicationAccessKey
-// scoped within its host entity(s).
-type ApplicationAccessKeyIDNum int64
-
-// To ensure that it conforms the interfaces. If any of these is failing,
-// there's a bug in the generator.
-var _ azid.IDNumMethods = ApplicationAccessKeyIDNumZero
-var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
-var _ azcore.AdjunctEntityIDNumMethods = ApplicationAccessKeyIDNumZero
-var _ azcore.ValueObjectAssert[ApplicationAccessKeyIDNum] = ApplicationAccessKeyIDNumZero
-
-// ApplicationAccessKeyIDNumIdentifierBitsMask is used to
-// extract identifier bits from an instance of ApplicationAccessKeyIDNum.
-const ApplicationAccessKeyIDNumIdentifierBitsMask uint64 = 0b_00000000_11111111_11111111_11111111_11111111_11111111_11111111_11111111
-
-// ApplicationAccessKeyIDNumZero is the zero value for ApplicationAccessKeyIDNum.
-const ApplicationAccessKeyIDNumZero = ApplicationAccessKeyIDNum(0)
-
-// _ApplicationAccessKeyIDNumZeroVar is used for testing
-// pointer-based interfaces conformance.
-var _ApplicationAccessKeyIDNumZeroVar = ApplicationAccessKeyIDNumZero
-
-// ApplicationAccessKeyIDNumFromPrimitiveValue creates an instance
-// of ApplicationAccessKeyIDNum from its primitive value.
-func ApplicationAccessKeyIDNumFromPrimitiveValue(v int64) ApplicationAccessKeyIDNum {
-	return ApplicationAccessKeyIDNum(v)
-}
-
-// ApplicationAccessKeyIDNumFromAZIDBinField creates ApplicationAccessKeyIDNum from
-// its azid-bin form.
-func ApplicationAccessKeyIDNumFromAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (idNum ApplicationAccessKeyIDNum, readLen int, err error) {
-	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt64 {
-		return ApplicationAccessKeyIDNum(0), 0,
-			errors.ArgMsg("typeHint", "unsupported")
-	}
-	i := binary.BigEndian.Uint64(b)
-	return ApplicationAccessKeyIDNum(i), 8, nil
-}
-
-// PrimitiveValue returns the value in its primitive type. Prefer to use
-// this method instead of casting directly.
-func (idNum ApplicationAccessKeyIDNum) PrimitiveValue() int64 {
-	return int64(idNum)
-}
-
-// Clone returns a copy of self.
-func (idNum ApplicationAccessKeyIDNum) Clone() ApplicationAccessKeyIDNum { return idNum }
-
-// AZIDNum is required
-// for conformance with azid.IDNum.
-func (ApplicationAccessKeyIDNum) AZIDNum() {}
-
-// AZAdjunctEntityIDNum is required
-// for conformance with azcore.AdjunctEntityIDNum.
-func (ApplicationAccessKeyIDNum) AZAdjunctEntityIDNum() {}
-
-// IsZero is required as ApplicationAccessKeyIDNum is a value-object.
-func (idNum ApplicationAccessKeyIDNum) IsZero() bool {
-	return idNum == ApplicationAccessKeyIDNumZero
-}
-
-// IsStaticallyValid returns true if this instance is valid as an isolated value
-// of ApplicationAccessKeyIDNum. It doesn't tell whether it refers to
-// a valid instance of ApplicationAccessKey.
-func (idNum ApplicationAccessKeyIDNum) IsStaticallyValid() bool {
-	return int64(idNum) > 0 &&
-		(uint64(idNum)&ApplicationAccessKeyIDNumIdentifierBitsMask) != 0
-}
-
-// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
-func (idNum ApplicationAccessKeyIDNum) IsNotStaticallyValid() bool {
-	return !idNum.IsStaticallyValid()
-}
-
-// Equals is required as ApplicationAccessKeyIDNum is a value-object.
-//
-// Use EqualsApplicationAccessKeyIDNum method if the other value
-// has the same type.
-func (idNum ApplicationAccessKeyIDNum) Equals(other interface{}) bool {
-	if x, ok := other.(ApplicationAccessKeyIDNum); ok {
-		return x == idNum
-	}
-	if x, _ := other.(*ApplicationAccessKeyIDNum); x != nil {
-		return *x == idNum
-	}
-	return false
-}
-
-// Equal is a wrapper for Equals method. It is required for
-// compatibility with github.com/google/go-cmp
-func (idNum ApplicationAccessKeyIDNum) Equal(other interface{}) bool {
-	return idNum.Equals(other)
-}
-
-// EqualsApplicationAccessKeyIDNum determines if the other instance
-// is equal to this instance.
-func (idNum ApplicationAccessKeyIDNum) EqualsApplicationAccessKeyIDNum(
-	other ApplicationAccessKeyIDNum,
-) bool {
-	return idNum == other
-}
-
-// AZIDBinField is required for conformance
-// with azid.IDNum.
-func (idNum ApplicationAccessKeyIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(idNum))
-	return b, azid.BinDataTypeInt64
-}
-
-// UnmarshalAZIDBinField is required for conformance
-// with azid.BinFieldUnmarshalable.
-func (idNum *ApplicationAccessKeyIDNum) UnmarshalAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (readLen int, err error) {
-	i, readLen, err := ApplicationAccessKeyIDNumFromAZIDBinField(b, typeHint)
-	if err == nil {
-		*idNum = i
-	}
-	return readLen, err
-}
-
-// Embedded fields
-const (
-	ApplicationAccessKeyIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
-)
-
-//endregion
 
 //region ID
 
@@ -506,5 +374,139 @@ type ApplicationAccessKeyIDError interface {
 	error
 	ApplicationAccessKeyIDError()
 }
+
+//endregion
+
+//region IDNum
+
+// ApplicationAccessKeyIDNum is a scoped identifier
+// used to identify an instance of adjunct entity ApplicationAccessKey
+// scoped within its host entity(s).
+type ApplicationAccessKeyIDNum int64
+
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
+var _ azid.IDNumMethods = ApplicationAccessKeyIDNumZero
+var _ azid.BinFieldUnmarshalable = &_ApplicationAccessKeyIDNumZeroVar
+var _ azcore.AdjunctEntityIDNumMethods = ApplicationAccessKeyIDNumZero
+var _ azcore.ValueObjectAssert[ApplicationAccessKeyIDNum] = ApplicationAccessKeyIDNumZero
+
+// ApplicationAccessKeyIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of ApplicationAccessKeyIDNum.
+const ApplicationAccessKeyIDNumIdentifierBitsMask uint64 = 0b_00000000_11111111_11111111_11111111_11111111_11111111_11111111_11111111
+
+// ApplicationAccessKeyIDNumZero is the zero value for ApplicationAccessKeyIDNum.
+const ApplicationAccessKeyIDNumZero = ApplicationAccessKeyIDNum(0)
+
+// _ApplicationAccessKeyIDNumZeroVar is used for testing
+// pointer-based interfaces conformance.
+var _ApplicationAccessKeyIDNumZeroVar = ApplicationAccessKeyIDNumZero
+
+// ApplicationAccessKeyIDNumFromPrimitiveValue creates an instance
+// of ApplicationAccessKeyIDNum from its primitive value.
+func ApplicationAccessKeyIDNumFromPrimitiveValue(v int64) ApplicationAccessKeyIDNum {
+	return ApplicationAccessKeyIDNum(v)
+}
+
+// ApplicationAccessKeyIDNumFromAZIDBinField creates ApplicationAccessKeyIDNum from
+// its azid-bin form.
+func ApplicationAccessKeyIDNumFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (idNum ApplicationAccessKeyIDNum, readLen int, err error) {
+	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt64 {
+		return ApplicationAccessKeyIDNum(0), 0,
+			errors.ArgMsg("typeHint", "unsupported")
+	}
+	i := binary.BigEndian.Uint64(b)
+	return ApplicationAccessKeyIDNum(i), 8, nil
+}
+
+// PrimitiveValue returns the value in its primitive type. Prefer to use
+// this method instead of casting directly.
+func (idNum ApplicationAccessKeyIDNum) PrimitiveValue() int64 {
+	return int64(idNum)
+}
+
+// Clone returns a copy of self.
+func (idNum ApplicationAccessKeyIDNum) Clone() ApplicationAccessKeyIDNum { return idNum }
+
+// AZIDNum is required
+// for conformance with azid.IDNum.
+func (ApplicationAccessKeyIDNum) AZIDNum() {}
+
+// AZAdjunctEntityIDNum is required
+// for conformance with azcore.AdjunctEntityIDNum.
+func (ApplicationAccessKeyIDNum) AZAdjunctEntityIDNum() {}
+
+// IsZero is required as ApplicationAccessKeyIDNum is a value-object.
+func (idNum ApplicationAccessKeyIDNum) IsZero() bool {
+	return idNum == ApplicationAccessKeyIDNumZero
+}
+
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of ApplicationAccessKeyIDNum. It doesn't tell whether it refers to
+// a valid instance of ApplicationAccessKey.
+func (idNum ApplicationAccessKeyIDNum) IsStaticallyValid() bool {
+	return int64(idNum) > 0 &&
+		(uint64(idNum)&ApplicationAccessKeyIDNumIdentifierBitsMask) != 0
+}
+
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum ApplicationAccessKeyIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
+}
+
+// Equals is required as ApplicationAccessKeyIDNum is a value-object.
+//
+// Use EqualsApplicationAccessKeyIDNum method if the other value
+// has the same type.
+func (idNum ApplicationAccessKeyIDNum) Equals(other interface{}) bool {
+	if x, ok := other.(ApplicationAccessKeyIDNum); ok {
+		return x == idNum
+	}
+	if x, _ := other.(*ApplicationAccessKeyIDNum); x != nil {
+		return *x == idNum
+	}
+	return false
+}
+
+// Equal is a wrapper for Equals method. It is required for
+// compatibility with github.com/google/go-cmp
+func (idNum ApplicationAccessKeyIDNum) Equal(other interface{}) bool {
+	return idNum.Equals(other)
+}
+
+// EqualsApplicationAccessKeyIDNum determines if the other instance
+// is equal to this instance.
+func (idNum ApplicationAccessKeyIDNum) EqualsApplicationAccessKeyIDNum(
+	other ApplicationAccessKeyIDNum,
+) bool {
+	return idNum == other
+}
+
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum ApplicationAccessKeyIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(idNum))
+	return b, azid.BinDataTypeInt64
+}
+
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *ApplicationAccessKeyIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := ApplicationAccessKeyIDNumFromAZIDBinField(b, typeHint)
+	if err == nil {
+		*idNum = i
+	}
+	return readLen, err
+}
+
+// Embedded fields
+const (
+	ApplicationAccessKeyIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+)
 
 //endregion

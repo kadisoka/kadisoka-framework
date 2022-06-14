@@ -18,12 +18,17 @@ var _ = azcore.AZCorePackageIsVersion1
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = azid.BinDataTypeUnspecified
-var _ = strings.Compare
+var _ = errors.ErrUnimplemented
+var _ = binary.MaxVarintLen16
 var _ = rand.Reader
+var _ = strings.Compare
 
 // Adjunct-entity Terminal of Application, User.
 //
-// A Terminal is an authorized instance of application. As long the the
+// A Terminal is an authorized instance of application. A new instance of
+// Terminal will be created upon sucessful authorization-authentication.
+//
+// As long the the
 // authorization is still valid, a terminal could be used to access the
 // service within the limit of the granted authorization. An
 // authorization of a Terminal will become invalid when it is expired, or
@@ -36,147 +41,8 @@ var _ = rand.Reader
 // instance of an Application will generate a new Terminal. A
 // de-authorized Terminal is no longer usable.
 //
-// A sucessful authorization will generate both a new Terminal and
-// an initial Session.
-
-//region IDNum
-
-// TerminalIDNum is a scoped identifier
-// used to identify an instance of adjunct entity Terminal
-// scoped within its host entity(s).
-type TerminalIDNum int64
-
-// To ensure that it conforms the interfaces. If any of these is failing,
-// there's a bug in the generator.
-var _ azid.IDNumMethods = TerminalIDNumZero
-var _ azid.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
-var _ azcore.AdjunctEntityIDNumMethods = TerminalIDNumZero
-var _ azcore.ValueObjectAssert[TerminalIDNum] = TerminalIDNumZero
-var _ azcore.TerminalIDNumMethods = TerminalIDNumZero
-
-// TerminalIDNumIdentifierBitsMask is used to
-// extract identifier bits from an instance of TerminalIDNum.
-const TerminalIDNumIdentifierBitsMask uint64 = 0b_00000000_11111111_11111111_11111111_11111111_11111111_11111111_11111111
-
-// TerminalIDNumZero is the zero value for TerminalIDNum.
-const TerminalIDNumZero = TerminalIDNum(0)
-
-// _TerminalIDNumZeroVar is used for testing
-// pointer-based interfaces conformance.
-var _TerminalIDNumZeroVar = TerminalIDNumZero
-
-// TerminalIDNumFromPrimitiveValue creates an instance
-// of TerminalIDNum from its primitive value.
-func TerminalIDNumFromPrimitiveValue(v int64) TerminalIDNum {
-	return TerminalIDNum(v)
-}
-
-// TerminalIDNumFromAZIDBinField creates TerminalIDNum from
-// its azid-bin form.
-func TerminalIDNumFromAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (idNum TerminalIDNum, readLen int, err error) {
-	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt64 {
-		return TerminalIDNum(0), 0,
-			errors.ArgMsg("typeHint", "unsupported")
-	}
-	i := binary.BigEndian.Uint64(b)
-	return TerminalIDNum(i), 8, nil
-}
-
-// PrimitiveValue returns the value in its primitive type. Prefer to use
-// this method instead of casting directly.
-func (idNum TerminalIDNum) PrimitiveValue() int64 {
-	return int64(idNum)
-}
-
-// Clone returns a copy of self.
-func (idNum TerminalIDNum) Clone() TerminalIDNum { return idNum }
-
-// AZIDNum is required
-// for conformance with azid.IDNum.
-func (TerminalIDNum) AZIDNum() {}
-
-// AZAdjunctEntityIDNum is required
-// for conformance with azcore.AdjunctEntityIDNum.
-func (TerminalIDNum) AZAdjunctEntityIDNum() {}
-
-// AZTerminalIDNum is required for conformance
-// with azcore.TerminalIDNum.
-func (TerminalIDNum) AZTerminalIDNum() {}
-
-// IsZero is required as TerminalIDNum is a value-object.
-func (idNum TerminalIDNum) IsZero() bool {
-	return idNum == TerminalIDNumZero
-}
-
-// IsStaticallyValid returns true if this instance is valid as an isolated value
-// of TerminalIDNum. It doesn't tell whether it refers to
-// a valid instance of Terminal.
-func (idNum TerminalIDNum) IsStaticallyValid() bool {
-	return int64(idNum) > 0 &&
-		(uint64(idNum)&TerminalIDNumIdentifierBitsMask) != 0
-}
-
-// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
-func (idNum TerminalIDNum) IsNotStaticallyValid() bool {
-	return !idNum.IsStaticallyValid()
-}
-
-// Equals is required as TerminalIDNum is a value-object.
-//
-// Use EqualsTerminalIDNum method if the other value
-// has the same type.
-func (idNum TerminalIDNum) Equals(other interface{}) bool {
-	if x, ok := other.(TerminalIDNum); ok {
-		return x == idNum
-	}
-	if x, _ := other.(*TerminalIDNum); x != nil {
-		return *x == idNum
-	}
-	return false
-}
-
-// Equal is a wrapper for Equals method. It is required for
-// compatibility with github.com/google/go-cmp
-func (idNum TerminalIDNum) Equal(other interface{}) bool {
-	return idNum.Equals(other)
-}
-
-// EqualsTerminalIDNum determines if the other instance
-// is equal to this instance.
-func (idNum TerminalIDNum) EqualsTerminalIDNum(
-	other TerminalIDNum,
-) bool {
-	return idNum == other
-}
-
-// AZIDBinField is required for conformance
-// with azid.IDNum.
-func (idNum TerminalIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(idNum))
-	return b, azid.BinDataTypeInt64
-}
-
-// UnmarshalAZIDBinField is required for conformance
-// with azid.BinFieldUnmarshalable.
-func (idNum *TerminalIDNum) UnmarshalAZIDBinField(
-	b []byte, typeHint azid.BinDataType,
-) (readLen int, err error) {
-	i, readLen, err := TerminalIDNumFromAZIDBinField(b, typeHint)
-	if err == nil {
-		*idNum = i
-	}
-	return readLen, err
-}
-
-// Embedded fields
-const (
-	TerminalIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
-)
-
-//endregion
+// A sucessful authorization will generate both a new instance of
+// Terminal and an instance of initial Session.
 
 //region ID
 
@@ -591,5 +457,144 @@ type TerminalIDError interface {
 	error
 	TerminalIDError()
 }
+
+//endregion
+
+//region IDNum
+
+// TerminalIDNum is a scoped identifier
+// used to identify an instance of adjunct entity Terminal
+// scoped within its host entity(s).
+type TerminalIDNum int64
+
+// To ensure that it conforms the interfaces. If any of these is failing,
+// there's a bug in the generator.
+var _ azid.IDNumMethods = TerminalIDNumZero
+var _ azid.BinFieldUnmarshalable = &_TerminalIDNumZeroVar
+var _ azcore.AdjunctEntityIDNumMethods = TerminalIDNumZero
+var _ azcore.ValueObjectAssert[TerminalIDNum] = TerminalIDNumZero
+var _ azcore.TerminalIDNumMethods = TerminalIDNumZero
+
+// TerminalIDNumIdentifierBitsMask is used to
+// extract identifier bits from an instance of TerminalIDNum.
+const TerminalIDNumIdentifierBitsMask uint64 = 0b_00000000_11111111_11111111_11111111_11111111_11111111_11111111_11111111
+
+// TerminalIDNumZero is the zero value for TerminalIDNum.
+const TerminalIDNumZero = TerminalIDNum(0)
+
+// _TerminalIDNumZeroVar is used for testing
+// pointer-based interfaces conformance.
+var _TerminalIDNumZeroVar = TerminalIDNumZero
+
+// TerminalIDNumFromPrimitiveValue creates an instance
+// of TerminalIDNum from its primitive value.
+func TerminalIDNumFromPrimitiveValue(v int64) TerminalIDNum {
+	return TerminalIDNum(v)
+}
+
+// TerminalIDNumFromAZIDBinField creates TerminalIDNum from
+// its azid-bin form.
+func TerminalIDNumFromAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (idNum TerminalIDNum, readLen int, err error) {
+	if typeHint != azid.BinDataTypeUnspecified && typeHint != azid.BinDataTypeInt64 {
+		return TerminalIDNum(0), 0,
+			errors.ArgMsg("typeHint", "unsupported")
+	}
+	i := binary.BigEndian.Uint64(b)
+	return TerminalIDNum(i), 8, nil
+}
+
+// PrimitiveValue returns the value in its primitive type. Prefer to use
+// this method instead of casting directly.
+func (idNum TerminalIDNum) PrimitiveValue() int64 {
+	return int64(idNum)
+}
+
+// Clone returns a copy of self.
+func (idNum TerminalIDNum) Clone() TerminalIDNum { return idNum }
+
+// AZIDNum is required
+// for conformance with azid.IDNum.
+func (TerminalIDNum) AZIDNum() {}
+
+// AZAdjunctEntityIDNum is required
+// for conformance with azcore.AdjunctEntityIDNum.
+func (TerminalIDNum) AZAdjunctEntityIDNum() {}
+
+// AZTerminalIDNum is required for conformance
+// with azcore.TerminalIDNum.
+func (TerminalIDNum) AZTerminalIDNum() {}
+
+// IsZero is required as TerminalIDNum is a value-object.
+func (idNum TerminalIDNum) IsZero() bool {
+	return idNum == TerminalIDNumZero
+}
+
+// IsStaticallyValid returns true if this instance is valid as an isolated value
+// of TerminalIDNum. It doesn't tell whether it refers to
+// a valid instance of Terminal.
+func (idNum TerminalIDNum) IsStaticallyValid() bool {
+	return int64(idNum) > 0 &&
+		(uint64(idNum)&TerminalIDNumIdentifierBitsMask) != 0
+}
+
+// IsNotStaticallyValid returns the negation of value returned by IsStaticallyValid.
+func (idNum TerminalIDNum) IsNotStaticallyValid() bool {
+	return !idNum.IsStaticallyValid()
+}
+
+// Equals is required as TerminalIDNum is a value-object.
+//
+// Use EqualsTerminalIDNum method if the other value
+// has the same type.
+func (idNum TerminalIDNum) Equals(other interface{}) bool {
+	if x, ok := other.(TerminalIDNum); ok {
+		return x == idNum
+	}
+	if x, _ := other.(*TerminalIDNum); x != nil {
+		return *x == idNum
+	}
+	return false
+}
+
+// Equal is a wrapper for Equals method. It is required for
+// compatibility with github.com/google/go-cmp
+func (idNum TerminalIDNum) Equal(other interface{}) bool {
+	return idNum.Equals(other)
+}
+
+// EqualsTerminalIDNum determines if the other instance
+// is equal to this instance.
+func (idNum TerminalIDNum) EqualsTerminalIDNum(
+	other TerminalIDNum,
+) bool {
+	return idNum == other
+}
+
+// AZIDBinField is required for conformance
+// with azid.IDNum.
+func (idNum TerminalIDNum) AZIDBinField() ([]byte, azid.BinDataType) {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(idNum))
+	return b, azid.BinDataTypeInt64
+}
+
+// UnmarshalAZIDBinField is required for conformance
+// with azid.BinFieldUnmarshalable.
+func (idNum *TerminalIDNum) UnmarshalAZIDBinField(
+	b []byte, typeHint azid.BinDataType,
+) (readLen int, err error) {
+	i, readLen, err := TerminalIDNumFromAZIDBinField(b, typeHint)
+	if err == nil {
+		*idNum = i
+	}
+	return readLen, err
+}
+
+// Embedded fields
+const (
+	TerminalIDNumEmbeddedFieldsMask = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+)
 
 //endregion
