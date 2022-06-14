@@ -1,4 +1,5 @@
 # NOTE: to be run from the top directory
+# e.g., 
 
 version: "3"
 
@@ -21,13 +22,13 @@ services:
     volumes:
       - ./var/iam-object-store:/data
     environment:
-      - MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE
-      - MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+      - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     command: server /data
 
   iam-server:
     build:
-      context: ../..
+      context: ../../..
       dockerfile: ./pkg/iam/iam-server-app/Dockerfile
     restart: on-failure
     depends_on:
@@ -40,13 +41,25 @@ services:
     volumes:
       # To simulate secrets in Swarm mode
       - ./etc/iam-server/secrets:/run/secrets:ro
-      - ./var/iam-server/local-object-store:/object-store-data
     env_file:
       - ./etc/iam-server/secrets/config.env
     environment:
-      - REALM_NAME=Kadisoka Standalone IAM Server
       - IAM_GRPC_ENABLED=true
-      - IAM_HTTP_BASE_PATH=/
       - IAM_REST_CANONICAL_BASE_URL=http://localhost:11121/rest/v1/
       - LOG_LEVEL=debug
       - LOG_PRETTY=true
+
+  microservice-app:
+    build:
+      context: ../../..
+      dockerfile: ./iam/examples/microservices/Dockerfile
+    restart: on-failure
+    depends_on:
+      - iam-server
+    ports:
+      - 11201:8080
+    environment:
+      - IAM_CLIENT_ID=KAp02dr7r3y3
+      - IAM_CLIENT_SECRET=v1eM1nmPyHXXXi0HHFAIzQ
+      - LOG_PRETTY=true
+      - IAM_SERVER_BASE_URL=http://iam-server:9080/rest/v1

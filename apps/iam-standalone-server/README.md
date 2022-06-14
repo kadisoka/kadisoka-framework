@@ -10,11 +10,11 @@ documentation or template will always match the implementation.
 To generate the template, use this command from the top directory:
 
 ```shell
-$ go run iam/iam-server/main.go env_file_template
+$ go run pkg/iam/iam-server-app/main.go env_file_template
 ```
 
 The template will be printed out in the stdout. For printing into a file, use:
 
 ```shell
-$ go run iam/iam-server/main.go env_file_template > config.env
+$ go run pkg/iam/iam-server-app/main.go env_file_template > config.env
 ```
