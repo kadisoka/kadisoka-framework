@@ -20,8 +20,8 @@ func (core *Core) DisposeTerminalFCMRegistrationToken(
 	ctxAuth := inputCtx.Authorization()
 	_, err := core.db.Exec(
 		`UPDATE `+terminalFCMRegistrationTokenDBTableName+` `+
-			"SET _md_ts = $1, _md_uid = $2, _md_tid = $3 "+
-			"WHERE terminal_id = $4 AND token = $5 AND _md_ts IS NULL",
+			"SET md_d_ts = $1, md_d_uid = $2, md_d_tid = $3 "+
+			"WHERE terminal_id = $4 AND token = $5 AND md_d_ts IS NULL",
 		inputCtx.CallInputMetadata().ReceiveTime,
 		ctxAuth.UserIDNum().PrimitiveValue(),
 		ctxAuth.TerminalIDNum().PrimitiveValue(),
@@ -39,8 +39,8 @@ func (core *Core) ListTerminalFCMRegistrationTokensByUser(
 		`SELECT tid.id_num, tid.application_id, tft.token `+
 			`FROM `+terminalDBTableName+` tid `+
 			`JOIN `+terminalFCMRegistrationTokenDBTableName+` tft `+
-			"ON tft.terminal_id=tid.id_num AND tft._md_ts IS NULL "+
-			"WHERE tid.user_id=$1 AND tid._md_ts IS NULL AND tid.verification_ts IS NOT NULL",
+			"ON tft.terminal_id=tid.id_num AND tft.md_d_ts IS NULL "+
+			"WHERE tid.user_id=$1 AND tid.md_d_ts IS NULL AND tid.verification_ts IS NOT NULL",
 		ownerUserID.IDNum().PrimitiveValue())
 	if err != nil {
 		return nil, err
@@ -91,8 +91,8 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
 			`UPDATE `+terminalFCMRegistrationTokenDBTableName+` `+
-				"SET _md_ts = $1, _md_uid = $2, _md_tid = $3 "+
-				"WHERE terminal_id = $4 AND _md_ts IS NULL",
+				"SET md_d_ts = $1, md_d_uid = $2, md_d_tid = $3 "+
+				"WHERE terminal_id = $4 AND md_d_ts IS NULL",
 			inputCtx.CallInputMetadata().ReceiveTime,
 			ctxAuth.UserIDNum().PrimitiveValue(),
 			ctxAuth.TerminalIDNum().PrimitiveValue(),
@@ -105,7 +105,7 @@ func (core *Core) SetTerminalFCMRegistrationToken(
 		}
 		_, err = tx.Exec(
 			`INSERT INTO `+terminalFCMRegistrationTokenDBTableName+` `+
-				"(terminal_id, user_id, _mc_uid, _mc_tid, token) "+
+				"(terminal_id, user_id, md_c_uid, md_c_tid, token) "+
 				"VALUES ($1, $2, $3, $4, $5)",
 			terminalID.IDNum().PrimitiveValue(),
 			userID.IDNum().PrimitiveValue(),

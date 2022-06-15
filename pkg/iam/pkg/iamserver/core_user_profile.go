@@ -46,13 +46,13 @@ func (core *Core) getUserBaseProfileInsecure(
 	err := core.db.
 		QueryRow(
 			`SELECT ua.id_num, `+
-				`CASE WHEN ua._md_ts IS NULL THEN false ELSE true END AS is_deleted, `+
+				`CASE WHEN ua.md_d_ts IS NULL THEN false ELSE true END AS is_deleted, `+
 				`udn.display_name, upiu.profile_image_key `+
 				`FROM `+userDBTableName+` AS ua `+
 				`LEFT JOIN `+userProfileDisplayNameDBTableName+` udn ON udn.user_id = ua.id_num `+
-				`AND udn._md_ts IS NULL `+
+				`AND udn.md_d_ts IS NULL `+
 				`LEFT JOIN `+userProfileImageKeyDBTableName+` upiu ON upiu.user_id = ua.id_num `+
-				`AND upiu._md_ts IS NULL `+
+				`AND upiu.md_d_ts IS NULL `+
 				`WHERE ua.id_num = $1`,
 			userID).
 		Scan(&idNum, &deleted, &displayName, &profileImageURL)

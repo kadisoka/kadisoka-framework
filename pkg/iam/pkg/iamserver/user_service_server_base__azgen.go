@@ -148,7 +148,7 @@ func (srv *UserServiceServerBase) getUserInstanceStateByIDNum(
 	sqlString, _, _ := goqu.From(userDBTableName).
 		Select(
 			goqu.Case().
-				When(goqu.C(userDBColMetaDeletionTimestamp).IsNull(), false).
+				When(goqu.C(userDBColMDDeletionTimestamp).IsNull(), false).
 				Else(true).
 				As("deleted"),
 		).
@@ -207,10 +207,10 @@ func (srv *UserServiceServerBase) createUserInstanceInsecure(
 			Insert(userDBTableName).
 			Rows(
 				goqu.Record{
-					userDBColIDNum:                  newInstanceIDNum,
-					userDBColMetaCreationTimestamp:  cTime,
-					userDBColMetaCreationUserID:     ctxAuth.UserIDNumPtr(),
-					userDBColMetaCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
+					userDBColIDNum:                newInstanceIDNum,
+					userDBColMDCreationTimestamp:  cTime,
+					userDBColMDCreationUserID:     ctxAuth.UserIDNumPtr(),
+					userDBColMDCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
 				},
 			).
 			ToSQL()
@@ -270,15 +270,15 @@ func (srv *UserServiceServerBase) deleteUserInstanceInsecure(
 			From(userDBTableName).
 			Where(
 				goqu.C(userDBColIDNum).Eq(ctxAuth.UserIDNum().PrimitiveValue()),
-				goqu.C(userDBColMetaDeletionTimestamp).IsNull(),
+				goqu.C(userDBColMDDeletionTimestamp).IsNull(),
 			).
 			Update().
 			Set(
 				goqu.Record{
-					userDBColMetaDeletionTimestamp:  ctxTime,
-					userDBColMetaDeletionTerminalID: ctxAuth.TerminalIDNum().PrimitiveValue(),
-					userDBColMetaDeletionUserID:     ctxAuth.UserIDNum().PrimitiveValue(),
-					userDBColMetaDeletionNotes:      input.DeletionNotes,
+					userDBColMDDeletionTimestamp:  ctxTime,
+					userDBColMDDeletionTerminalID: ctxAuth.TerminalIDNum().PrimitiveValue(),
+					userDBColMDDeletionUserID:     ctxAuth.UserIDNum().PrimitiveValue(),
+					userDBColMDDeletionNotes:      input.DeletionNotes,
 				},
 			).
 			ToSQL()
@@ -335,13 +335,13 @@ func (srv *UserServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 	_, err := dbTx.Exec(
 		`CREATE TABLE ` + userDBTableName + ` ( ` +
 			userDBColIDNum + `  bigint, ` +
-			userDBColMetaCreationTimestamp + `  timestamp with time zone NOT NULL DEFAULT now(), ` +
-			userDBColMetaCreationTerminalID + `  bigint, ` +
-			userDBColMetaCreationUserID + `  bigint, ` +
-			userDBColMetaDeletionTimestamp + `  timestamp with time zone, ` +
-			userDBColMetaDeletionTerminalID + `  bigint, ` +
-			userDBColMetaDeletionUserID + `  bigint, ` +
-			userDBColMetaDeletionNotes + `  jsonb, ` +
+			userDBColMDCreationTimestamp + `  timestamp with time zone NOT NULL DEFAULT now(), ` +
+			userDBColMDCreationTerminalID + `  bigint, ` +
+			userDBColMDCreationUserID + `  bigint, ` +
+			userDBColMDDeletionTimestamp + `  timestamp with time zone, ` +
+			userDBColMDDeletionTerminalID + `  bigint, ` +
+			userDBColMDDeletionUserID + `  bigint, ` +
+			userDBColMDDeletionNotes + `  jsonb, ` +
 			`CONSTRAINT ` + userDBTablePrimaryKeyName + ` PRIMARY KEY(` + userDBColIDNum + `), ` +
 			`CHECK (` + userDBColIDNum + ` > 0) ` +
 			`);`,
@@ -353,14 +353,14 @@ func (srv *UserServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error {
 }
 
 const (
-	userDBColMetaCreationTimestamp  = "_mc_ts"
-	userDBColMetaCreationTerminalID = "_mc_tid"
-	userDBColMetaCreationUserID     = "_mc_uid"
-	userDBColMetaDeletionTimestamp  = "_md_ts"
-	userDBColMetaDeletionTerminalID = "_md_tid"
-	userDBColMetaDeletionUserID     = "_md_uid"
-	userDBColMetaDeletionNotes      = "_md_notes"
-	userDBColIDNum                  = "id_num"
+	userDBColMDCreationTimestamp  = "md_c_ts"
+	userDBColMDCreationTerminalID = "md_c_tid"
+	userDBColMDCreationUserID     = "md_c_uid"
+	userDBColMDDeletionTimestamp  = "md_d_ts"
+	userDBColMDDeletionTerminalID = "md_d_tid"
+	userDBColMDDeletionUserID     = "md_d_uid"
+	userDBColMDDeletionNotes      = "md_d_notes"
+	userDBColIDNum                = "id_num"
 )
 
 // GenerateUserIDNum generates a new iam.UserIDNum.

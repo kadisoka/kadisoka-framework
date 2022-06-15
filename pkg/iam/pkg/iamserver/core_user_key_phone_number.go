@@ -40,7 +40,7 @@ func (core *Core) getUserKeyPhoneNumberInsecure(
 		Select("country_code", "national_number").
 		Where(
 			goqu.C("user_id").Eq(userID.IDNum().PrimitiveValue()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
 
@@ -68,7 +68,7 @@ func (core *Core) getUserIDNumByKeyPhoneNumberInsecure(
 		Where(
 			goqu.C("country_code").Eq(phoneNumber.CountryCode()),
 			goqu.C("national_number").Eq(phoneNumber.NationalNumber()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull(),
 		).
 		ToSQL()
@@ -102,9 +102,9 @@ func (core *Core) getUserIDByKeyPhoneNumberAllowUnverifiedInsecure(
 		Where(
 			goqu.C("country_code").Eq(phoneNumber.CountryCode()),
 			goqu.C("national_number").Eq(phoneNumber.NationalNumber()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 		).
-		Order(goqu.C("_mc_ts").Desc()).
+		Order(goqu.C("md_c_ts").Desc()).
 		Limit(1).
 		ToSQL()
 
@@ -190,11 +190,11 @@ func (core *Core) setUserKeyPhoneNumber(
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userKeyPhoneNumberDBTableName+` (`+
 			`user_id, country_code, national_number, raw_input, `+
-			`_mc_ts, _mc_uid, _mc_tid `+
+			`md_c_ts, md_c_uid, md_c_tid `+
 			`) VALUES (`+
 			`$1, $2, $3, $4, $5, $6, $7`+
 			`) `+
-			`ON CONFLICT (user_id, country_code, national_number) WHERE _md_ts IS NULL `+
+			`ON CONFLICT (user_id, country_code, national_number) WHERE md_d_ts IS NULL `+
 			`DO NOTHING`,
 		userID.IDNum().PrimitiveValue(),
 		phoneNumber.CountryCode(),
@@ -289,7 +289,7 @@ func (core *Core) ensureUserPhoneNumberVerifiedFlag(
 			`$1, $2`+
 			`) WHERE user_id = $3 `+
 			`AND country_code = $4 AND national_number = $5 `+
-			`AND _md_ts IS NULL AND verification_ts IS NULL`,
+			`AND md_d_ts IS NULL AND verification_ts IS NULL`,
 		verificationTime,
 		verificationID,
 		userIDNum.PrimitiveValue(),

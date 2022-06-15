@@ -15,13 +15,13 @@ const (
 )
 
 const (
-	sessionDBColMetaCreationTimestamp  = "_mc_ts"
-	sessionDBColMetaCreationTerminalID = "_mc_tid"
-	sessionDBColMetaCreationUserID     = "_mc_uid"
-	sessionDBColMetaDeletionTimestamp  = "_md_ts"
-	sessionDBColMetaDeletionTerminalID = "_md_tid"
-	sessionDBColMetaDeletionUserID     = "_md_uid"
-	sessionDBColIDNum                  = "id_num"
+	sessionDBColMDCreationTimestamp  = "md_c_ts"
+	sessionDBColMDCreationTerminalID = "md_c_tid"
+	sessionDBColMDCreationUserID     = "md_c_uid"
+	sessionDBColMDDeletionTimestamp  = "md_d_ts"
+	sessionDBColMDDeletionTerminalID = "md_d_tid"
+	sessionDBColMDDeletionUserID     = "md_d_uid"
+	sessionDBColIDNum                = "id_num"
 
 	sessionDBColTerminalID = "terminal_id"
 )

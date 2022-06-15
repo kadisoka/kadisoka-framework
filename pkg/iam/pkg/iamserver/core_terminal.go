@@ -33,7 +33,7 @@ func (core *Core) AuthenticateTerminal(
 		Select("user_id", "secret").
 		Where(
 			goqu.C("id_num").Eq(terminalID.IDNum().PrimitiveValue()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull(),
 		).
 		ToSQL()
@@ -373,7 +373,7 @@ func (core *Core) getTerminalRaw(idNum iam.TerminalIDNum) (*terminalDBRawModel, 
 		From(terminalDBTableName).
 		Select(
 			"id_num", "application_id", "user_id",
-			"_mc_ts", "_mc_uid", "_mc_tid", "_mc_origin_address",
+			"md_c_ts", "md_c_uid", "md_c_tid", "md_c_origin_address",
 			"display_name", "accept_language",
 			"verification_type", "verification_id", "verification_ts").
 		Where(
@@ -414,7 +414,7 @@ func (core *Core) GetTerminalInfo(
 		Select("user_id", "display_name", "accept_language").
 		Where(
 			goqu.C("id_num").Eq(terminalIDKey.IDNum().PrimitiveValue()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 		).
 		ToSQL()
 
@@ -529,20 +529,20 @@ func (core *Core) registerTerminalInsecure(
 		Insert(terminalDBTableName).
 		Rows(
 			goqu.Record{
-				"id_num":             termID.PrimitiveValue(),
-				"application_id":     inputData.ApplicationID.IDNum().PrimitiveValue(),
-				"user_id":            inputData.UserID.IDNum().PrimitiveValue(),
-				"secret":             termSecret,
-				"_mc_ts":             ctxTime,
-				"_mc_uid":            ctxAuth.UserIDNumPtr(),
-				"_mc_tid":            ctxAuth.TerminalIDNumPtr(),
-				"_mc_origin_address": originInfo.Address,
-				"_mc_origin_env":     originInfo.EnvironmentString,
-				"display_name":       strings.TrimSpace(inputData.DisplayName),
-				"accept_language":    strings.Join(acceptLangStrings, ","),
-				"verification_type":  inputData.VerificationType,
-				"verification_id":    inputData.VerificationID,
-				"verification_ts":    inputData.VerificationTime,
+				"id_num":              termID.PrimitiveValue(),
+				"application_id":      inputData.ApplicationID.IDNum().PrimitiveValue(),
+				"user_id":             inputData.UserID.IDNum().PrimitiveValue(),
+				"secret":              termSecret,
+				"md_c_ts":             ctxTime,
+				"md_c_uid":            ctxAuth.UserIDNumPtr(),
+				"md_c_tid":            ctxAuth.TerminalIDNumPtr(),
+				"md_c_origin_address": originInfo.Address,
+				"md_c_origin_env":     originInfo.EnvironmentString,
+				"display_name":        strings.TrimSpace(inputData.DisplayName),
+				"accept_language":     strings.Join(acceptLangStrings, ","),
+				"verification_type":   inputData.VerificationType,
+				"verification_id":     inputData.VerificationID,
+				"verification_ts":     inputData.VerificationTime,
 			}).
 		ToSQL()
 
@@ -580,14 +580,14 @@ func (core *Core) DeleteTerminal(
 		From(terminalDBTableName).
 		Where(
 			goqu.C("id_num").Eq(terminalIDToDelete.IDNum().PrimitiveValue()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 		).
 		Update().
 		Set(
 			goqu.Record{
-				"_md_ts":  ctxTime,
-				"_md_tid": ctxAuth.TerminalIDNum().PrimitiveValue(),
-				"_md_uid": ctxAuth.UserIDNum().PrimitiveValue(),
+				"md_d_ts":  ctxTime,
+				"md_d_tid": ctxAuth.TerminalIDNum().PrimitiveValue(),
+				"md_d_uid": ctxAuth.UserIDNum().PrimitiveValue(),
 			},
 		).
 		ToSQL()

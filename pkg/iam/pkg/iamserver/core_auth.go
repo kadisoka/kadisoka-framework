@@ -130,12 +130,12 @@ func (core *Core) issueSession(
 			Insert(sessionDBTableName).
 			Rows(
 				goqu.Record{
-					sessionDBColTerminalID:             terminalID.IDNum().PrimitiveValue(),
-					sessionDBColIDNum:                  sessionIDNum.PrimitiveValue(),
-					"expiry":                           sessionExpiry,
-					sessionDBColMetaCreationTimestamp:  sessionStartTime,
-					sessionDBColMetaCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
-					sessionDBColMetaCreationUserID:     ctxAuth.UserIDNumPtr(),
+					sessionDBColTerminalID:           terminalID.IDNum().PrimitiveValue(),
+					sessionDBColIDNum:                sessionIDNum.PrimitiveValue(),
+					"expiry":                         sessionExpiry,
+					sessionDBColMDCreationTimestamp:  sessionStartTime,
+					sessionDBColMDCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
+					sessionDBColMDCreationUserID:     ctxAuth.UserIDNumPtr(),
 				},
 			).
 			ToSQL()

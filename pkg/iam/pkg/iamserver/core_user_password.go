@@ -61,8 +61,8 @@ func (core *Core) SetUserPassword(
 	return doTx(core.db, func(tx *sqlx.Tx) error {
 		_, txErr := core.db.Exec(
 			`UPDATE `+userPasswordDBTableName+` SET `+
-				`_md_ts = $1, _md_uid = $2, _md_tid = $3 `+
-				`WHERE user_id = $4 AND _md_ts IS NULL`,
+				`md_d_ts = $1, md_d_uid = $2, md_d_tid = $3 `+
+				`WHERE user_id = $4 AND md_d_ts IS NULL`,
 			ctxTime, ctxAuth.UserIDNum().PrimitiveValue(), ctxAuth.TerminalIDNum().PrimitiveValue(),
 			userID.IDNum().PrimitiveValue())
 		if txErr != nil {
@@ -70,7 +70,7 @@ func (core *Core) SetUserPassword(
 		}
 		_, txErr = core.db.Exec(
 			`INSERT INTO `+userPasswordDBTableName+` `+
-				`(user_id, password, _mc_ts, _mc_uid, _mc_tid) `+
+				`(user_id, password, md_c_ts, md_c_uid, md_c_tid) `+
 				`VALUES ($1, $2, $3, $4, $5) `,
 			userID.IDNum().PrimitiveValue(), passwordHash,
 			ctxTime, ctxAuth.UserIDNum().PrimitiveValue(), ctxAuth.TerminalIDNum().PrimitiveValue())
@@ -99,7 +99,7 @@ func (core *Core) getUserPasswordHash(
 		QueryRow(
 			`SELECT password `+
 				`FROM `+userPasswordDBTableName+` `+
-				`WHERE user_id = $1 AND _md_ts IS NULL`,
+				`WHERE user_id = $1 AND md_d_ts IS NULL`,
 			userIDNum).
 		Scan(&hashedPassword)
 	if err != nil {

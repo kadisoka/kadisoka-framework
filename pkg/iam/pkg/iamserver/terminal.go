@@ -62,15 +62,15 @@ type terminalDBRawModel struct {
 	ApplicationIDNum iam.ApplicationIDNum `db:"application_id"`
 	UserIDNum        iam.UserIDNum        `db:"user_id"`
 
-	CreationTime          time.Time          `db:"_mc_ts"`
-	CreationUserIDNum     *iam.UserIDNum     `db:"_mc_uid"`
-	CreationTerminalIDNum *iam.TerminalIDNum `db:"_mc_tid"`
-	CreationOriginAddress string             `db:"_mc_origin_address"`
-	CreationOriginEnv     string             `db:"_mc_origin_env"`
+	CreationTime          time.Time          `db:"md_c_ts"`
+	CreationUserIDNum     *iam.UserIDNum     `db:"md_c_uid"`
+	CreationTerminalIDNum *iam.TerminalIDNum `db:"md_c_tid"`
+	CreationOriginAddress string             `db:"md_c_origin_address"`
+	CreationOriginEnv     string             `db:"md_c_origin_env"`
 
-	DeletionTime          *time.Time         `db:"_md_ts"`
-	DeletionUserIDNum     *iam.UserIDNum     `db:"_md_uid"`
-	DeletionTerminalIDNum *iam.TerminalIDNum `db:"_md_tid"`
+	DeletionTime          *time.Time         `db:"md_d_ts"`
+	DeletionUserIDNum     *iam.UserIDNum     `db:"md_d_uid"`
+	DeletionTerminalIDNum *iam.TerminalIDNum `db:"md_d_tid"`
 
 	Secret         string `db:"secret"`
 	DisplayName    string `db:"display_name"`

@@ -148,7 +148,7 @@ func (srv *ApplicationServiceServerBase) getApplicationInstanceStateByIDNum(
 	sqlString, _, _ := goqu.From(applicationDBTableName).
 		Select(
 			goqu.Case().
-				When(goqu.C(applicationDBColMetaDeletionTimestamp).IsNull(), false).
+				When(goqu.C(applicationDBColMDDeletionTimestamp).IsNull(), false).
 				Else(true).
 				As("deleted"),
 		).
@@ -207,10 +207,10 @@ func (srv *ApplicationServiceServerBase) createApplicationInstanceInsecure(
 			Insert(applicationDBTableName).
 			Rows(
 				goqu.Record{
-					applicationDBColIDNum:                  newInstanceIDNum,
-					applicationDBColMetaCreationTimestamp:  cTime,
-					applicationDBColMetaCreationUserID:     ctxAuth.UserIDNumPtr(),
-					applicationDBColMetaCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
+					applicationDBColIDNum:                newInstanceIDNum,
+					applicationDBColMDCreationTimestamp:  cTime,
+					applicationDBColMDCreationUserID:     ctxAuth.UserIDNumPtr(),
+					applicationDBColMDCreationTerminalID: ctxAuth.TerminalIDNumPtr(),
 				},
 			).
 			ToSQL()
@@ -266,14 +266,14 @@ func (srv *ApplicationServiceServerBase) deleteApplicationInstanceInsecure(
 			From(applicationDBTableName).
 			Where(
 				goqu.C(applicationDBColIDNum).Eq(ctxAuth.UserIDNum().PrimitiveValue()),
-				goqu.C(applicationDBColMetaDeletionTimestamp).IsNull(),
+				goqu.C(applicationDBColMDDeletionTimestamp).IsNull(),
 			).
 			Update().
 			Set(
 				goqu.Record{
-					applicationDBColMetaDeletionTimestamp:  ctxTime,
-					applicationDBColMetaDeletionTerminalID: ctxAuth.TerminalIDNum().PrimitiveValue(),
-					applicationDBColMetaDeletionUserID:     ctxAuth.UserIDNum().PrimitiveValue(),
+					applicationDBColMDDeletionTimestamp:  ctxTime,
+					applicationDBColMDDeletionTerminalID: ctxAuth.TerminalIDNum().PrimitiveValue(),
+					applicationDBColMDDeletionUserID:     ctxAuth.UserIDNum().PrimitiveValue(),
 				},
 			).
 			ToSQL()
@@ -329,12 +329,12 @@ func (srv *ApplicationServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error 
 	_, err := dbTx.Exec(
 		`CREATE TABLE ` + applicationDBTableName + ` ( ` +
 			applicationDBColIDNum + `  integer, ` +
-			applicationDBColMetaCreationTimestamp + `  timestamp with time zone NOT NULL DEFAULT now(), ` +
-			applicationDBColMetaCreationTerminalID + `  bigint, ` +
-			applicationDBColMetaCreationUserID + `  bigint, ` +
-			applicationDBColMetaDeletionTimestamp + `  timestamp with time zone, ` +
-			applicationDBColMetaDeletionTerminalID + `  bigint, ` +
-			applicationDBColMetaDeletionUserID + `  bigint, ` +
+			applicationDBColMDCreationTimestamp + `  timestamp with time zone NOT NULL DEFAULT now(), ` +
+			applicationDBColMDCreationTerminalID + `  bigint, ` +
+			applicationDBColMDCreationUserID + `  bigint, ` +
+			applicationDBColMDDeletionTimestamp + `  timestamp with time zone, ` +
+			applicationDBColMDDeletionTerminalID + `  bigint, ` +
+			applicationDBColMDDeletionUserID + `  bigint, ` +
 			`CONSTRAINT ` + applicationDBTablePrimaryKeyName + ` PRIMARY KEY(` + applicationDBColIDNum + `), ` +
 			`CHECK (` + applicationDBColIDNum + ` > 0) ` +
 			`);`,
@@ -346,13 +346,13 @@ func (srv *ApplicationServiceServerBase) initDataStoreInTx(dbTx *sqlx.Tx) error 
 }
 
 const (
-	applicationDBColMetaCreationTimestamp  = "_mc_ts"
-	applicationDBColMetaCreationTerminalID = "_mc_tid"
-	applicationDBColMetaCreationUserID     = "_mc_uid"
-	applicationDBColMetaDeletionTimestamp  = "_md_ts"
-	applicationDBColMetaDeletionTerminalID = "_md_tid"
-	applicationDBColMetaDeletionUserID     = "_md_uid"
-	applicationDBColIDNum                  = "id_num"
+	applicationDBColMDCreationTimestamp  = "md_c_ts"
+	applicationDBColMDCreationTerminalID = "md_c_tid"
+	applicationDBColMDCreationUserID     = "md_c_uid"
+	applicationDBColMDDeletionTimestamp  = "md_d_ts"
+	applicationDBColMDDeletionTerminalID = "md_d_tid"
+	applicationDBColMDDeletionUserID     = "md_d_uid"
+	applicationDBColIDNum                = "id_num"
 )
 
 // GenerateApplicationIDNum generates a new iam.ApplicationIDNum.

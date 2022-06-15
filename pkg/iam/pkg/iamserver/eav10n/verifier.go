@@ -148,7 +148,7 @@ func (verifier *Verifier) StartVerification(
 	var prevCodeExpiry time.Time
 	err = verifier.db.
 		QueryRow(
-			"SELECT id_num, code_expiry, attempts_remaining "+
+			"SELECT id_num, code_expiry, confirmation_attempts_remaining "+
 				`FROM `+verificationDBTableName+` `+
 				"WHERE domain_part = $1 AND local_part = $2 AND confirmation_ts IS NULL "+
 				"ORDER BY id_num DESC "+
@@ -177,8 +177,8 @@ func (verifier *Verifier) StartVerification(
 		QueryRow(
 			`INSERT INTO `+verificationDBTableName+` (`+
 				`domain_part, local_part, `+
-				"_mc_ts, _mc_uid, _mc_tid, "+
-				"code, code_expiry, attempts_remaining"+
+				"md_c_ts, md_c_uid, md_c_tid, "+
+				"code, code_expiry, confirmation_attempts_remaining"+
 				") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "+
 				"RETURNING id_num",
 			emailAddress.DomainPart(),
@@ -229,7 +229,7 @@ func (verifier *Verifier) ConfirmVerification(
 
 	err := verifier.db.QueryRowx(
 		`UPDATE `+verificationDBTableName+` `+
-			`SET attempts_remaining = attempts_remaining - 1 `+
+			`SET confirmation_attempts_remaining = confirmation_attempts_remaining - 1 `+
 			`WHERE id_num = $1 `+
 			`RETURNING *`,
 		verificationID).
@@ -238,7 +238,7 @@ func (verifier *Verifier) ConfirmVerification(
 		return err
 	}
 
-	if dbData.AttemptsRemaining < 0 {
+	if dbData.ConfirmationAttemptsRemaining < 0 {
 		return ErrVerificationCodeExpired
 	}
 	if dbData.Code != code {

@@ -37,7 +37,7 @@ func (core *Core) getUserKeyEmailAddressInsecure(
 		Select("raw_input").
 		Where(
 			goqu.C("user_id").Eq(userID.IDNum().PrimitiveValue()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull()).
 		ToSQL()
 
@@ -68,7 +68,7 @@ func (core *Core) getUserIDNumByKeyEmailAddressInsecure(
 		Where(
 			goqu.C("domain_part").Eq(emailAddress.DomainPart()),
 			goqu.C("local_part").Eq(emailAddress.LocalPart()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 			goqu.C("verification_ts").IsNotNull(),
 		).
 		ToSQL()
@@ -102,9 +102,9 @@ func (core *Core) getUserIDByKeyEmailAddressAllowUnverifiedInsecure(
 		Where(
 			goqu.C("domain_part").Eq(emailAddress.DomainPart()),
 			goqu.C("local_part").Eq(emailAddress.LocalPart()),
-			goqu.C("_md_ts").IsNull(),
+			goqu.C("md_d_ts").IsNull(),
 		).
-		Order(goqu.C("_mc_ts").Desc()).
+		Order(goqu.C("md_c_ts").Desc()).
 		Limit(1).
 		ToSQL()
 
@@ -188,11 +188,11 @@ func (core *Core) setUserKeyEmailAddressInsecure(
 	xres, err := core.db.Exec(
 		`INSERT INTO `+userKeyEmailAddressDBTableName+` (`+
 			`user_id, domain_part, local_part, raw_input, `+
-			`_mc_ts, _mc_uid, _mc_tid `+
+			`md_c_ts, md_c_uid, md_c_tid `+
 			`) VALUES (`+
 			`$1, $2, $3, $4, $5, $6, $7`+
 			`) `+
-			`ON CONFLICT (user_id, domain_part, local_part) WHERE _md_ts IS NULL `+
+			`ON CONFLICT (user_id, domain_part, local_part) WHERE md_d_ts IS NULL `+
 			`DO NOTHING`,
 		userID.IDNum().PrimitiveValue(),
 		emailAddress.DomainPart(),
@@ -281,7 +281,7 @@ func (core *Core) ensureUserEmailAddressVerifiedFlag(
 			`$1, $2`+
 			`) WHERE user_id = $3 `+
 			`AND domain_part = $4 AND local_part = $5 `+
-			`AND _md_ts IS NULL AND verification_ts IS NULL`,
+			`AND md_d_ts IS NULL AND verification_ts IS NULL`,
 		verificationTime,
 		verificationID,
 		userIDNum.PrimitiveValue(),

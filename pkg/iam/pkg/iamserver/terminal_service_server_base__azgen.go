@@ -15,13 +15,13 @@ const (
 )
 
 const (
-	terminalDBColMetaCreationTimestamp  = "_mc_ts"
-	terminalDBColMetaCreationTerminalID = "_mc_tid"
-	terminalDBColMetaCreationUserID     = "_mc_uid"
-	terminalDBColMetaDeletionTimestamp  = "_md_ts"
-	terminalDBColMetaDeletionTerminalID = "_md_tid"
-	terminalDBColMetaDeletionUserID     = "_md_uid"
-	terminalDBColIDNum                  = "id_num"
+	terminalDBColMDCreationTimestamp  = "md_c_ts"
+	terminalDBColMDCreationTerminalID = "md_c_tid"
+	terminalDBColMDCreationUserID     = "md_c_uid"
+	terminalDBColMDDeletionTimestamp  = "md_d_ts"
+	terminalDBColMDDeletionTerminalID = "md_d_tid"
+	terminalDBColMDDeletionUserID     = "md_d_uid"
+	terminalDBColIDNum                = "id_num"
 
 	terminalDBColApplicationID = "application_id"
 	terminalDBColUserID        = "user_id"
