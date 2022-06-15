@@ -7,7 +7,7 @@ import (
 
 	oidc "github.com/kadisoka/kadisoka-framework/pkg/foundation/pkg/api/openid/connect"
 	"github.com/kadisoka/kadisoka-framework/pkg/iam/pkg/iam"
-	"github.com/kadisoka/kadisoka-framework/upbase/pkg/upbase"
+	"github.com/kadisoka/kadisoka-framework/pkg/upbase/pkg/upbase"
 )
 
 type Core struct {

@@ -36,7 +36,7 @@ func NewEmptyCallInputContext(ctx context.Context) CallInputContext {
 type CallInputContext interface {
 	api.CallInputContext[
 		SessionIDNum, SessionID, TerminalIDNum, TerminalID,
-		UserIDNum, UserID, Actor, Authorization, api.IdempotencyKey]
+		UserIDNum, UserID, AuthorizationSubject, Authorization, api.IdempotencyKey]
 
 	Authorization() Authorization
 	IsUserContext() bool

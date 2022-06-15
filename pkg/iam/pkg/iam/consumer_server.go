@@ -242,8 +242,8 @@ func (consumerSrv *consumerServerBaseCore) AuthorizationFromJWTString(
 	}
 
 	return &Authorization{
-		Session:  sessionID,
-		rawToken: jwtStr,
+		SessionID: sessionID,
+		rawToken:  jwtStr,
 	}, nil
 }
 

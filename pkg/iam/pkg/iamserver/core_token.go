@@ -20,6 +20,14 @@ func (core *Core) GenerateTokenSetJWT(
 		return "", "", errors.ArgMsg("inputCtx", "missing")
 	}
 
+	if terminalID.IsNotStaticallyValid() {
+		return "", "", errors.ArgMsg("terminalID", "invalid")
+	}
+	if (terminalID.Application().AZIDNum().IsUserAgent() && userID.IsNotStaticallyValid()) ||
+		(!terminalID.Application().AZIDNum().IsUserAgent() && userID.IsStaticallyValid()) {
+		return "", "", errors.ArgMsg("userID", "invalid combination with terminalID")
+	}
+
 	jwtKeyChain := core.JWTKeyChain()
 	if jwtKeyChain == nil {
 		return "", "", apperrs.NewConfigurationMsg("JWT key chain is not configured")
@@ -79,6 +87,14 @@ func (core *Core) GenerateAccessTokenJWT(
 ) (tokenString string, err error) {
 	if inputCtx == nil {
 		return "", errors.ArgMsg("inputCtx", "missing")
+	}
+
+	if terminalID.IsNotStaticallyValid() {
+		return "", errors.ArgMsg("terminalID", "invalid")
+	}
+	if (terminalID.Application().AZIDNum().IsUserAgent() && userID.IsNotStaticallyValid()) ||
+		(!terminalID.Application().AZIDNum().IsUserAgent() && userID.IsStaticallyValid()) {
+		return "", errors.ArgMsg("userID", "invalid combination with terminalID")
 	}
 
 	jwtKeyChain := core.JWTKeyChain()

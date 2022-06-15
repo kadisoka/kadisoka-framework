@@ -25,7 +25,7 @@ type RESTCallInputContext struct {
 
 var _ rest.CallInputContext[
 	SessionIDNum, SessionID, TerminalIDNum, TerminalID,
-	UserIDNum, UserID, Actor, Authorization, api.IdempotencyKey,
+	UserIDNum, UserID, AuthorizationSubject, Authorization, api.IdempotencyKey,
 ] = &RESTCallInputContext{}
 
 func (reqCtx *RESTCallInputContext) HTTPRequest() *http.Request {

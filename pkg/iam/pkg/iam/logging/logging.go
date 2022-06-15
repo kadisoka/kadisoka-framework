@@ -47,9 +47,9 @@ func (logger Logger) WithContext(
 
 	if ctxAuth := ctx.Authorization(); ctxAuth.IsStaticallyValid() {
 		logCtx = logCtx.
-			Str("session", ctxAuth.Session.AZIDText()).
-			Str("terminal", ctxAuth.Session.Terminal().AZIDText()).
-			Str("user", ctxAuth.Session.Terminal().User().AZIDText())
+			Str("session", ctxAuth.SessionID.AZIDText()).
+			Str("terminal", ctxAuth.SessionID.Terminal().AZIDText()).
+			Str("user", ctxAuth.SessionID.Terminal().User().AZIDText())
 		hasAuth = true
 	}
 

@@ -5,8 +5,8 @@ import (
 
 	"github.com/kadisoka/kadisoka-framework/pkg/foundation/pkg/api/rest"
 	"github.com/kadisoka/kadisoka-framework/pkg/iam/pkg/iam/rest/logging"
-	"github.com/kadisoka/kadisoka-framework/upbase/pkg/upbase"
-	"github.com/kadisoka/kadisoka-framework/upbase/pkg/upbaseserver"
+	"github.com/kadisoka/kadisoka-framework/pkg/upbase/pkg/upbase"
+	"github.com/kadisoka/kadisoka-framework/pkg/upbase/pkg/upbaseserver"
 )
 
 var (

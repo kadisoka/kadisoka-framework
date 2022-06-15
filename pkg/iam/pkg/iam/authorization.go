@@ -32,7 +32,7 @@ type Authorization struct {
 	// holds info about the assuming context.
 	AssumingAuthorization *Authorization `json:"assuming_authorization,omitempty"`
 
-	Session SessionID
+	SessionID SessionID
 
 	// Scope, expiry time
 
@@ -43,20 +43,21 @@ var _ azcore.Session[
 	SessionIDNum, SessionID,
 	TerminalIDNum, TerminalID,
 	UserIDNum, UserID,
-	Actor,
+	AuthorizationSubject,
 ] = Authorization{}
 
 func (authz Authorization) ParentSessionID() SessionID {
 	if authz.AssumingAuthorization != nil {
-		return authz.AssumingAuthorization.Session
+		return authz.AssumingAuthorization.SessionID
 	}
 	return SessionIDZero()
 }
 
-func (authz Authorization) ID() SessionID { return authz.Session }
+func (authz Authorization) ID() SessionID { return authz.SessionID }
 
-func (authz Authorization) Subject() Actor {
-	return authz.Actor()
+func (authz Authorization) Subject() AuthorizationSubject {
+	return NewAuthorizationSubject(
+		authz.SessionID.terminal, authz.SessionID.terminal.user)
 }
 
 // newEmptyAuthorization creates a new instance of Authorization without
@@ -66,33 +67,29 @@ func newEmptyAuthorization() *Authorization {
 }
 
 func (authz Authorization) IsStaticallyValid() bool {
-	return authz.Session.IsStaticallyValid()
+	return authz.SessionID.IsStaticallyValid()
 }
 
 func (authz Authorization) IsNotStaticallyValid() bool {
 	return !authz.IsStaticallyValid()
 }
 
-func (authz Authorization) Actor() Actor {
-	return NewActor(authz.Session.terminal, authz.Session.terminal.user)
-}
-
 // IsTerminal returns true if the authorized terminal is the same as terminalID.
 func (authz Authorization) IsTerminal(terminalID TerminalID) bool {
-	ctxTerm := authz.Session.terminal
+	ctxTerm := authz.SessionID.terminal
 	return ctxTerm.IsStaticallyValid() && ctxTerm.EqualsTerminalID(terminalID)
 }
 
 // IsUser checks if this authorization is represeting a particular user.
 func (authz Authorization) IsUser(userID UserID) bool {
 	return authz.ClientApplicationIDNum().IsUserAgent() &&
-		authz.Session.terminal.user.EqualsUserID(userID)
+		authz.SessionID.terminal.user.EqualsUserID(userID)
 }
 
 // IsUserSubject is used to determine if this authorization represents a user.
 func (authz Authorization) IsUserSubject() bool {
 	if authz.ClientApplicationIDNum().IsUserAgent() &&
-		authz.Session.terminal.user.IsStaticallyValid() {
+		authz.SessionID.terminal.user.IsStaticallyValid() {
 		return true
 	}
 	return false
@@ -100,48 +97,48 @@ func (authz Authorization) IsUserSubject() bool {
 
 func (authz Authorization) IsServiceClientContext() bool {
 	if authz.ClientApplicationIDNum().IsService() &&
-		authz.Session.terminal.user.IsNotStaticallyValid() {
+		authz.SessionID.terminal.user.IsNotStaticallyValid() {
 		return true
 	}
 	return false
 }
 
 func (authz Authorization) UserID() UserID {
-	return authz.Session.terminal.user
+	return authz.SessionID.terminal.user
 }
 
 // UserIDPtr returns a pointer to a new copy of user ref-key. The
 // returned value is non-nil when the user ref-key is valid.
 func (authz Authorization) UserIDPtr() *UserID {
-	return authz.Session.terminal.UserPtr()
+	return authz.SessionID.terminal.UserPtr()
 }
 
 func (authz Authorization) UserIDNum() UserIDNum {
-	return authz.Session.terminal.user.IDNum()
+	return authz.SessionID.terminal.user.IDNum()
 }
 
 // UserIDNumPtr returns a pointer to a new copy of user id-num. The
 // returned value is non-nil when the user id-num is valid.
 func (authz Authorization) UserIDNumPtr() *UserIDNum {
-	return authz.Session.terminal.user.IDNumPtr()
+	return authz.SessionID.terminal.user.IDNumPtr()
 }
 
 func (authz Authorization) TerminalID() TerminalID {
-	return authz.Session.terminal
+	return authz.SessionID.terminal
 }
 
 func (authz Authorization) TerminalIDNum() TerminalIDNum {
-	return authz.Session.terminal.idNum
+	return authz.SessionID.terminal.idNum
 }
 
 // TerminalIDNumPtr returns a pointer to a new copy of terminal id-num. The
 // returned value is non-nil when the terminal id-num is valid.
 func (authz Authorization) TerminalIDNumPtr() *TerminalIDNum {
-	return authz.Session.terminal.IDNumPtr()
+	return authz.SessionID.terminal.IDNumPtr()
 }
 
 func (authz Authorization) ClientApplicationIDNum() ApplicationIDNum {
-	return authz.Session.terminal.application.IDNum()
+	return authz.SessionID.terminal.application.IDNum()
 }
 
 // RawToken returns the token where this instance of Authorization
