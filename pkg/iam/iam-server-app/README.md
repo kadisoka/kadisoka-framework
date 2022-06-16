@@ -8,18 +8,18 @@ with the executable.
 To generate env-file template, use the command (in the root directory):
 
 ```shell
-$ go run pkg/iam/iam-server-app/main.go env_file_template
+$ go run pkg/iam/iam-server-app/main.go env-file-template
 ```
 
 We can also use prebuilt executable (in the directory where the executable
 resides):
 
 ```shell
-$ ./iam-server env_file_template
+$ ./iam-server env-file-template
 ```
 
 To obtain the template as a file, use something like:
 
 ```shell
-$ ./iam-server env_file_template > config.env
+$ ./iam-server env-file-template > config.env
 ```

@@ -39,7 +39,7 @@ func main() {
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
-		case "env_file_template":
+		case "env-file-template", "env_file_template":
 			fmt.Fprintf(os.Stderr, "Generating env file template...\n")
 			cfg := configSkeleton()
 			fmt.Fprintf(os.Stdout,
