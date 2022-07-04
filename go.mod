@@ -20,7 +20,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.6
-	github.com/minio/minio-go/v7 v7.0.28
+	github.com/minio/minio-go/v7 v7.0.30
 	github.com/nyaruka/phonenumbers v1.0.75
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
@@ -63,7 +63,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.13 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
