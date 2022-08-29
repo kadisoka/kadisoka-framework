@@ -21,7 +21,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.6
 	github.com/minio/minio-go/v7 v7.0.28
-	github.com/nyaruka/phonenumbers v1.0.75
+	github.com/nyaruka/phonenumbers v1.1.1
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/rez-go/crock32 v0.0.0-20210224111353-8fde4331511d
 	github.com/rez-go/stev v0.0.0-20220607035830-a584f4607939
