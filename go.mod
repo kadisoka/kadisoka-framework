@@ -6,7 +6,7 @@ require (
 	github.com/alloyzeus/go-azfl v0.0.0-20220613021558-b89376f6dd77
 	github.com/alloyzeus/go-azgrpc v0.0.0-20220614060859-6031e06851c7
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/aws/aws-sdk-go v1.44.35
+	github.com/aws/aws-sdk-go v1.44.109
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/emicklei/go-restful-openapi/v2 v2.9.0
